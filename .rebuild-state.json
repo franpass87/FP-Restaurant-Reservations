@@ -1,5 +1,5 @@
 {
-  "current": "COMPLETED",
+  "current": "IDLE",
   "completed": [
     "FASE 0",
     "FASE 1",
@@ -22,7 +22,8 @@
     "FASE 18",
     "FASE 19",
     "FASE 20",
-    "FASE 21"
+    "FASE 21",
+    "PATCH-2025-09-29-A"
   ],
   "notes": "Audit finale completato: repository verificato, schema DB coerente, hook e documentazione confermati"
 }

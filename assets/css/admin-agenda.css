@@ -18,3 +18,91 @@
 .fp-resv-agenda-placeholder .description {
     color: #555d66;
 }
+
+.fp-resv-arrivals {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 20px;
+}
+
+.fp-resv-arrivals__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.fp-resv-arrivals__filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.fp-resv-arrivals__filters input {
+    min-width: 120px;
+}
+
+.fp-resv-arrivals__list {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.fp-resv-arrivals__card {
+    border: 1px solid #dcdfe5;
+    border-radius: 6px;
+    padding: 16px;
+    background: #fdfdfd;
+}
+
+.fp-resv-arrivals__card-header {
+    display: flex;
+    gap: 12px;
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 8px;
+}
+
+.fp-resv-arrivals__card-body {
+    color: #32373c;
+    margin-bottom: 12px;
+}
+
+.fp-resv-arrivals__guest {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.fp-resv-arrivals__notes {
+    margin: 0 0 8px;
+    color: #50575e;
+}
+
+.fp-resv-arrivals__badges {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.fp-resv-arrivals__badges li {
+    background: #d63638;
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+}
+
+.fp-resv-arrivals__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}

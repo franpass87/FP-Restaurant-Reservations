@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Reservations;
 use DateTimeImmutable;
 use FP\Resv\Domain\Reservations\Models\Reservation;
 use wpdb;
+use function absint;
 use function array_key_exists;
 use function current_time;
 use function gmdate;
@@ -114,6 +115,47 @@ final class Repository
 
         $rows = $this->wpdb->get_results(
             $this->wpdb->prepare($sql, $startDate, $endDate),
+            ARRAY_A
+        );
+
+        return is_array($rows) ? $rows : [];
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findArrivals(string $startDate, string $endDate, array $filters = []): array
+    {
+        $tablesTable = $this->wpdb->prefix . 'fp_tables';
+        $roomsTable  = $this->wpdb->prefix . 'fp_rooms';
+
+        $sql = 'SELECT r.*, '
+            . 'c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang, '
+            . 't.code AS table_code, rm.name AS room_name '
+            . 'FROM ' . $this->tableName() . ' r '
+            . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
+            . 'LEFT JOIN ' . $tablesTable . ' t ON r.table_id = t.id '
+            . 'LEFT JOIN ' . $roomsTable . ' rm ON r.room_id = rm.id '
+            . 'WHERE r.date BETWEEN %s AND %s';
+
+        $params = [$startDate, $endDate];
+
+        if (isset($filters['room']) && $filters['room'] !== '') {
+            $sql      .= ' AND r.room_id = %d';
+            $params[] = absint((string) $filters['room']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $sql      .= ' AND r.status = %s';
+            $params[] = (string) $filters['status'];
+        }
+
+        $sql .= ' ORDER BY r.date ASC, r.time ASC';
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, ...$params),
             ARRAY_A
         );
 

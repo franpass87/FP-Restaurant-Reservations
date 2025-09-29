@@ -13,6 +13,7 @@ use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
 use function rest_url;
+use function sanitize_key;
 use function wp_create_nonce;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
@@ -61,16 +62,33 @@ final class AdminController
             wp_enqueue_style($styleHandle, $styleUrl, [], Plugin::VERSION);
         }
 
+        $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : '';
+        if ($tab === '') {
+            $tab = 'agenda';
+        }
+
         wp_localize_script($scriptHandle, 'fpResvAgendaSettings', [
-            'restRoot' => esc_url_raw(rest_url('fp-resv/v1')),
-            'nonce'    => wp_create_nonce('wp_rest'),
-            'links'    => [
+            'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),
+            'nonce'     => wp_create_nonce('wp_rest'),
+            'activeTab' => $tab,
+            'links'     => [
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
+                'agenda'   => esc_url_raw(admin_url('admin.php?page=fp-resv-agenda')),
             ],
-            'strings'  => [
-                'headline'    => __('Agenda in arrivo', 'fp-restaurant-reservations'),
-                'description' => __('La SPA dell\'agenda verrà completata nelle prossime fasi. Nel frattempo sono disponibili le API REST per integrare dati reali.', 'fp-restaurant-reservations'),
-                'cta'         => __('Utilizza le API per alimentare dashboard personalizzate oppure attendi i prossimi rilasci per il drag & drop.', 'fp-restaurant-reservations'),
+            'strings'   => [
+                'headline'          => __('Agenda in arrivo', 'fp-restaurant-reservations'),
+                'description'       => __('La SPA dell’agenda verrà completata nelle prossime fasi. Nel frattempo sono disponibili le API REST per integrare dati reali.', 'fp-restaurant-reservations'),
+                'cta'               => __('Utilizza le API per alimentare dashboard personalizzate oppure attendi i prossimi rilasci per il drag & drop.', 'fp-restaurant-reservations'),
+                'arrivalsTitle'     => __('Prenotazioni in arrivo', 'fp-restaurant-reservations'),
+                'arrivalsEmpty'     => __('Nessuna prenotazione imminente per l’intervallo selezionato.', 'fp-restaurant-reservations'),
+                'arrivalsLoading'   => __('Caricamento arrivi…', 'fp-restaurant-reservations'),
+                'arrivalsReload'    => __('Aggiorna elenco', 'fp-restaurant-reservations'),
+                'arrivalsError'     => __('Impossibile caricare le prenotazioni in arrivo. Riprova.', 'fp-restaurant-reservations'),
+                'actionConfirm'     => __('Conferma', 'fp-restaurant-reservations'),
+                'actionVisited'     => __('Check-in', 'fp-restaurant-reservations'),
+                'actionNoShow'      => __('No-show', 'fp-restaurant-reservations'),
+                'actionMove'        => __('Sposta', 'fp-restaurant-reservations'),
+                'drawerPlaceholder' => __('La funzione di spostamento aprirà un drawer dedicato nelle prossime versioni.', 'fp-restaurant-reservations'),
             ],
         ]);
     }

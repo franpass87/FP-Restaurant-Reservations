@@ -28,7 +28,7 @@ FP Restaurant Reservations fornisce un flusso completo di prenotazioni ristorant
 * **Generali** – definisci orari, buffer, sedi, PDF per lingua/sede e stato prenotazione default.
 * **Notifiche** – imposta mittenti, indirizzi ristorante/webmaster e allegato ICS.
 * **Pagamenti Stripe** – abilita/gestisci caparra, pre-autorizzazione o pagamento completo.
-* **Brevo** – configura API key, liste e soglie review Google per la survey.
+* **Brevo** – configura API key, liste IT/EN e la mappa prefissi (es. +39=IT) per il routing automatico delle iscrizioni e le soglie review Google della survey.
 * **Google Calendar** – collega l’account OAuth, abilita busy check e sincronizzazione fp-resv-{id}.
 * **Stile del form** – personalizza palette, tipografia, dark mode e verifica WCAG.
 * **Lingua** – scegli auto-detect IT/EN con fallback e dizionari personalizzabili.
