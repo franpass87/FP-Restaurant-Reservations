@@ -37,7 +37,10 @@
     "PATCH-HARDENING-FOLLOWUP",
     "PATCH-HARDENING-CLOSEOUT",
     "PATCH-HARDENING-CLOSEOUT-ARCHIVE",
-    "PATCH-HARDENING-POSTMORTEM"
+    "PATCH-HARDENING-POSTMORTEM",
+    "PATCH WOW-UI+FE-2025-09-29",
+    "PATCH WOW-UI+FE-2025-09-29",
+    "PATCH WOW-UI+FE-2025-09-29"
   ],
   "notes": "2025-11-05: Post-mortem hardening completato con lesson learned documentate in docs/HARDENING-POSTMORTEM.md; azioni correttive PM-01..PM-04 aperte. Prossimo step: consolidare le lesson learned nei playbook ufficiali."
 }

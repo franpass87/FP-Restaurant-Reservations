@@ -80,3 +80,16 @@ Data: 2025-10-28T09:15Z (aggiornamento closeout)
 | Configurazione plugin | PASS | SMTP, Stripe, Brevo, GCal e rotazione log verificati con ticket allegati nel closeout. |
 | Server & rete | PASS | Scanner TLS/HSTS, WAF, headers e isolamento PHP-FPM documentati in `docs/HARDENING-VERIFICATION.md`. |
 
+## WOW-UI+FE
+
+1. Verificata la scalatura tipografica con font-size h1/h2/h3 e spacing 4/8/12/16 come da patch.
+2. Pills pasto animate con micro-shadow e badge “Consigliato” opzionale renderizzati correttamente.
+3. Skeleton loader visibile durante fetch disponibilità con shimmer attivo.
+4. Debounce a 250 ms per disponibilità con retry esponenziale 0.5/1/2 s (max 3) monitorato in dataLayer.
+5. Focus management: sblocco sezione → focus primo campo, submit ok → focus banner successo.
+6. Aria-live su messaggi disponibilità, submit hint e boundary error per accessibilità.
+7. Tracking `ui_latency`/`availability_retry`/`cta_state_change` validato con push dataLayer.
+8. CTA smart mostra “Completa i campi richiesti” da disabilitata e “Prenota ora” da abilitata.
+9. Dark mode compatibile con nuove superfici (badge/spinner) senza regressioni di contrasto.
+10. Error boundary submit mostra messaggio e bottone “Riprova” con riabilitazione CTA.
+

@@ -1,170 +1,236 @@
-(function () {
-    'use strict';
 
-    /**
-     * @param {HTMLElement} root
-     * @returns {Record<string, any>}
-     */
-    function parseDataset(root) {
-        const raw = root.getAttribute('data-fp-resv');
-        if (!raw) {
-            return {};
-        }
+import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
 
-        try {
-            return JSON.parse(raw);
-        } catch (error) {
-            if (window.console && window.console.warn) {
-                console.warn('[fp-resv] Impossibile analizzare il dataset del widget', error);
-            }
-        }
+let availabilityModulePromise = null;
+const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
+    ? (callback) => window.requestIdleCallback(callback)
+    : (callback) => window.setTimeout(() => callback(Date.now()), 1);
 
+function loadAvailabilityModule() {
+    if (!availabilityModulePromise) {
+        availabilityModulePromise = import('./availability.js');
+    }
+
+    return availabilityModulePromise;
+}
+
+function parseDataset(root) {
+    const raw = root.getAttribute('data-fp-resv');
+    if (!raw) {
         return {};
     }
 
-    /**
-     * @param {string} name
-     * @param {Record<string, any>} payload
-     */
-    function pushDataLayerEvent(name, payload) {
-        if (!name) {
-            return;
+    try {
+        return JSON.parse(raw);
+    } catch (error) {
+        if (window.console && window.console.warn) {
+            console.warn('[fp-resv] Impossibile analizzare il dataset del widget', error);
         }
-
-        /** @type {Record<string, any>} */
-        const event = Object.assign({ event: name }, payload || {});
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push(event);
-
-        if (window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
-            window.fpResvTracking.dispatch(event);
-        }
-
-        return event;
     }
 
-    /**
-     * @param {HTMLElement} element
-     * @param {string} attribute
-     * @returns {HTMLElement | null}
-     */
-    function closestWithAttribute(element, attribute) {
-        if (!element) {
-            return null;
-        }
+    return {};
+}
 
-        if (typeof element.closest === 'function') {
-            return element.closest('[' + attribute + ']');
-        }
-
-        var parent = element;
-        while (parent) {
-            if (parent.hasAttribute(attribute)) {
-                return parent;
-            }
-            parent = parent.parentElement;
-        }
-
+function pushDataLayerEvent(name, payload) {
+    if (!name) {
         return null;
     }
 
-    /**
-     * @param {HTMLElement} element
-     * @returns {HTMLElement | null}
-     */
-    function closestSection(element) {
-        return closestWithAttribute(element, 'data-fp-resv-section');
+    const event = Object.assign({ event: name }, payload || {});
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(event);
+
+    if (window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
+        window.fpResvTracking.dispatch(event);
     }
 
-    /**
-     * @param {HTMLElement} element
-     * @param {string} attribute
-     * @returns {Record<string, any>}
-     */
-    function parseJsonAttribute(element, attribute) {
-        if (!element) {
-            return {};
-        }
+    return event;
+}
 
-        var raw = element.getAttribute(attribute);
-        if (!raw) {
-            return {};
-        }
+function closestWithAttribute(element, attribute) {
+    if (!element) {
+        return null;
+    }
 
-        try {
-            var parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object') {
-                return parsed;
-            }
-        } catch (error) {
-            if (window.console && window.console.warn) {
-                console.warn('[fp-resv] Impossibile analizzare l\'attributo', attribute, error);
-            }
-        }
+    if (typeof element.closest === 'function') {
+        return element.closest('[' + attribute + ']');
+    }
 
+    let parent = element;
+    while (parent) {
+        if (parent.hasAttribute(attribute)) {
+            return parent;
+        }
+        parent = parent.parentElement;
+    }
+
+    return null;
+}
+
+function closestSection(element) {
+    return closestWithAttribute(element, 'data-fp-resv-section');
+}
+
+function parseJsonAttribute(element, attribute) {
+    if (!element) {
         return {};
     }
 
-    /**
-     * @param {HTMLElement} element
-     * @param {boolean} disabled
-     */
-    function setAriaDisabled(element, disabled) {
-        if (!element) {
-            return;
-        }
+    const raw = element.getAttribute(attribute);
+    if (!raw) {
+        return {};
+    }
 
-        if (disabled) {
-            element.setAttribute('aria-disabled', 'true');
-            element.setAttribute('disabled', 'disabled');
-        } else {
-            element.removeAttribute('disabled');
-            element.setAttribute('aria-disabled', 'false');
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+            return parsed;
+        }
+    } catch (error) {
+        if (window.console && window.console.warn) {
+            console.warn("[fp-resv] Impossibile analizzare l'attributo", attribute, error);
         }
     }
 
-    /**
-     * @param {string | number | null | undefined} value
-     * @returns {number | null}
-     */
-    function toNumber(value) {
-        if (value === null || value === undefined) {
-            return null;
-        }
+    return {};
+}
 
-        if (typeof value === 'number') {
-            return isFinite(value) ? value : null;
-        }
-
-        const normalized = String(value).replace(',', '.');
-        const parsed = parseFloat(normalized);
-
-        return isNaN(parsed) ? null : parsed;
+function setAriaDisabled(element, disabled) {
+    if (!element) {
+        return;
     }
 
-    function OnePageForm(root) {
+    if (disabled) {
+        element.setAttribute('aria-disabled', 'true');
+        element.setAttribute('disabled', 'disabled');
+    } else {
+        element.removeAttribute('disabled');
+        element.setAttribute('aria-disabled', 'false');
+    }
+}
+
+function toNumber(value) {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : null;
+    }
+
+    const normalized = String(value).replace(',', '.');
+    const parsed = parseFloat(normalized);
+
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function resolveEndpoint(endpoint, fallback) {
+    if (endpoint && typeof endpoint === 'string') {
+        try {
+            return new URL(endpoint, window.location.origin).toString();
+        } catch (error) {
+            return endpoint;
+        }
+    }
+
+    if (window.wpApiSettings && window.wpApiSettings.root) {
+        const root = window.wpApiSettings.root.replace(/\/$/, '');
+        return root + fallback;
+    }
+
+    return fallback;
+}
+
+function firstFocusable(section) {
+    if (!section) {
+        return null;
+    }
+
+    const selectors = 'input:not([type=\"hidden\"]), select, textarea, button, [tabindex=\"0\"]';
+    return section.querySelector(selectors);
+}
+
+function safeJson(response) {
+    return response.text().then((text) => {
+        if (!text) {
+            return {};
+        }
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return {};
+        }
+    });
+}
+
+class OnePageForm {
+    constructor(root) {
         this.root = root;
         this.dataset = parseDataset(root);
+        this.config = this.dataset.config || {};
+        this.strings = this.dataset.strings || {};
+        this.messages = this.strings.messages || {};
         this.events = (this.dataset && this.dataset.events) || {};
+        this.integrations = this.config.integrations || this.config.features || {};
+
         this.form = root.querySelector('[data-fp-resv-form]');
         this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll('[data-fp-resv-section]')) : [];
         this.progress = this.form ? this.form.querySelector('[data-fp-resv-progress]') : null;
         this.submitButton = this.form ? this.form.querySelector('[data-fp-resv-submit]') : null;
+        this.submitLabel = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-label]') || this.submitButton : null;
+        this.submitSpinner = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-spinner]') : null;
         this.submitHint = this.form ? this.form.querySelector('[data-fp-resv-submit-hint]') : null;
+        this.successAlert = this.form ? this.form.querySelector('[data-fp-resv-success]') : null;
+        this.errorAlert = this.form ? this.form.querySelector('[data-fp-resv-error]') : null;
+        this.errorMessage = this.form ? this.form.querySelector('[data-fp-resv-error-message]') : null;
+        this.errorRetry = this.form ? this.form.querySelector('[data-fp-resv-error-retry]') : null;
         this.mealButtons = Array.prototype.slice.call(root.querySelectorAll('[data-fp-resv-meal]'));
         this.mealNotice = root.querySelector('[data-fp-resv-meal-notice]');
-        this.hiddenMeal = this.form ? this.form.querySelector('input[name="fp_resv_meal"]') : null;
-        this.hiddenPrice = this.form ? this.form.querySelector('input[name="fp_resv_price_per_person"]') : null;
+        this.hiddenMeal = this.form ? this.form.querySelector('input[name=\"fp_resv_meal\"]') : null;
+        this.hiddenPrice = this.form ? this.form.querySelector('input[name=\"fp_resv_price_per_person\"]') : null;
+        this.hiddenSlot = this.form ? this.form.querySelector('input[name=\"fp_resv_slot_start\"]') : null;
         this.summaryTargets = Array.prototype.slice.call(root.querySelectorAll('[data-fp-resv-summary]'));
+        this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field=\"phone\"]') : null;
+        this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_e164\"]') : null;
+        this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_cc\"]') : null;
+        this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_local\"]') : null;
+        this.availabilityRoot = this.form ? this.form.querySelector('[data-fp-resv-slots]') : null;
+
         this.state = {
             started: false,
             formValidEmitted: false,
             sectionStates: {},
             unlocked: {},
             initialHint: this.submitHint ? this.submitHint.textContent : '',
+            hintOverride: '',
+            ctaEnabled: false,
+            sending: false,
+            pendingAvailability: false,
+            lastAvailabilityParams: null,
         };
 
+        this.copy = {
+            ctaDisabled: this.messages.cta_complete_fields || 'Complete required fields',
+            ctaEnabled: (this.messages.cta_book_now || (this.strings.actions && this.strings.actions.submit) || 'Book now'),
+            ctaSending: this.messages.cta_sending || 'Sending…',
+            updatingSlots: this.messages.msg_updating_slots || 'Updating availability…',
+            slotsUpdated: this.messages.msg_slots_updated || 'Availability updated.',
+            slotsEmpty: this.messages.slots_empty || '',
+            selectMeal: this.messages.msg_select_meal || 'Select a meal to view available times.',
+            invalidPhone: this.messages.msg_invalid_phone || 'Enter a valid phone number (minimum 6 digits).',
+            invalidEmail: this.messages.msg_invalid_email || 'Enter a valid email address.',
+            submitError: this.messages.msg_submit_error || 'We could not complete your reservation. Please try again.',
+            submitSuccess: this.messages.msg_submit_success || 'Reservation sent successfully.',
+        };
+
+        this.phoneCountryCode = this.getPhoneCountryCode();
+        if (this.hiddenPhoneCc && this.hiddenPhoneCc.value === '') {
+            this.hiddenPhoneCc.value = this.phoneCountryCode;
+        }
+
         this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this);
+        this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this);
+        this.handleWindowFocus = this.handleWindowFocus.bind(this);
 
         if (!this.form || this.sections.length === 0) {
             return;
@@ -173,27 +239,39 @@
         this.bind();
         this.initializeSections();
         this.initializeMeals();
+        this.initializeAvailability();
         this.syncConsentState();
         this.updateSubmitState();
         this.updateSummary();
+
+        idleCallback(() => {
+            this.loadStripeIfNeeded();
+            this.loadGoogleCalendarIfNeeded();
+        });
     }
 
-    OnePageForm.prototype.bind = function bind() {
+    bind() {
         this.form.addEventListener('input', this.handleFormInput.bind(this), true);
         this.form.addEventListener('change', this.handleFormInput.bind(this), true);
         this.form.addEventListener('focusin', this.handleFirstInteraction.bind(this));
+        this.form.addEventListener('blur', this.handleFieldBlur.bind(this), true);
+        this.form.addEventListener('keydown', this.handleKeydown.bind(this), true);
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         this.root.addEventListener('click', this.handleDelegatedTrackingEvent);
 
-        var confirmedHandler = this.handleReservationConfirmed.bind(this);
-        document.addEventListener('fp-resv:reservation:confirmed', confirmedHandler);
-        window.addEventListener('fp-resv:reservation:confirmed', confirmedHandler);
-    };
+        if (this.errorRetry) {
+            this.errorRetry.addEventListener('click', this.handleRetrySubmit.bind(this));
+        }
 
-    OnePageForm.prototype.initializeSections = function initializeSections() {
-        var _this = this;
+        document.addEventListener('fp-resv:reservation:confirmed', this.handleReservationConfirmed);
+        window.addEventListener('fp-resv:reservation:confirmed', this.handleReservationConfirmed);
+        window.addEventListener('focus', this.handleWindowFocus);
+    }
+
+    initializeSections() {
+        const _this = this;
         this.sections.forEach(function (section, index) {
-            var key = section.getAttribute('data-step') || String(index);
+            const key = section.getAttribute('data-step') || String(index);
             _this.state.sectionStates[key] = index === 0 ? 'active' : 'locked';
             if (index === 0) {
                 _this.dispatchSectionUnlocked(key);
@@ -202,10 +280,10 @@
         });
 
         this.updateProgressIndicators();
-    };
+    }
 
-    OnePageForm.prototype.initializeMeals = function initializeMeals() {
-        var _this = this;
+    initializeMeals() {
+        const _this = this;
         if (this.mealButtons.length === 0) {
             return;
         }
@@ -221,18 +299,67 @@
                 _this.applyMealSelection(button);
             }
         });
-    };
+    }
 
-    OnePageForm.prototype.handleFormInput = function handleFormInput(event) {
-        var target = event.target;
+    initializeAvailability() {
+        if (!this.availabilityRoot) {
+            return;
+        }
+
+        const schedule = () => {
+            if (!this.availabilityController) {
+                this.state.pendingAvailability = true;
+                return;
+            }
+
+            this.scheduleAvailabilityUpdate();
+        };
+
+        idleCallback(() => {
+            loadAvailabilityModule()
+                .then((module) => {
+                    if (!module || typeof module.createAvailabilityController !== 'function' || !this.availabilityRoot) {
+                        return;
+                    }
+
+                    this.availabilityController = module.createAvailabilityController({
+                        root: this.availabilityRoot,
+                        endpoint: this.getAvailabilityEndpoint(),
+                        strings: this.copy,
+                        getParams: () => this.collectAvailabilityParams(),
+                        onSlotSelected: (slot) => this.handleSlotSelected(slot),
+                        onLatency: (ms) => this.handleAvailabilityLatency(ms),
+                        onRetry: (attempt) => this.handleAvailabilityRetry(attempt),
+                    });
+
+                    if (this.state.pendingAvailability) {
+                        this.state.pendingAvailability = false;
+                        this.scheduleAvailabilityUpdate();
+                    }
+                })
+                .catch(() => {
+                    // noop
+                });
+        });
+
+        schedule();
+    }
+
+    handleFormInput(event) {
+        const target = event.target;
         if (!target) {
             return;
         }
 
         this.handleFirstInteraction();
+
+        if (target === this.phoneField) {
+            applyMask(this.phoneField, this.getPhoneCountryCode());
+        }
+
         this.updateSummary();
 
-        var section = closestSection(target);
+        const section = closestSection(target);
         if (!section) {
             if (this.isConsentField(target)) {
                 this.syncConsentState();
@@ -248,24 +375,72 @@
             this.updateSectionAttributes(section, 'active');
         }
 
+        const fieldKey = target.getAttribute('data-fp-resv-field') || '';
+        if (fieldKey === 'date' || fieldKey === 'party' || fieldKey === 'slots' || fieldKey === 'time') {
+            this.scheduleAvailabilityUpdate();
+        }
+
         if (this.isConsentField(target)) {
             this.syncConsentState();
         }
 
         this.updateSubmitState();
-    };
+    }
 
-    OnePageForm.prototype.handleFirstInteraction = function handleFirstInteraction() {
-        if (this.state.started) {
+    handleFieldBlur(event) {
+        const target = event.target;
+        if (!target || !(target instanceof HTMLElement)) {
             return;
         }
 
-        var eventName = this.events.start || 'reservation_start';
-        pushDataLayerEvent(eventName, { source: 'form' });
-        this.state.started = true;
-    };
+        const fieldKey = target.getAttribute('data-fp-resv-field');
+        if (!fieldKey) {
+            return;
+        }
 
-    OnePageForm.prototype.handleMealSelection = function handleMealSelection(button) {
+        if (fieldKey === 'phone' && this.phoneField) {
+            this.validatePhoneField();
+        }
+
+        if (fieldKey === 'email' && target instanceof HTMLInputElement) {
+            this.validateEmailField(target);
+        }
+    }
+
+    handleKeydown(event) {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        const target = event.target;
+        if (!target || !(target instanceof HTMLElement)) {
+            return;
+        }
+
+        if (target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        if (target instanceof HTMLButtonElement && target.type === 'submit') {
+            return;
+        }
+
+        const type = (target instanceof HTMLInputElement && target.type) || '';
+        if (type === 'submit') {
+            return;
+        }
+
+        event.preventDefault();
+    }
+
+    handleRetrySubmit(event) {
+        event.preventDefault();
+        this.clearError();
+        this.focusFirstInvalid();
+        this.updateSubmitState();
+    }
+
+    handleMealSelection(button) {
         this.mealButtons.forEach(function (item) {
             item.removeAttribute('data-active');
             item.setAttribute('aria-pressed', 'false');
@@ -275,25 +450,27 @@
         button.setAttribute('aria-pressed', 'true');
         this.applyMealSelection(button);
 
-        var mealEvent = this.events.meal_selected || 'meal_selected';
+        const mealEvent = this.events.meal_selected || 'meal_selected';
         pushDataLayerEvent(mealEvent, {
             meal_type: button.getAttribute('data-fp-resv-meal') || '',
             meal_label: button.getAttribute('data-meal-label') || '',
         });
-    };
 
-    OnePageForm.prototype.applyMealSelection = function applyMealSelection(button) {
-        var key = button.getAttribute('data-fp-resv-meal') || '';
+        this.scheduleAvailabilityUpdate();
+    }
+
+    applyMealSelection(button) {
+        const key = button.getAttribute('data-fp-resv-meal') || '';
         if (this.hiddenMeal) {
             this.hiddenMeal.value = key;
         }
 
-        var price = toNumber(button.getAttribute('data-meal-price'));
+        const price = toNumber(button.getAttribute('data-meal-price'));
         if (this.hiddenPrice) {
             this.hiddenPrice.value = price !== null ? String(price) : '';
         }
 
-        var notice = button.getAttribute('data-meal-notice');
+        const notice = button.getAttribute('data-meal-notice');
         if (this.mealNotice) {
             if (notice && notice.trim() !== '') {
                 this.mealNotice.textContent = notice;
@@ -305,20 +482,20 @@
         }
 
         this.updateSubmitState();
-    };
+    }
 
-    OnePageForm.prototype.ensureSectionActive = function ensureSectionActive(section) {
-        var key = section.getAttribute('data-step') || '';
+    ensureSectionActive(section) {
+        const key = section.getAttribute('data-step') || '';
         if (this.state.sectionStates[key] === 'locked') {
             this.state.sectionStates[key] = 'active';
             this.updateSectionAttributes(section, 'active');
             this.dispatchSectionUnlocked(key);
             this.scrollIntoView(section);
         }
-    };
+    }
 
-    OnePageForm.prototype.completeSection = function completeSection(section, advance) {
-        var key = section.getAttribute('data-step') || '';
+    completeSection(section, advance) {
+        const key = section.getAttribute('data-step') || '';
         if (this.state.sectionStates[key] === 'completed') {
             return;
         }
@@ -331,119 +508,163 @@
             return;
         }
 
-        var currentIndex = this.sections.indexOf(section);
+        const currentIndex = this.sections.indexOf(section);
         if (currentIndex === -1) {
             return;
         }
 
-        var nextSection = this.sections[currentIndex + 1];
+        const nextSection = this.sections[currentIndex + 1];
         if (!nextSection) {
             return;
         }
 
-        var nextKey = nextSection.getAttribute('data-step') || String(currentIndex + 1);
+        const nextKey = nextSection.getAttribute('data-step') || String(currentIndex + 1);
         if (this.state.sectionStates[nextKey] !== 'completed') {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
             this.scrollIntoView(nextSection);
         }
-    };
+    }
 
-    OnePageForm.prototype.updateSectionAttributes = function updateSectionAttributes(section, state) {
-        var key = section.getAttribute('data-step') || '';
+    dispatchSectionUnlocked(key) {
+        if (this.state.unlocked[key]) {
+            return;
+        }
+
+        this.state.unlocked[key] = true;
+        const eventName = this.events.section_unlocked || 'section_unlocked';
+        pushDataLayerEvent(eventName, { section: key });
+    }
+
+    updateSectionAttributes(section, state) {
+        const key = section.getAttribute('data-step') || '';
         this.state.sectionStates[key] = state;
         section.setAttribute('data-state', state);
         section.setAttribute('aria-hidden', state === 'locked' ? 'true' : 'false');
         section.setAttribute('aria-expanded', state === 'active' ? 'true' : 'false');
 
         this.updateProgressIndicators();
-    };
+    }
 
-    OnePageForm.prototype.updateProgressIndicators = function updateProgressIndicators() {
+    updateProgressIndicators() {
         if (!this.progress) {
             return;
         }
 
-        var _this = this;
-        var items = this.progress.querySelectorAll('[data-step]');
-        Array.prototype.forEach.call(items, function (item) {
-            var key = item.getAttribute('data-step') || '';
-            var state = _this.state.sectionStates[key] || 'locked';
+        const _this = this;
+        const items = this.progress.querySelectorAll('[data-step]');
+        let progressValue = 0;
+        const total = items.length || 1;
+
+        Array.prototype.forEach.call(items, function (item, index) {
+            const key = item.getAttribute('data-step') || '';
+            const state = _this.state.sectionStates[key] || 'locked';
             item.setAttribute('data-state', state);
+            item.setAttribute('data-progress-state', state === 'completed' ? 'done' : state);
             if (state === 'active') {
                 item.setAttribute('aria-current', 'step');
+                progressValue = Math.max(progressValue, index + 0.5);
             } else {
                 item.removeAttribute('aria-current');
             }
             if (state === 'completed') {
                 item.setAttribute('data-completed', 'true');
+                progressValue = Math.max(progressValue, index + 1);
             } else {
                 item.removeAttribute('data-completed');
             }
         });
-    };
 
-    OnePageForm.prototype.isSectionValid = function isSectionValid(section) {
-        var fields = section.querySelectorAll('[data-fp-resv-field]');
+        const percentage = Math.min(100, Math.max(0, Math.round((progressValue / total) * 100)));
+        this.progress.style.setProperty('--fp-progress-fill', percentage + '%');
+    }
+
+    isSectionValid(section) {
+        const fields = section.querySelectorAll('[data-fp-resv-field]');
         if (fields.length === 0) {
             return true;
         }
 
-        var valid = true;
+        let valid = true;
         Array.prototype.forEach.call(fields, function (field) {
-            if (typeof field.checkValidity === 'function') {
-                if (!field.checkValidity()) {
-                    valid = false;
-                }
+            if (typeof field.checkValidity === 'function' && !field.checkValidity()) {
+                valid = false;
             }
         });
 
         return valid;
-    };
+    }
 
-    OnePageForm.prototype.updateSubmitState = function updateSubmitState() {
+    updateSubmitState() {
         if (!this.submitButton) {
             return;
         }
 
-        var isValid = this.form.checkValidity();
-        setAriaDisabled(this.submitButton, !isValid);
-
-        if (!isValid) {
-            var tooltip = this.submitButton.getAttribute('data-disabled-tooltip');
-            if (this.submitHint) {
-                this.submitHint.textContent = tooltip || this.state.initialHint || '';
-            }
-            return;
+        const isValid = this.form.checkValidity();
+        if (this.state.sending) {
+            this.setSubmitButtonState(false, 'sending');
+        } else {
+            this.setSubmitButtonState(isValid, null);
         }
 
         if (this.submitHint) {
-            this.submitHint.textContent = this.state.initialHint || '';
+            const hint = this.state.hintOverride || (isValid ? this.state.initialHint : this.copy.ctaDisabled);
+            this.submitHint.textContent = hint;
         }
 
-        if (!this.state.formValidEmitted) {
-            var eventName = this.events.form_valid || 'form_valid';
+        if (isValid && !this.state.formValidEmitted) {
+            const eventName = this.events.form_valid || 'form_valid';
             pushDataLayerEvent(eventName, { timestamp: Date.now() });
             this.state.formValidEmitted = true;
         }
-    };
+    }
 
-    OnePageForm.prototype.updateSummary = function updateSummary() {
+    setSubmitButtonState(enabled, mode) {
+        if (!this.submitButton) {
+            return;
+        }
+
+        const effectiveEnabled = mode === 'sending' ? false : Boolean(enabled);
+        const previousState = this.state.ctaEnabled;
+        setAriaDisabled(this.submitButton, !effectiveEnabled);
+
+        if (this.submitLabel) {
+            if (mode === 'sending') {
+                this.submitLabel.textContent = this.copy.ctaSending;
+            } else if (effectiveEnabled) {
+                this.submitLabel.textContent = this.copy.ctaEnabled;
+            } else {
+                this.submitLabel.textContent = this.copy.ctaDisabled;
+            }
+        }
+
+        if (this.submitSpinner) {
+            this.submitSpinner.hidden = mode !== 'sending';
+        }
+
+        if (previousState !== effectiveEnabled && mode !== 'sending') {
+            pushDataLayerEvent('cta_state_change', { enabled: effectiveEnabled });
+        }
+
+        this.state.ctaEnabled = effectiveEnabled;
+    }
+
+    updateSummary() {
         if (this.summaryTargets.length === 0) {
             return;
         }
 
-        var date = this.form.querySelector('[data-fp-resv-field="date"]');
-        var time = this.form.querySelector('[data-fp-resv-field="time"]');
-        var party = this.form.querySelector('[data-fp-resv-field="party"]');
-        var firstName = this.form.querySelector('[data-fp-resv-field="first_name"]');
-        var lastName = this.form.querySelector('[data-fp-resv-field="last_name"]');
-        var email = this.form.querySelector('[data-fp-resv-field="email"]');
-        var phone = this.form.querySelector('[data-fp-resv-field="phone"]');
-        var notes = this.form.querySelector('[data-fp-resv-field="notes"]');
+        const date = this.form.querySelector('[data-fp-resv-field=\"date\"]');
+        const time = this.form.querySelector('[data-fp-resv-field=\"time\"]');
+        const party = this.form.querySelector('[data-fp-resv-field=\"party\"]');
+        const firstName = this.form.querySelector('[data-fp-resv-field=\"first_name\"]');
+        const lastName = this.form.querySelector('[data-fp-resv-field=\"last_name\"]');
+        const email = this.form.querySelector('[data-fp-resv-field=\"email\"]');
+        const phone = this.form.querySelector('[data-fp-resv-field=\"phone\"]');
+        const notes = this.form.querySelector('[data-fp-resv-field=\"notes\"]');
 
-        var nameValue = '';
+        let nameValue = '';
         if (firstName && firstName.value) {
             nameValue = firstName.value.trim();
         }
@@ -451,7 +672,7 @@
             nameValue = (nameValue + ' ' + lastName.value.trim()).trim();
         }
 
-        var contactValue = '';
+        let contactValue = '';
         if (email && email.value) {
             contactValue = email.value.trim();
         }
@@ -460,7 +681,7 @@
         }
 
         this.summaryTargets.forEach(function (target) {
-            var key = target.getAttribute('data-fp-resv-summary');
+            const key = target.getAttribute('data-fp-resv-summary');
             switch (key) {
                 case 'date':
                     target.textContent = date && date.value ? date.value : '';
@@ -482,51 +703,281 @@
                     break;
             }
         });
-    };
+    }
 
-    OnePageForm.prototype.handleSubmit = function handleSubmit(event) {
+    async handleSubmit(event) {
+        event.preventDefault();
+
         if (!this.form.checkValidity()) {
-            event.preventDefault();
             this.form.reportValidity();
+            this.focusFirstInvalid();
             this.updateSubmitState();
             return false;
         }
 
-        this.handleFirstInteraction();
-        var eventName = this.events.submit || 'reservation_submit';
-        pushDataLayerEvent(eventName, {
-            trigger: 'click',
-            party_size: (function () {
-                var partyField = /** @type {HTMLInputElement | null} */ (this.form.querySelector('[data-fp-resv-field="party"]'));
-                if (!partyField) {
-                    return null;
+        this.preparePhonePayload();
+        this.state.sending = true;
+        this.updateSubmitState();
+        this.clearError();
+
+        const payload = this.serializeForm();
+        const endpoint = this.getReservationEndpoint();
+        const start = performance.now();
+        let latency = 0;
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': payload.fp_resv_nonce || '',
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin',
+            });
+
+            latency = Math.round(performance.now() - start);
+            pushDataLayerEvent('ui_latency', { op: 'submit', ms: latency });
+
+            if (!response.ok) {
+                const errorPayload = await safeJson(response);
+                const message = (errorPayload && errorPayload.message) || this.copy.submitError;
+                throw Object.assign(new Error(message), {
+                    status: response.status,
+                    payload: errorPayload,
+                });
+            }
+
+            const data = await response.json();
+            this.handleSubmitSuccess(data);
+        } catch (error) {
+            if (!latency) {
+                latency = Math.round(performance.now() - start);
+                pushDataLayerEvent('ui_latency', { op: 'submit', ms: latency });
+            }
+
+            this.handleSubmitError(error, latency);
+        } finally {
+            this.state.sending = false;
+            this.updateSubmitState();
+        }
+
+        return false;
+    }
+
+    handleSubmitSuccess(data) {
+        this.clearError();
+        const message = (data && data.message) || this.copy.submitSuccess;
+        if (this.successAlert) {
+            this.successAlert.textContent = message;
+            this.successAlert.hidden = false;
+            if (typeof this.successAlert.focus === 'function') {
+                this.successAlert.focus();
+            }
+        }
+
+        if (data && Array.isArray(data.tracking)) {
+            data.tracking.forEach((entry) => {
+                if (entry && entry.event) {
+                    pushDataLayerEvent(entry.event, entry);
                 }
-                var value = parseInt(partyField.value, 10);
-                return isNaN(value) ? null : value;
-            }).call(this),
-            meal_type: this.hiddenMeal ? this.hiddenMeal.value : '',
+            });
+        }
+    }
+
+    handleSubmitError(error, latency) {
+        const status = error && typeof error.status === 'number' ? error.status : 'unknown';
+        const message = (error && error.message) || this.copy.submitError;
+
+        if (this.errorAlert && this.errorMessage) {
+            this.errorMessage.textContent = message;
+            this.errorAlert.hidden = false;
+        }
+
+        this.state.hintOverride = message;
+        this.updateSubmitState();
+
+        const eventName = this.events.submit_error || 'submit_error';
+        pushDataLayerEvent(eventName, { code: status, latency });
+    }
+
+    clearError() {
+        if (this.errorAlert) {
+            this.errorAlert.hidden = true;
+        }
+        this.state.hintOverride = '';
+    }
+
+    serializeForm() {
+        const formData = new FormData(this.form);
+        const payload = {};
+        formData.forEach((value, key) => {
+            if (typeof value === 'string') {
+                payload[key] = value;
+            }
         });
+        return payload;
+    }
 
-        return true;
-    };
+    preparePhonePayload() {
+        if (!this.phoneField) {
+            return;
+        }
 
-    OnePageForm.prototype.handleDelegatedTrackingEvent = function handleDelegatedTrackingEvent(event) {
-        var target = /** @type {HTMLElement | null} */ (event.target instanceof HTMLElement ? event.target : null);
+        const phoneData = buildPayload(this.phoneField, this.getPhoneCountryCode());
+        if (this.hiddenPhoneE164) {
+            this.hiddenPhoneE164.value = phoneData.e164;
+        }
+        if (this.hiddenPhoneCc) {
+            this.hiddenPhoneCc.value = phoneData.country;
+        }
+        if (this.hiddenPhoneLocal) {
+            this.hiddenPhoneLocal.value = phoneData.local;
+        }
+    }
+
+    validatePhoneField() {
+        if (!this.phoneField) {
+            return;
+        }
+
+        const payload = buildPayload(this.phoneField, this.getPhoneCountryCode());
+        if (payload.local === '') {
+            this.phoneField.setCustomValidity('');
+            this.phoneField.removeAttribute('aria-invalid');
+            return;
+        }
+
+        if (!isValidLocal(payload.local)) {
+            this.phoneField.setCustomValidity(this.copy.invalidPhone);
+            this.phoneField.setAttribute('aria-invalid', 'true');
+            this.state.hintOverride = this.copy.invalidPhone;
+            this.updateSubmitState();
+            pushDataLayerEvent('phone_validation_error', { field: 'phone' });
+            pushDataLayerEvent('ui_validation_error', { field: 'phone' });
+        } else {
+            this.phoneField.setCustomValidity('');
+            this.phoneField.setAttribute('aria-invalid', 'false');
+            if (this.state.hintOverride === this.copy.invalidPhone) {
+                this.state.hintOverride = '';
+                this.updateSubmitState();
+            }
+        }
+    }
+
+    validateEmailField(field) {
+        if (field.value.trim() === '') {
+            field.setCustomValidity('');
+            field.removeAttribute('aria-invalid');
+            return;
+        }
+
+        if (!field.checkValidity()) {
+            field.setCustomValidity(this.copy.invalidEmail);
+            field.setAttribute('aria-invalid', 'true');
+            this.state.hintOverride = this.copy.invalidEmail;
+            this.updateSubmitState();
+            pushDataLayerEvent('ui_validation_error', { field: 'email' });
+        } else {
+            field.setCustomValidity('');
+            field.setAttribute('aria-invalid', 'false');
+            if (this.state.hintOverride === this.copy.invalidEmail) {
+                this.state.hintOverride = '';
+                this.updateSubmitState();
+            }
+        }
+    }
+
+    focusFirstInvalid() {
+        const invalid = this.form.querySelector('[data-fp-resv-field]:invalid, [required]:invalid');
+        if (invalid && typeof invalid.focus === 'function') {
+            invalid.focus();
+        }
+    }
+
+    collectAvailabilityParams() {
+        const dateField = this.form.querySelector('[data-fp-resv-field=\"date\"]');
+        const partyField = this.form.querySelector('[data-fp-resv-field=\"party\"]');
+        const meal = this.hiddenMeal ? this.hiddenMeal.value : '';
+        return {
+            date: dateField && dateField.value ? dateField.value : '',
+            party: partyField && partyField.value ? partyField.value : '',
+            meal,
+        };
+    }
+
+    scheduleAvailabilityUpdate() {
+        if (!this.availabilityController) {
+            this.state.pendingAvailability = true;
+            return;
+        }
+
+        const params = this.collectAvailabilityParams();
+        this.state.lastAvailabilityParams = params;
+        if (this.availabilityController && typeof this.availabilityController.schedule === 'function') {
+            this.availabilityController.schedule(params);
+        }
+    }
+
+    handleSlotSelected(slot) {
+        const timeField = this.form.querySelector('[data-fp-resv-field=\"time\"]');
+        if (timeField) {
+            timeField.value = slot && slot.label ? slot.label : '';
+            if (slot && slot.start) {
+                timeField.setAttribute('data-slot-start', slot.start);
+            }
+        }
+
+        if (this.hiddenSlot) {
+            this.hiddenSlot.value = slot && slot.start ? slot.start : '';
+        }
+
+        this.updateSummary();
+        this.updateSubmitState();
+    }
+
+    handleAvailabilityLatency(ms) {
+        pushDataLayerEvent('ui_latency', { op: 'availability', ms: Math.round(ms) });
+    }
+
+    handleAvailabilityRetry(attempt) {
+        pushDataLayerEvent('availability_retry', { attempt });
+    }
+
+    handleWindowFocus() {
+        if (this.availabilityController && typeof this.availabilityController.revalidate === 'function') {
+            this.availabilityController.revalidate();
+        }
+    }
+
+    handleFirstInteraction() {
+        if (this.state.started) {
+            return;
+        }
+
+        const eventName = this.events.start || 'reservation_start';
+        pushDataLayerEvent(eventName, { source: 'form' });
+        this.state.started = true;
+    }
+
+    handleDelegatedTrackingEvent(event) {
+        const target = event.target instanceof HTMLElement ? event.target : null;
         if (!target) {
             return;
         }
 
-        var element = closestWithAttribute(target, 'data-fp-resv-event');
+        const element = closestWithAttribute(target, 'data-fp-resv-event');
         if (!element) {
             return;
         }
 
-        var name = element.getAttribute('data-fp-resv-event');
+        const name = element.getAttribute('data-fp-resv-event');
         if (!name) {
             return;
         }
 
-        var payload = parseJsonAttribute(element, 'data-fp-resv-payload');
+        let payload = parseJsonAttribute(element, 'data-fp-resv-payload');
         if (!payload || typeof payload !== 'object') {
             payload = {};
         }
@@ -540,80 +991,73 @@
         }
 
         if (!payload.label) {
-            var label = element.getAttribute('data-fp-resv-label') || element.getAttribute('aria-label') || element.textContent || '';
+            const label = element.getAttribute('data-fp-resv-label') || element.getAttribute('aria-label') || element.textContent || '';
             if (label) {
                 payload.label = label.trim();
             }
         }
 
         pushDataLayerEvent(name, payload);
-    };
+    }
 
-    OnePageForm.prototype.handleReservationConfirmed = function handleReservationConfirmed(event) {
+    handleReservationConfirmed(event) {
         if (!event || !event.detail) {
             return;
         }
 
-        var detail = event.detail || {};
-        var eventName = this.events.confirmed || 'reservation_confirmed';
+        const detail = event.detail || {};
+        const eventName = this.events.confirmed || 'reservation_confirmed';
         pushDataLayerEvent(eventName, detail);
 
         if (detail && detail.purchase && detail.purchase.value && detail.purchase.value_is_estimated) {
             pushDataLayerEvent(this.events.purchase || 'purchase', detail.purchase);
         }
-    };
+    }
 
-    OnePageForm.prototype.dispatchSectionUnlocked = function dispatchSectionUnlocked(key) {
-        if (this.state.unlocked[key]) {
-            return;
+    scrollIntoView(section) {
+        if (typeof section.scrollIntoView === 'function') {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        this.state.unlocked[key] = true;
-        var eventName = this.events.section_unlocked || 'section_unlocked';
-        pushDataLayerEvent(eventName, { section: key });
-    };
-
-    OnePageForm.prototype.scrollIntoView = function scrollIntoView(section) {
-        if (typeof section.scrollIntoView !== 'function') {
-            return;
+        const focusable = firstFocusable(section);
+        if (focusable && typeof focusable.focus === 'function') {
+            focusable.focus({ preventScroll: true });
         }
+    }
 
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    OnePageForm.prototype.isConsentField = function isConsentField(element) {
+    isConsentField(element) {
         if (!element || !element.getAttribute) {
             return false;
         }
 
-        var key = element.getAttribute('data-fp-resv-field') || '';
+        const key = element.getAttribute('data-fp-resv-field') || '';
         return key === 'consent' || key === 'marketing_consent' || key === 'profiling_consent';
-    };
+    }
 
-    OnePageForm.prototype.syncConsentState = function syncConsentState() {
-        var tracking = window.fpResvTracking;
+    syncConsentState() {
+        const tracking = window.fpResvTracking;
         if (!tracking || typeof tracking.updateConsent !== 'function') {
             return;
         }
 
-        var updates = {};
-        var changed = false;
+        const updates = {};
+        let changed = false;
 
-        var policy = /** @type {HTMLInputElement | null} */ (this.form.querySelector('[data-fp-resv-field="consent"]'));
-        if (policy) {
+        const policy = this.form.querySelector('[data-fp-resv-field=\"consent\"]');
+        if (policy && 'checked' in policy) {
             updates.analytics = policy.checked ? 'granted' : 'denied';
             updates.clarity = policy.checked ? 'granted' : 'denied';
             changed = true;
         }
 
-        var marketing = /** @type {HTMLInputElement | null} */ (this.form.querySelector('[data-fp-resv-field="marketing_consent"]'));
-        if (marketing) {
+        const marketing = this.form.querySelector('[data-fp-resv-field=\"marketing_consent\"]');
+        if (marketing && 'checked' in marketing) {
             updates.ads = marketing.checked ? 'granted' : 'denied';
             changed = true;
         }
 
-        var profiling = /** @type {HTMLInputElement | null} */ (this.form.querySelector('[data-fp-resv-field="profiling_consent"]'));
-        if (profiling) {
+        const profiling = this.form.querySelector('[data-fp-resv-field=\"profiling_consent\"]');
+        if (profiling && 'checked' in profiling) {
             updates.personalization = profiling.checked ? 'granted' : 'denied';
             changed = true;
         }
@@ -623,27 +1067,76 @@
         }
 
         tracking.updateConsent(updates);
-    };
+    }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var widgets = document.querySelectorAll('[data-fp-resv]');
-        Array.prototype.forEach.call(widgets, function (widget) {
-            new OnePageForm(widget);
-        });
-    });
-
-    document.addEventListener('fp-resv:tracking:push', function (event) {
-        if (!event || !event.detail) {
-            return;
+    getPhoneCountryCode() {
+        if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
+            return normalizeCountryCode(this.hiddenPhoneCc.value) || '39';
         }
 
-        var detail = event.detail;
-        var name = detail && (detail.event || detail.name);
-        if (!name) {
-            return;
+        const defaults = (this.config && this.config.defaults) || {};
+        if (defaults.phone_country_code) {
+            return normalizeCountryCode(defaults.phone_country_code) || '39';
         }
 
-        var payload = detail.payload || detail.data || {};
-        pushDataLayerEvent(name, payload && typeof payload === 'object' ? payload : {});
+        return '39';
+    }
+
+    getReservationEndpoint() {
+        const endpoints = this.config.endpoints || {};
+        return resolveEndpoint(endpoints.reservations, '/wp-json/fp-resv/v1/reservations');
+    }
+
+    getAvailabilityEndpoint() {
+        const endpoints = this.config.endpoints || {};
+        return resolveEndpoint(endpoints.availability, '/wp-json/fp-resv/v1/availability');
+    }
+
+    loadStripeIfNeeded() {
+        const feature = this.integrations && (this.integrations.stripe || this.integrations.payments_stripe);
+        if (!feature || (typeof feature === 'object' && feature.enabled === false)) {
+            return Promise.resolve(null);
+        }
+
+        if (!this.stripePromise) {
+            this.stripePromise = import(/* webpackIgnore: true */ 'https://js.stripe.com/v3/').catch(() => null);
+        }
+
+        return this.stripePromise;
+    }
+
+    loadGoogleCalendarIfNeeded() {
+        const feature = this.integrations && (this.integrations.googleCalendar || this.integrations.calendar_google);
+        if (!feature || (typeof feature === 'object' && feature.enabled === false)) {
+            return Promise.resolve(null);
+        }
+
+        if (!this.googlePromise) {
+            this.googlePromise = import(/* webpackIgnore: true */ 'https://apis.google.com/js/api.js').catch(() => null);
+        }
+
+        return this.googlePromise;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const widgets = document.querySelectorAll('[data-fp-resv]');
+    Array.prototype.forEach.call(widgets, function (widget) {
+        new OnePageForm(widget);
     });
-})();
+});
+
+document.addEventListener('fp-resv:tracking:push', function (event) {
+    if (!event || !event.detail) {
+        return;
+    }
+
+    const detail = event.detail;
+    const name = detail && (detail.event || detail.name);
+    if (!name) {
+        return;
+    }
+
+    const payload = detail.payload || detail.data || {};
+    pushDataLayerEvent(name, payload && typeof payload === 'object' ? payload : {});
+});
