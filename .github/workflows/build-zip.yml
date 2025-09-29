@@ -1,0 +1,57 @@
+name: Build Plugin Zip
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Prepare distribution zip
+    runs-on: ubuntu-latest
+    env:
+      PLUGIN_SLUG: fp-restaurant-reservations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate composer configuration
+        run: composer validate --no-check-all --no-check-publish
+
+      - name: Install PHP dependencies (if lock file present)
+        if: hashFiles('composer.lock') != ''
+        run: composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare package directory
+        run: |
+          rm -rf package
+          mkdir -p "package/$PLUGIN_SLUG"
+          rsync -a ./ "package/$PLUGIN_SLUG" \
+            --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'vendor/' \
+            --exclude 'package/' \
+            --exclude '.gitignore' \
+            --exclude '*.zip' \
+            --exclude '*.log' \
+            --exclude '.rebuild-state.json' \
+            --exclude 'AUDIT.md'
+
+      - name: Create zip archive
+        working-directory: package
+        run: zip -r "../$PLUGIN_SLUG.zip" "$PLUGIN_SLUG"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLUGIN_SLUG }}
+          path: ${{ env.PLUGIN_SLUG }}.zip
+          if-no-files-found: error
