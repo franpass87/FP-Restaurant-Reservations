@@ -21,6 +21,16 @@ $policyVersion = isset($privacy['policy_version']) ? (string) $privacy['policy_v
 $marketingEnabled = !empty($privacy['marketing_enabled']);
 $profilingEnabled = !empty($privacy['profiling_enabled']);
 $style      = $context['style'] ?? [];
+$progressLabels = is_array($strings['steps_labels'] ?? null) ? $strings['steps_labels'] : [];
+$meals = isset($context['meals']) && is_array($context['meals']) ? array_values($context['meals']) : [];
+$hints = is_array($strings['hints'] ?? null) ? $strings['hints'] : [];
+$noticeMessage = '';
+if (isset($context['notice']) && is_string($context['notice'])) {
+    $noticeMessage = trim($context['notice']);
+}
+if ($noticeMessage === '' && isset($strings['messages']['notice']) && is_string($strings['messages']['notice'])) {
+    $noticeMessage = trim($strings['messages']['notice']);
+}
 
 $dataset = [
     'config'  => $config,
@@ -47,12 +57,12 @@ if ($styleCss !== '') :
 endif;
 ?>
 <div
-    class="fp-resv-widget"
+    class="fp-resv-widget fp-resv fp-card"
     id="<?php echo esc_attr($formId); ?>"
     data-fp-resv="<?php echo esc_attr($datasetJson); ?>"
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
 >
-    <div class="fp-resv-widget__topbar">
+    <div class="fp-resv-widget__topbar fp-topbar fp-section">
         <div class="fp-resv-widget__titles">
             <h2 class="fp-resv-widget__headline"><?php echo esc_html($strings['headline'] ?? ''); ?></h2>
             <?php if (!empty($strings['subheadline'])) : ?>
@@ -61,7 +71,7 @@ endif;
         </div>
         <?php if ($pdfUrl !== '') : ?>
             <a
-                class="fp-resv-widget__pdf"
+                class="fp-resv-widget__pdf fp-btn fp-btn--ghost"
                 href="<?php echo esc_url($pdfUrl); ?>"
                 target="_blank"
                 rel="noopener"
@@ -72,7 +82,7 @@ endif;
         <?php endif; ?>
     </div>
     <form
-        class="fp-resv-widget__form"
+        class="fp-resv-widget__form fp-section"
         data-fp-resv-form
         action=""
         method="post"
@@ -84,14 +94,73 @@ endif;
         <input type="hidden" name="fp_resv_language" value="<?php echo esc_attr($config['language'] ?? 'it'); ?>">
         <input type="hidden" name="fp_resv_currency" value="<?php echo esc_attr($config['defaults']['currency'] ?? 'EUR'); ?>">
         <input type="hidden" name="fp_resv_policy_version" value="<?php echo esc_attr($policyVersion); ?>">
-        <label class="fp-resv-field fp-resv-field--honeypot" aria-hidden="true" tabindex="-1">
+        <label class="fp-resv-field fp-resv-field--honeypot fp-field" aria-hidden="true" tabindex="-1">
             <span class="screen-reader-text"><?php esc_html_e('Lascia vuoto questo campo', 'fp-restaurant-reservations'); ?></span>
-            <input type="text" name="fp_resv_hp" value="" autocomplete="off">
+            <input class="fp-input" type="text" name="fp_resv_hp" value="" autocomplete="off">
         </label>
+        <?php if ($steps !== []) : ?>
+            <ul class="fp-progress" data-fp-resv-progress aria-label="<?php esc_attr_e('Avanzamento prenotazione', 'fp-restaurant-reservations'); ?>">
+                <?php foreach ($steps as $index => $step) : ?>
+                    <?php
+                    $stepKey   = (string) ($step['key'] ?? '');
+                    $isCurrent = $index === 0;
+                    ?>
+                    <li
+                        class="fp-progress__item"
+                        data-step="<?php echo esc_attr($stepKey); ?>"
+                        <?php echo $isCurrent ? 'data-state="active" aria-current="step"' : ''; ?>
+                    >
+                        <span class="fp-progress__index"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
+                        <span class="fp-progress__label"><?php echo esc_html($progressLabels[$stepKey] ?? ($step['title'] ?? '')); ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+        <?php if ($meals !== []) : ?>
+            <section class="fp-section fp-meals" data-fp-resv-meals>
+                <header class="fp-meals__header">
+                    <h3 class="fp-meals__title"><?php echo esc_html($strings['meals']['title'] ?? ($strings['steps_labels']['slots'] ?? '')); ?></h3>
+                    <?php if (!empty($strings['meals']['subtitle'] ?? '')) : ?>
+                        <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
+                    <?php endif; ?>
+                </header>
+                <div class="fp-meals__list" role="group">
+                    <?php foreach ($meals as $meal) : ?>
+                        <?php
+                        $mealKey   = isset($meal['key']) ? (string) $meal['key'] : '';
+                        $mealLabel = isset($meal['label']) ? (string) $meal['label'] : $mealKey;
+                        $mealBadge = isset($meal['badge']) ? (string) $meal['badge'] : '';
+                        $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
+                        $isActive  = !empty($meal['active']);
+                        ?>
+                        <button
+                            type="button"
+                            class="fp-meal-pill"
+                            data-fp-resv-meal="<?php echo esc_attr($mealKey); ?>"
+                            <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
+                        >
+                            <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>
+                            <?php if ($mealBadge !== '') : ?>
+                                <span class="fp-badge"><?php echo esc_html($mealBadge); ?></span>
+                            <?php endif; ?>
+                            <?php if ($mealHint !== '') : ?>
+                                <span class="fp-hint"><?php echo esc_html($mealHint); ?></span>
+                            <?php endif; ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
+        <?php if ($noticeMessage !== '') : ?>
+            <aside class="fp-alert fp-alert--info" role="status">
+                <span class="fp-badge"><?php echo esc_html($strings['badges']['notice'] ?? __('Info', 'fp-restaurant-reservations')); ?></span>
+                <p><?php echo esc_html($noticeMessage); ?></p>
+            </aside>
+        <?php endif; ?>
         <ol class="fp-resv-widget__steps">
             <?php foreach ($steps as $step) : ?>
                 <?php $stepKey = (string) ($step['key'] ?? ''); ?>
-                <li class="fp-resv-step" data-step="<?php echo esc_attr($stepKey); ?>">
+                <li class="fp-resv-step fp-section" data-step="<?php echo esc_attr($stepKey); ?>">
                     <header class="fp-resv-step__header">
                         <span class="fp-resv-step__label">
                             <?php echo esc_html($strings['steps'][$stepKey] ?? ($step['title'] ?? '')); ?>
@@ -104,24 +173,31 @@ endif;
                     <div class="fp-resv-step__body">
                         <?php switch ($stepKey) {
                             case 'date': ?>
-                                <div class="fp-resv-field">
+                                <div class="fp-resv-field fp-field">
                                     <label>
                                         <span><?php echo esc_html($strings['fields']['date'] ?? ''); ?></span>
-                                        <input type="date" name="fp_resv_date" data-fp-resv-field="date" required>
+                                        <input class="fp-input" type="date" name="fp_resv_date" data-fp-resv-field="date" required>
+                                        <?php if (!empty($hints['date'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['date']); ?></small>
+                                        <?php endif; ?>
                                     </label>
                                 </div>
-                                <div class="fp-resv-field">
+                                <div class="fp-resv-field fp-field">
                                     <label>
                                         <span><?php echo esc_html($strings['fields']['time'] ?? ''); ?></span>
-                                        <input type="time" name="fp_resv_time" data-fp-resv-field="time">
+                                        <input class="fp-input" type="time" name="fp_resv_time" data-fp-resv-field="time">
+                                        <?php if (!empty($hints['time'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['time']); ?></small>
+                                        <?php endif; ?>
                                     </label>
                                 </div>
                                 <?php break;
                             case 'party': ?>
-                                <div class="fp-resv-field">
+                                <div class="fp-resv-field fp-field">
                                     <label>
                                         <span><?php echo esc_html($strings['fields']['party'] ?? ''); ?></span>
                                         <input
+                                            class="fp-input"
                                             type="number"
                                             min="1"
                                             max="40"
@@ -134,7 +210,7 @@ endif;
                                 </div>
                                 <?php break;
                             case 'slots': ?>
-                                <div class="fp-resv-slots" data-fp-resv-slots>
+                                <div class="fp-resv-slots fp-slots" data-fp-resv-slots>
                                     <p class="fp-resv-slots__status" data-state="loading"><?php echo esc_html($strings['messages']['slots_loading'] ?? ''); ?></p>
                                     <ul class="fp-resv-slots__list" aria-live="polite" aria-busy="false"></ul>
                                     <p class="fp-resv-slots__empty" hidden><?php echo esc_html($strings['messages']['slots_empty'] ?? ''); ?></p>
@@ -142,33 +218,45 @@ endif;
                                 <?php break;
                             case 'details': ?>
                                 <div class="fp-resv-fields fp-resv-fields--grid">
-                                    <label class="fp-resv-field">
+                                    <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['first_name'] ?? ''); ?></span>
-                                        <input type="text" name="fp_resv_first_name" data-fp-resv-field="first_name" required>
+                                        <input class="fp-input" type="text" name="fp_resv_first_name" data-fp-resv-field="first_name" required>
+                                        <?php if (!empty($hints['first_name'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['first_name']); ?></small>
+                                        <?php endif; ?>
                                     </label>
-                                    <label class="fp-resv-field">
+                                    <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['last_name'] ?? ''); ?></span>
-                                        <input type="text" name="fp_resv_last_name" data-fp-resv-field="last_name" required>
+                                        <input class="fp-input" type="text" name="fp_resv_last_name" data-fp-resv-field="last_name" required>
+                                        <?php if (!empty($hints['last_name'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['last_name']); ?></small>
+                                        <?php endif; ?>
                                     </label>
-                                    <label class="fp-resv-field">
+                                    <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
-                                        <input type="email" name="fp_resv_email" data-fp-resv-field="email" required>
+                                        <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required>
                                     </label>
-                                    <label class="fp-resv-field">
+                                    <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
-                                        <input type="tel" name="fp_resv_phone" data-fp-resv-field="phone">
+                                        <input class="fp-input" type="tel" name="fp_resv_phone" data-fp-resv-field="phone">
+                                        <?php if (!empty($hints['phone'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
+                                        <?php endif; ?>
                                     </label>
                                 </div>
-                                <label class="fp-resv-field">
+                                <label class="fp-resv-field fp-field">
                                     <span><?php echo esc_html($strings['fields']['notes'] ?? ''); ?></span>
-                                    <textarea name="fp_resv_notes" data-fp-resv-field="notes" rows="3"></textarea>
+                                    <textarea class="fp-textarea" name="fp_resv_notes" data-fp-resv-field="notes" rows="3"></textarea>
+                                    <?php if (!empty($hints['notes'] ?? '')) : ?>
+                                        <small class="fp-hint"><?php echo esc_html($hints['notes']); ?></small>
+                                    <?php endif; ?>
                                 </label>
-                                <label class="fp-resv-field">
+                                <label class="fp-resv-field fp-field">
                                     <span><?php echo esc_html($strings['fields']['allergies'] ?? ''); ?></span>
-                                    <textarea name="fp_resv_allergies" data-fp-resv-field="allergies" rows="3"></textarea>
+                                    <textarea class="fp-textarea" name="fp_resv_allergies" data-fp-resv-field="allergies" rows="3"></textarea>
                                 </label>
-                                <label class="fp-resv-field fp-resv-field--consent">
-                                    <input type="checkbox" name="fp_resv_consent" data-fp-resv-field="consent" required>
+                                <label class="fp-resv-field fp-resv-field--consent fp-field">
+                                    <input class="fp-checkbox" type="checkbox" name="fp_resv_consent" data-fp-resv-field="consent" required>
                                     <span>
                                         <?php echo esc_html($strings['fields']['consent'] ?? ''); ?>
                                         <?php if ($policyUrl !== '') : ?>
@@ -179,14 +267,14 @@ endif;
                                     </span>
                                 </label>
                                 <?php if ($marketingEnabled) : ?>
-                                    <label class="fp-resv-field fp-resv-field--consent">
-                                        <input type="checkbox" name="fp_resv_marketing_consent" value="1" data-fp-resv-field="marketing_consent">
+                                    <label class="fp-resv-field fp-resv-field--consent fp-field">
+                                        <input class="fp-checkbox" type="checkbox" name="fp_resv_marketing_consent" value="1" data-fp-resv-field="marketing_consent">
                                         <span><?php echo esc_html($strings['consents']['marketing'] ?? ''); ?></span>
                                     </label>
                                 <?php endif; ?>
                                 <?php if ($profilingEnabled) : ?>
-                                    <label class="fp-resv-field fp-resv-field--consent">
-                                        <input type="checkbox" name="fp_resv_profiling_consent" value="1" data-fp-resv-field="profiling_consent">
+                                    <label class="fp-resv-field fp-resv-field--consent fp-field">
+                                        <input class="fp-checkbox" type="checkbox" name="fp_resv_profiling_consent" value="1" data-fp-resv-field="profiling_consent">
                                         <span><?php echo esc_html($strings['consents']['profiling'] ?? ''); ?></span>
                                     </label>
                                 <?php endif; ?>
@@ -226,18 +314,18 @@ endif;
                         }
                         ?>
                     </div>
-                    <footer class="fp-resv-step__footer">
+                    <footer class="fp-resv-step__footer fp-sticky">
                         <?php if ($stepKey !== 'date') : ?>
-                            <button type="button" class="fp-resv-button fp-resv-button--ghost" data-fp-resv-prev>
+                            <button type="button" class="fp-resv-button fp-resv-button--ghost fp-btn fp-btn--ghost" data-fp-resv-prev>
                                 <?php echo esc_html($strings['actions']['previous'] ?? ''); ?>
                             </button>
                         <?php endif; ?>
                         <?php if ($stepKey !== 'confirm') : ?>
-                            <button type="button" class="fp-resv-button fp-resv-button--primary" data-fp-resv-next>
+                            <button type="button" class="fp-resv-button fp-resv-button--primary fp-btn fp-btn--primary" data-fp-resv-next>
                                 <?php echo esc_html($strings['actions']['next'] ?? ''); ?>
                             </button>
                         <?php else : ?>
-                            <button type="submit" class="fp-resv-button fp-resv-button--submit">
+                            <button type="submit" class="fp-resv-button fp-resv-button--submit fp-btn fp-btn--primary" data-fp-resv-submit>
                                 <?php echo esc_html($strings['actions']['submit'] ?? ''); ?>
                             </button>
                         <?php endif; ?>
@@ -247,7 +335,7 @@ endif;
         </ol>
         <?php wp_nonce_field('fp_resv_submit', 'fp_resv_nonce'); ?>
     </form>
-    <noscript class="fp-resv-widget__nojs">
+    <noscript class="fp-resv-widget__nojs fp-alert fp-alert--info">
         <?php echo esc_html__('Per inviare la prenotazione abilita JavaScript o contattaci direttamente.', 'fp-restaurant-reservations'); ?>
     </noscript>
 </div>
