@@ -1,0 +1,321 @@
+<?php
+
+declare(strict_types=1);
+
+namespace FP\Resv\Domain\Closures;
+
+use DateInterval;
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
+use InvalidArgumentException;
+use RuntimeException;
+use FP\Resv\Core\Security;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
+use function add_action;
+use function is_array;
+use function rest_ensure_response;
+use function sanitize_key;
+use function sanitize_text_field;
+use function wp_timezone;
+
+final class REST
+{
+    public function __construct(private readonly Service $service)
+    {
+    }
+
+    public function register(): void
+    {
+        add_action('rest_api_init', [$this, 'registerRoutes']);
+    }
+
+    public function registerRoutes(): void
+    {
+        register_rest_route(
+            'fp-resv/v1',
+            '/closures',
+            [
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'handleList'],
+                    'permission_callback' => [$this, 'permissionCallback'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'handleCreate'],
+                    'permission_callback' => [$this, 'permissionCallback'],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/closures/(?P<id>\d+)',
+            [
+                [
+                    'methods'             => WP_REST_Server::EDITABLE,
+                    'callback'            => [$this, 'handleUpdate'],
+                    'permission_callback' => [$this, 'permissionCallback'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::DELETABLE,
+                    'callback'            => [$this, 'handleDelete'],
+                    'permission_callback' => [$this, 'permissionCallback'],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/closures/preview',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handlePreview'],
+                'permission_callback' => [$this, 'permissionCallback'],
+            ]
+        );
+    }
+
+    public function handleList(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $range = $this->resolveRange($request);
+
+        $filters = [
+            'range_start'      => $range['start'],
+            'range_end'        => $range['end'],
+            'include_inactive' => (bool) $request->get_param('include_inactive'),
+        ];
+
+        $scope = $request->get_param('scope');
+        if (is_string($scope) && sanitize_key($scope) !== '') {
+            $filters['scope'] = $scope;
+        }
+
+        $roomId = $request->get_param('room_id');
+        if ($roomId !== null) {
+            $filters['room_id'] = (int) $roomId;
+        }
+
+        $tableId = $request->get_param('table_id');
+        if ($tableId !== null) {
+            $filters['table_id'] = (int) $tableId;
+        }
+
+        $items = $this->service->list($filters);
+
+        $expand = $request->get_param('expand');
+        if ($expand === 'occurrences') {
+            $preview = $this->service->preview($range['start'], $range['end'], $filters);
+            $index   = [];
+            foreach ($preview['events'] as $event) {
+                $index[$event['id']][] = [
+                    'start' => $event['start'],
+                    'end'   => $event['end'],
+                    'type'  => $event['type'],
+                ];
+            }
+
+            foreach ($items as &$item) {
+                $item['occurrences'] = $index[$item['id']] ?? [];
+            }
+            unset($item);
+        }
+
+        return rest_ensure_response([
+            'range' => [
+                'start' => $range['start']->format(DateTimeInterface::ATOM),
+                'end'   => $range['end']->format(DateTimeInterface::ATOM),
+            ],
+            'items' => $items,
+        ]);
+    }
+
+    public function handleCreate(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $payload = $this->collectPayload($request);
+
+        try {
+            $model = $this->service->create($payload);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 400]);
+        } catch (RuntimeException $exception) {
+            return new WP_Error('fp_resv_closure_error', $exception->getMessage(), ['status' => 500]);
+        }
+
+        $result = $this->service->list([
+            'id'                => $model->id,
+            'include_inactive'  => true,
+        ]);
+
+        return rest_ensure_response($result[0] ?? []);
+    }
+
+    public function handleUpdate(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = (int) $request->get_param('id');
+        $payload = $this->collectPayload($request);
+
+        try {
+            $model = $this->service->update($id, $payload);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 400]);
+        } catch (RuntimeException $exception) {
+            return new WP_Error('fp_resv_closure_error', $exception->getMessage(), ['status' => 500]);
+        }
+
+        $result = $this->service->list([
+            'id'                => $model->id,
+            'include_inactive'  => true,
+        ]);
+
+        return rest_ensure_response($result[0] ?? []);
+    }
+
+    public function handleDelete(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = (int) $request->get_param('id');
+
+        try {
+            $this->service->deactivate($id);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 404]);
+        } catch (RuntimeException $exception) {
+            return new WP_Error('fp_resv_closure_error', $exception->getMessage(), ['status' => 500]);
+        }
+
+        return new WP_REST_Response(null, 204);
+    }
+
+    public function handlePreview(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $range = $this->resolveRange($request);
+
+        $filters = [];
+        $scope = $request->get_param('scope');
+        if (is_string($scope) && sanitize_key($scope) !== '') {
+            $filters['scope'] = $scope;
+        }
+
+        $roomId = $request->get_param('room_id');
+        if ($roomId !== null) {
+            $filters['room_id'] = (int) $roomId;
+        }
+
+        $tableId = $request->get_param('table_id');
+        if ($tableId !== null) {
+            $filters['table_id'] = (int) $tableId;
+        }
+
+        try {
+            $preview = $this->service->preview($range['start'], $range['end'], $filters);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 400]);
+        }
+
+        return rest_ensure_response($preview);
+    }
+
+    private function permissionCallback(): bool
+    {
+        return Security::currentUserCanManage();
+    }
+
+    /**
+     * @return array<string, DateTimeImmutable>
+     */
+    private function resolveRange(WP_REST_Request $request): array
+    {
+        $timezone = wp_timezone();
+        $start    = $this->parseDateParam($request->get_param('start') ?? $request->get_param('from'), $timezone);
+        $end      = $this->parseDateParam($request->get_param('end') ?? $request->get_param('to'), $timezone);
+
+        $body = $request->get_json_params();
+        if (is_array($body)) {
+            if ($start === null && isset($body['start'])) {
+                $start = $this->parseDateParam($body['start'], $timezone);
+            }
+            if ($end === null && isset($body['end'])) {
+                $end = $this->parseDateParam($body['end'], $timezone);
+            }
+        }
+
+        if ($start === null) {
+            $start = new DateTimeImmutable('today', $timezone);
+        }
+
+        if ($end === null) {
+            $end = $start->add(new DateInterval('P30D'));
+        }
+
+        return [
+            'start' => $start,
+            'end'   => $end,
+        ];
+    }
+
+    private function parseDateParam(mixed $value, DateTimeZone $timezone): ?DateTimeImmutable
+    {
+        if ($value instanceof DateTimeImmutable) {
+            return $value->setTimezone($timezone);
+        }
+
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+
+        $value = sanitize_text_field($value);
+
+        $date = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value, $timezone);
+        if ($date instanceof DateTimeImmutable) {
+            return $date;
+        }
+
+        try {
+            return new DateTimeImmutable($value, $timezone);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function collectPayload(WP_REST_Request $request): array
+    {
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = $request->get_body_params();
+        }
+
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $payload = [
+            'scope'              => $params['scope'] ?? $request->get_param('scope'),
+            'type'               => $params['type'] ?? $request->get_param('type'),
+            'start_at'           => $params['start_at'] ?? $request->get_param('start_at'),
+            'end_at'             => $params['end_at'] ?? $request->get_param('end_at'),
+            'room_id'            => $params['room_id'] ?? $request->get_param('room_id'),
+            'table_id'           => $params['table_id'] ?? $request->get_param('table_id'),
+            'note'               => $params['note'] ?? $request->get_param('note'),
+            'active'             => $params['active'] ?? $request->get_param('active'),
+            'capacity_percent'   => $params['capacity_percent'] ?? $request->get_param('capacity_percent'),
+            'unassigned_capacity'=> $params['unassigned_capacity'] ?? $request->get_param('unassigned_capacity'),
+            'label'              => $params['label'] ?? $request->get_param('label'),
+            'special_hours'      => $params['special_hours'] ?? $request->get_param('special_hours'),
+        ];
+
+        if (isset($params['recurrence']) && is_array($params['recurrence'])) {
+            $payload['recurrence'] = $params['recurrence'];
+        } elseif (is_array($request->get_param('recurrence'))) {
+            $payload['recurrence'] = $request->get_param('recurrence');
+        }
+
+        return $payload;
+    }
+}

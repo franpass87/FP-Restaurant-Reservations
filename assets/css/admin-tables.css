@@ -1,0 +1,143 @@
+.fp-resv-tables-wrap {
+    position: relative;
+    max-width: 1280px;
+}
+
+.fp-resv-tables-app {
+    margin-top: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    min-height: 460px;
+    background: #fff;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.fp-resv-tables-app[data-state="loading"]::after {
+    content: 'Loading layout...';
+    display: block;
+    padding: 120px 0;
+    text-align: center;
+    color: #4b5563;
+    font-size: 16px;
+}
+
+.fp-resv-tables-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.fp-resv-tables-toolbar__left,
+.fp-resv-tables-toolbar__right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.fp-resv-tables-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 360px;
+    flex: 1 1 auto;
+}
+
+.fp-resv-tables-sidebar {
+    border-right: 1px solid #e5e7eb;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f9fafb;
+}
+
+.fp-resv-tables-empty {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.fp-resv-room-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fp-resv-room-card header {
+    border-left: 6px solid var(--room-color, #6366f1);
+    padding-left: 12px;
+}
+
+.fp-resv-room-card__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fp-resv-tables-canvas {
+    position: relative;
+    padding: 24px;
+    overflow: hidden;
+}
+
+.fp-resv-canvas-room {
+    margin-bottom: 32px;
+}
+
+.fp-resv-canvas-room header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.fp-resv-canvas-board {
+    position: relative;
+    min-height: 260px;
+    border-radius: 16px;
+    border: 2px dashed var(--room-color, #0ea5e9);
+    background-image: linear-gradient(to right, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    background-size: 40px 40px;
+    overflow: hidden;
+    transform-origin: top left;
+    transform: scale(var(--scale, 1));
+}
+
+.fp-resv-table-node {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(40px, 40px);
+    min-width: 56px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    cursor: grab;
+    transition: box-shadow 0.2s ease;
+}
+
+.fp-resv-table-node:active {
+    cursor: grabbing;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+}
+
+.fp-resv-table-node.status-blocked {
+    background: #f97316;
+}
+
+.fp-resv-table-node.status-maintenance {
+    background: #ea580c;
+}
+
+.fp-resv-table-node.status-hidden {
+    background: #94a3b8;
+}

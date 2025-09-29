@@ -1,0 +1,21 @@
+{
+  "name": "francescopasseri/fp-restaurant-reservations",
+  "description": "Prenotazioni ristorante con eventi, calendario drag&drop, Brevo, Google Calendar e tracking.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "FP\\\\Resv\\\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Francesco Passeri",
+      "homepage": "https://francescopasseri.com",
+      "email": "info@francescopasseri.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.1"
+  }
+}

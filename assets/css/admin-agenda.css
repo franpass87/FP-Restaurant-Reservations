@@ -1,0 +1,20 @@
+/*
+ * Basic placeholder styles for the admin agenda SPA container.
+ * The definitive design system will be delivered in the dedicated UI phase.
+ */
+
+.fp-resv-agenda-placeholder {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 680px;
+}
+
+.fp-resv-agenda-placeholder h2 {
+    margin-top: 0;
+}
+
+.fp-resv-agenda-placeholder .description {
+    color: #555d66;
+}

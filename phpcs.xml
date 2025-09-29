@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="FP Restaurant Reservations">
+    <description>WordPress + PSR12 coding standards.</description>
+    <rule ref="WordPress" />
+    <rule ref="PSR12" />
+    <file>src</file>
+    <file>templates</file>
+</ruleset>
