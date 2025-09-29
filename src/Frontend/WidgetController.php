@@ -8,6 +8,7 @@ use FP\Resv\Core\Plugin;
 use function add_action;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
+use function wp_script_add_data;
 
 final class WidgetController
 {
@@ -36,5 +37,9 @@ final class WidgetController
             Plugin::VERSION,
             true
         );
+
+        if (function_exists('wp_script_add_data')) {
+            wp_script_add_data('fp-resv-onepage', 'type', 'module');
+        }
     }
 }

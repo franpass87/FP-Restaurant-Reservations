@@ -37,6 +37,17 @@ Questa mappa riassume il flusso end-to-end degli eventi di tracciamento tra data
 | `reservation_payment_required` | `reservation_payment_required` | Prenotazione con pagamento richiesto | Stessi parametri di `reservation_submit` | Analytics |
 | `reservation_cancelled` / `reservation_modified` | (solo dataLayer) | Da emettere manualmente con `fp-resv:tracking:push` o custom JS | Dipende dall'implementazione custom | Analytics |
 
+### UI instrumentation (dataLayer only)
+
+| Evento dataLayer | Origine trigger | Parametri principali | Note |
+|------------------|-----------------|----------------------|------|
+| `ui_latency` | JS frontend (`availability` e `submit`) | `op` (`availability`\|`submit`), `ms` | Misura la latenza client-side per fetch disponibilità e submit ottimistico. |
+| `availability_retry` | Controller disponibilità | `attempt` | Emetto su retry progressivi (0.5/1/2s) fino a 3 tentativi. |
+| `ui_validation_error` | Blur campo invalidato | `field` (`email`, `phone`, ...) | Traccia errori di validazione lato client. |
+| `phone_validation_error` | Blur telefono non valido | `field: 'phone'` | Specifico per normalizzazione telefono E.164. |
+| `cta_state_change` | Toggle CTA smart | `enabled` (`true`\|`false`) | Monitor fallback/attivazione CTA principale. |
+| `submit_error` | Catch submit REST fallita | `code`, `latency` | Inviato su HTTP 4xx/5xx con latenza client. |
+
 ### Google Ads
 
 | Evento | Trigger | Parametri | Consent |

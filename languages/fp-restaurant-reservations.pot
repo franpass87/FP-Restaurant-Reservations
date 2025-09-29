@@ -8,3 +8,39 @@ msgstr ""
 "X-Generator: manual\n"
 
 # Stub entries will be generated in later phases.
+
+msgid "Complete required fields"
+msgstr ""
+
+msgid "Book now"
+msgstr ""
+
+msgid "Sending…"
+msgstr ""
+
+msgid "Complete required fields to enable booking."
+msgstr ""
+
+msgid "Updating availability…"
+msgstr ""
+
+msgid "Availability updated."
+msgstr ""
+
+msgid "Select a meal to view available times."
+msgstr ""
+
+msgid "Enter a valid phone number (minimum 6 digits)."
+msgstr ""
+
+msgid "Enter a valid email address."
+msgstr ""
+
+msgid "We could not update available times. Please try again."
+msgstr ""
+
+msgid "We could not complete your reservation. Please try again."
+msgstr ""
+
+msgid "Reservation sent successfully."
+msgstr ""

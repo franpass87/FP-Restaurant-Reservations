@@ -1,3 +1,13 @@
+## PATCH WOW-UI+FE
+- Aggiornato `assets/css/form.css` con scala tipografica, progress bar animata, skeleton shimmer e CTA smart con spinner testuale.
+- Introdotti moduli JS (`phone.js`, `availability.js`, `onepage.js`) per maschera E.164, debounce disponibilità con retry/backoff e submit ottimistico con error boundary accessibile.
+- Raffinato l'annuncio aria-live degli slot disponibili/assenti per comunicare "Disponibilità aggiornata" o inviti alla selezione pasto.
+- Esteso il markup `templates/frontend/form.php` per aria-live, region focus, badge consigliato e tracking aggiuntivo con dataLayer (`ui_latency`, `availability_retry`, `cta_state_change`).
+- Aggiornata documentazione QA/Tracking, dizionario lingue e test E2E per coprire i nuovi flussi UI.
+- Allineate le stringhe fallback e il file `.pot` alle nuove chiavi lingua per CTA, disponibilità e validazioni telefoniche/email.
+- Contrassegnato lo script `fp-resv-onepage` come modulo ES per supportare gli import dinamici senza bundler intermedio.
+- Documentato il completamento della tranche rimanente della patch WOW UI riallineando changelog e rebuild tracker.
+
 ## PATCH-HARDENING-POSTMORTEM
 - Riassunto delle lesson learned e delle azioni correttive nel post-mortem documentato in `docs/HARDENING-POSTMORTEM.md`.
 - Identificati miglioramenti di processo, tooling e comunicazione per i futuri cicli di hardening.

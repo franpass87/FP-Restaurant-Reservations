@@ -97,6 +97,19 @@ endif;
         <input type="hidden" name="fp_resv_language" value="<?php echo esc_attr($config['language'] ?? 'it'); ?>">
         <input type="hidden" name="fp_resv_currency" value="<?php echo esc_attr($config['defaults']['currency'] ?? 'EUR'); ?>">
         <input type="hidden" name="fp_resv_policy_version" value="<?php echo esc_attr($policyVersion); ?>">
+        <input type="hidden" name="fp_resv_phone_e164" value="">
+        <input type="hidden" name="fp_resv_phone_cc" value="<?php echo esc_attr($config['defaults']['phone_country_code'] ?? '39'); ?>">
+        <input type="hidden" name="fp_resv_phone_local" value="">
+        <input type="hidden" name="fp_resv_slot_start" value="">
+        <div class="fp-resv-widget__feedback" aria-live="polite">
+            <div class="fp-alert fp-alert--success" data-fp-resv-success hidden tabindex="-1"></div>
+            <div class="fp-alert fp-alert--error" data-fp-resv-error hidden role="alert">
+                <p data-fp-resv-error-message></p>
+                <button type="button" class="fp-btn fp-btn--ghost" data-fp-resv-error-retry>
+                    <?php esc_html_e('Riprova', 'fp-restaurant-reservations'); ?>
+                </button>
+            </div>
+        </div>
         <label class="fp-resv-field fp-resv-field--honeypot fp-field" aria-hidden="true" tabindex="-1">
             <span class="screen-reader-text"><?php esc_html_e('Lascia vuoto questo campo', 'fp-restaurant-reservations'); ?></span>
             <input class="fp-input" type="text" name="fp_resv_hp" value="" autocomplete="off">
@@ -133,6 +146,7 @@ endif;
                         $mealKey   = isset($meal['key']) ? (string) $meal['key'] : '';
                         $mealLabel = isset($meal['label']) ? (string) $meal['label'] : $mealKey;
                         $mealBadge = isset($meal['badge']) ? (string) $meal['badge'] : '';
+                        $mealBadgeIcon = isset($meal['badge_icon']) ? (string) $meal['badge_icon'] : '';
                         $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
                         $mealNotice = isset($meal['notice']) ? (string) $meal['notice'] : '';
                         $mealPrice  = isset($meal['price']) ? (float) $meal['price'] : 0.0;
@@ -149,7 +163,7 @@ endif;
                         >
                             <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>
                             <?php if ($mealBadge !== '') : ?>
-                                <span class="fp-badge"><?php echo esc_html($mealBadge); ?></span>
+                                <span class="fp-badge"<?php echo $mealBadgeIcon !== '' ? ' data-icon="' . esc_attr($mealBadgeIcon) . '"' : ''; ?>><?php echo esc_html($mealBadge); ?></span>
                             <?php endif; ?>
                             <?php if ($mealHint !== '') : ?>
                                 <span class="fp-hint"><?php echo esc_html($mealHint); ?></span>
@@ -171,6 +185,7 @@ endif;
                 <?php
                 $stepKey = (string) ($step['key'] ?? '');
                 $isActive = $index === 0;
+                $titleId = $formId . '-section-title-' . $stepKey;
                 ?>
                 <li
                     class="fp-resv-step fp-section"
@@ -179,12 +194,14 @@ endif;
                     data-state="<?php echo $isActive ? 'active' : 'locked'; ?>"
                     aria-hidden="<?php echo $isActive ? 'false' : 'true'; ?>"
                     aria-expanded="<?php echo $isActive ? 'true' : 'false'; ?>"
+                    role="region"
+                    aria-labelledby="<?php echo esc_attr($titleId); ?>"
                 >
                     <header class="fp-resv-step__header">
                         <span class="fp-resv-step__label">
                             <?php echo esc_html($strings['steps'][$stepKey] ?? ($step['title'] ?? '')); ?>
                         </span>
-                        <h3 class="fp-resv-step__title"><?php echo esc_html($step['title'] ?? ''); ?></h3>
+                        <h3 class="fp-resv-step__title" id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($step['title'] ?? ''); ?></h3>
                         <?php if (!empty($step['description'])) : ?>
                             <p class="fp-resv-step__description"><?php echo esc_html($step['description']); ?></p>
                         <?php endif; ?>
@@ -230,9 +247,17 @@ endif;
                                 <?php break;
                             case 'slots': ?>
                                 <div class="fp-resv-slots fp-slots" data-fp-resv-slots>
-                                    <p class="fp-resv-slots__status" data-state="loading"><?php echo esc_html($strings['messages']['slots_loading'] ?? ''); ?></p>
-                                    <ul class="fp-resv-slots__list" aria-live="polite" aria-busy="false"></ul>
-                                    <p class="fp-resv-slots__empty" hidden><?php echo esc_html($strings['messages']['slots_empty'] ?? ''); ?></p>
+                                    <p class="fp-resv-slots__status" data-fp-resv-slots-status aria-live="polite">
+                                        <?php echo esc_html($strings['messages']['slots_loading'] ?? ''); ?>
+                                    </p>
+                                    <ul class="fp-resv-slots__list" data-fp-resv-slots-list aria-live="polite" aria-busy="false"></ul>
+                                    <p class="fp-resv-slots__empty" data-fp-resv-slots-empty hidden><?php echo esc_html($strings['messages']['slots_empty'] ?? ''); ?></p>
+                                    <div class="fp-resv-slots__boundary fp-alert fp-alert--error" data-fp-resv-slots-boundary hidden role="alert">
+                                        <span data-fp-resv-slots-boundary-message></span>
+                                        <button type="button" class="fp-btn fp-btn--ghost" data-fp-resv-slots-retry>
+                                            <?php esc_html_e('Riprova', 'fp-restaurant-reservations'); ?>
+                                        </button>
+                                    </div>
                                 </div>
                                 <?php break;
                             case 'details': ?>
@@ -257,7 +282,7 @@ endif;
                                     </label>
                                     <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
-                                        <input class="fp-input" type="tel" name="fp_resv_phone" data-fp-resv-field="phone">
+                                        <input class="fp-input" type="tel" name="fp_resv_phone" data-fp-resv-field="phone" inputmode="tel" autocomplete="tel">
                                         <?php if (!empty($hints['phone'] ?? '')) : ?>
                                             <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
                                         <?php endif; ?>
@@ -338,9 +363,10 @@ endif;
         </ol>
         <div class="fp-resv-widget__actions">
             <?php
-            $submitLabel = $strings['actions']['submit'] ?? __('Prenota ora', 'fp-restaurant-reservations');
+            $submitLabel = $strings['actions']['submit'] ?? __('Book now', 'fp-restaurant-reservations');
+            $ctaDisabled = $strings['messages']['cta_complete_fields'] ?? __('Complete required fields', 'fp-restaurant-reservations');
             $submitHint  = $strings['messages']['submit_hint'] ?? __('Completa tutti i passaggi per prenotare.', 'fp-restaurant-reservations');
-            $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Completa i campi obbligatori per abilitare la prenotazione.', 'fp-restaurant-reservations');
+            $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Complete required fields to enable booking.', 'fp-restaurant-reservations');
             $submitHintId = $formId . '-submit-hint';
             ?>
             <button
@@ -352,7 +378,8 @@ endif;
                 disabled
                 aria-describedby="<?php echo esc_attr($submitHintId); ?>"
             >
-                <?php echo esc_html($submitLabel); ?>
+                <span class="fp-btn__spinner" data-fp-resv-submit-spinner hidden>···</span>
+                <span class="fp-btn__label" data-fp-resv-submit-label><?php echo esc_html($ctaDisabled); ?></span>
             </button>
             <p class="fp-resv-widget__submit-hint fp-hint" id="<?php echo esc_attr($submitHintId); ?>" data-fp-resv-submit-hint aria-live="polite">
                 <?php echo esc_html($submitHint); ?>
