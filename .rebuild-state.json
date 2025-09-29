@@ -23,7 +23,8 @@
     "FASE 19",
     "FASE 20",
     "FASE 21",
-    "PATCH-2025-09-29-A"
+    "PATCH-2025-09-29-A",
+    "PATCH-UI-POLISH-FORM"
   ],
   "notes": "Audit finale completato: repository verificato, schema DB coerente, hook e documentazione confermati"
 }

@@ -1,3 +1,6 @@
+## PATCH-UI-POLISH-FORM
+- PATCH: UI polish del form (pills, progress, micro-animazioni, dark mode).
+
 ## PATCH-2025-09-29-A
 - Aggiornata l'integrazione Brevo con liste dedicate IT/EN, mappa prefissi telefonici configurabile e log iscrizioni automatiche su conferma/visita.
 
