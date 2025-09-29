@@ -266,6 +266,7 @@ final class Service
             'phone'       => '',
             'notes'       => '',
             'allergies'   => '',
+            'meal'        => '',
             'language'    => 'it',
             'locale'      => 'it_IT',
             'location'    => 'default',
@@ -281,6 +282,7 @@ final class Service
             'room_id'     => null,
             'table_id'    => null,
             'value'       => null,
+            'price_per_person' => null,
         ];
 
         $payload = array_merge($defaults, $payload);
@@ -294,6 +296,7 @@ final class Service
         $payload['phone']      = sanitize_text_field((string) $payload['phone']);
         $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
         $payload['allergies']  = sanitize_textarea_field((string) $payload['allergies']);
+        $payload['meal']       = sanitize_text_field((string) $payload['meal']);
         $payload['language']   = sanitize_text_field((string) $payload['language']);
         $payload['locale']     = sanitize_text_field((string) $payload['locale']);
         $payload['location']   = sanitize_text_field((string) $payload['location']);
@@ -327,6 +330,16 @@ final class Service
             $rawValue = is_string($payload['value']) ? str_replace(',', '.', $payload['value']) : (string) $payload['value'];
             $value    = (float) $rawValue;
             $payload['value'] = $value > 0 ? round($value, 2) : null;
+        }
+
+        if (is_array($payload['price_per_person'])) {
+            $payload['price_per_person'] = null;
+        } elseif ($payload['price_per_person'] === null || $payload['price_per_person'] === '') {
+            $payload['price_per_person'] = null;
+        } else {
+            $rawPrice = is_string($payload['price_per_person']) ? str_replace(',', '.', $payload['price_per_person']) : (string) $payload['price_per_person'];
+            $price    = (float) $rawPrice;
+            $payload['price_per_person'] = $price > 0 ? round($price, 2) : null;
         }
 
         $payload['language'] = $this->language->ensureLanguage((string) $payload['language']);

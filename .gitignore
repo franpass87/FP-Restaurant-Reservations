@@ -19,4 +19,9 @@ Thumbs.db
 *.jpeg
 *.gif
 *.webp
+*.svg
 *.pdf
+*.woff
+*.woff2
+*.ttf
+*.otf

@@ -1,3 +1,61 @@
+## PATCH-HARDENING-POSTMORTEM
+- Riassunto delle lesson learned e delle azioni correttive nel post-mortem documentato in `docs/HARDENING-POSTMORTEM.md`.
+- Identificati miglioramenti di processo, tooling e comunicazione per i futuri cicli di hardening.
+- Pianificati follow-up PM-01..PM-04 con owner e scadenze dedicate per automatizzare verifiche e formazione.
+
+## PATCH-HARDENING-CLOSEOUT-ARCHIVE
+- Archiviati gli artefatti di sicurezza nel repository SecOps `secops://fp-resv/2025/hardening/*` con checksum e password registrate nel vault.
+- Documentata la procedura di handoff e le verifiche post-archiviazione in `docs/HARDENING-ARCHIVE.md`.
+- Aggiornato il rebuild tracker per segnare l'archiviazione completata e pianificare il post-mortem hardening.
+
+## PATCH-HARDENING-CLOSEOUT
+- Documentato `docs/HARDENING-CLOSEOUT.md` con cronologia, evidenze e hand-off del closeout di hardening.
+- Aggiornati `docs/HARDENING-VERIFICATION.md`, `docs/HARDENING-FOLLOWUP.md` e `docs/QA-AUDIT.md` marcando PASS tutti i controlli e referenziando gli artefatti raccolti.
+- Allineato `.rebuild-state.json` impostando la fase conclusa e pianificando l'archiviazione degli allegati di sicurezza.
+
+## PATCH-HARDENING-FOLLOWUP
+- Creato `docs/HARDENING-FOLLOWUP.md` con piano operativo, owner e scadenze per chiudere le evidenze aperte dell'hardening.
+- Aggiornate le guide di hardening per puntare al nuovo playbook e armonizzato il registro di verifica con il percorso di follow-up.
+
+## PATCH-HARDENING-VERIFICATION
+- Creato `docs/HARDENING-VERIFICATION.md` per tracciare le evidenze delle misure di hardening e segnalare le attività ancora da completare.
+- Integrato `docs/QA-AUDIT.md` con la sezione di verifica post-cleanup e richiamo al registro di hardening.
+
+## PATCH-HARDENING
+- Documentata `docs/HARDENING-GUIDE.md` con checklist operative per rafforzare configurazioni WordPress, plugin e infrastruttura dopo il cleanup.
+- Evidenziate le azioni periodiche di sicurezza (rotazione chiavi, backup, MFA, firewall) da verificare nei riesami trimestrali.
+
+## PATCH-CLEANUP
+- Esteso `.gitignore` per includere asset binari comuni (SVG, font) e prevenire l'inserimento accidentale nel repository.
+- Verificata l'assenza di directory `dist/`, `vendor/`, `node_modules/` nel progetto e confermato lo stato text-only dopo il cleanup.
+
+## PATCH-SECURITY-SWEEP
+- Documentato `docs/SECURITY-REPORT.md` con l'audit delle route REST (nonce, capability, sanitizzazione, escaping).
+- Aggiornato `.rebuild-state.json` segnando la fase completata e impostando il prossimo step sul cleanup finale.
+
+## PATCH-TRACKING-MAP
+- Documentata `docs/TRACKING-MAP.md` con mappa eventi GA4/Ads/Meta/Clarity e snippet `dataLayer.push`.
+- Riassunto gating dei consensi per GA4, Ads, Meta Pixel e Microsoft Clarity.
+
+## PATCH-SEED-SCRIPTS
+- Creato lo script `scripts/seed.php` per generare sala, tavoli, clienti, prenotazioni demo ed evento di degustazione, con opzioni base (general, notifications, Brevo, Calendar, reports).
+- Aggiunta la guida `docs/TEST-SCENARIOS.md` con scenari QA passo-passo e nota sul filtro per esporre i meal pills dal seed.
+
+## PATCH-TRACKING-CONSENT
+- Sincronizzata la raccolta dei consensi del form one-page con l'API `fpResvTracking.updateConsent`, propagando analytics/ads/personalization/clarity in base alle checkbox privacy.
+- Introdotto un delegato unico per `data-fp-resv-event` (es. PDF menu) e l'hook `fp-resv:tracking:push` per armonizzare il dispatch degli eventi nel dataLayer.
+
+## PATCH-FRONTEND-ONEPAGE
+- Riprogettato il form pubblico in modalità one-page con sezioni progressive, CTA unica e hint dinamici.
+- Aggiunto script `assets/js/fe/onepage.js` per auto-scroll, validazioni live e dispatch degli eventi dataLayer (`reservation_start`, `meal_selected`, `section_unlocked`, `form_valid`, `reservation_submit`).
+- Esteso il tracking server-side per inviare l'evento `purchase` stimato (`value_is_estimated=true`) quando Stripe è disattivato.
+
+## PATCH-PREFLIGHT-REFRESH
+- Aggiornato stato pre-flight QA: `.rebuild-state.json` riallineato e audit documentato.
+
+## QA-AUDIT-2025-09-29
+- QA audit report generated.
+
 ## PATCH-UI-POLISH-FORM
 - PATCH: UI polish del form (pills, progress, micro-animazioni, dark mode).
 

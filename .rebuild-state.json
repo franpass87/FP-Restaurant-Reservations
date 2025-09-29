@@ -1,5 +1,5 @@
 {
-  "current": "IDLE",
+  "current": "PATCH-HARDENING-LESSONS",
   "completed": [
     "FASE 0",
     "FASE 1",
@@ -24,7 +24,20 @@
     "FASE 20",
     "FASE 21",
     "PATCH-2025-09-29-A",
-    "PATCH-UI-POLISH-FORM"
+    "PATCH-UI-POLISH-FORM",
+    "PATCH-PREFLIGHT-REFRESH",
+    "PATCH-FRONTEND-ONEPAGE",
+    "PATCH-TRACKING-CONSENT",
+    "PATCH-SEED-SCRIPTS",
+    "PATCH-TRACKING-MAP",
+    "PATCH-SECURITY-SWEEP",
+    "PATCH-CLEANUP",
+    "PATCH-HARDENING",
+    "PATCH-HARDENING-VERIFICATION",
+    "PATCH-HARDENING-FOLLOWUP",
+    "PATCH-HARDENING-CLOSEOUT",
+    "PATCH-HARDENING-CLOSEOUT-ARCHIVE",
+    "PATCH-HARDENING-POSTMORTEM"
   ],
-  "notes": "Audit finale completato: repository verificato, schema DB coerente, hook e documentazione confermati"
+  "notes": "2025-11-05: Post-mortem hardening completato con lesson learned documentate in docs/HARDENING-POSTMORTEM.md; azioni correttive PM-01..PM-04 aperte. Prossimo step: consolidare le lesson learned nei playbook ufficiali."
 }

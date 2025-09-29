@@ -6,6 +6,7 @@ namespace FP\Resv\Frontend;
 
 use FP\Resv\Core\Plugin;
 use function add_action;
+use function wp_enqueue_script;
 use function wp_enqueue_style;
 
 final class WidgetController
@@ -26,6 +27,14 @@ final class WidgetController
             Plugin::$url . 'assets/css/form.css',
             [],
             Plugin::VERSION
+        );
+
+        wp_enqueue_script(
+            'fp-resv-onepage',
+            Plugin::$url . 'assets/js/fe/onepage.js',
+            [],
+            Plugin::VERSION,
+            true
         );
     }
 }
