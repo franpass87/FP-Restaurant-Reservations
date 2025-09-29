@@ -17,6 +17,7 @@ use function is_admin;
 use function is_numeric;
 use function is_string;
 use function max;
+use function round;
 use function sanitize_text_field;
 use function strtolower;
 use function substr;
@@ -194,6 +195,8 @@ final class Manager
         }
 
         DataLayer::push($event);
+
+        $this->maybeDispatchEstimatedPurchase($payload, $reservation, $currency);
     }
 
     /**
@@ -399,5 +402,66 @@ JS;
         }
 
         return $this->settings;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function maybeDispatchEstimatedPurchase(array $payload, ReservationModel $reservation, string $currency): void
+    {
+        if (isset($payload['value']) && is_numeric($payload['value']) && (float) $payload['value'] > 0) {
+            return;
+        }
+
+        if (!isset($payload['price_per_person']) || !is_numeric($payload['price_per_person'])) {
+            return;
+        }
+
+        $price = (float) $payload['price_per_person'];
+        if ($price <= 0.0) {
+            return;
+        }
+
+        $party = isset($payload['party']) && is_numeric($payload['party'])
+            ? max(1, (int) $payload['party'])
+            : max(1, $reservation->party);
+
+        $estimated = round($price * $party, 2);
+        if ($estimated <= 0.0) {
+            return;
+        }
+
+        $currency = $currency !== '' ? $currency : 'EUR';
+        $mealType = isset($payload['meal']) && is_string($payload['meal']) ? (string) $payload['meal'] : '';
+
+        $event = [
+            'event'    => 'purchase',
+            'purchase' => [
+                'value'              => $estimated,
+                'currency'           => $currency,
+                'value_is_estimated' => true,
+                'meal_type'          => $mealType,
+                'party_size'         => $party,
+            ],
+            'reservation' => [
+                'id'        => $reservation->id,
+                'status'    => strtolower($reservation->status),
+                'party'     => $party,
+                'meal_type' => $mealType,
+            ],
+            'ga4' => [
+                'name'   => 'purchase',
+                'params' => array_filter([
+                    'reservation_id'     => $reservation->id,
+                    'reservation_party'  => $party,
+                    'meal_type'          => $mealType !== '' ? $mealType : null,
+                    'value'              => $estimated,
+                    'currency'           => $currency,
+                    'value_is_estimated' => true,
+                ], static fn ($val) => $val !== null && $val !== ''),
+            ],
+        ];
+
+        DataLayer::push($event);
     }
 }

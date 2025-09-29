@@ -166,6 +166,10 @@ final class FormContext
                 'payment_required' => 'reservation_payment_required',
                 'cancelled'        => 'reservation_cancelled',
                 'modified'         => 'reservation_modified',
+                'meal_selected'    => 'meal_selected',
+                'section_unlocked' => 'section_unlocked',
+                'form_valid'       => 'form_valid',
+                'purchase'         => 'purchase',
             ],
         ];
 
