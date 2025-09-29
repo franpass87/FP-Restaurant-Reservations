@@ -20,17 +20,27 @@ use function apply_filters;
 use function array_filter;
 use function array_map;
 use function array_values;
+use function ctype_digit;
 use function current_time;
 use function explode;
 use function home_url;
 use function implode;
 use function is_array;
 use function is_string;
+use function json_decode;
+use function ltrim;
+use function preg_replace;
 use function sprintf;
+use function str_replace;
+use function strpos;
+use function strlen;
+use function strcmp;
 use function strip_tags;
 use function strtolower;
 use function substr;
 use function trim;
+use function strtoupper;
+use function uksort;
 use function wp_timezone;
 
 final class AutomationService
@@ -85,6 +95,12 @@ final class AutomationService
 
         $status = strtolower((string) ($payload['status'] ?? ''));
         if ($status === 'confirmed') {
+            $this->subscribeContact($reservationId, $contact, [
+                'forced_language' => $payload['language_forced'] ?? '',
+                'page_language'   => $payload['language'] ?? '',
+                'phone'           => $payload['phone'] ?? '',
+            ]);
+
             $this->dispatchEvent(
                 'reservation_confirmed',
                 $email,
@@ -134,6 +150,14 @@ final class AutomationService
         $this->syncContact($reservationId, $contact);
 
         if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed') {
+            $subscriptionContext = [
+                'forced_language' => $context['customer']['language'] ?? '',
+                'page_language'   => $context['customer_lang'] ?? '',
+                'phone'           => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
+            ];
+
+            $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+
             $this->dispatchEvent(
                 'reservation_confirmed',
                 $email,
@@ -151,6 +175,14 @@ final class AutomationService
         }
 
         if ($currentStatus === 'visited') {
+            $subscriptionContext = [
+                'forced_language' => $context['customer']['language'] ?? '',
+                'page_language'   => $context['customer_lang'] ?? '',
+                'phone'           => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
+            ];
+
+            $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+
             $this->dispatchEvent(
                 'reservation_visited',
                 $email,
@@ -321,26 +353,39 @@ final class AutomationService
 
     /**
      * @param array<string, mixed> $contact
+     *
+     * @return array<string, mixed>
      */
-    private function syncContact(int $reservationId, array $contact): void
+    private function syncContact(int $reservationId, array $contact, ?int $listId = null): array
     {
         if (!$this->isEnabled()) {
-            return;
+            return [
+                'success' => false,
+                'message' => 'Brevo integration disabled',
+                'code'    => 0,
+            ];
         }
 
         $payload = $contact;
-        $listIds = $this->listIds();
-        if ($listIds !== []) {
-            $payload['listIds'] = $listIds;
+
+        if ($listId !== null) {
+            $payload['listIds'] = [$listId];
+        } else {
+            $listIds = $this->defaultListIds();
+            if ($listIds !== []) {
+                $payload['listIds'] = $listIds;
+            }
         }
 
         $response = $this->client->upsertContact($payload);
-        $status   = $response['success'] ? 'success' : 'error';
+        $status   = !empty($response['success']) ? 'success' : 'error';
 
         $this->repository->log($reservationId, 'contact_upsert', [
             'payload'  => $payload,
             'response' => $response,
-        ], $status, $response['success'] ? null : ($response['message'] ?? null));
+        ], $status, !empty($response['success']) ? null : ($response['message'] ?? null));
+
+        return $response;
     }
 
     /**
@@ -438,7 +483,7 @@ final class AutomationService
         return array_values(array_filter($parts, static fn (string $email): bool => $email !== ''));
     }
 
-    private function listIds(): array
+    private function defaultListIds(): array
     {
         $settings = $this->options->getGroup('fp_resv_brevo', []);
         $value    = (string) ($settings['brevo_list_id'] ?? '');
@@ -446,9 +491,279 @@ final class AutomationService
             return [];
         }
 
-        $ids = array_values(array_filter(array_map('trim', explode(',', $value)), static fn (string $id): bool => $id !== ''));
+        $ids    = array_values(array_filter(array_map('trim', explode(',', $value)), static fn (string $id): bool => $id !== ''));
+        $result = [];
 
-        return array_map('intval', $ids);
+        foreach ($ids as $id) {
+            if ($id === '') {
+                continue;
+            }
+
+            if (!ctype_digit($id)) {
+                $id = preg_replace('/[^0-9]/', '', $id);
+                if (!is_string($id) || $id === '') {
+                    continue;
+                }
+            }
+
+            $intId = (int) $id;
+            if ($intId > 0) {
+                $result[] = $intId;
+            }
+        }
+
+        return $result;
+    }
+
+    private function listIdForKey(string $key): ?int
+    {
+        $settings   = $this->options->getGroup('fp_resv_brevo', []);
+        $key        = strtoupper($key);
+        $candidates = [];
+
+        if ($key === 'IT') {
+            $candidates[] = (string) ($settings['brevo_list_id_it'] ?? '');
+        } elseif ($key === 'EN') {
+            $candidates[] = (string) ($settings['brevo_list_id_en'] ?? '');
+        } else {
+            $candidates[] = (string) ($settings['brevo_list_id_en'] ?? '');
+            $candidates[] = (string) ($settings['brevo_list_id_it'] ?? '');
+        }
+
+        $candidates[] = (string) ($settings['brevo_list_id'] ?? '');
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '') {
+                continue;
+            }
+
+            if (!ctype_digit($candidate)) {
+                $candidate = preg_replace('/[^0-9]/', '', $candidate);
+                if (!is_string($candidate) || $candidate === '') {
+                    continue;
+                }
+            }
+
+            $listId = (int) $candidate;
+            if ($listId > 0) {
+                return $listId;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function phonePrefixMap(): array
+    {
+        $settings = $this->options->getGroup('fp_resv_brevo', []);
+        $raw      = $settings['brevo_phone_prefix_map'] ?? '';
+        $map      = [];
+
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $prefix => $language) {
+                    if (!is_string($prefix) || !is_string($language)) {
+                        continue;
+                    }
+
+                    $normalizedPrefix = $this->normalizePhonePrefix($prefix);
+                    if ($normalizedPrefix === '') {
+                        continue;
+                    }
+
+                    $languageCode = $this->normalizeLanguage($language, true);
+                    if ($languageCode === '') {
+                        $languageCode = 'INT';
+                    }
+
+                    $map[$normalizedPrefix] = $languageCode;
+                }
+            }
+        }
+
+        if ($map === []) {
+            $map['+39'] = 'IT';
+        }
+
+        uksort($map, static function (string $a, string $b): int {
+            $lengthComparison = strlen($b) <=> strlen($a);
+
+            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
+        });
+
+        return $map;
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    public function parsePhoneCountry(string $phone, array $map): string
+    {
+        $normalized = trim($phone);
+        if ($normalized === '') {
+            return 'INT';
+        }
+
+        $normalized = preg_replace('/[^0-9+]/', '', $normalized);
+        if (!is_string($normalized) || $normalized === '') {
+            return 'INT';
+        }
+
+        if ($normalized[0] !== '+') {
+            if (strpos($normalized, '00') === 0) {
+                $normalized = '+' . substr($normalized, 2);
+            } else {
+                $normalized = '+' . $normalized;
+            }
+        }
+
+        $normalizedMap = [];
+        foreach ($map as $prefix => $language) {
+            if (!is_string($prefix) || !is_string($language)) {
+                continue;
+            }
+
+            $cleanPrefix = $this->normalizePhonePrefix($prefix);
+            if ($cleanPrefix === '') {
+                continue;
+            }
+
+            $normalizedMap[$cleanPrefix] = $this->normalizeLanguage($language, true);
+        }
+
+        uksort($normalizedMap, static function (string $a, string $b): int {
+            $lengthComparison = strlen($b) <=> strlen($a);
+
+            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
+        });
+
+        foreach ($normalizedMap as $prefix => $languageCode) {
+            if (strpos($normalized, $prefix) === 0) {
+                if ($languageCode === 'IT' || $languageCode === 'EN') {
+                    return $languageCode;
+                }
+
+                return 'INT';
+            }
+        }
+
+        return 'INT';
+    }
+
+    /**
+     * @param array<string, mixed> $contact
+     * @param array<string, mixed> $context
+     */
+    private function subscribeContact(int $reservationId, array $contact, array $context = []): void
+    {
+        if (!$this->isEnabled()) {
+            return;
+        }
+
+        $map          = $this->phonePrefixMap();
+        $forcedLang   = $this->normalizeLanguage((string) ($context['forced_language'] ?? ''), true);
+        $pageLanguage = $this->normalizeLanguage((string) ($context['page_language'] ?? ''), false);
+
+        $phone = (string) ($context['phone'] ?? '');
+        if ($phone === '' && isset($contact['attributes']['PHONE'])) {
+            $phone = (string) $contact['attributes']['PHONE'];
+        }
+
+        $phoneCountry = $this->parsePhoneCountry($phone, $map);
+        $targetKey    = $this->resolveListKey($forcedLang, $phoneCountry, $pageLanguage);
+
+        $listId = $this->listIdForKey($targetKey);
+        if ($listId === null && $targetKey !== 'INT') {
+            $listId = $this->listIdForKey('INT');
+        }
+
+        if ($listId === null) {
+            $this->repository->log($reservationId, 'subscribe', [
+                'list'            => $targetKey,
+                'list_key'        => $targetKey,
+                'forced_language' => $forcedLang,
+                'page_language'   => $pageLanguage,
+                'phone_country'   => $phoneCountry,
+                'phone'           => $phone,
+            ], 'error', 'Missing list ID for subscription');
+
+            return;
+        }
+
+        $response = $this->syncContact($reservationId, $contact, $listId);
+        $success  = !empty($response['success']);
+
+        $this->repository->log($reservationId, 'subscribe', [
+            'list'            => $targetKey,
+            'list_key'        => $targetKey,
+            'list_id'         => $listId,
+            'forced_language' => $forcedLang,
+            'page_language'   => $pageLanguage,
+            'phone_country'   => $phoneCountry,
+            'phone'           => $phone,
+        ], $success ? 'success' : 'error', $success ? null : ($response['message'] ?? null));
+    }
+
+    private function resolveListKey(string $forced, string $phoneCountry, string $pageLanguage): string
+    {
+        if ($forced !== '') {
+            return $forced;
+        }
+
+        if ($phoneCountry === 'IT' || $phoneCountry === 'EN') {
+            return $phoneCountry;
+        }
+
+        if ($pageLanguage === 'IT' || $pageLanguage === 'EN') {
+            return $pageLanguage;
+        }
+
+        return 'INT';
+    }
+
+    private function normalizeLanguage(string $value, bool $allowInternational = false): string
+    {
+        $upper = strtoupper(trim($value));
+        if ($upper === '') {
+            return '';
+        }
+
+        if (strpos($upper, 'IT') === 0) {
+            return 'IT';
+        }
+
+        if (strpos($upper, 'EN') === 0) {
+            return 'EN';
+        }
+
+        if ($allowInternational && strpos($upper, 'INT') === 0) {
+            return 'INT';
+        }
+
+        return '';
+    }
+
+    private function normalizePhonePrefix(string $prefix): string
+    {
+        $normalized = str_replace(' ', '', trim($prefix));
+        if ($normalized === '') {
+            return '';
+        }
+
+        if (strpos($normalized, '00') === 0) {
+            $normalized = '+' . substr($normalized, 2);
+        }
+
+        if (strpos($normalized, '+') !== 0) {
+            $normalized = '+' . ltrim($normalized, '+');
+        }
+
+        return $normalized === '+' ? '' : $normalized;
     }
 
     private function isEnabled(): bool

@@ -28,6 +28,8 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_email;
+use function json_decode;
+use function ltrim;
 use function preg_match;
 use function preg_split;
 use function register_setting;
@@ -39,15 +41,19 @@ use function sanitize_textarea_field;
 use function selected;
 use function settings_errors;
 use function settings_fields;
+use function str_replace;
 use function sprintf;
 use function str_contains;
+use function strpos;
 use function strtolower;
 use function submit_button;
 use function timezone_identifiers_list;
 use function trim;
+use function substr;
 use function wp_add_inline_style;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
+use function wp_json_encode;
 use function wp_localize_script;
 use function wp_strip_all_tags;
 use const FILTER_FLAG_ALLOW_FRACTION;
@@ -58,6 +64,7 @@ use const INPUT_GET;
 final class AdminPages
 {
     private const CAPABILITY = 'manage_options';
+    private const DEFAULT_PHONE_PREFIX_MAP = ['+39' => 'IT'];
 
     /**
      * @var array<string, array<string, mixed>>
@@ -232,6 +239,7 @@ final class AdminPages
         }
 
         $value = $options[$fieldKey] ?? ($field['default'] ?? ($field['type'] === 'checkbox' ? '0' : ''));
+        $phonePrefixPreview = null;
 
         $inputName   = $optionKey . '[' . $fieldKey . ']';
         $description = (string) ($field['description'] ?? '');
@@ -240,6 +248,15 @@ final class AdminPages
             case 'checkbox':
                 $checked = $value === '1' || $value === 1 || $value === true;
                 echo '<label><input type="checkbox" value="1" name="' . esc_attr($inputName) . '"' . ($checked ? ' checked="checked"' : '') . '> ' . esc_html((string) ($field['checkbox_label'] ?? '')) . '</label>';
+                break;
+            case 'phone_prefix_map':
+                $map  = $this->decodePhonePrefixMapValue($value, $field);
+                $rows = (int) ($field['rows'] ?? 4);
+                $display = $this->formatPhonePrefixMapValue($map);
+                echo '<textarea class="large-text code" rows="' . esc_attr((string) $rows) . '" name="' . esc_attr($inputName) . '">';
+                echo esc_textarea($display);
+                echo '</textarea>';
+                $phonePrefixPreview = $map;
                 break;
             case 'textarea':
                 $rows = (int) ($field['rows'] ?? 5);
@@ -302,6 +319,10 @@ final class AdminPages
 
         if ($description !== '') {
             echo '<p class="description">' . esc_html($description) . '</p>';
+        }
+
+        if ($phonePrefixPreview !== null) {
+            echo $this->renderPhonePrefixPreview($phonePrefixPreview);
         }
     }
 
@@ -479,6 +500,8 @@ final class AdminPages
                 return $this->sanitizeEmailList($pageKey, $fieldKey, $value, $field);
             case 'language_map':
                 return $this->sanitizeLanguageMap($pageKey, $fieldKey, $value);
+            case 'phone_prefix_map':
+                return $this->sanitizePhonePrefixMap($pageKey, $fieldKey, $value);
             case 'select':
                 $allowed = $field['options'] ?? [];
                 $raw     = is_scalar($value) ? (string) $value : '';
@@ -751,6 +774,189 @@ final class AdminPages
         }
 
         return $map;
+    }
+
+    private function sanitizePhonePrefixMap(string $pageKey, string $fieldKey, mixed $value): string
+    {
+        $raw      = is_scalar($value) ? (string) $value : '';
+        $segments = preg_split('/[\r\n,]+/', $raw) ?: [];
+        $map      = [];
+        $invalid  = [];
+
+        foreach ($segments as $segment) {
+            $segment = trim($segment);
+            if ($segment === '') {
+                continue;
+            }
+
+            if (!str_contains($segment, '=')) {
+                $invalid[] = $segment;
+                continue;
+            }
+
+            [$prefixRaw, $langRaw] = array_map('trim', explode('=', $segment, 2));
+            if ($prefixRaw === '' || $langRaw === '') {
+                $invalid[] = $segment;
+                continue;
+            }
+
+            $normalizedPrefix = str_replace(' ', '', $prefixRaw);
+            if (strpos($normalizedPrefix, '00') === 0) {
+                $normalizedPrefix = '+' . substr($normalizedPrefix, 2);
+            }
+            if (strpos($normalizedPrefix, '+') !== 0) {
+                $normalizedPrefix = '+' . ltrim($normalizedPrefix, '+');
+            }
+            if ($normalizedPrefix === '+') {
+                $invalid[] = $segment;
+                continue;
+            }
+
+            $languageCode = $this->normalizeLanguageCode($langRaw, true);
+            if ($languageCode === '') {
+                $languageCode = 'INT';
+            }
+
+            $map[$normalizedPrefix] = $languageCode;
+        }
+
+        if ($invalid !== []) {
+            $definition = $this->getFieldDefinition($pageKey, $fieldKey);
+            $fieldLabel = is_array($definition) && isset($definition['label']) ? (string) $definition['label'] : $fieldKey;
+
+            $this->addError(
+                $pageKey,
+                $fieldKey . '_invalid_prefix_map',
+                sprintf(
+                    __('Alcune righe non sono state accettate per il campo %s: %s', 'fp-restaurant-reservations'),
+                    $fieldLabel,
+                    implode(', ', array_map('wp_strip_all_tags', $invalid))
+                )
+            );
+        }
+
+        if ($map === []) {
+            $map = self::DEFAULT_PHONE_PREFIX_MAP;
+        }
+
+        $encoded = wp_json_encode($map);
+        if (!is_string($encoded)) {
+            $encoded = wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP);
+        }
+
+        return (string) $encoded;
+    }
+
+    /**
+     * @param array<string, mixed> $field
+     *
+     * @return array<string, string>
+     */
+    private function decodePhonePrefixMapValue(mixed $value, array $field): array
+    {
+        $raw = '';
+        if (is_string($value) && $value !== '') {
+            $raw = $value;
+        } elseif (is_string($field['default'] ?? null) && $field['default'] !== '') {
+            $raw = (string) $field['default'];
+        } else {
+            $raw = (string) wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP);
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return self::DEFAULT_PHONE_PREFIX_MAP;
+        }
+
+        $map = [];
+        foreach ($decoded as $prefix => $language) {
+            if (!is_string($prefix) || !is_string($language)) {
+                continue;
+            }
+
+            $prefix = trim($prefix);
+            if ($prefix === '') {
+                continue;
+            }
+
+            if (strpos($prefix, '+') !== 0) {
+                $prefix = '+' . ltrim($prefix, '+');
+            }
+
+            if ($prefix === '+') {
+                continue;
+            }
+
+            $langCode = $this->normalizeLanguageCode($language, true);
+            if ($langCode === '') {
+                $langCode = 'INT';
+            }
+
+            $map[$prefix] = $langCode;
+        }
+
+        if ($map === []) {
+            $map = self::DEFAULT_PHONE_PREFIX_MAP;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    private function renderPhonePrefixPreview(array $map): string
+    {
+        $title = '<strong>' . esc_html(__('Anteprima mapping attivo:', 'fp-restaurant-reservations')) . '</strong> ';
+        if ($map === []) {
+            return '<p class="description">' . $title . esc_html(__('Nessun mapping disponibile.', 'fp-restaurant-reservations')) . '</p>';
+        }
+
+        $items = [];
+        foreach ($map as $prefix => $language) {
+            $items[] = '<code>' . esc_html($prefix . ' → ' . $language) . '</code>';
+        }
+
+        return '<p class="description">' . $title . implode(', ', $items) . '</p>';
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    private function formatPhonePrefixMapValue(array $map): string
+    {
+        if ($map === []) {
+            return '';
+        }
+
+        $pairs = [];
+        foreach ($map as $prefix => $language) {
+            $pairs[] = $prefix . '=' . $language;
+        }
+
+        return implode(', ', $pairs);
+    }
+
+    private function normalizeLanguageCode(string $value, bool $allowInternational = false): string
+    {
+        $upper = strtoupper(trim($value));
+        if ($upper === '') {
+            return '';
+        }
+
+        if (strpos($upper, 'IT') === 0) {
+            return 'IT';
+        }
+
+        if (strpos($upper, 'EN') === 0) {
+            return 'EN';
+        }
+
+        if ($allowInternational && strpos($upper, 'INT') === 0) {
+            return 'INT';
+        }
+
+        return '';
     }
 
     private function validateServiceHoursDefinition(string $pageKey, string $definition): void
@@ -1124,10 +1330,30 @@ final class AdminPages
                                 'default'     => '',
                                 'description' => __('Chiave privata con permessi marketing + transactional.', 'fp-restaurant-reservations'),
                             ],
-                            'brevo_list_id' => [
-                                'label'       => __('ID lista contatti', 'fp-restaurant-reservations'),
+                            'brevo_list_id_it' => [
+                                'label'       => __('ID lista contatti IT', 'fp-restaurant-reservations'),
                                 'type'        => 'text',
                                 'default'     => '',
+                                'description' => __('Lista per i contatti con lingua italiana.', 'fp-restaurant-reservations'),
+                            ],
+                            'brevo_list_id_en' => [
+                                'label'       => __('ID lista contatti EN', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => '',
+                                'description' => __('Lista per i contatti con lingua inglese o internazionale.', 'fp-restaurant-reservations'),
+                            ],
+                            'brevo_phone_prefix_map' => [
+                                'label'       => __('Mappa prefissi telefono → lingua', 'fp-restaurant-reservations'),
+                                'type'        => 'phone_prefix_map',
+                                'rows'        => 4,
+                                'default'     => (string) wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP),
+                                'description' => __('Usa formato +39=IT,+33=EN oppure righe separate. I valori ammessi sono IT, EN o INT.', 'fp-restaurant-reservations'),
+                            ],
+                            'brevo_list_id' => [
+                                'label'       => __('ID lista contatti (fallback)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => '',
+                                'description' => __('Lista di ripiego se non viene determinata una lingua specifica.', 'fp-restaurant-reservations'),
                             ],
                             'brevo_followup_offset_hours' => [
                                 'label'       => __('Invio follow-up (ore dalla visita)', 'fp-restaurant-reservations'),

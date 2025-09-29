@@ -17,7 +17,9 @@ use WP_REST_Server;
 use function __;
 use function absint;
 use function array_keys;
+use function array_filter;
 use function array_map;
+use function array_values;
 use function add_action;
 use function do_action;
 use function current_time;
@@ -27,12 +29,14 @@ use function in_array;
 use function is_array;
 use function is_string;
 use function preg_match;
+use function preg_split;
 use function rest_ensure_response;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
 use function strtolower;
 use function trim;
 use function substr;
+use function wp_timezone;
 
 final class AdminREST
 {
@@ -99,6 +103,71 @@ final class AdminREST
                 'permission_callback' => [$this, 'checkPermissions'],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/reservations/arrivals',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleArrivals'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'range' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'room' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'status' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
+    }
+
+    public function handleArrivals(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $range = strtolower((string) $request->get_param('range'));
+        if (!in_array($range, ['today', 'week'], true)) {
+            $range = 'today';
+        }
+
+        $timezone = wp_timezone();
+        $start    = new DateTimeImmutable('today', $timezone);
+        $end      = $range === 'week' ? $start->add(new DateInterval('P6D')) : $start;
+
+        $filters = [];
+
+        $room = $request->get_param('room');
+        if ($room !== null && $room !== '') {
+            $filters['room'] = (string) $room;
+        }
+
+        $status = $request->get_param('status');
+        if ($status !== null && $status !== '') {
+            $filters['status'] = sanitize_text_field((string) $status);
+        }
+
+        $rows = $this->reservations->findArrivals(
+            $start->format('Y-m-d'),
+            $end->format('Y-m-d'),
+            $filters
+        );
+
+        $reservations = array_map([$this, 'mapArrivalReservation'], $rows);
+
+        return rest_ensure_response([
+            'range'        => [
+                'mode'  => $range,
+                'start' => $start->format('Y-m-d'),
+                'end'   => $end->format('Y-m-d'),
+            ],
+            'reservations' => $reservations,
+        ]);
     }
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -417,5 +486,62 @@ final class AdminREST
         }
 
         return $payload;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array<string, mixed>
+     */
+    private function mapArrivalReservation(array $row): array
+    {
+        $time = isset($row['time']) ? substr((string) $row['time'], 0, 5) : '';
+
+        $guestParts = [];
+        if (!empty($row['first_name'])) {
+            $guestParts[] = (string) $row['first_name'];
+        }
+        if (!empty($row['last_name'])) {
+            $guestParts[] = (string) $row['last_name'];
+        }
+
+        $guest = trim(implode(' ', $guestParts));
+        if ($guest === '') {
+            $guest = (string) ($row['email'] ?? '');
+        }
+
+        $tableParts = [];
+        if (!empty($row['table_code'])) {
+            $tableParts[] = (string) $row['table_code'];
+        }
+        if (!empty($row['room_name'])) {
+            $tableParts[] = (string) $row['room_name'];
+        }
+
+        $tableLabel = $tableParts !== [] ? implode(' · ', $tableParts) : '';
+
+        $allergies = [];
+        if (!empty($row['allergies']) && is_string($row['allergies'])) {
+            $chunks = preg_split('/[\r\n,;]+/', (string) $row['allergies']) ?: [];
+            $allergies = array_values(array_filter(array_map(static function ($value) {
+                $value = trim((string) $value);
+
+                return $value !== '' ? $value : null;
+            }, $chunks)));
+        }
+
+        return [
+            'id'           => (int) ($row['id'] ?? 0),
+            'date'         => (string) ($row['date'] ?? ''),
+            'time'         => $time,
+            'party'        => (int) ($row['party'] ?? 0),
+            'table_label'  => $tableLabel,
+            'guest'        => $guest,
+            'notes'        => isset($row['notes']) ? (string) $row['notes'] : '',
+            'allergies'    => $allergies,
+            'status'       => (string) ($row['status'] ?? ''),
+            'language'     => (string) ($row['customer_lang'] ?? ($row['lang'] ?? '')),
+            'phone'        => isset($row['phone']) ? (string) $row['phone'] : '',
+        ];
     }
 }

@@ -1,3 +1,6 @@
+## PATCH-2025-09-29-A
+- Aggiornata l'integrazione Brevo con liste dedicate IT/EN, mappa prefissi telefonici configurabile e log iscrizioni automatiche su conferma/visita.
+
 ## 0.1.0 - Bootstrap
 - Avvio del progetto FP Restaurant Reservations.
 - Struttura directory iniziale e classi stub core/domain.
