@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="bootstrap.php" colors="true">
+    <testsuites>
+        <testsuite name="FP Restaurant Reservations">
+            <directory>Unit</directory>
+            <directory>Integration</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

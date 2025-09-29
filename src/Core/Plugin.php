@@ -1,0 +1,293 @@
+<?php
+
+declare(strict_types=1);
+
+namespace FP\Resv\Core;
+
+use FP\Resv\Core\Consent;
+use FP\Resv\Core\Privacy;
+use FP\Resv\Core\Scheduler;
+use FP\Resv\Domain\Brevo\AutomationService as BrevoAutomation;
+use FP\Resv\Domain\Brevo\Client as BrevoClient;
+use FP\Resv\Domain\Brevo\Mapper as BrevoMapper;
+use FP\Resv\Domain\Brevo\Repository as BrevoRepository;
+use FP\Resv\Domain\Closures\AdminController as ClosuresAdminController;
+use FP\Resv\Domain\Closures\REST as ClosuresREST;
+use FP\Resv\Domain\Closures\Service as ClosuresService;
+use FP\Resv\Domain\Calendar\GoogleCalendarService;
+use FP\Resv\Domain\Customers\Repository as CustomersRepository;
+use FP\Resv\Domain\Events\CPT as EventsCPT;
+use FP\Resv\Domain\Events\REST as EventsREST;
+use FP\Resv\Domain\Events\Service as EventsService;
+use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
+use FP\Resv\Domain\Payments\REST as PaymentsREST;
+use FP\Resv\Domain\Payments\StripeService;
+use FP\Resv\Domain\Reservations\AdminController as ReservationsAdminController;
+use FP\Resv\Domain\Reservations\AdminREST as ReservationsAdminREST;
+use FP\Resv\Domain\Reservations\Availability as AvailabilityService;
+use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
+use FP\Resv\Domain\Reservations\REST as ReservationsREST;
+use FP\Resv\Domain\Reservations\Service as ReservationsService;
+use FP\Resv\Domain\Reports\AdminController as ReportsAdminController;
+use FP\Resv\Domain\Reports\REST as ReportsREST;
+use FP\Resv\Domain\Reports\Service as ReportsService;
+use FP\Resv\Domain\Settings\AdminPages;
+use FP\Resv\Domain\Settings\Language as LanguageSettings;
+use FP\Resv\Domain\Settings\Options;
+use FP\Resv\Domain\Settings\Style as StyleSettings;
+use FP\Resv\Domain\Tracking\Ads as AdsTracking;
+use FP\Resv\Domain\Tracking\Clarity as ClarityTracking;
+use FP\Resv\Domain\Tracking\GA4 as GA4Tracking;
+use FP\Resv\Domain\Tracking\Manager as TrackingManager;
+use FP\Resv\Domain\Tracking\Meta as MetaTracking;
+use FP\Resv\Domain\Surveys\REST as SurveysREST;
+use FP\Resv\Domain\Tables\AdminController as TablesAdminController;
+use FP\Resv\Domain\Tables\LayoutService as TablesLayoutService;
+use FP\Resv\Domain\Tables\Repository as TablesRepository;
+use FP\Resv\Domain\Tables\REST as TablesREST;
+use FP\Resv\Frontend\WidgetController;
+use function is_admin;
+
+final class Plugin
+{
+    public const VERSION = '0.1.0';
+
+    public static string $file;
+    public static string $dir;
+    public static string $url;
+
+    public static function boot(string $file): void
+    {
+        self::$file = $file;
+        self::$dir  = plugin_dir_path($file);
+        self::$url  = plugin_dir_url($file);
+
+        require_once __DIR__ . '/Autoloader.php';
+        Autoloader::register();
+
+        register_activation_hook($file, [self::class, 'onActivate']);
+        add_action('plugins_loaded', [self::class, 'onPluginsLoaded']);
+    }
+
+    public static function onActivate(): void
+    {
+        ServiceContainer::getInstance();
+
+        Migrations::run();
+    }
+
+    public static function onPluginsLoaded(): void
+    {
+        $container = ServiceContainer::getInstance();
+        $container->register('plugin.file', self::$file);
+        $container->register('plugin.dir', self::$dir);
+        $container->register('plugin.url', self::$url);
+
+        $options = new Options();
+        $container->register(Options::class, $options);
+        $container->register('settings.options', $options);
+
+        $languageSettings = new LanguageSettings($options);
+        $container->register(LanguageSettings::class, $languageSettings);
+        $container->register('settings.language', $languageSettings);
+
+        Consent::init($options);
+
+        $mailer = new Mailer();
+        $mailer->registerHooks();
+        $container->register(Mailer::class, $mailer);
+        $container->register('core.mailer', $mailer);
+
+        $styleSettings = new StyleSettings($options);
+        $container->register(StyleSettings::class, $styleSettings);
+        $container->register('settings.style', $styleSettings);
+
+        global $wpdb;
+
+        $paymentsRepository = new PaymentsRepository($wpdb);
+        $container->register(PaymentsRepository::class, $paymentsRepository);
+        $container->register('payments.repository', $paymentsRepository);
+
+        $stripe = new StripeService($options, $paymentsRepository);
+        $container->register(StripeService::class, $stripe);
+        $container->register('payments.stripe', $stripe);
+
+        $availability = new AvailabilityService($options, $wpdb);
+        $container->register(AvailabilityService::class, $availability);
+        $container->register('reservations.availability', $availability);
+
+        $customersRepository = new CustomersRepository($wpdb);
+        $container->register(CustomersRepository::class, $customersRepository);
+        $container->register('customers.repository', $customersRepository);
+
+        $reservationsRepository = new ReservationsRepository($wpdb);
+        $container->register(ReservationsRepository::class, $reservationsRepository);
+        $container->register('reservations.repository', $reservationsRepository);
+
+        $privacy = new Privacy($options, $customersRepository, $reservationsRepository, $wpdb);
+        $container->register(Privacy::class, $privacy);
+        $container->register('core.privacy', $privacy);
+
+        $googleCalendar = new GoogleCalendarService($options, $reservationsRepository);
+        $googleCalendar->boot();
+        $container->register(GoogleCalendarService::class, $googleCalendar);
+        $container->register('calendar.google', $googleCalendar);
+
+        $tablesRepository = new TablesRepository($wpdb);
+        $container->register(TablesRepository::class, $tablesRepository);
+        $container->register('tables.repository', $tablesRepository);
+
+        $tablesLayout = new TablesLayoutService($tablesRepository);
+        $container->register(TablesLayoutService::class, $tablesLayout);
+        $container->register('tables.layout', $tablesLayout);
+
+        $closuresService = new ClosuresService($wpdb, $options);
+        $container->register(ClosuresService::class, $closuresService);
+        $container->register('closures.service', $closuresService);
+
+        $reservationsService = new ReservationsService(
+            $reservationsRepository,
+            $options,
+            $languageSettings,
+            $mailer,
+            $customersRepository,
+            $stripe,
+            $googleCalendar
+        );
+        $container->register(ReservationsService::class, $reservationsService);
+        $container->register('reservations.service', $reservationsService);
+
+        $reportsService = new ReportsService($wpdb, $reservationsRepository, $paymentsRepository);
+        $container->register(ReportsService::class, $reportsService);
+        $container->register('reports.service', $reportsService);
+
+        $brevoRepository = new BrevoRepository($wpdb);
+        $container->register(BrevoRepository::class, $brevoRepository);
+        $container->register('brevo.repository', $brevoRepository);
+
+        $brevoClient = new BrevoClient($options);
+        $container->register(BrevoClient::class, $brevoClient);
+        $container->register('brevo.client', $brevoClient);
+
+        $brevoMapper = new BrevoMapper();
+        $container->register(BrevoMapper::class, $brevoMapper);
+        $container->register('brevo.mapper', $brevoMapper);
+
+        $brevoAutomation = new BrevoAutomation(
+            $options,
+            $brevoClient,
+            $brevoMapper,
+            $brevoRepository,
+            $reservationsRepository,
+            $mailer
+        );
+        $brevoAutomation->boot();
+        $container->register(BrevoAutomation::class, $brevoAutomation);
+        $container->register('brevo.automation', $brevoAutomation);
+
+        $eventsService = new EventsService($wpdb, $reservationsService, $reservationsRepository, $customersRepository, $stripe);
+        $container->register(EventsService::class, $eventsService);
+        $container->register('events.service', $eventsService);
+
+        $ga4     = new GA4Tracking($options);
+        $ads     = new AdsTracking($options);
+        $meta    = new MetaTracking($options);
+        $clarity = new ClarityTracking($options);
+
+        $container->register(GA4Tracking::class, $ga4);
+        $container->register(AdsTracking::class, $ads);
+        $container->register(MetaTracking::class, $meta);
+        $container->register(ClarityTracking::class, $clarity);
+
+        $trackingManager = new TrackingManager($options, $ga4, $ads, $meta, $clarity);
+        $trackingManager->boot();
+        $container->register(TrackingManager::class, $trackingManager);
+        $container->register('tracking.manager', $trackingManager);
+
+        if (is_admin()) {
+            $adminPages = new AdminPages();
+            $adminPages->register();
+            $container->register(AdminPages::class, $adminPages);
+            $container->register('settings.admin_pages', $adminPages);
+
+            $reservationsAdmin = new ReservationsAdminController();
+            $reservationsAdmin->register();
+            $container->register(ReservationsAdminController::class, $reservationsAdmin);
+            $container->register('reservations.admin_controller', $reservationsAdmin);
+
+            $tablesAdmin = new TablesAdminController($tablesLayout);
+            $tablesAdmin->register();
+            $container->register(TablesAdminController::class, $tablesAdmin);
+            $container->register('tables.admin_controller', $tablesAdmin);
+
+            $closuresAdmin = new ClosuresAdminController($closuresService);
+            $closuresAdmin->register();
+            $container->register(ClosuresAdminController::class, $closuresAdmin);
+            $container->register('closures.admin_controller', $closuresAdmin);
+
+            $reportsAdmin = new ReportsAdminController();
+            $reportsAdmin->register();
+            $container->register(ReportsAdminController::class, $reportsAdmin);
+            $container->register('reports.admin_controller', $reportsAdmin);
+        }
+
+        Migrations::run();
+
+        I18n::init();
+
+        $reservationsRest = new ReservationsREST($availability, $reservationsService);
+        $reservationsRest->register();
+        $container->register(ReservationsREST::class, $reservationsRest);
+        $container->register('reservations.rest', $reservationsRest);
+
+        $eventsRest = new EventsREST($eventsService);
+        $eventsRest->register();
+        $container->register(EventsREST::class, $eventsRest);
+        $container->register('events.rest', $eventsRest);
+
+        $paymentsRest = new PaymentsREST($stripe, $paymentsRepository, $reservationsRepository);
+        $paymentsRest->register();
+        $container->register(PaymentsREST::class, $paymentsRest);
+        $container->register('payments.rest', $paymentsRest);
+
+        $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar);
+        $adminRest->register();
+        $container->register(ReservationsAdminREST::class, $adminRest);
+        $container->register('reservations.admin_rest', $adminRest);
+
+        $tablesRest = new TablesREST($tablesLayout);
+        $tablesRest->register();
+        $container->register(TablesREST::class, $tablesRest);
+        $container->register('tables.rest', $tablesRest);
+
+        $closuresRest = new ClosuresREST($closuresService);
+        $closuresRest->register();
+        $container->register(ClosuresREST::class, $closuresRest);
+        $container->register('closures.rest', $closuresRest);
+
+        $surveysRest = new SurveysREST($options, $languageSettings, $reservationsRepository, $wpdb);
+        $surveysRest->register();
+        $container->register(SurveysREST::class, $surveysRest);
+        $container->register('surveys.rest', $surveysRest);
+
+        $reportsRest = new ReportsREST($reportsService);
+        $reportsRest->register();
+        $container->register(ReportsREST::class, $reportsRest);
+        $container->register('reports.rest', $reportsRest);
+
+        $widgets = new WidgetController();
+        $widgets->boot();
+
+        $container->register(WidgetController::class, $widgets);
+        $container->register('frontend.widgets', $widgets);
+
+        $eventsCpt = new EventsCPT();
+        $eventsCpt->register();
+        $container->register(EventsCPT::class, $eventsCpt);
+        $container->register('events.cpt', $eventsCpt);
+
+        Scheduler::init();
+
+        REST::init();
+    }
+}

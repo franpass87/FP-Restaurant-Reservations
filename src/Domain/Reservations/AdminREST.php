@@ -1,0 +1,421 @@
+<?php
+
+declare(strict_types=1);
+
+namespace FP\Resv\Domain\Reservations;
+
+use DateInterval;
+use DateTimeImmutable;
+use FP\Resv\Domain\Calendar\GoogleCalendarService;
+use InvalidArgumentException;
+use RuntimeException;
+use Throwable;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
+use function __;
+use function absint;
+use function array_keys;
+use function array_map;
+use function add_action;
+use function do_action;
+use function current_time;
+use function current_user_can;
+use function gmdate;
+use function in_array;
+use function is_array;
+use function is_string;
+use function preg_match;
+use function rest_ensure_response;
+use function sanitize_text_field;
+use function sanitize_textarea_field;
+use function strtolower;
+use function trim;
+use function substr;
+
+final class AdminREST
+{
+    public function __construct(
+        private readonly Repository $reservations,
+        private readonly Service $service,
+        private readonly ?GoogleCalendarService $calendar = null
+    ) {
+    }
+
+    public function register(): void
+    {
+        add_action('rest_api_init', [$this, 'registerRoutes']);
+    }
+
+    public function registerRoutes(): void
+    {
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAgenda'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'date' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'range' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda/reservations',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handleCreateReservation'],
+                'permission_callback' => [$this, 'checkPermissions'],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda/reservations/(?P<id>\d+)',
+            [
+                'methods'             => WP_REST_Server::EDITABLE,
+                'callback'            => [$this, 'handleUpdateReservation'],
+                'permission_callback' => [$this, 'checkPermissions'],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda/reservations/(?P<id>\d+)/move',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handleMoveReservation'],
+                'permission_callback' => [$this, 'checkPermissions'],
+            ]
+        );
+    }
+
+    public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $dateParam = $request->get_param('date');
+        $date = $this->sanitizeDate($dateParam);
+        if ($date === null) {
+            $date = gmdate('Y-m-d');
+        }
+
+        $range = $request->get_param('range');
+        $rangeMode = is_string($range) ? strtolower($range) : 'day';
+        if (!in_array($rangeMode, ['day', 'week'], true)) {
+            $rangeMode = 'day';
+        }
+
+        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date) ?: new DateTimeImmutable($date);
+        $end   = $rangeMode === 'week' ? $start->add(new DateInterval('P6D')) : $start;
+
+        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+        $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
+
+        return rest_ensure_response([
+            'range'        => [
+                'mode'  => $rangeMode,
+                'start' => $start->format('Y-m-d'),
+                'end'   => $end->format('Y-m-d'),
+            ],
+            'reservations' => $reservations,
+            'meta'         => [
+                'generated_at' => gmdate('c'),
+            ],
+        ]);
+    }
+
+    public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $payload = $this->extractReservationPayload($request);
+
+        try {
+            $result = $this->service->create($payload);
+        } catch (InvalidArgumentException|RuntimeException $exception) {
+            return new WP_Error(
+                'fp_resv_admin_reservation_invalid',
+                $exception->getMessage(),
+                ['status' => 400]
+            );
+        } catch (Throwable $exception) {
+            return new WP_Error(
+                'fp_resv_admin_reservation_error',
+                __('Impossibile creare la prenotazione.', 'fp-restaurant-reservations'),
+                ['status' => 500, 'details' => $exception->getMessage()]
+            );
+        }
+
+        $entry = $this->reservations->findAgendaEntry((int) $result['id']);
+
+        return rest_ensure_response([
+            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+            'result'      => $result,
+        ]);
+    }
+
+    public function handleUpdateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = absint((string) $request->get_param('id'));
+        if ($id <= 0) {
+            return new WP_Error('fp_resv_invalid_reservation_id', __('ID prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $updates = [];
+
+        if ($request->offsetExists('status')) {
+            $status = strtolower(sanitize_text_field((string) $request->get_param('status')));
+            if ($status !== '' && !in_array($status, Service::ALLOWED_STATUSES, true)) {
+                return new WP_Error('fp_resv_invalid_status', __('Stato prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
+            }
+            $updates['status'] = $status === '' ? null : $status;
+        }
+
+        if ($request->offsetExists('party')) {
+            $party = max(1, absint((string) $request->get_param('party')));
+            $updates['party'] = $party;
+        }
+
+        if ($request->offsetExists('notes')) {
+            $updates['notes'] = sanitize_textarea_field((string) $request->get_param('notes'));
+        }
+
+        if ($request->offsetExists('allergies')) {
+            $updates['allergies'] = sanitize_textarea_field((string) $request->get_param('allergies'));
+        }
+
+        if ($request->offsetExists('visited')) {
+            $visited = (string) $request->get_param('visited');
+            if (in_array(strtolower($visited), ['1', 'true', 'yes', 'on'], true)) {
+                $updates['visited_at'] = current_time('mysql');
+                $updates['status']     = $updates['status'] ?? 'visited';
+            } else {
+                $updates['visited_at'] = null;
+            }
+        }
+
+        if ($request->offsetExists('table_id')) {
+            $tableId = absint((string) $request->get_param('table_id'));
+            $updates['table_id'] = $tableId > 0 ? $tableId : null;
+        }
+
+        if ($request->offsetExists('room_id')) {
+            $roomId = absint((string) $request->get_param('room_id'));
+            $updates['room_id'] = $roomId > 0 ? $roomId : null;
+        }
+
+        if ($updates === []) {
+            return new WP_Error('fp_resv_no_updates', __('Nessuna modifica fornita.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $original = $this->reservations->findAgendaEntry($id);
+        if ($original === null) {
+            return new WP_Error('fp_resv_reservation_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
+        }
+
+        if ($this->calendar !== null && $this->calendar->shouldBlockOnBusy()) {
+            $previousStatus = (string) ($original['status'] ?? '');
+            $targetStatus   = $updates['status'] ?? $previousStatus;
+
+            if ($targetStatus === 'confirmed' && $previousStatus !== 'confirmed') {
+                $date = (string) ($original['date'] ?? '');
+                $time = substr((string) ($original['time'] ?? ''), 0, 5);
+
+                if ($date !== '' && $time !== '' && $this->calendar->isWindowBusy($date, $time, $this->calendar->eventId($id))) {
+                    return new WP_Error(
+                        'fp_resv_google_busy',
+                        __('Lo slot selezionato risulta occupato su Google Calendar. Scegli un altro orario.', 'fp-restaurant-reservations'),
+                        ['status' => 409]
+                    );
+                }
+            }
+        }
+
+        try {
+            $this->reservations->update($id, $updates);
+        } catch (RuntimeException $exception) {
+            return new WP_Error('fp_resv_update_failed', $exception->getMessage(), ['status' => 500]);
+        }
+
+        $entry = $this->reservations->findAgendaEntry($id);
+
+        if (is_array($entry)) {
+            $previousStatus = (string) ($original['status'] ?? '');
+            $currentStatus  = (string) ($entry['status'] ?? $previousStatus);
+
+            $statusChanged = $currentStatus !== $previousStatus;
+            $visitedToggled = !empty($updates['visited_at']) && empty($original['visited_at']) && !empty($entry['visited_at']);
+
+            if ($statusChanged || $visitedToggled) {
+                do_action('fp_resv_reservation_status_changed', $id, $previousStatus, $currentStatus, $entry);
+            }
+        }
+
+        do_action('fp_resv_reservation_updated', $id, $entry, $updates, $original);
+
+        return rest_ensure_response([
+            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+            'updated'     => array_keys($updates),
+        ]);
+    }
+
+    public function handleMoveReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = absint((string) $request->get_param('id'));
+        if ($id <= 0) {
+            return new WP_Error('fp_resv_invalid_reservation_id', __('ID prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $dateParam = $this->sanitizeDate($request->get_param('date'));
+        if ($dateParam === null) {
+            return new WP_Error('fp_resv_invalid_date', __('Data non valida.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $time = sanitize_text_field((string) $request->get_param('time'));
+        if (!preg_match('/^\d{2}:\d{2}$/', $time)) {
+            return new WP_Error('fp_resv_invalid_time', __('Orario non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $updates = [
+            'date'     => $dateParam,
+            'time'     => $time . ':00',
+            'table_id' => null,
+            'room_id'  => null,
+        ];
+
+        $tableId = absint((string) $request->get_param('table_id'));
+        if ($tableId > 0) {
+            $updates['table_id'] = $tableId;
+        }
+
+        $roomId = absint((string) $request->get_param('room_id'));
+        if ($roomId > 0) {
+            $updates['room_id'] = $roomId;
+        }
+
+        if ($this->calendar !== null && $this->calendar->shouldBlockOnBusy()) {
+            $guardTime = substr($updates['time'], 0, 5);
+            if ($this->calendar->isWindowBusy($dateParam, $guardTime, $this->calendar->eventId($id))) {
+                return new WP_Error(
+                    'fp_resv_google_busy',
+                    __('Lo slot selezionato risulta occupato su Google Calendar. Scegli un altro orario.', 'fp-restaurant-reservations'),
+                    ['status' => 409]
+                );
+            }
+        }
+
+        try {
+            $this->reservations->update($id, $updates);
+        } catch (RuntimeException $exception) {
+            return new WP_Error('fp_resv_move_failed', $exception->getMessage(), ['status' => 500]);
+        }
+
+        $entry = $this->reservations->findAgendaEntry($id);
+
+        do_action('fp_resv_reservation_moved', $id, $entry, $updates);
+
+        return rest_ensure_response([
+            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+            'moved'       => true,
+        ]);
+    }
+
+    private function checkPermissions(): bool
+    {
+        return current_user_can('manage_options');
+    }
+
+    private function sanitizeDate(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim(sanitize_text_field($value));
+        if ($value === '') {
+            return null;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array<string, mixed>
+     */
+    private function mapAgendaReservation(array $row): array
+    {
+        return [
+            'id'         => (int) $row['id'],
+            'status'     => (string) ($row['status'] ?? 'pending'),
+            'date'       => (string) $row['date'],
+            'time'       => substr((string) $row['time'], 0, 5),
+            'party'      => (int) $row['party'],
+            'notes'      => (string) ($row['notes'] ?? ''),
+            'allergies'  => (string) ($row['allergies'] ?? ''),
+            'room_id'    => isset($row['room_id']) ? (int) $row['room_id'] : null,
+            'table_id'   => isset($row['table_id']) ? (int) $row['table_id'] : null,
+            'customer'   => [
+                'id'         => isset($row['customer_id']) ? (int) $row['customer_id'] : null,
+                'first_name' => (string) ($row['first_name'] ?? ''),
+                'last_name'  => (string) ($row['last_name'] ?? ''),
+                'email'      => (string) ($row['email'] ?? ''),
+                'phone'      => (string) ($row['phone'] ?? ''),
+                'language'   => (string) ($row['customer_lang'] ?? ''),
+            ],
+            'visited_at' => $row['visited_at'] ?? null,
+            'calendar_event_id'    => $row['calendar_event_id'] ?? null,
+            'calendar_sync_status' => $row['calendar_sync_status'] ?? null,
+            'calendar_synced_at'   => $row['calendar_synced_at'] ?? null,
+            'calendar_last_error'  => $row['calendar_last_error'] ?? null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractReservationPayload(WP_REST_Request $request): array
+    {
+        $payload = [
+            'date'       => $request->get_param('date') ?? '',
+            'time'       => $request->get_param('time') ?? '',
+            'party'      => $request->get_param('party') ?? 0,
+            'first_name' => $request->get_param('first_name') ?? '',
+            'last_name'  => $request->get_param('last_name') ?? '',
+            'email'      => $request->get_param('email') ?? '',
+            'phone'      => $request->get_param('phone') ?? '',
+            'notes'      => $request->get_param('notes') ?? '',
+            'allergies'  => $request->get_param('allergies') ?? '',
+            'language'   => $request->get_param('language') ?? '',
+            'locale'     => $request->get_param('locale') ?? '',
+            'location'   => $request->get_param('location') ?? '',
+            'currency'   => $request->get_param('currency') ?? '',
+            'utm_source' => $request->get_param('utm_source') ?? '',
+            'utm_medium' => $request->get_param('utm_medium') ?? '',
+            'utm_campaign' => $request->get_param('utm_campaign') ?? '',
+            'status'     => $request->get_param('status') ?? null,
+            'room_id'    => $request->get_param('room_id') ?? null,
+            'table_id'   => $request->get_param('table_id') ?? null,
+            'value'      => $request->get_param('value') ?? null,
+        ];
+
+        if ($request->offsetExists('visited') && in_array(strtolower((string) $request->get_param('visited')), ['1', 'true', 'yes', 'on'], true)) {
+            $payload['status'] = 'visited';
+        }
+
+        return $payload;
+    }
+}
