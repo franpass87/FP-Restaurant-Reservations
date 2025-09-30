@@ -1,15 +1,42 @@
 <?php
 /** @var string $hook_suffix */
-?>
-<div class="wrap fp-resv-reports">
-    <h1 class="wp-heading-inline"><?php esc_html_e('Dashboard & Report', 'fp-restaurant-reservations'); ?></h1>
-    <p class="description">
-        <?php esc_html_e('Monitora KPI giornalieri, esporta prenotazioni e consulta i log di sistema.', 'fp-restaurant-reservations'); ?>
-    </p>
 
-    <div id="fp-resv-reports-app" class="fp-resv-reports__app">
-        <div class="fp-resv-reports__filters" data-section="toolbar">
-            <div class="fp-resv-reports__dates">
+$settingsUrl = admin_url('admin.php?page=fp-resv-settings');
+$headingId   = 'fp-resv-analytics-title';
+?>
+<div class="fp-resv-admin fp-resv-admin--analytics" role="region" aria-labelledby="<?php echo esc_attr($headingId); ?>">
+    <header class="fp-resv-admin__topbar">
+        <div class="fp-resv-admin__identity">
+            <nav class="fp-resv-admin__breadcrumbs" aria-label="<?php esc_attr_e('Percorso', 'fp-restaurant-reservations'); ?>">
+                <a href="<?php echo esc_url($settingsUrl); ?>"><?php esc_html_e('FP Reservations', 'fp-restaurant-reservations'); ?></a>
+                <span class="fp-resv-admin__breadcrumb-separator" aria-hidden="true">/</span>
+                <span class="fp-resv-admin__breadcrumb-current"><?php esc_html_e('Report & Analytics', 'fp-restaurant-reservations'); ?></span>
+            </nav>
+            <div>
+                <h1 class="fp-resv-admin__title" id="<?php echo esc_attr($headingId); ?>">
+                    <?php esc_html_e('Report & Analytics', 'fp-restaurant-reservations'); ?>
+                </h1>
+                <p class="fp-resv-admin__subtitle">
+                    <?php esc_html_e("Visualizza l'andamento delle prenotazioni, individua i canali più efficaci e scarica i dati in CSV.", 'fp-restaurant-reservations'); ?>
+                </p>
+            </div>
+        </div>
+        <div class="fp-resv-admin__actions">
+            <a class="button" href="<?php echo esc_url($settingsUrl); ?>">
+                <?php esc_html_e('Impostazioni', 'fp-restaurant-reservations'); ?>
+            </a>
+            <a class="button button-primary" href="#fp-resv-analytics-app">
+                <?php esc_html_e('Vai alla dashboard', 'fp-restaurant-reservations'); ?>
+            </a>
+        </div>
+    </header>
+
+    <main class="fp-resv-admin__main">
+        <section class="fp-resv-admin__toolbar" aria-labelledby="<?php echo esc_attr($headingId); ?>-filters">
+            <h2 id="<?php echo esc_attr($headingId); ?>-filters" class="screen-reader-text">
+                <?php esc_html_e('Filtri Analytics', 'fp-restaurant-reservations'); ?>
+            </h2>
+            <div class="fp-resv-admin__toolbar-row fp-resv-analytics__filters" data-role="filters">
                 <label>
                     <span><?php esc_html_e('Dal', 'fp-restaurant-reservations'); ?></span>
                     <input type="date" data-role="date-start" />
@@ -18,98 +45,102 @@
                     <span><?php esc_html_e('Al', 'fp-restaurant-reservations'); ?></span>
                     <input type="date" data-role="date-end" />
                 </label>
+                <label>
+                    <span><?php esc_html_e('Sede', 'fp-restaurant-reservations'); ?></span>
+                    <select data-role="location">
+                        <option value=""><?php esc_html_e('Tutte le sedi', 'fp-restaurant-reservations'); ?></option>
+                    </select>
+                </label>
                 <button type="button" class="button button-primary" data-action="reload">
-                    <?php esc_html_e('Aggiorna intervallo', 'fp-restaurant-reservations'); ?>
+                    <?php esc_html_e('Aggiorna', 'fp-restaurant-reservations'); ?>
+                </button>
+                <button type="button" class="button" data-action="export" aria-live="polite">
+                    <?php esc_html_e('Esporta CSV', 'fp-restaurant-reservations'); ?>
                 </button>
             </div>
-            <div class="fp-resv-reports__export">
-                <span class="fp-resv-reports__export-label"><?php esc_html_e('Esporta prenotazioni', 'fp-restaurant-reservations'); ?></span>
-                <button type="button" class="button" data-export="csv"><?php esc_html_e('CSV', 'fp-restaurant-reservations'); ?></button>
-                <button type="button" class="button" data-export="excel"><?php esc_html_e('Excel (;)', 'fp-restaurant-reservations'); ?></button>
+        </section>
+
+        <div id="fp-resv-analytics-app" class="fp-resv-analytics__app" data-role="analytics-app">
+            <div class="fp-resv-analytics__loading" data-role="loading" hidden>
+                <?php esc_html_e('Caricamento analytics…', 'fp-restaurant-reservations'); ?>
             </div>
+            <p class="fp-resv-analytics__empty" data-role="empty" hidden>
+                <?php esc_html_e('Nessun dato disponibile per i filtri selezionati.', 'fp-restaurant-reservations'); ?>
+            </p>
+
+            <section class="fp-resv-analytics__summary" aria-labelledby="<?php echo esc_attr($headingId); ?>-summary">
+                <h2 id="<?php echo esc_attr($headingId); ?>-summary" class="screen-reader-text">
+                    <?php esc_html_e('Riepilogo prenotazioni', 'fp-restaurant-reservations'); ?>
+                </h2>
+                <article class="fp-resv-analytics__summary-card" data-metric="reservations">
+                    <h3><?php esc_html_e('Prenotazioni', 'fp-restaurant-reservations'); ?></h3>
+                    <p data-role="summary-reservations" aria-live="polite">0</p>
+                </article>
+                <article class="fp-resv-analytics__summary-card" data-metric="covers">
+                    <h3><?php esc_html_e('Coperti', 'fp-restaurant-reservations'); ?></h3>
+                    <p data-role="summary-covers" aria-live="polite">0</p>
+                </article>
+                <article class="fp-resv-analytics__summary-card" data-metric="revenue">
+                    <h3><?php esc_html_e('Valore', 'fp-restaurant-reservations'); ?></h3>
+                    <p data-role="summary-value" aria-live="polite">€0</p>
+                </article>
+                <article class="fp-resv-analytics__summary-card" data-metric="avg-party">
+                    <h3><?php esc_html_e('Party medio', 'fp-restaurant-reservations'); ?></h3>
+                    <p data-role="summary-avg-party" aria-live="polite">0</p>
+                </article>
+                <article class="fp-resv-analytics__summary-card" data-metric="avg-ticket">
+                    <h3><?php esc_html_e('Ticket medio', 'fp-restaurant-reservations'); ?></h3>
+                    <p data-role="summary-avg-ticket" aria-live="polite">0</p>
+                </article>
+            </section>
+
+            <section class="fp-resv-card fp-resv-analytics__card" data-section="channels">
+                <header class="fp-resv-card__header">
+                    <h2><?php esc_html_e('Canali principali', 'fp-restaurant-reservations'); ?></h2>
+                    <p><?php esc_html_e('Distribuzione delle prenotazioni per canale di acquisizione.', 'fp-restaurant-reservations'); ?></p>
+                </header>
+                <div class="fp-resv-card__body">
+                    <canvas data-role="channels-chart" aria-label="<?php esc_attr_e('Distribuzione prenotazioni per canale', 'fp-restaurant-reservations'); ?>" role="img"></canvas>
+                </div>
+            </section>
+
+            <section class="fp-resv-card fp-resv-analytics__card" data-section="trend">
+                <header class="fp-resv-card__header">
+                    <h2><?php esc_html_e('Trend giornaliero', 'fp-restaurant-reservations'); ?></h2>
+                    <p><?php esc_html_e('Prenotazioni e coperti giorno per giorno.', 'fp-restaurant-reservations'); ?></p>
+                </header>
+                <div class="fp-resv-card__body">
+                    <canvas data-role="trend-chart" aria-label="<?php esc_attr_e('Trend giornaliero delle prenotazioni', 'fp-restaurant-reservations'); ?>" role="img"></canvas>
+                </div>
+            </section>
+
+            <section class="fp-resv-card fp-resv-analytics__card" data-section="table">
+                <header class="fp-resv-card__header">
+                    <h2><?php esc_html_e('Sorgenti top', 'fp-restaurant-reservations'); ?></h2>
+                    <p><?php esc_html_e('Le principali combinazioni di sorgente, mezzo e campagna con share sul totale.', 'fp-restaurant-reservations'); ?></p>
+                </header>
+                <div class="fp-resv-card__body">
+                    <table class="widefat fixed" data-role="sources-table">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?php esc_html_e('Sorgente', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Mezzo', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Campagna', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Prenotazioni', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Coperti', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Valore', 'fp-restaurant-reservations'); ?></th>
+                                <th scope="col"><?php esc_html_e('Share', 'fp-restaurant-reservations'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody data-role="sources-body"></tbody>
+                    </table>
+                    <p class="fp-resv-analytics__empty" data-role="sources-empty" hidden>
+                        <?php esc_html_e('Nessuna sorgente tracciata.', 'fp-restaurant-reservations'); ?>
+                    </p>
+                </div>
+            </section>
+
+            <div class="screen-reader-text" aria-live="polite" data-role="live-region"></div>
         </div>
-
-        <section class="fp-resv-card" data-section="summary">
-            <header class="fp-resv-card__header">
-                <h2><?php esc_html_e('KPI giornalieri', 'fp-restaurant-reservations'); ?></h2>
-                <p><?php esc_html_e('Prenotazioni, coperti e caparre registrate giorno per giorno.', 'fp-restaurant-reservations'); ?></p>
-            </header>
-            <div class="fp-resv-card__body">
-                <div class="fp-resv-reports__loading" data-role="summary-loading" hidden>
-                    <?php esc_html_e('Caricamento in corso…', 'fp-restaurant-reservations'); ?>
-                </div>
-                <table class="widefat fixed" data-role="summary-table" hidden>
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('Prenotazioni totali', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('Coperti', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('Media coperti', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('Visitati %', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('No-show %', 'fp-restaurant-reservations'); ?></th>
-                            <th><?php esc_html_e('Caparre', 'fp-restaurant-reservations'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody data-role="summary-body"></tbody>
-                </table>
-                <p class="fp-resv-reports__empty" data-role="summary-empty" hidden>
-                    <?php esc_html_e('Nessun dato disponibile.', 'fp-restaurant-reservations'); ?>
-                </p>
-            </div>
-        </section>
-
-        <section class="fp-resv-card" data-section="logs">
-            <header class="fp-resv-card__header">
-                <h2><?php esc_html_e('Log di sistema', 'fp-restaurant-reservations'); ?></h2>
-                <div class="fp-resv-reports__log-filters">
-                    <label>
-                        <span><?php esc_html_e('Canale', 'fp-restaurant-reservations'); ?></span>
-                        <select data-role="log-channel">
-                            <option value="mail"><?php esc_html_e('Email', 'fp-restaurant-reservations'); ?></option>
-                            <option value="brevo"><?php esc_html_e('Brevo', 'fp-restaurant-reservations'); ?></option>
-                            <option value="audit"><?php esc_html_e('Audit', 'fp-restaurant-reservations'); ?></option>
-                        </select>
-                    </label>
-                    <label>
-                        <span><?php esc_html_e('Stato', 'fp-restaurant-reservations'); ?></span>
-                        <input type="text" data-role="log-status" placeholder="sent, failed…" />
-                    </label>
-                    <label class="fp-resv-reports__log-search">
-                        <span><?php esc_html_e('Ricerca', 'fp-restaurant-reservations'); ?></span>
-                        <input type="search" data-role="log-search" placeholder="subject, action, IP…" />
-                    </label>
-                    <button type="button" class="button" data-action="logs-reload"><?php esc_html_e('Filtra', 'fp-restaurant-reservations'); ?></button>
-                </div>
-            </header>
-            <div class="fp-resv-card__body">
-                <div class="fp-resv-reports__loading" data-role="logs-loading" hidden>
-                    <?php esc_html_e('Caricamento log…', 'fp-restaurant-reservations'); ?>
-                </div>
-                <table class="widefat striped" data-role="logs-table" hidden>
-                    <thead>
-                        <tr data-role="logs-head"></tr>
-                    </thead>
-                    <tbody data-role="logs-body"></tbody>
-                </table>
-                <p class="fp-resv-reports__empty" data-role="logs-empty" hidden>
-                    <?php esc_html_e('Nessun evento trovato per i filtri selezionati.', 'fp-restaurant-reservations'); ?>
-                </p>
-                <div class="tablenav" data-role="logs-pagination" hidden>
-                    <div class="tablenav-pages">
-                        <span class="displaying-num" data-role="logs-count"></span>
-                        <span class="pagination-links">
-                            <button type="button" class="button" data-page="first" aria-label="<?php esc_attr_e('Prima pagina', 'fp-restaurant-reservations'); ?>">&laquo;</button>
-                            <button type="button" class="button" data-page="prev" aria-label="<?php esc_attr_e('Pagina precedente', 'fp-restaurant-reservations'); ?>">&lsaquo;</button>
-                            <span class="paging-input">
-                                <input type="number" data-role="logs-page" min="1" value="1" />
-                                <span class="tablenav-paging-text">/ <span data-role="logs-total-pages">1</span></span>
-                            </span>
-                            <button type="button" class="button" data-page="next" aria-label="<?php esc_attr_e('Pagina successiva', 'fp-restaurant-reservations'); ?>">&rsaquo;</button>
-                            <button type="button" class="button" data-page="last" aria-label="<?php esc_attr_e('Ultima pagina', 'fp-restaurant-reservations'); ?>">&raquo;</button>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+    </main>
 </div>

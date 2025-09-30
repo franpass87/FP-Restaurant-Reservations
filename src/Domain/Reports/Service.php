@@ -10,6 +10,7 @@ use DateTimeImmutable;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
+use function array_keys;
 use function array_map;
 use function array_values;
 use function ceil;
@@ -22,39 +23,33 @@ use function is_numeric;
 use function is_string;
 use function ksort;
 use function max;
+use function number_format;
 use function preg_match;
+use function round;
 use function rewind;
 use function sprintf;
 use function stream_get_contents;
 use function str_replace;
+use function str_contains;
+use function strtolower;
 use function strtoupper;
 use function substr;
+use function usort;
 use function trim;
 
 final class Service
 {
     /**
-     * @var array<string, array<string, mixed>>
+     * @var array<int, string>
      */
-    private const LOG_TABLES = [
-        'mail' => [
-            'table'           => 'fp_mail_log',
-            'order_by'        => 'created_at',
-            'search_columns'  => ['to_emails', 'subject', 'first_line', 'error'],
-            'status_column'   => 'status',
-        ],
-        'brevo' => [
-            'table'           => 'fp_brevo_log',
-            'order_by'        => 'created_at',
-            'search_columns'  => ['action', 'payload_snippet', 'status', 'error'],
-            'status_column'   => 'status',
-        ],
-        'audit' => [
-            'table'           => 'fp_audit_log',
-            'order_by'        => 'created_at',
-            'search_columns'  => ['action', 'entity', 'actor_role', 'ip', 'before_json', 'after_json'],
-            'status_column'   => null,
-        ],
+    private const ANALYTICS_CHANNELS = [
+        'google_ads',
+        'meta_ads',
+        'organic',
+        'direct',
+        'referral',
+        'email',
+        'other',
     ];
 
     public function __construct(
@@ -62,6 +57,222 @@ final class Service
         private readonly ReservationsRepository $reservations,
         private readonly PaymentsRepository $payments
     ) {
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function listLocations(): array
+    {
+        $table = $this->reservations->tableName();
+        $sql   = 'SELECT DISTINCT location_id FROM ' . $table . ' WHERE location_id IS NOT NULL AND location_id <> "" ORDER BY location_id ASC';
+
+        $rows = $this->wpdb->get_col($sql);
+
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $locations = [];
+        foreach ($rows as $value) {
+            if (!is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            $locations[] = [
+                'id'    => $value,
+                'label' => $value,
+            ];
+        }
+
+        return $locations;
+    }
+
+    /**
+     * @param array<string, mixed> $args
+     *
+     * @return array<string, mixed>
+     */
+    public function getAnalytics(array $args = []): array
+    {
+        [$start, $end] = $this->resolveRange(
+            (string) ($args['start'] ?? ''),
+            isset($args['end']) ? (string) $args['end'] : null
+        );
+
+        $location = isset($args['location']) ? trim((string) $args['location']) : '';
+        $location = $location !== '' ? $location : null;
+
+        $buckets   = $this->bootstrapTrendBuckets($start, $end);
+        $channels  = $this->bootstrapChannelBuckets();
+        $sources   = [];
+        $totals    = [
+            'reservations' => 0,
+            'covers'       => 0,
+            'value'        => 0.0,
+        ];
+        $currencies = [];
+
+        $table = $this->reservations->tableName();
+        $where = 'date BETWEEN %s AND %s AND status <> %s';
+        $params = [
+            $start->format('Y-m-d'),
+            $end->format('Y-m-d'),
+            'cancelled',
+        ];
+
+        if ($location !== null) {
+            $where   .= ' AND location_id = %s';
+            $params[] = $location;
+        }
+
+        $sql = 'SELECT date, party, value, currency, utm_source, utm_medium, utm_campaign, status '
+            . 'FROM ' . $table
+            . ' WHERE ' . $where;
+
+        $rows = $this->wpdb->get_results($this->wpdb->prepare($sql, $params), ARRAY_A);
+
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $status = strtolower((string) ($row['status'] ?? ''));
+                if ($status === 'deleted') {
+                    continue;
+                }
+
+                $date = (string) ($row['date'] ?? '');
+                if (!isset($buckets[$date])) {
+                    continue;
+                }
+
+                $covers = (int) ($row['party'] ?? 0);
+                $value  = $this->normalizeFloat($row['value'] ?? null);
+                $currency = (string) ($row['currency'] ?? '');
+                if ($currency !== '') {
+                    $currencies[$currency] = true;
+                }
+
+                $buckets[$date]['reservations'] += 1;
+                $buckets[$date]['covers']       += $covers;
+                $buckets[$date]['value']        += $value;
+
+                $totals['reservations'] += 1;
+                $totals['covers']       += $covers;
+                $totals['value']        += $value;
+
+                $source   = strtolower(trim((string) ($row['utm_source'] ?? '')));
+                $medium   = strtolower(trim((string) ($row['utm_medium'] ?? '')));
+                $campaign = (string) ($row['utm_campaign'] ?? '');
+                $channel  = $this->classifyChannel($source, $medium);
+
+                $channels[$channel]['reservations'] += 1;
+                $channels[$channel]['covers']       += $covers;
+                $channels[$channel]['value']        += $value;
+
+                $key = $source . '|' . $medium . '|' . $campaign;
+                if (!isset($sources[$key])) {
+                    $sources[$key] = [
+                        'source'        => $source,
+                        'medium'        => $medium,
+                        'campaign'      => $campaign,
+                        'reservations'  => 0,
+                        'covers'        => 0,
+                        'value'         => 0.0,
+                    ];
+                }
+
+                $sources[$key]['reservations'] += 1;
+                $sources[$key]['covers']       += $covers;
+                $sources[$key]['value']        += $value;
+            }
+        }
+
+        $currencyList = array_keys($currencies);
+        $primaryCurrency = $currencyList[0] ?? '';
+
+        foreach ($buckets as &$bucket) {
+            $bucket['value'] = round((float) $bucket['value'], 2);
+        }
+        unset($bucket);
+
+        foreach ($channels as &$channelBucket) {
+            $channelBucket['share'] = $totals['reservations'] > 0
+                ? round(($channelBucket['reservations'] / $totals['reservations']) * 100, 2)
+                : 0.0;
+            $channelBucket['value'] = round((float) $channelBucket['value'], 2);
+        }
+        unset($channelBucket);
+
+        $topSources = array_values($sources);
+        usort($topSources, static function (array $a, array $b): int {
+            return ($b['reservations'] <=> $a['reservations']) ?: ($b['value'] <=> $a['value']);
+        });
+
+        $topSources = array_map(function (array $row) use ($totals): array {
+            $row['value'] = round((float) $row['value'], 2);
+            $row['share'] = $totals['reservations'] > 0
+                ? round(($row['reservations'] / $totals['reservations']) * 100, 2)
+                : 0.0;
+
+            return $row;
+        }, $topSources);
+
+        return [
+            'range' => [
+                'start' => $start->format('Y-m-d'),
+                'end'   => $end->format('Y-m-d'),
+            ],
+            'summary' => [
+                'reservations' => $totals['reservations'],
+                'covers'       => $totals['covers'],
+                'value'        => round((float) $totals['value'], 2),
+                'avg_party'    => $totals['reservations'] > 0
+                    ? round($totals['covers'] / $totals['reservations'], 2)
+                    : 0.0,
+                'avg_ticket'   => $totals['reservations'] > 0
+                    ? round($totals['value'] / $totals['reservations'], 2)
+                    : 0.0,
+                'currency'     => $primaryCurrency,
+            ],
+            'channels'   => array_values($channels),
+            'trend'      => array_values($buckets),
+            'topSources' => $topSources,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $args
+     *
+     * @return array<string, string>
+     */
+    public function exportAnalytics(array $args = []): array
+    {
+        $analytics = $this->getAnalytics($args);
+
+        $headers = ['source', 'medium', 'campaign', 'reservations', 'covers', 'value', 'share'];
+
+        $rows = array_map(static function (array $row): array {
+            return [
+                'source'       => $row['source'] !== '' ? $row['source'] : 'direct',
+                'medium'       => $row['medium'],
+                'campaign'     => $row['campaign'],
+                'reservations' => (string) $row['reservations'],
+                'covers'       => (string) $row['covers'],
+                'value'        => number_format((float) $row['value'], 2, '.', ''),
+                'share'        => number_format((float) $row['share'], 2, '.', ''),
+            ];
+        }, $analytics['topSources']);
+
+        $content = $this->buildCsv($headers, $rows, ',', false);
+
+        $range = $analytics['range'];
+
+        return [
+            'filename'  => sprintf('fp-analytics-%s-%s.csv', $range['start'], $range['end']),
+            'content'   => $content,
+            'mime_type' => 'text/csv; charset=utf-8',
+            'delimiter' => ',',
+            'format'    => 'csv',
+        ];
     }
 
     /**
@@ -183,115 +394,6 @@ final class Service
         unset($data);
 
         return array_values($buckets);
-    }
-
-    /**
-     * @param array<string, mixed> $args
-     *
-     * @return array<string, mixed>
-     */
-    public function getLogs(string $channel, array $args = []): array
-    {
-        $channel = strtolower(trim($channel));
-        if (!isset(self::LOG_TABLES[$channel])) {
-            return [
-                'entries'    => [],
-                'pagination' => [
-                    'page'        => 1,
-                    'per_page'    => 20,
-                    'total'       => 0,
-                    'total_pages' => 0,
-                ],
-            ];
-        }
-
-        $config = self::LOG_TABLES[$channel];
-        $table  = $this->wpdb->prefix . $config['table'];
-
-        $page    = max(1, (int) ($args['page'] ?? 1));
-        $perPage = max(1, min(100, (int) ($args['per_page'] ?? 25)));
-
-        $where    = [];
-        $params   = [];
-        $status   = isset($args['status']) ? trim((string) $args['status']) : '';
-        $dateFrom = isset($args['from']) ? $this->normalizeDateString((string) $args['from']) : null;
-        $dateTo   = isset($args['to']) ? $this->normalizeDateString((string) $args['to']) : null;
-        $search   = isset($args['search']) ? trim((string) $args['search']) : '';
-
-        if ($status !== '' && is_string($config['status_column'])) {
-            $where[]  = $config['status_column'] . ' = %s';
-            $params[] = $status;
-        }
-
-        if ($dateFrom !== null) {
-            $where[]  = 'created_at >= %s';
-            $params[] = $dateFrom . ' 00:00:00';
-        }
-
-        if ($dateTo !== null) {
-            $where[]  = 'created_at <= %s';
-            $params[] = $dateTo . ' 23:59:59';
-        }
-
-        if ($search !== '' && !empty($config['search_columns'])) {
-            $like      = '%' . $this->wpdb->esc_like($search) . '%';
-            $searchSql = [];
-            foreach ($config['search_columns'] as $column) {
-                $searchSql[] = $column . ' LIKE %s';
-                $params[]    = $like;
-            }
-
-            if ($searchSql !== []) {
-                $where[] = '(' . implode(' OR ', $searchSql) . ')';
-            }
-        }
-
-        $whereSql = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
-
-        $countSql = 'SELECT COUNT(*) FROM ' . $table . $whereSql;
-        $count    = (int) ($params !== []
-            ? $this->wpdb->get_var($this->wpdb->prepare($countSql, $params))
-            : $this->wpdb->get_var($countSql));
-
-        $offset = ($page - 1) * $perPage;
-        $query  = 'SELECT * FROM ' . $table . $whereSql
-            . ' ORDER BY ' . $config['order_by'] . ' DESC'
-            . ' LIMIT %d OFFSET %d';
-
-        $queryParams = $params;
-        $queryParams[] = $perPage;
-        $queryParams[] = $offset;
-
-        $preparedQuery = $params !== []
-            ? $this->wpdb->prepare($query, $queryParams)
-            : $this->wpdb->prepare($query, $perPage, $offset);
-
-        $rows = $this->wpdb->get_results($preparedQuery, ARRAY_A);
-
-        $entries = [];
-        if (is_array($rows)) {
-            foreach ($rows as $row) {
-                $entries[] = array_map(static function ($value) {
-                    if (is_numeric($value)) {
-                        return $value + 0;
-                    }
-
-                    return $value;
-                }, $row);
-            }
-        }
-
-        $totalPages = $count > 0 ? (int) ceil($count / $perPage) : 0;
-
-        return [
-            'entries'    => $entries,
-            'pagination' => [
-                'page'        => $page,
-                'per_page'    => $perPage,
-                'total'       => $count,
-                'total_pages' => $totalPages,
-            ],
-        ];
     }
 
     /**
@@ -527,5 +629,110 @@ final class Service
         fclose($handle);
 
         return is_string($csv) ? $csv : '';
+    }
+
+    /**
+     * @return array<string, array<string, float|int|string>>
+     */
+    private function bootstrapChannelBuckets(): array
+    {
+        $buckets = [];
+        foreach (self::ANALYTICS_CHANNELS as $channel) {
+            $buckets[$channel] = [
+                'channel'      => $channel,
+                'reservations' => 0,
+                'covers'       => 0,
+                'value'        => 0.0,
+                'share'        => 0.0,
+            ];
+        }
+
+        return $buckets;
+    }
+
+    /**
+     * @return array<string, array<string, float|int|string>>
+     */
+    private function bootstrapTrendBuckets(DateTimeImmutable $start, DateTimeImmutable $end): array
+    {
+        $period = new DatePeriod($start, new DateInterval('P1D'), $end->modify('+1 day'));
+        $buckets = [];
+
+        foreach ($period as $date) {
+            $key = $date->format('Y-m-d');
+            $buckets[$key] = [
+                'date'         => $key,
+                'reservations' => 0,
+                'covers'       => 0,
+                'value'        => 0.0,
+            ];
+        }
+
+        return $buckets;
+    }
+
+    private function classifyChannel(string $source, string $medium): string
+    {
+        $source = strtolower($source);
+        $medium = strtolower($medium);
+
+        if ($source === '' && $medium === '') {
+            return 'direct';
+        }
+
+        if (str_contains($source, 'google') && ($medium === 'cpc' || $medium === 'ppc' || $medium === 'paid_search')) {
+            return 'google_ads';
+        }
+
+        if (str_contains($source, 'gclid')) {
+            return 'google_ads';
+        }
+
+        if (
+            str_contains($source, 'facebook')
+            || str_contains($source, 'instagram')
+            || str_contains($source, 'meta')
+            || $medium === 'paid_social'
+        ) {
+            return 'meta_ads';
+        }
+
+        if ($medium === 'email' || $medium === 'newsletter' || str_contains($source, 'newsletter')) {
+            return 'email';
+        }
+
+        if ($medium === 'organic' || str_contains($source, 'google') || str_contains($source, 'bing')) {
+            return 'organic';
+        }
+
+        if ($medium === 'referral') {
+            return 'referral';
+        }
+
+        if ($source === 'direct' || $medium === '(none)') {
+            return 'direct';
+        }
+
+        return 'other';
+    }
+
+    private function normalizeFloat(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value)) {
+            $normalized = str_replace(',', '.', $value);
+            if (is_numeric($normalized)) {
+                return (float) $normalized;
+            }
+        }
+
+        return 0.0;
     }
 }

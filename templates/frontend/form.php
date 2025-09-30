@@ -61,6 +61,7 @@ endif;
     id="<?php echo esc_attr($formId); ?>"
     data-fp-resv="<?php echo esc_attr($datasetJson); ?>"
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
+    data-fp-resv-app
 >
     <div class="fp-resv-widget__topbar fp-topbar fp-section">
         <div class="fp-resv-widget__titles">
@@ -115,22 +116,24 @@ endif;
             <input class="fp-input" type="text" name="fp_resv_hp" value="" autocomplete="off">
         </label>
         <?php if ($steps !== []) : ?>
-            <ul class="fp-progress" data-fp-resv-progress aria-label="<?php esc_attr_e('Avanzamento prenotazione', 'fp-restaurant-reservations'); ?>">
-                <?php foreach ($steps as $index => $step) : ?>
-                    <?php
-                    $stepKey   = (string) ($step['key'] ?? '');
-                    $isCurrent = $index === 0;
-                    ?>
-                    <li
-                        class="fp-progress__item"
-                        data-step="<?php echo esc_attr($stepKey); ?>"
-                        <?php echo $isCurrent ? 'data-state="active" aria-current="step"' : 'data-state="locked"'; ?>
-                    >
-                        <span class="fp-progress__index"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
-                        <span class="fp-progress__label"><?php echo esc_html($progressLabels[$stepKey] ?? ($step['title'] ?? '')); ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <div class="fp-resv-progress" data-fp-resv-progress-shell>
+                <ul class="fp-progress" data-fp-resv-progress aria-label="<?php esc_attr_e('Avanzamento prenotazione', 'fp-restaurant-reservations'); ?>">
+                    <?php foreach ($steps as $index => $step) : ?>
+                        <?php
+                        $stepKey   = (string) ($step['key'] ?? '');
+                        $isCurrent = $index === 0;
+                        ?>
+                        <li
+                            class="fp-progress__item"
+                            data-step="<?php echo esc_attr($stepKey); ?>"
+                            <?php echo $isCurrent ? 'data-state="active" aria-current="step"' : 'data-state="locked"'; ?>
+                        >
+                            <span class="fp-progress__index"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
+                            <span class="fp-progress__label"><?php echo esc_html($progressLabels[$stepKey] ?? ($step['title'] ?? '')); ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         <?php endif; ?>
         <?php if ($meals !== []) : ?>
             <section class="fp-section fp-meals" data-fp-resv-meals>
@@ -361,7 +364,7 @@ endif;
                 </li>
             <?php endforeach; ?>
         </ol>
-        <div class="fp-resv-widget__actions">
+        <div class="fp-resv-widget__actions fp-resv-sticky-cta" data-fp-resv-sticky-cta>
             <?php
             $submitLabel = $strings['actions']['submit'] ?? __('Book now', 'fp-restaurant-reservations');
             $ctaDisabled = $strings['messages']['cta_complete_fields'] ?? __('Complete required fields', 'fp-restaurant-reservations');

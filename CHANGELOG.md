@@ -1,3 +1,27 @@
+## 1.0.0 - UI Refresh Release
+
+### Added
+- Form "FormApp" single-page con progressivo step-by-step, validazioni live, tracking eventi `dataLayer` e CTA sticky mobile.
+- Dashboard **Report & Analytics** con grafico a torta dei canali, trend giornaliero, tabella sorgenti UTM ed export CSV (Chart.js locale).
+- Pagina **Diagnostica** dedicata con tab Email/Webhook/Stripe/API/Cron, filtri, ricerca e download CSV.
+- Editor **Stile & Tema** con token (palette, radius, shadow, spacing, tipografia, focus ring), anteprima live e checker contrasto WCAG AA.
+- Seeder QA accessibile via REST e WP-CLI per generare/pulire dati di smoke test.
+- Workflow GitHub "Build Plugin Zip" per generare automaticamente lo ZIP di rilascio dai tag `v*`.
+
+### Changed
+- Restyling completo delle schermate amministrative con shell condivisa, layout responsive e CPT Eventi annidato nel menu del plugin.
+- Pipeline frontend aggiornata a Vite con bundle duale ESM/IIFE e enqueue condizionale degli asset solo quando necessari.
+- Servizi Report & Availability potenziati per filtri sede, aggregazioni marketing, caching transiente e rate limit per IP.
+- Controller JS frontend aggiornato con debounce 400 ms, retry con backoff e messaggistica accessibile per slot e errori.
+
+### Fixed
+- Eliminata l'eccezione "Cannot use import statement outside a module" grazie al bundle IIFE di fallback.
+- Applicati header `Cache-Control: no-store` a tutte le risposte REST sensibili sotto `fp-resv/v1`.
+- Migliorati i messaggi di errore e la resilienza delle richieste disponibilità con retry e pulsante "Riprova".
+
+### Breaking
+- Nessuna rottura intenzionale: il form e gli endpoint REST mantengono le stesse firme pubbliche.
+
 ## PATCH WOW-UI+FE
 - Aggiornato `assets/css/form.css` con scala tipografica, progress bar animata, skeleton shimmer e CTA smart con spinner testuale.
 - Introdotti moduli JS (`phone.js`, `availability.js`, `onepage.js`) per maschera E.164, debounce disponibilità con retry/backoff e submit ottimistico con error boundary accessibile.
@@ -87,7 +111,7 @@
 - Modulo eventi con CPT pubblico, prenotazione biglietti, QR testuali, API REST per vendita ed export invitati con data layer e rilevamento pagamento Stripe opzionale (FASE 8).
 - Pagamenti Stripe opzionali con PaymentIntent, repository dedicato, conferma pubblica e API admin per capture/void/refund con sincronizzazione stato prenotazione (FASE 9).
 - Tracking & Consent Mode v2 con manager centralizzato, GA4/Ads/Meta/Clarity condizionati dal consenso, dataLayer orchestrato lato server, gestione cookie UTM e propagazione eventi nelle risposte REST (FASE 10).
-- Automazione Brevo con upsert contatti, tracking eventi reservation_confirmed/visited/post_visit, follow-up +24h dalla visita, survey REST con calcolo NPS e template review Google (FASE 11).
+- Automazione Brevo con upsert contatti, tracking eventi reservation_confirmed/visited/post_visit, survey REST con calcolo NPS e template review Google (FASE 11).
 - Integrazione Google Calendar con refresh token OAuth, controllo disponibilità anti-overbooking, sincronizzazione deterministica fp-resv-{id} e pulizia eventi in base allo stato prenotazione (FASE 12).
 - Gestione sale e tavoli con repository dedicato, layout service, SPA amministrativa drag & drop e API REST per CRUD, merge/split e suggerimenti automatici di combinazioni tavoli (FASE 13).
 - Pianificazione chiusure e orari speciali con servizio dedicato, preview impatti, audit log, REST protette e interfaccia admin con calendario riepilogativo (FASE 14).

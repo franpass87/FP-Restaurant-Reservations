@@ -1,0 +1,347 @@
+:root {
+    --fp-resv-admin-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --fp-resv-admin-bg: #f5f6f8;
+    --fp-resv-admin-surface: #ffffff;
+    --fp-resv-admin-surface-alt: #f9fafb;
+    --fp-resv-admin-text: #1d1f24;
+    --fp-resv-admin-muted: #5b667a;
+    --fp-resv-admin-border: #d6dae3;
+    --fp-resv-admin-accent: #4338ca;
+    --fp-resv-admin-accent-strong: #312e81;
+    --fp-resv-admin-radius: 10px;
+    --fp-resv-admin-shadow: 0 24px 40px -28px rgba(15, 23, 42, 0.45);
+    --fp-resv-admin-gap: clamp(16px, 2vw, 28px);
+}
+
+.fp-resv-admin {
+    font-family: var(--fp-resv-admin-font);
+    color: var(--fp-resv-admin-text);
+    background: var(--fp-resv-admin-bg);
+    padding: clamp(20px, 3vw, 36px);
+    margin: 0;
+    border-radius: 0;
+    line-height: 1.55;
+    font-size: 15px;
+}
+
+.fp-resv-admin a {
+    color: var(--fp-resv-admin-accent);
+    text-decoration: none;
+}
+
+.fp-resv-admin a:hover,
+.fp-resv-admin a:focus-visible {
+    color: var(--fp-resv-admin-accent-strong);
+    text-decoration: underline;
+}
+
+.fp-resv-admin__topbar {
+    background: var(--fp-resv-admin-surface);
+    border-radius: var(--fp-resv-admin-radius);
+    box-shadow: var(--fp-resv-admin-shadow);
+    padding: clamp(18px, 2vw, 26px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(16px, 2vw, 32px);
+    flex-wrap: wrap;
+}
+
+.fp-resv-admin__identity {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 220px;
+}
+
+.fp-resv-admin__breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin__breadcrumbs a {
+    color: inherit;
+}
+
+.fp-resv-admin__breadcrumb-separator {
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin__breadcrumb-current {
+    color: var(--fp-resv-admin-text);
+    font-weight: 600;
+}
+
+.fp-resv-admin__title {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.fp-resv-admin__subtitle {
+    margin: 0;
+    color: var(--fp-resv-admin-muted);
+    font-size: 14px;
+    max-width: 640px;
+}
+
+.fp-resv-admin__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fp-resv-admin__actions .button {
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-weight: 600;
+}
+
+.fp-resv-admin__actions .button.button-primary {
+    background-color: var(--fp-resv-admin-accent);
+    border-color: var(--fp-resv-admin-accent);
+    color: #fff;
+    box-shadow: 0 10px 22px -12px rgba(67, 56, 202, 0.7);
+}
+
+.fp-resv-admin__actions .button.button-primary:hover,
+.fp-resv-admin__actions .button.button-primary:focus-visible {
+    background-color: var(--fp-resv-admin-accent-strong);
+    border-color: var(--fp-resv-admin-accent-strong);
+    color: #fff;
+}
+
+.fp-resv-admin__main {
+    margin-top: clamp(20px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--fp-resv-admin-gap);
+}
+
+.fp-resv-surface {
+    background: var(--fp-resv-admin-surface);
+    border-radius: var(--fp-resv-admin-radius);
+    box-shadow: var(--fp-resv-admin-shadow);
+    padding: clamp(20px, 2.4vw, 32px);
+}
+
+.fp-resv-surface + .fp-resv-surface {
+    margin-top: 16px;
+}
+
+.fp-resv-card {
+    background: var(--fp-resv-admin-surface);
+    border-radius: var(--fp-resv-admin-radius);
+    box-shadow: var(--fp-resv-admin-shadow);
+    padding: clamp(20px, 2.4vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.fp-resv-card__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.fp-resv-card__header p {
+    margin: 4px 0 0;
+    color: var(--fp-resv-admin-muted);
+    font-size: 14px;
+}
+
+.fp-resv-admin__grid {
+    display: grid;
+    gap: var(--fp-resv-admin-gap);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.fp-resv-admin__toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.fp-resv-admin__toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.fp-resv-admin__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.fp-resv-admin__tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--fp-resv-admin-surface-alt);
+    color: var(--fp-resv-admin-muted);
+    font-size: 13px;
+    border: 1px solid transparent;
+    transition: background 120ms ease, color 120ms ease, border 120ms ease;
+}
+
+.fp-resv-admin__tab:hover,
+.fp-resv-admin__tab:focus-visible {
+    color: var(--fp-resv-admin-accent-strong);
+    border-color: var(--fp-resv-admin-accent);
+}
+
+.fp-resv-admin__tab.is-active {
+    background: rgba(67, 56, 202, 0.12);
+    color: var(--fp-resv-admin-accent-strong);
+    border-color: rgba(67, 56, 202, 0.28);
+    font-weight: 600;
+}
+
+.fp-resv-admin table.widefat,
+.fp-resv-admin table.wp-list-table {
+    background: var(--fp-resv-admin-surface);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    overflow: hidden;
+    border-color: rgba(15, 23, 42, 0.08);
+}
+
+.fp-resv-admin table.widefat thead th,
+.fp-resv-admin table.widefat tbody td {
+    padding: 12px 16px;
+}
+
+.fp-resv-admin .tablenav {
+    margin-top: 12px;
+}
+
+.fp-resv-admin .tablenav .button,
+.fp-resv-admin__toolbar .button {
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+.fp-resv-admin input[type="text"],
+.fp-resv-admin input[type="search"],
+.fp-resv-admin input[type="number"],
+.fp-resv-admin input[type="date"],
+.fp-resv-admin input[type="email"],
+.fp-resv-admin select,
+.fp-resv-admin textarea {
+    border-radius: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    padding: 8px 12px;
+    font-family: var(--fp-resv-admin-font);
+    transition: border 120ms ease, box-shadow 120ms ease;
+    min-height: 38px;
+}
+
+.fp-resv-admin input:focus-visible,
+.fp-resv-admin select:focus-visible,
+.fp-resv-admin textarea:focus-visible,
+.fp-resv-admin .button:focus-visible,
+.fp-resv-admin__tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--fp-resv-admin-accent);
+    border-color: var(--fp-resv-admin-accent);
+}
+
+.fp-resv-admin__status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(67, 56, 202, 0.12);
+    color: var(--fp-resv-admin-accent-strong);
+}
+
+.fp-resv-admin__empty-state {
+    padding: 32px;
+    border-radius: var(--fp-resv-admin-radius);
+    background: var(--fp-resv-admin-surface-alt);
+    text-align: center;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-settings__notices {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.fp-resv-settings__notices .notice {
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    padding: 14px 18px;
+    box-shadow: 0 10px 24px -16px rgba(15, 23, 42, 0.35);
+}
+
+.fp-resv-settings__form {
+    display: grid;
+    gap: 24px;
+}
+
+.fp-resv-settings__sections .form-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 18px;
+}
+
+.fp-resv-settings__sections .form-table th {
+    width: 240px;
+    color: var(--fp-resv-admin-muted);
+    font-weight: 600;
+    vertical-align: top;
+    padding: 0;
+}
+
+.fp-resv-settings__sections .form-table td {
+    padding: 0;
+}
+
+.fp-resv-settings__sections .form-table .description {
+    margin-top: 8px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-settings__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 960px) {
+    .fp-resv-admin {
+        padding: 16px;
+    }
+
+    .fp-resv-admin__topbar {
+        padding: 18px;
+    }
+
+    .fp-resv-admin__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fp-resv-admin *,
+    .fp-resv-admin *::before,
+    .fp-resv-admin *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

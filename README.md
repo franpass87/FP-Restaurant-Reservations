@@ -1,77 +1,76 @@
 # FP Restaurant Reservations
 
-FP Restaurant Reservations è un plugin WordPress pensato per ristoranti che necessitano di una piattaforma completa per la gestione delle prenotazioni, dei pagamenti opzionali, degli eventi e dei flussi di automazione marketing.
+FP Restaurant Reservations è un plugin WordPress completo per la gestione delle prenotazioni di un ristorante moderno: form single-page accessibile, agenda drag & drop, pagamenti facoltativi, analisi marketing e strumenti di diagnostica per l'assistenza.
 
 ## Requisiti
 
 - WordPress 6.5 o superiore (single site o multisite)
-- PHP 8.1 o superiore con estensioni `curl`, `mbstring`, `json`
+- PHP 8.1 o superiore con estensioni `curl`, `json`, `mbstring`
 - Accesso REST API attivo su WordPress
-- (Opzionale) Account Stripe e Brevo per le relative integrazioni
+- (Opzionale) account Stripe e Brevo per le rispettive integrazioni
 
 ## Installazione
 
-1. Copia la cartella del repository nella directory `wp-content/plugins/fp-restaurant-reservations` del tuo sito.
-2. Verifica i permessi di scrittura sulle cartelle di WordPress per consentire la generazione di file temporanei (es. ICS).
-3. Accedi alla Bacheca WordPress e attiva il plugin “FP Restaurant Reservations”.
-4. Alla prima attivazione il plugin esegue automaticamente le migrazioni database necessarie.
+1. Copia la cartella del repository in `wp-content/plugins/fp-restaurant-reservations`.
+2. Installa le dipendenze opzionali: `composer install --no-dev` e `npm install` (necessario solo negli ambienti di build).
+3. Esegui `npm run build` per generare i bundle JavaScript/CSS quando lavori da sorgente.
+4. Attiva il plugin dalla Bacheca WordPress.
+5. Dopo l'attivazione visita **Impostazioni → FP Reservations** per completare la configurazione guidata.
 
-> Suggerimento: è possibile tenere il repository come submodule Git per ambienti di staging/produzione.
+## Come integrare il form
 
-## Funzionalità principali
+Il form pubblico è una single-page application con progress bar, CTA sticky e validazioni live. È disponibile in tre modalità:
 
-- Prenotazione ristorante senza pagamento di default con email di conferma e link di gestione.
-- Pagamenti Stripe opzionali (caparra, pre-autorizzazione, pagamento completo).
-- Calendario agenda drag & drop in tempo reale con quick edit e creazione manuale.
-- Modulo eventi completo con biglietti e QR testuale per il check-in.
-- Gestione sale/tavoli con layout visuale, merge/split e suggeritore.
-- Gestione chiusure e orari speciali con priorità e ricorrenze.
-- Integrazione Google Calendar bidirezionale con controlli “busy”.
-- Tracking GA4/Ads/Meta/Clarity con Consent Mode v2 e dataLayer centralizzato.
-- Automazioni Brevo: upsert contatti, follow-up +24h dalla visita, survey post-visita e routing recensioni Google.
-- Dashboard KPI con export CSV/Excel e viewer log.
-- Gestione privacy (consensi granulari, DSAR, retention) e stile form personalizzabile (palette, tipografia, dark mode, WCAG checker).
+- Shortcode `[fp_reservations]`
+- Blocco Gutenberg **FP Reservations → Form**
+- Widget Elementor **FP Reservations Form**
 
-## Configurazione rapida
+Gli asset frontend vengono caricati solo quando shortcode/blocco/widget sono presenti sulla pagina. Il form espone gli eventi `dataLayer`/`fpResvTracking.dispatch`:
 
-Dopo l’attivazione visita **Impostazioni → FP Reservations** per completare i parametri principali:
+| Evento | Descrizione |
+| --- | --- |
+| `reservation_start` | L'utente apre il form e seleziona una data valida |
+| `section_unlocked` | Passaggio a uno step successivo (party, slot, dettagli, conferma) |
+| `meal_selected` | Scelta del turno/pasto |
+| `form_valid` | Tutti i campi obbligatori risultano validi |
+| `reservation_submit` | Invio della prenotazione |
+| `reservation_confirmed` | Prenotazione confermata lato server |
+| `purchase` | Prenotazione con pagamento stimato o confermato |
 
-1. **Generali** – orari di servizio, dimensioni party, valuta default, sedi.
-2. **Notifiche** – indirizzi email ristorante e webmaster, template e allegati ICS.
-3. **Pagamenti Stripe** – chiavi API, modalità pagamento (caparra/pre-auth/full), stato iniziale (OFF di default).
-4. **Brevo** – chiave API, elenchi, mapping attributi e soglie review Google.
-5. **Google Calendar** – credenziali OAuth, calendario target, preferenze privacy guest.
-6. **Stile del form** – palette, tipografia, variabili CSS e anteprima live.
-7. **Lingua** – auto-detect IT/EN, fallback e dizionari personalizzati.
-8. **Chiusure & Periodi** – regole ricorrenti, riduzioni capienza e anteprima impatti.
-9. **Sale & Tavoli** – configurazione layout, merge/split, suggeritore.
-10. **Tracking & Consent** – configurazione manager consenso, integrazioni GA4/Ads/Meta/Clarity.
+Il controller JavaScript implementa debounce da 400 ms, retry con backoff sugli slot (`/availability`) e rispetta gli header `Retry-After` per il rate limiting.
 
-Per il bottone “Scarica PDF” definisci un URL per lingua/sede all’interno delle impostazioni generali.
+## Pagine amministrative
 
-## Testing & Tooling
+Tutte le schermate dell'area di amministrazione condividono un layout coerente (breadcrumb, barre laterali, card responsive, supporto tema scuro).
 
-Il progetto fornisce solo sorgenti: nessun artefatto di build viene committato. Sono disponibili gli script:
+- **Agenda** – Calendario drag & drop con azioni rapide e dettagli prenotazione.
+- **Tavoli & Sale** – Editor visuale con merge/split e suggerimenti automatici.
+- **Chiusure** – Gestione periodi speciali e riduzioni di capienza con anteprima.
+- **Report & Analytics** – Grafico a torta per canali di acquisizione, linea temporale giornaliera, tabella sorgenti UTM ed export CSV.
+- **Diagnostica** – Log separati (Email, Webhook, Stripe, API, Cron/Queue) con filtri, ricerca, paginazione ed export CSV.
+- **Stile & Tema** – Editor token (palette, tipografia, radius, shadow, focus ring) con anteprima live del form e checker contrasto WCAG AA.
+- **Impostazioni** – Schede per generali, notifiche, pagamenti Stripe, Brevo, Google Calendar, privacy e lingua.
+- **Eventi** – Custom post type incluso nel menu del plugin per gestire degustazioni e serate speciali.
 
-- `composer dump-autoload` per aggiornare il mapping PSR-4 (se necessario).
-- `npm run lint:php` per eseguire PHPCS.
-- `npm run lint:phpstan` per l’analisi statica.
-- `npm run lint:js` e `npm run format:check` (una volta configurati ESLint/Prettier).
-- `npm run test` per la suite PHPUnit definita in `tests/phpunit.xml`.
+## API, sicurezza e performance
 
-## Struttura del repository
+- Endpoint REST namespaced `fp-resv/v1` con `no-store`, sanitizzazione parametri, nonce/capability dove richiesto e rate limit sugli slot.
+- Cache transient 30–60 s sulle risposte di disponibilità più comuni.
+- Export CSV per report e log con paginazione lato server.
+- Seeder QA disponibile via REST `/fp-resv/v1/qa/seed` (autenticazione amministratore) e WP-CLI `wp fp-resv qa seed` per generare dati demo o pulire le fixture.
 
-- `fp-restaurant-reservations.php`: bootstrap del plugin.
-- `src/`: codice PHP organizzato in domini (core, reservations, events, ecc.).
-- `assets/`: sorgenti JS/CSS per frontend e admin SPA (nessun build output incluso).
-- `templates/`: viste PHP per email, form e survey.
-- `tests/`: bootstrap PHPUnit con stub WordPress, integrazioni e Playwright.
-- `languages/`: file `.pot` stub per la localizzazione (nessun `.mo` binario).
+## Tooling & sviluppo
+
+- `npm run build` compila i bundle frontend (ESM + IIFE) e gli asset admin tramite Vite.
+- `npm run lint:php` esegue PHPCS; `npm run lint:phpstan` avvia PHPStan.
+- `composer dump-autoload` aggiorna il classmap PSR-4.
+- I file distribuiti sono generati nella cartella `assets/dist/`; gli asset sorgente restano in `assets/js` e `assets/css`.
+- Il workflow GitHub `Build Plugin Zip` crea automaticamente lo ZIP pronto per l'upload ad ogni tag `v*`.
 
 ## Supporto
 
-Per assistenza o richieste commerciali contattare **info@francescopasseri.com**.
+Per assistenza o richieste commerciali scrivere a **info@francescopasseri.com**.
 
 ## Licenza
 
-Distribuito sotto licenza GPLv2 o successiva.
+GPLv2 o successiva.

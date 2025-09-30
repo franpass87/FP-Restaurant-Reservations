@@ -1,143 +1,159 @@
-.fp-resv-tables-wrap {
-    position: relative;
-    max-width: 1280px;
-}
-
-.fp-resv-tables-app {
-    margin-top: 24px;
-    border: 1px solid #d9d9d9;
-    border-radius: 12px;
-    min-height: 460px;
-    background: #fff;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+.fp-resv-admin--tables .fp-resv-tables-app {
+    margin-top: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: calc(var(--fp-resv-admin-radius) + 2px);
+    min-height: 480px;
+    background: var(--fp-resv-admin-surface);
+    box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.45);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-.fp-resv-tables-app[data-state="loading"]::after {
-    content: 'Loading layout...';
+.fp-resv-admin--tables .fp-resv-tables-app[data-state="loading"]::after {
+    content: attr(data-loading-label);
     display: block;
-    padding: 120px 0;
+    padding: 140px 0;
     text-align: center;
-    color: #4b5563;
-    font-size: 16px;
+    color: var(--fp-resv-admin-muted);
+    font-size: 15px;
 }
 
-.fp-resv-tables-toolbar {
+.fp-resv-admin--tables .fp-resv-tables-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e5e7eb;
-    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-    border-radius: 12px 12px 0 0;
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.08) 0%, rgba(67, 56, 202, 0.02) 100%);
+    gap: 12px;
 }
 
-.fp-resv-tables-toolbar__left,
-.fp-resv-tables-toolbar__right {
+.fp-resv-admin--tables .fp-resv-tables-toolbar__left,
+.fp-resv-admin--tables .fp-resv-tables-toolbar__right {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
     align-items: center;
 }
 
-.fp-resv-tables-layout {
+.fp-resv-admin--tables .fp-resv-tables-toolbar .button {
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+.fp-resv-admin--tables .fp-resv-tables-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
     min-height: 360px;
     flex: 1 1 auto;
 }
 
-.fp-resv-tables-sidebar {
-    border-right: 1px solid #e5e7eb;
-    padding: 20px;
+.fp-resv-admin--tables .fp-resv-tables-sidebar {
+    border-right: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 22px;
+    background: var(--fp-resv-admin-surface-alt);
     overflow-y: auto;
-    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.fp-resv-tables-empty {
-    font-style: italic;
-    color: #6b7280;
-}
-
-.fp-resv-room-card {
+.fp-resv-admin--tables .fp-resv-room-card {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    box-shadow: 0 18px 32px -24px rgba(15, 23, 42, 0.45);
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.fp-resv-room-card header {
-    border-left: 6px solid var(--room-color, #6366f1);
+.fp-resv-admin--tables .fp-resv-room-card header {
+    border-left: 6px solid var(--room-color, var(--fp-resv-admin-accent));
     padding-left: 12px;
 }
 
-.fp-resv-room-card__actions {
+.fp-resv-admin--tables .fp-resv-room-card__actions {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-.fp-resv-tables-canvas {
+.fp-resv-admin--tables .fp-resv-tables-canvas {
     position: relative;
     padding: 24px;
-    overflow: hidden;
+    overflow: auto;
+    background: var(--fp-resv-admin-surface);
 }
 
-.fp-resv-canvas-room {
+.fp-resv-admin--tables .fp-resv-canvas-room {
     margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.fp-resv-canvas-room header {
+.fp-resv-admin--tables .fp-resv-canvas-room header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    gap: 12px;
 }
 
-.fp-resv-canvas-board {
+.fp-resv-admin--tables .fp-resv-canvas-board {
     position: relative;
-    min-height: 260px;
-    border-radius: 16px;
-    border: 2px dashed var(--room-color, #0ea5e9);
-    background-image: linear-gradient(to right, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    min-height: 280px;
+    border-radius: 18px;
+    border: 2px dashed var(--room-color, rgba(67, 56, 202, 0.65));
+    background-image: linear-gradient(to right, rgba(99, 102, 241, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
     background-size: 40px 40px;
     overflow: hidden;
     transform-origin: top left;
     transform: scale(var(--scale, 1));
 }
 
-.fp-resv-table-node {
+.fp-resv-admin--tables .fp-resv-table-node {
     position: absolute;
     top: 0;
     left: 0;
-    transform: translate(40px, 40px);
-    min-width: 56px;
-    padding: 8px 12px;
+    transform: translate(36px, 36px);
+    min-width: 60px;
+    padding: 8px 14px;
     border-radius: 999px;
     border: none;
-    background: #2563eb;
+    background: var(--room-color, #4338ca);
     color: #fff;
     cursor: grab;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 160ms ease, transform 160ms ease;
 }
 
-.fp-resv-table-node:active {
+.fp-resv-admin--tables .fp-resv-table-node:active {
     cursor: grabbing;
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 18px 36px -16px rgba(67, 56, 202, 0.55);
 }
 
-.fp-resv-table-node.status-blocked {
+.fp-resv-admin--tables .fp-resv-table-node.status-blocked {
     background: #f97316;
 }
 
-.fp-resv-table-node.status-maintenance {
+.fp-resv-admin--tables .fp-resv-table-node.status-maintenance {
     background: #ea580c;
 }
 
-.fp-resv-table-node.status-hidden {
+.fp-resv-admin--tables .fp-resv-table-node.status-hidden {
     background: #94a3b8;
+}
+
+@media (max-width: 960px) {
+    .fp-resv-admin--tables .fp-resv-tables-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .fp-resv-admin--tables .fp-resv-tables-sidebar {
+        border-right: none;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
 }

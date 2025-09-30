@@ -52,14 +52,17 @@ final class AdminController
 
         $scriptHandle = 'fp-resv-admin-agenda';
         $styleHandle  = 'fp-resv-admin-agenda-style';
+        $baseHandle   = 'fp-resv-admin-shell';
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/agenda-app.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-agenda.css';
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], Plugin::VERSION, true);
 
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+
         if (file_exists(Plugin::$dir . 'assets/css/admin-agenda.css')) {
-            wp_enqueue_style($styleHandle, $styleUrl, [], Plugin::VERSION);
+            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], Plugin::VERSION);
         }
 
         $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : '';
