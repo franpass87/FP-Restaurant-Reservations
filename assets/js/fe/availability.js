@@ -1,7 +1,8 @@
 
-const DEBOUNCE_MS = 250;
-const CACHE_TTL_MS = 120000;
-const RETRY_DELAYS_MS = [500, 1000, 2000];
+const DEBOUNCE_MS = 400;
+const CACHE_TTL_MS = 60000;
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_RETRY_DELAY_MS = 600;
 
 function buildUrl(base, params) {
     let url;
@@ -50,14 +51,19 @@ export function createAvailabilityController(options) {
         });
     }
 
-    function setStatus(message, loading) {
+    function setStatus(message, state) {
+        const normalizedState = typeof state === 'string'
+            ? state
+            : (state ? 'loading' : 'idle');
+        const text = typeof message === 'string' ? message : '';
         if (statusEl) {
-            statusEl.textContent = message;
-            statusEl.setAttribute('data-state', loading ? 'loading' : 'idle');
+            statusEl.textContent = text;
+            statusEl.setAttribute('data-state', normalizedState);
         }
-        root.setAttribute('data-loading', loading ? 'true' : 'false');
+        const isLoading = normalizedState === 'loading';
+        root.setAttribute('data-loading', isLoading ? 'true' : 'false');
         if (listEl) {
-            listEl.setAttribute('aria-busy', loading ? 'true' : 'false');
+            listEl.setAttribute('aria-busy', isLoading ? 'true' : 'false');
         }
     }
 
@@ -85,7 +91,7 @@ export function createAvailabilityController(options) {
         const message = !params || !params.meal
             ? ((options.strings && options.strings.selectMeal) || '')
             : ((options.strings && options.strings.slotsEmpty) || '');
-        setStatus(message, false);
+        setStatus(message, 'idle');
 
         if (listEl) {
             clearChildren(listEl);
@@ -105,15 +111,19 @@ export function createAvailabilityController(options) {
     }
 
     function showBoundary(message) {
-        if (!boundaryEl) {
-            return;
+        const fallback = (options.strings && options.strings.slotsError)
+            || (options.strings && options.strings.submitError)
+            || 'We could not update available times. Please try again.';
+
+        if (boundaryEl) {
+            const text = boundaryEl.querySelector('[data-fp-resv-slots-boundary-message]');
+            if (text) {
+                text.textContent = message || fallback;
+            }
+            boundaryEl.hidden = false;
         }
 
-        const text = boundaryEl.querySelector('[data-fp-resv-slots-boundary-message]');
-        if (text) {
-            text.textContent = message || (options.strings && options.strings.submitError) || 'We could not update available times. Please try again.';
-        }
-        boundaryEl.hidden = false;
+        setStatus(message || fallback, 'error');
     }
 
     function selectSlot(slot, button) {
@@ -174,18 +184,31 @@ export function createAvailabilityController(options) {
 
         hideBoundary();
         showSkeleton();
-        setStatus((options.strings && options.strings.updatingSlots) || 'Updating availability…', true);
+        setStatus((options.strings && options.strings.updatingSlots) || 'Updating availability…', 'loading');
 
         const url = buildUrl(options.endpoint, params);
         const start = performance.now();
 
-        fetch(url, { credentials: 'same-origin' })
-            .then((response) => {
-                if (!response.ok) {
-                    throw Object.assign(new Error('availability_error'), { status: response.status });
-                }
-                return response.json();
-            })
+        fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+            .then((response) => response.json()
+                .catch(() => ({}))
+                .then((payload) => {
+                    if (!response.ok) {
+                        const error = new Error('availability_error');
+                        error.status = response.status;
+                        error.payload = payload;
+                        const retryAfter = response.headers.get('Retry-After');
+                        if (retryAfter) {
+                            const parsedRetry = Number.parseInt(retryAfter, 10);
+                            if (Number.isFinite(parsedRetry)) {
+                                error.retryAfter = parsedRetry;
+                            }
+                        }
+                        throw error;
+                    }
+
+                    return payload;
+                }))
             .then((payload) => {
                 const latency = performance.now() - start;
                 if (typeof options.onLatency === 'function') {
@@ -199,17 +222,54 @@ export function createAvailabilityController(options) {
                 if (typeof options.onLatency === 'function') {
                     options.onLatency(latency);
                 }
-                if (attempt < RETRY_DELAYS_MS.length) {
+
+                const payloadData = error && error.payload && typeof error.payload === 'object'
+                    ? error.payload.data || {}
+                    : {};
+                const status = typeof error.status === 'number'
+                    ? error.status
+                    : (payloadData && typeof payloadData.status === 'number' ? payloadData.status : 0);
+                let retryAfterSeconds = 0;
+                if (error && typeof error.retryAfter === 'number' && Number.isFinite(error.retryAfter)) {
+                    retryAfterSeconds = error.retryAfter;
+                } else if (payloadData && typeof payloadData.retry_after !== 'undefined') {
+                    const parsed = Number.parseInt(payloadData.retry_after, 10);
+                    if (Number.isFinite(parsed)) {
+                        retryAfterSeconds = parsed;
+                    }
+                }
+
+                const shouldRetry = (() => {
+                    if (attempt >= MAX_RETRY_ATTEMPTS - 1) {
+                        return false;
+                    }
+                    if (status === 429) {
+                        return true;
+                    }
+                    if (status >= 500 && status < 600) {
+                        return true;
+                    }
+                    return status === 0;
+                })();
+
+                if (shouldRetry) {
                     const nextAttempt = attempt + 1;
                     if (typeof options.onRetry === 'function') {
                         options.onRetry(nextAttempt);
                     }
-                    window.setTimeout(() => request(params, nextAttempt), RETRY_DELAYS_MS[attempt]);
+                    const delay = retryAfterSeconds > 0
+                        ? Math.max(retryAfterSeconds * 1000, BASE_RETRY_DELAY_MS)
+                        : BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+                    window.setTimeout(() => request(params, nextAttempt), delay);
                     return;
                 }
 
-                setStatus('', false);
-                showBoundary((options.strings && options.strings.submitError) || 'We could not update available times. Please try again.');
+                const message = (error && error.payload && (error.payload.message || error.payload.code))
+                    || (payloadData && payloadData.message)
+                    || (options.strings && options.strings.slotsError)
+                    || (options.strings && options.strings.submitError)
+                    || 'We could not update available times. Please try again.';
+                showBoundary(message);
             });
     }
 

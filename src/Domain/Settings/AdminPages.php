@@ -8,6 +8,7 @@ use FP\Resv\Core\Plugin;
 use FP\Resv\Core\ServiceContainer;
 use function __;
 use function add_action;
+use function add_query_arg;
 use function add_menu_page;
 use function add_settings_error;
 use function add_settings_field;
@@ -15,6 +16,8 @@ use function add_settings_section;
 use function add_submenu_page;
 use function array_key_first;
 use function current_user_can;
+use function admin_url;
+use function check_admin_referer;
 use function do_settings_sections;
 use function esc_attr;
 use function esc_html;
@@ -55,6 +58,8 @@ use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_json_encode;
 use function wp_localize_script;
+use function wp_nonce_field;
+use function wp_safe_redirect;
 use function wp_strip_all_tags;
 use const FILTER_FLAG_ALLOW_FRACTION;
 use const FILTER_SANITIZE_SPECIAL_CHARS;
@@ -81,11 +86,22 @@ final class AdminPages
         add_action('admin_menu', [$this, 'registerMenu']);
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('admin_post_fp_resv_style_reset', [$this, 'handleStyleReset']);
     }
 
     public function enqueueAssets(): void
     {
         $page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_SPECIAL_CHARS);
+        if (!is_string($page) || $page === '') {
+            return;
+        }
+
+        $baseHandle = 'fp-resv-admin-shell';
+
+        if (strpos($page, 'fp-resv-') === 0) {
+            wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+        }
+
         if ($page !== 'fp-resv-style') {
             return;
         }
@@ -105,7 +121,7 @@ final class AdminPages
         $preview = $style->getPreviewData('fp-resv-style-preview-widget');
 
         $handle = 'fp-resv-style-preview';
-        wp_enqueue_style($handle, Plugin::$url . 'assets/css/admin-style.css', [], Plugin::VERSION);
+        wp_enqueue_style($handle, Plugin::$url . 'assets/css/admin-style.css', [$baseHandle], Plugin::VERSION);
         wp_enqueue_script($handle, Plugin::$url . 'assets/js/admin/style-preview.js', [], Plugin::VERSION, true);
         wp_add_inline_style($handle, (string) ($preview['css'] ?? ''));
 
@@ -129,8 +145,41 @@ final class AdminPages
                 'surface'      => __('Testo su superficie', 'fp-restaurant-reservations'),
                 'muted'        => __('Testo secondario', 'fp-restaurant-reservations'),
                 'badge'        => __('Badge slot', 'fp-restaurant-reservations'),
+                'resetConfirm' => __('Ripristinare i valori di default? Questa azione sovrascrive i token salvati.', 'fp-restaurant-reservations'),
             ],
         ]);
+    }
+
+    public function handleStyleReset(): void
+    {
+        if (!current_user_can(self::CAPABILITY)) {
+            wp_safe_redirect(admin_url());
+            exit;
+        }
+
+        check_admin_referer('fp_resv_style_reset');
+
+        $container = ServiceContainer::getInstance();
+        $style     = $container->get(Style::class);
+        if (!$style instanceof Style) {
+            $options = $container->get(Options::class);
+            if (!$options instanceof Options) {
+                $options = new Options();
+            }
+
+            $style = new Style($options);
+            $container->register(Style::class, $style);
+        }
+
+        $style->resetToDefaults();
+
+        $redirect = add_query_arg(
+            ['fp_resv_style_reset' => '1'],
+            admin_url('admin.php?page=fp-resv-style')
+        );
+
+        wp_safe_redirect($redirect);
+        exit;
     }
 
     public function registerMenu(): void
@@ -345,14 +394,64 @@ final class AdminPages
             return;
         }
 
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html((string) $page['page_title']) . '</h1>';
-        echo '<form method="post" action="options.php">';
+        $menuTitle = (string) ($page['menu_title'] ?? $page['page_title']);
+        $subtitle  = $this->describePage($pageKey);
+        $headingId = $page['slug'] . '-title';
+        $formId    = 'fp-resv-settings-form-' . $pageKey;
+
+        $reportsUrl = admin_url('admin.php?page=fp-resv-reports');
+
+        ob_start();
         settings_errors($optionGroup);
+        $notices = trim((string) ob_get_clean());
+
+        $resetFlag = filter_input(INPUT_GET, 'fp_resv_style_reset', FILTER_SANITIZE_SPECIAL_CHARS);
+        if (is_string($resetFlag) && $resetFlag !== '') {
+            $resetNotice = '<div class="notice notice-success is-dismissible"><p>'
+                . esc_html__('Stile ripristinato ai valori di default.', 'fp-restaurant-reservations')
+                . '</p></div>';
+            $notices = $resetNotice . $notices;
+        }
+
+        echo '<div class="fp-resv-admin fp-resv-admin--settings" role="region" aria-labelledby="' . esc_attr($headingId) . '">';
+        echo '<header class="fp-resv-admin__topbar">';
+        echo '<div class="fp-resv-admin__identity">';
+        echo '<nav class="fp-resv-admin__breadcrumbs" aria-label="' . esc_attr__('Percorso', 'fp-restaurant-reservations') . '">';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=fp-resv-settings')) . '">' . esc_html__('FP Reservations', 'fp-restaurant-reservations') . '</a>';
+        echo '<span class="fp-resv-admin__breadcrumb-separator" aria-hidden="true">/</span>';
+        echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($menuTitle) . '</span>';
+        echo '</nav>';
+        echo '<div>';
+        echo '<h1 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
+        if ($subtitle !== '') {
+            echo '<p class="fp-resv-admin__subtitle">' . esc_html($subtitle) . '</p>';
+        }
+        echo '</div>';
+        echo '</div>';
+        echo '<div class="fp-resv-admin__actions">';
+        echo '<a class="button" href="' . esc_url($reportsUrl) . '">' . esc_html__('Vai ai report', 'fp-restaurant-reservations') . '</a>';
+        echo '<button type="submit" class="button button-primary" form="' . esc_attr($formId) . '">';
+        esc_html_e('Salva impostazioni', 'fp-restaurant-reservations');
+        echo '</button>';
+        echo '</div>';
+        echo '</header>';
+
+        echo '<main class="fp-resv-admin__main">';
+        echo '<section class="fp-resv-surface">';
+        if ($notices !== '') {
+            echo '<div class="fp-resv-settings__notices">' . $notices . '</div>';
+        }
+        echo '<form method="post" action="options.php" id="' . esc_attr($formId) . '" class="fp-resv-settings__form">';
         settings_fields($optionGroup);
+        echo '<div class="fp-resv-settings__sections">';
         do_settings_sections($page['slug']);
-        submit_button();
+        echo '</div>';
+        echo '<div class="fp-resv-settings__actions">';
+        submit_button(__('Salva modifiche', 'fp-restaurant-reservations'));
+        echo '</div>';
         echo '</form>';
+        echo '</section>';
+        echo '</main>';
         echo '</div>';
     }
 
@@ -376,23 +475,84 @@ final class AdminPages
         $preview     = $style->getPreviewData('fp-resv-style-preview-widget');
         $optionGroup = (string) $page['option_group'];
 
-        echo '<div class="wrap fp-resv-style-admin">';
-        echo '<h1>' . esc_html((string) $page['page_title']) . '</h1>';
-        echo '<div class="fp-resv-style-admin__layout">';
-        echo '<div class="fp-resv-style-admin__form">';
-        echo '<form method="post" action="options.php" id="fp-resv-style-form">';
+        $headingId = 'fp-resv-style-title';
+
+        ob_start();
         settings_errors($optionGroup);
-        settings_fields($optionGroup);
-        do_settings_sections($page['slug']);
-        submit_button();
+        $notices = trim((string) ob_get_clean());
+
+        echo '<div class="fp-resv-admin fp-resv-admin--style" role="region" aria-labelledby="' . esc_attr($headingId) . '">';
+        echo '<header class="fp-resv-admin__topbar">';
+        echo '<div class="fp-resv-admin__identity">';
+        echo '<nav class="fp-resv-admin__breadcrumbs" aria-label="' . esc_attr__('Percorso', 'fp-restaurant-reservations') . '">';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=fp-resv-settings')) . '">' . esc_html__('FP Reservations', 'fp-restaurant-reservations') . '</a>';
+        echo '<span class="fp-resv-admin__breadcrumb-separator" aria-hidden="true">/</span>';
+        echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($page['menu_title'] ?? $page['page_title']) . '</span>';
+        echo '</nav>';
+        echo '<div>';
+        echo '<h1 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
+        echo '<p class="fp-resv-admin__subtitle">' . esc_html__('Personalizza palette, tipografia e focus ring con anteprima live del form.', 'fp-restaurant-reservations') . '</p>';
+        echo '</div>';
+        echo '</div>';
+        echo '<div class="fp-resv-admin__actions">';
+        echo '<button type="submit" class="button button-primary" form="fp-resv-style-form">';
+        esc_html_e('Salva stile', 'fp-restaurant-reservations');
+        echo '</button>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="fp-resv-admin__reset-form" data-style-reset-form>';
+        wp_nonce_field('fp_resv_style_reset');
+        echo '<input type="hidden" name="action" value="fp_resv_style_reset">';
+        echo '<button type="submit" class="button-link fp-resv-admin__reset" data-style-reset>';
+        esc_html_e('Ripristina default', 'fp-restaurant-reservations');
+        echo '</button>';
         echo '</form>';
         echo '</div>';
-        echo '<div class="fp-resv-style-admin__preview">';
+        echo '</header>';
+
+        echo '<main class="fp-resv-admin__main">';
+        if ($notices !== '') {
+            echo '<div class="fp-resv-settings__notices">' . $notices . '</div>';
+        }
+        echo '<div class="fp-resv-style-admin__layout">';
+        echo '<section class="fp-resv-surface fp-resv-style-admin__form">';
+        echo '<form method="post" action="options.php" id="fp-resv-style-form" class="fp-resv-settings__form">';
+        settings_fields($optionGroup);
+        echo '<div class="fp-resv-settings__sections">';
+        do_settings_sections($page['slug']);
+        echo '</div>';
+        echo '<div class="fp-resv-settings__actions">';
+        submit_button(__('Aggiorna stile', 'fp-restaurant-reservations'));
+        echo '</div>';
+        echo '</form>';
+        echo '</section>';
+        echo '<section class="fp-resv-surface fp-resv-style-admin__preview">';
         $previewData = $preview;
         include Plugin::$dir . 'src/Admin/Views/style.php';
+        echo '</section>';
         echo '</div>';
+        echo '</main>';
         echo '</div>';
-        echo '</div>';
+    }
+
+    private function describePage(string $pageKey): string
+    {
+        switch ($pageKey) {
+            case 'general':
+                return __('Preferenze globali e dati anagrafici del ristorante.', 'fp-restaurant-reservations');
+            case 'notifications':
+                return __('Configura mittenti, destinatari e frequenza delle notifiche.', 'fp-restaurant-reservations');
+            case 'payments':
+                return __('Imposta Stripe e le politiche di incasso per il form.', 'fp-restaurant-reservations');
+            case 'brevo':
+                return __('Collega automazioni Brevo per email e recensioni post visita.', 'fp-restaurant-reservations');
+            case 'google-calendar':
+                return __('Sincronizza turni e prenotazioni con Google Calendar in modo sicuro.', 'fp-restaurant-reservations');
+            case 'language':
+                return __('Personalizza testi, PDF multilingua e copy del widget.', 'fp-restaurant-reservations');
+            case 'tracking':
+                return __('Definisci eventi e integrazioni analytics per marketing e attribuzione.', 'fp-restaurant-reservations');
+            default:
+                return __('Aggiorna le impostazioni avanzate per questa sezione.', 'fp-restaurant-reservations');
+        }
     }
 
     /**
@@ -1452,9 +1612,9 @@ final class AdminPages
                 'option_group' => 'fp_resv_style',
                 'option_name'  => 'fp_resv_style',
                 'sections'     => [
-                    'style-appearance' => [
-                        'title'       => __('Aspetto', 'fp-restaurant-reservations'),
-                        'description' => __('Imposta palette, tipografia e angoli del widget.', 'fp-restaurant-reservations'),
+                    'style-foundations' => [
+                        'title'       => __('Colori & superfici', 'fp-restaurant-reservations'),
+                        'description' => __('Imposta palette, raggio, ombre e focus ring del widget.', 'fp-restaurant-reservations'),
                         'fields'      => [
                             'style_palette' => [
                                 'label'       => __('Palette di base', 'fp-restaurant-reservations'),
@@ -1470,11 +1630,6 @@ final class AdminPages
                                 'label'       => __('Colore principale', 'fp-restaurant-reservations'),
                                 'type'        => 'color',
                                 'default'     => '#bb2649',
-                            ],
-                            'style_font_family' => [
-                                'label'       => __('Font preferito', 'fp-restaurant-reservations'),
-                                'type'        => 'text',
-                                'default'     => '"Inter", sans-serif',
                             ],
                             'style_border_radius' => [
                                 'label'       => __('Raggio bordi (px)', 'fp-restaurant-reservations'),
@@ -1493,18 +1648,75 @@ final class AdminPages
                                 ],
                                 'default'     => 'soft',
                             ],
+                            'style_spacing_scale' => [
+                                'label'       => __('Spaziatura layout', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    'compact'     => __('Compatta', 'fp-restaurant-reservations'),
+                                    'cozy'        => __('Standard', 'fp-restaurant-reservations'),
+                                    'comfortable' => __('Aria', 'fp-restaurant-reservations'),
+                                    'spacious'    => __('Lounge', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => 'cozy',
+                                'description' => __('Controlla la densità di spaziatura per carte, step e moduli.', 'fp-restaurant-reservations'),
+                            ],
+                            'style_focus_ring_width' => [
+                                'label'       => __('Focus ring (px)', 'fp-restaurant-reservations'),
+                                'type'        => 'integer',
+                                'default'     => '3',
+                                'min'         => 1,
+                                'max'         => 6,
+                                'description' => __('Spessore visibile dell’anello di focus per pulsanti e campi.', 'fp-restaurant-reservations'),
+                            ],
                             'style_enable_dark_mode' => [
                                 'label'          => __('Dark mode automatica', 'fp-restaurant-reservations'),
                                 'type'           => 'checkbox',
                                 'checkbox_label' => __('Adatta i colori al tema scuro del dispositivo.', 'fp-restaurant-reservations'),
                                 'default'        => '1',
                             ],
+                        ],
+                    ],
+                    'style-typography' => [
+                        'title'       => __('Tipografia & gerarchie', 'fp-restaurant-reservations'),
+                        'description' => __('Scegli font, dimensione base e peso titoli del form.', 'fp-restaurant-reservations'),
+                        'fields'      => [
+                            'style_font_family' => [
+                                'label'       => __('Font preferito', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => '"Inter", sans-serif',
+                            ],
+                            'style_font_size' => [
+                                'label'       => __('Dimensione base testo', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    '15' => __('Compatta (15px)', 'fp-restaurant-reservations'),
+                                    '16' => __('Standard (16px)', 'fp-restaurant-reservations'),
+                                    '17' => __('Aumentata (17px)', 'fp-restaurant-reservations'),
+                                    '18' => __('Ampia (18px)', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => '16',
+                            ],
+                            'style_heading_weight' => [
+                                'label'       => __('Peso titoli', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    '500' => __('Media (500)', 'fp-restaurant-reservations'),
+                                    '600' => __('Semibold (600)', 'fp-restaurant-reservations'),
+                                    '700' => __('Bold (700)', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => '600',
+                            ],
+                        ],
+                    ],
+                    'style-custom' => [
+                        'title'       => __('Personalizzazioni avanzate', 'fp-restaurant-reservations'),
+                        'description' => __('CSS opzionale applicato al widget (senza tag <style>).', 'fp-restaurant-reservations'),
+                        'fields'      => [
                             'style_custom_css' => [
                                 'label'       => __('CSS aggiuntivo', 'fp-restaurant-reservations'),
                                 'type'        => 'textarea',
                                 'rows'        => 6,
                                 'default'     => '',
-                                'description' => __('Snippet opzionale applicato al widget (senza tag <style>).', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],

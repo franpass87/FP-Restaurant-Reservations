@@ -14,5 +14,7 @@
     "test:phpunit": "phpunit -c tests/phpunit.xml",
     "test:e2e": "playwright test --config tests/E2E/playwright.config.ts"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
 }

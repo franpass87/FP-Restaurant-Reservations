@@ -38,10 +38,19 @@ jobs:
             --exclude '.github/' \
             --exclude 'node_modules/' \
             --exclude 'vendor/' \
+            --exclude 'tests/' \
+            --exclude 'docs/' \
             --exclude 'package/' \
+            --exclude 'scripts/' \
             --exclude '.gitignore' \
             --exclude '*.zip' \
             --exclude '*.log' \
+            --exclude '.codex-state.json' \
+            --exclude 'package-lock.json' \
+            --exclude 'pnpm-lock.yaml' \
+            --exclude 'yarn.lock' \
+            --exclude 'phpstan.neon' \
+            --exclude 'phpcs.xml' \
             --exclude '.rebuild-state.json' \
             --exclude 'AUDIT.md'
 

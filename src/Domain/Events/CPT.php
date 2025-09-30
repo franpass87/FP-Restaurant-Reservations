@@ -50,7 +50,7 @@ final class CPT
                     'not_found_in_trash' => __('Nessun evento nel cestino', 'fp-restaurant-reservations'),
                 ],
                 'public'             => true,
-                'show_in_menu'       => true,
+                'show_in_menu'       => 'fp-resv-settings',
                 'menu_icon'          => 'dashicons-tickets-alt',
                 'supports'           => ['title', 'editor', 'excerpt', 'thumbnail'],
                 'show_in_rest'       => true,

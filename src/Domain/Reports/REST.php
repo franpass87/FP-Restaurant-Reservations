@@ -51,46 +51,6 @@ final class REST
 
         register_rest_route(
             'fp-resv/v1',
-            '/reports/logs',
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'handleLogs'],
-                'permission_callback' => [$this, 'checkPermissions'],
-                'args'                => [
-                    'channel' => [
-                        'type'     => 'string',
-                        'required' => true,
-                    ],
-                    'page' => [
-                        'type'     => 'integer',
-                        'required' => false,
-                    ],
-                    'per_page' => [
-                        'type'     => 'integer',
-                        'required' => false,
-                    ],
-                    'status' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                    'from' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                    'to' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                    'search' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                ],
-            ]
-        );
-
-        register_rest_route(
-            'fp-resv/v1',
             '/reports/export',
             [
                 'methods'             => WP_REST_Server::READABLE,
@@ -116,6 +76,54 @@ final class REST
                 ],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/reports/analytics',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAnalytics'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'start' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'end' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'location' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/reports/analytics/export',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAnalyticsExport'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'start' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'end' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'location' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
     }
 
     public function handleDailySummary(WP_REST_Request $request): WP_REST_Response
@@ -131,21 +139,6 @@ final class REST
         ]);
     }
 
-    public function handleLogs(WP_REST_Request $request): WP_REST_Response
-    {
-        $channel = sanitize_text_field((string) $request->get_param('channel'));
-        $args    = [
-            'page'     => (int) $request->get_param('page'),
-            'per_page' => (int) $request->get_param('per_page'),
-            'status'   => sanitize_text_field((string) $request->get_param('status')),
-            'from'     => sanitize_text_field((string) $request->get_param('from')),
-            'to'       => sanitize_text_field((string) $request->get_param('to')),
-            'search'   => sanitize_text_field((string) $request->get_param('search')),
-        ];
-
-        return rest_ensure_response($this->service->getLogs($channel, $args));
-    }
-
     public function handleExport(WP_REST_Request $request): WP_REST_Response
     {
         $params = [
@@ -156,6 +149,41 @@ final class REST
         ];
 
         $export = $this->service->exportReservations($params);
+
+        return rest_ensure_response([
+            'filename'  => $export['filename'],
+            'mime_type' => $export['mime_type'],
+            'format'    => $export['format'],
+            'delimiter' => $export['delimiter'],
+            'encoding'  => 'base64',
+            'content'   => base64_encode($export['content']),
+        ]);
+    }
+
+    public function handleAnalytics(WP_REST_Request $request): WP_REST_Response
+    {
+        $params = [
+            'start'    => sanitize_text_field((string) $request->get_param('start')),
+            'end'      => sanitize_text_field((string) $request->get_param('end')),
+            'location' => sanitize_text_field((string) $request->get_param('location')),
+        ];
+
+        $analytics = $this->service->getAnalytics($params);
+
+        return rest_ensure_response([
+            'analytics' => $analytics,
+        ]);
+    }
+
+    public function handleAnalyticsExport(WP_REST_Request $request): WP_REST_Response
+    {
+        $params = [
+            'start'    => sanitize_text_field((string) $request->get_param('start')),
+            'end'      => sanitize_text_field((string) $request->get_param('end')),
+            'location' => sanitize_text_field((string) $request->get_param('location')),
+        ];
+
+        $export = $this->service->exportAnalytics($params);
 
         return rest_ensure_response([
             'filename'  => $export['filename'],

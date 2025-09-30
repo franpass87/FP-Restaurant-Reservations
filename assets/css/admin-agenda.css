@@ -1,33 +1,16 @@
-/*
- * Basic placeholder styles for the admin agenda SPA container.
- * The definitive design system will be delivered in the dedicated UI phase.
- */
-
-.fp-resv-agenda-placeholder {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 8px;
-    padding: 24px;
-    max-width: 680px;
+.fp-resv-admin--agenda #fp-resv-agenda-app {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.fp-resv-agenda-placeholder h2 {
-    margin-top: 0;
+.fp-resv-admin--agenda [data-role="arrivals"] {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
-.fp-resv-agenda-placeholder .description {
-    color: #555d66;
-}
-
-.fp-resv-arrivals {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 8px;
-    padding: 24px;
-    margin-top: 20px;
-}
-
-.fp-resv-arrivals__header {
+.fp-resv-admin--agenda .fp-resv-arrivals__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -35,74 +18,113 @@
     flex-wrap: wrap;
 }
 
-.fp-resv-arrivals__filters {
+.fp-resv-admin--agenda .fp-resv-arrivals__filters {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 12px;
     align-items: center;
 }
 
-.fp-resv-arrivals__filters input {
-    min-width: 120px;
+.fp-resv-admin--agenda .fp-resv-arrivals__filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
 }
 
-.fp-resv-arrivals__list {
+.fp-resv-admin--agenda .fp-resv-arrivals__filters input {
+    min-width: 140px;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__list {
     list-style: none;
-    margin: 24px 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
+    gap: 16px;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__card {
+    background: var(--fp-resv-admin-surface-alt);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    padding: 18px 20px;
+    display: grid;
     gap: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-.fp-resv-arrivals__card {
-    border: 1px solid #dcdfe5;
-    border-radius: 6px;
-    padding: 16px;
-    background: #fdfdfd;
-}
-
-.fp-resv-arrivals__card-header {
+.fp-resv-admin--agenda .fp-resv-arrivals__card-header {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     font-weight: 600;
-    color: #1d2327;
-    margin-bottom: 8px;
+    color: var(--fp-resv-admin-text);
 }
 
-.fp-resv-arrivals__card-body {
-    color: #32373c;
-    margin-bottom: 12px;
+.fp-resv-admin--agenda .fp-resv-arrivals__guest {
+    font-size: 16px;
+    margin: 0;
 }
 
-.fp-resv-arrivals__guest {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 4px;
+.fp-resv-admin--agenda .fp-resv-arrivals__notes {
+    margin: 0;
+    color: var(--fp-resv-admin-muted);
+    font-size: 14px;
 }
 
-.fp-resv-arrivals__notes {
-    margin: 0 0 8px;
-    color: #50575e;
-}
-
-.fp-resv-arrivals__badges {
+.fp-resv-admin--agenda .fp-resv-arrivals__badges {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    gap: 6px;
     flex-wrap: wrap;
-}
-
-.fp-resv-arrivals__badges li {
-    background: #d63638;
-    color: #fff;
-    border-radius: 999px;
-    padding: 2px 10px;
-    font-size: 12px;
-}
-
-.fp-resv-arrivals__actions {
-    display: flex;
     gap: 8px;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__badges li {
+    background: rgba(67, 56, 202, 0.16);
+    color: var(--fp-resv-admin-accent-strong);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__actions {
+    display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+}
+
+.fp-resv-admin--agenda .fp-resv-arrivals__actions .button {
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+.fp-resv-admin--agenda [data-role="arrivals-empty"],
+.fp-resv-admin--agenda [data-role="arrivals-loading"],
+.fp-resv-admin--agenda [data-role="arrivals-error"] {
+    font-size: 14px;
+    color: var(--fp-resv-admin-muted);
+}
+
+@media (max-width: 782px) {
+    .fp-resv-admin--agenda .fp-resv-arrivals__filters {
+        width: 100%;
+    }
+
+    .fp-resv-admin--agenda .fp-resv-arrivals__filters label {
+        width: 100%;
+    }
+
+    .fp-resv-admin--agenda .fp-resv-arrivals__filters input {
+        width: 100%;
+    }
 }

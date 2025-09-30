@@ -17,6 +17,7 @@ use function str_contains;
 use function str_starts_with;
 use function strtolower;
 use function trim;
+use function update_option;
 use function wp_parse_args;
 
 final class Style
@@ -37,11 +38,20 @@ final class Style
             'style_palette'          => 'brand',
             'style_primary_color'    => '#bb2649',
             'style_font_family'      => '"Inter", sans-serif',
+            'style_font_size'        => '16',
+            'style_heading_weight'   => '600',
             'style_border_radius'    => '8',
             'style_shadow_level'     => 'soft',
+            'style_spacing_scale'    => 'cozy',
+            'style_focus_ring_width' => '3',
             'style_enable_dark_mode' => '1',
             'style_custom_css'       => '',
         ];
+    }
+
+    public function resetToDefaults(): void
+    {
+        update_option('fp_resv_style', $this->getDefaults());
     }
 
     /**
@@ -282,38 +292,56 @@ final class Style
         $shadows = $this->getShadowPresets();
         $shadow  = $shadows[$settings['style_shadow_level'] ?? 'soft'] ?? $shadows['soft'];
         $font    = trim((string) ($settings['style_font_family'] ?? '"Inter", sans-serif'));
+        $fontSize = (int) ($settings['style_font_size'] ?? 16);
+        $fontSize = max(14, min(20, $fontSize));
+        $headingWeight = $this->resolveHeadingWeight((string) ($settings['style_heading_weight'] ?? '600'));
+        $spacingUnit   = $this->formatSpacingUnit((string) ($settings['style_spacing_scale'] ?? 'cozy'));
+        $focusWidth    = (int) ($settings['style_focus_ring_width'] ?? 3);
+        $focusWidth    = max(1, min(6, $focusWidth));
 
-        return sprintf(
-            "%s {\n    font-family: %s;\n    --fp-resv-radius: %dpx;\n    --fp-resv-shadow: %s;\n    --fp-resv-primary: %s;\n    --fp-resv-on-primary: %s;\n    --fp-resv-primary-soft: %s;\n    --fp-resv-background: %s;\n    --fp-resv-surface: %s;\n    --fp-resv-surface-alt: %s;\n    --fp-resv-text: %s;\n    --fp-resv-muted: %s;\n    --fp-resv-accent: %s;\n    --fp-resv-accent-text: %s;\n    --fp-resv-focus: %s;\n    --fp-resv-outline: %s;\n    --fp-resv-divider: %s;\n    --fp-resv-slot-bg: %s;\n    --fp-resv-slot-text: %s;\n    --fp-resv-slot-border: %s;\n    --fp-resv-slot-selected-bg: %s;\n    --fp-resv-slot-selected-text: %s;\n    --fp-resv-badge-bg: %s;\n    --fp-resv-badge-text: %s;\n    --fp-resv-success: %s;\n    --fp-resv-success-text: %s;\n    --fp-resv-danger: %s;\n    --fp-resv-danger-text: %s;\n}\n",
-            $scope,
-            $font,
-            $radius,
-            $shadow,
-            $tokens['primary'],
-            $tokens['on_primary'],
-            $tokens['primary_soft'],
-            $tokens['background'],
-            $tokens['surface'],
-            $tokens['surface_alt'],
-            $tokens['text'],
-            $tokens['muted'],
-            $tokens['accent'],
-            $tokens['accent_text'],
-            $tokens['focus'],
-            $tokens['outline'],
-            $tokens['divider'],
-            $tokens['slot_available_bg'],
-            $tokens['slot_available_text'],
-            $tokens['slot_available_border'],
-            $tokens['slot_selected_bg'],
-            $tokens['slot_selected_text'],
-            $tokens['badge_bg'],
-            $tokens['badge_text'],
-            $tokens['success'],
-            $tokens['success_text'],
-            $tokens['danger'],
-            $tokens['danger_text']
-        );
+        $lines   = [];
+        $lines[] = sprintf('%s {', $scope);
+        $lines[] = '    font-family: ' . $font . ';';
+        $lines[] = '    font-size: ' . $fontSize . 'px;';
+        $lines[] = '    --fp-resv-font-size-base: ' . $fontSize . 'px;';
+        $lines[] = '    --fp-resv-heading-weight: ' . $headingWeight . ';';
+        $lines[] = '    --fp-resv-radius: ' . $radius . 'px;';
+        $lines[] = '    --fp-resv-shadow: ' . $shadow . ';';
+        $lines[] = '    --fp-resv-space-unit: ' . $spacingUnit . ';';
+        $lines[] = '    --fp-resv-space-xxs: calc(var(--fp-resv-space-unit) * 0.35);';
+        $lines[] = '    --fp-resv-space-xs: calc(var(--fp-resv-space-unit) * 0.6);';
+        $lines[] = '    --fp-resv-space-sm: calc(var(--fp-resv-space-unit) * 0.85);';
+        $lines[] = '    --fp-resv-space-md: calc(var(--fp-resv-space-unit) * 1);';
+        $lines[] = '    --fp-resv-space-lg: calc(var(--fp-resv-space-unit) * 1.6);';
+        $lines[] = '    --fp-resv-space-xl: calc(var(--fp-resv-space-unit) * 2.4);';
+        $lines[] = '    --fp-resv-focus-ring-width: ' . $focusWidth . 'px;';
+        $lines[] = '    --fp-resv-primary: ' . $tokens['primary'] . ';';
+        $lines[] = '    --fp-resv-on-primary: ' . $tokens['on_primary'] . ';';
+        $lines[] = '    --fp-resv-primary-soft: ' . $tokens['primary_soft'] . ';';
+        $lines[] = '    --fp-resv-background: ' . $tokens['background'] . ';';
+        $lines[] = '    --fp-resv-surface: ' . $tokens['surface'] . ';';
+        $lines[] = '    --fp-resv-surface-alt: ' . $tokens['surface_alt'] . ';';
+        $lines[] = '    --fp-resv-text: ' . $tokens['text'] . ';';
+        $lines[] = '    --fp-resv-muted: ' . $tokens['muted'] . ';';
+        $lines[] = '    --fp-resv-accent: ' . $tokens['accent'] . ';';
+        $lines[] = '    --fp-resv-accent-text: ' . $tokens['accent_text'] . ';';
+        $lines[] = '    --fp-resv-focus: ' . $tokens['focus'] . ';';
+        $lines[] = '    --fp-resv-outline: ' . $tokens['outline'] . ';';
+        $lines[] = '    --fp-resv-divider: ' . $tokens['divider'] . ';';
+        $lines[] = '    --fp-resv-slot-bg: ' . $tokens['slot_available_bg'] . ';';
+        $lines[] = '    --fp-resv-slot-text: ' . $tokens['slot_available_text'] . ';';
+        $lines[] = '    --fp-resv-slot-border: ' . $tokens['slot_available_border'] . ';';
+        $lines[] = '    --fp-resv-slot-selected-bg: ' . $tokens['slot_selected_bg'] . ';';
+        $lines[] = '    --fp-resv-slot-selected-text: ' . $tokens['slot_selected_text'] . ';';
+        $lines[] = '    --fp-resv-badge-bg: ' . $tokens['badge_bg'] . ';';
+        $lines[] = '    --fp-resv-badge-text: ' . $tokens['badge_text'] . ';';
+        $lines[] = '    --fp-resv-success: ' . $tokens['success'] . ';';
+        $lines[] = '    --fp-resv-success-text: ' . $tokens['success_text'] . ';';
+        $lines[] = '    --fp-resv-danger: ' . $tokens['danger'] . ';';
+        $lines[] = '    --fp-resv-danger-text: ' . $tokens['danger_text'] . ';';
+        $lines[] = '}';
+
+        return implode("\n", $lines) . "\n";
     }
 
     /**
@@ -803,5 +831,28 @@ CSS;
         }
 
         return preg_replace('/(^|})\s*([^{}]+){/m', '$1 ' . $scope . ' $2{', $css) ?? '';
+    }
+
+    private function formatSpacingUnit(string $scale): string
+    {
+        $map = [
+            'compact'      => 0.85,
+            'cozy'         => 1.0,
+            'comfortable'  => 1.15,
+            'spacious'     => 1.3,
+        ];
+        $factor = $map[$scale] ?? $map['cozy'];
+
+        $value = number_format($factor, 3, '.', '');
+        $value = rtrim(rtrim($value, '0'), '.');
+
+        return $value . 'rem';
+    }
+
+    private function resolveHeadingWeight(string $weight): string
+    {
+        $allowed = ['500', '600', '700'];
+
+        return in_array($weight, $allowed, true) ? $weight : '600';
     }
 }

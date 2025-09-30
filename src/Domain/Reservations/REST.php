@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations;
 
-use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Service;
@@ -20,6 +19,7 @@ use function absint;
 use function add_action;
 use function apply_filters;
 use function defined;
+use function get_transient;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -27,7 +27,10 @@ use function preg_match;
 use function register_rest_route;
 use function rest_ensure_response;
 use function sanitize_text_field;
+use function set_transient;
 use function strtolower;
+use function wp_json_encode;
+use function wp_rand;
 use function wp_verify_nonce;
 
 final class REST
@@ -66,6 +69,11 @@ final class REST
                         'sanitize_callback' => static fn ($value): int => max(0, absint($value)),
                         'validate_callback' => static fn ($value): bool => absint($value) > 0,
                     ],
+                    'meal' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                    ],
                     'room' => [
                         'required'          => false,
                         'type'              => 'integer',
@@ -93,10 +101,35 @@ final class REST
 
     public function handleAvailability(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        $ip = Helpers::clientIp();
+        if (!RateLimiter::allow('availability:' . $ip, 30, 60)) {
+            $payload = [
+                'code'    => 'fp_resv_availability_rate_limited',
+                'message' => __('Hai effettuato troppe richieste di disponibilità. Attendi qualche secondo e riprova.', 'fp-restaurant-reservations'),
+                'data'    => [
+                    'status'      => 429,
+                    'retry_after' => 20,
+                ],
+            ];
+
+            $response = new WP_REST_Response($payload, 429);
+            $response->set_headers([
+                'Retry-After'   => '20',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]);
+
+            return $response;
+        }
+
         $criteria = [
             'date'  => $request->get_param('date'),
             'party' => absint($request->get_param('party')),
         ];
+
+        $meal = $request->get_param('meal');
+        if ($meal !== null && $meal !== '') {
+            $criteria['meal'] = sanitize_text_field((string) $meal);
+        }
 
         $room = $request->get_param('room');
         if ($room !== null) {
@@ -106,6 +139,34 @@ final class REST
         $event = $request->get_param('event_id');
         if ($event !== null) {
             $criteria['event_id'] = absint($event);
+        }
+
+        $cacheKeyPayload = [
+            'date'    => $criteria['date'],
+            'party'   => $criteria['party'],
+            'meal'    => $criteria['meal'] ?? '',
+            'room'    => $criteria['room'] ?? '',
+            'event'   => $criteria['event_id'] ?? '',
+        ];
+
+        $cacheKeyBase = wp_json_encode($cacheKeyPayload);
+        if (!is_string($cacheKeyBase) || $cacheKeyBase === '') {
+            $cacheKeyBase = serialize($cacheKeyPayload);
+        }
+
+        $cacheKey = 'fp_resv_avail_' . md5($cacheKeyBase);
+
+        $cached = get_transient($cacheKey);
+        if (is_array($cached)) {
+            $response = rest_ensure_response($cached);
+            if ($response instanceof WP_REST_Response) {
+                $response->set_headers([
+                    'Cache-Control'    => 'no-store, no-cache, must-revalidate, max-age=0',
+                    'X-FP-Resv-Cache'  => 'hit',
+                ]);
+            }
+
+            return $response;
         }
 
         try {
@@ -127,7 +188,17 @@ final class REST
             );
         }
 
-        return rest_ensure_response($result);
+        set_transient($cacheKey, $result, wp_rand(30, 60));
+
+        $response = rest_ensure_response($result);
+        if ($response instanceof WP_REST_Response) {
+            $response->set_headers([
+                'Cache-Control'   => 'no-store, no-cache, must-revalidate, max-age=0',
+                'X-FP-Resv-Cache' => 'miss',
+            ]);
+        }
+
+        return $response;
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error

@@ -6,7 +6,8 @@
     const globals = window.fpResvStylePreview || {};
     const form = document.getElementById('fp-resv-style-form');
     const previewRoot = document.querySelector('[data-fp-resv-style-preview]');
-    if (!form || !previewRoot) {
+    const iframe = previewRoot ? previewRoot.querySelector('[data-style-iframe]') : null;
+    if (!form || !previewRoot || !(iframe instanceof HTMLIFrameElement)) {
         return;
     }
 
@@ -17,24 +18,38 @@
     const shadows = globals.shadows || {};
     const i18n = globals.i18n || {};
 
-    let dynamicStyle = document.getElementById('fp-resv-style-preview-dynamic');
-    if (!dynamicStyle) {
-        dynamicStyle = document.createElement('style');
-        dynamicStyle.id = 'fp-resv-style-preview-dynamic';
-        document.head.appendChild(dynamicStyle);
-    }
-
+    let dynamicStyle = null;
+    let pendingSettings = null;
     const contrastList = previewRoot.querySelector('[data-contrast-list]');
 
     const initialSettings = Object.assign({}, defaults, (globals.initial && globals.initial.settings) || {});
-    updatePreview(initialSettings);
+    if (!updatePreview(initialSettings)) {
+        pendingSettings = initialSettings;
+    }
 
-    form.addEventListener('input', () => {
-        updatePreview(collectSettings());
+    iframe.addEventListener('load', () => {
+        const settings = pendingSettings || collectSettings();
+        pendingSettings = null;
+        updatePreview(settings);
     });
 
-    form.addEventListener('change', () => {
-        updatePreview(collectSettings());
+    const requestUpdate = () => {
+        const settings = collectSettings();
+        if (!updatePreview(settings)) {
+            pendingSettings = settings;
+        }
+    };
+
+    form.addEventListener('input', requestUpdate);
+    form.addEventListener('change', requestUpdate);
+
+    document.querySelectorAll('[data-style-reset]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            const message = i18n.resetConfirm || 'Ripristinare lo stile di default?';
+            if (!window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
     });
 
     function collectSettings() {
@@ -44,9 +59,38 @@
             style_font_family: getFieldValue('style_font_family'),
             style_border_radius: getFieldValue('style_border_radius'),
             style_shadow_level: getFieldValue('style_shadow_level'),
+            style_spacing_scale: getFieldValue('style_spacing_scale'),
+            style_font_size: getFieldValue('style_font_size'),
+            style_heading_weight: getFieldValue('style_heading_weight'),
+            style_focus_ring_width: getFieldValue('style_focus_ring_width'),
             style_enable_dark_mode: getCheckboxValue('style_enable_dark_mode'),
             style_custom_css: getFieldValue('style_custom_css'),
         };
+    }
+
+    function getFrameDocument() {
+        if (!(iframe instanceof HTMLIFrameElement)) {
+            return null;
+        }
+
+        return iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document) || null;
+    }
+
+    function ensureDynamicStyle(doc) {
+        if (!doc) {
+            return null;
+        }
+
+        if (!dynamicStyle || dynamicStyle.ownerDocument !== doc) {
+            dynamicStyle = doc.getElementById('fp-resv-style-preview-dynamic');
+            if (!dynamicStyle) {
+                dynamicStyle = doc.createElement('style');
+                dynamicStyle.id = 'fp-resv-style-preview-dynamic';
+                doc.head.appendChild(dynamicStyle);
+            }
+        }
+
+        return dynamicStyle;
     }
 
     function getFieldValue(name) {
@@ -80,10 +124,18 @@
     }
 
     function updatePreview(settings) {
+        const doc = getFrameDocument();
+        const styleNode = ensureDynamicStyle(doc);
+        if (!doc || !styleNode) {
+            return false;
+        }
+
         const tokens = buildTokens(settings);
         const cssParts = composeCss(scopeSelector, tokens, settings);
-        dynamicStyle.textContent = [cssParts.variables, cssParts.dark, cssParts.custom].filter(Boolean).join('\n');
+        styleNode.textContent = [cssParts.variables, cssParts.dark, cssParts.custom].filter(Boolean).join('\n');
         renderContrast(tokens);
+
+        return true;
     }
 
     function composeCss(scope, tokens, settings) {
@@ -176,38 +228,55 @@
         const shadowKey = settings.style_shadow_level || defaults.style_shadow_level || 'soft';
         const shadow = shadows[shadowKey] || shadows.soft || 'none';
         const font = (settings.style_font_family || defaults.style_font_family || '"Inter", sans-serif').trim();
+        const fontSize = clampInt(settings.style_font_size || defaults.style_font_size || 16, 14, 20);
+        const headingWeight = resolveHeadingWeight(settings.style_heading_weight || defaults.style_heading_weight || '600');
+        const spacingUnit = resolveSpacingUnit(settings.style_spacing_scale || defaults.style_spacing_scale || 'cozy');
+        const focusWidth = clampInt(settings.style_focus_ring_width || defaults.style_focus_ring_width || 3, 1, 6);
 
-        return (
-            `${scope} {\n` +
-            `    font-family: ${font};\n` +
-            `    --fp-resv-radius: ${radius}px;\n` +
-            `    --fp-resv-shadow: ${shadow};\n` +
-            `    --fp-resv-primary: ${tokens.primary};\n` +
-            `    --fp-resv-on-primary: ${tokens.on_primary};\n` +
-            `    --fp-resv-primary-soft: ${tokens.primary_soft};\n` +
-            `    --fp-resv-background: ${tokens.background};\n` +
-            `    --fp-resv-surface: ${tokens.surface};\n` +
-            `    --fp-resv-surface-alt: ${tokens.surface_alt};\n` +
-            `    --fp-resv-text: ${tokens.text};\n` +
-            `    --fp-resv-muted: ${tokens.muted};\n` +
-            `    --fp-resv-accent: ${tokens.accent};\n` +
-            `    --fp-resv-accent-text: ${tokens.accent_text};\n` +
-            `    --fp-resv-focus: ${tokens.focus};\n` +
-            `    --fp-resv-outline: ${tokens.outline};\n` +
-            `    --fp-resv-divider: ${tokens.divider};\n` +
-            `    --fp-resv-slot-bg: ${tokens.slot_available_bg};\n` +
-            `    --fp-resv-slot-text: ${tokens.slot_available_text};\n` +
-            `    --fp-resv-slot-border: ${tokens.slot_available_border};\n` +
-            `    --fp-resv-slot-selected-bg: ${tokens.slot_selected_bg};\n` +
-            `    --fp-resv-slot-selected-text: ${tokens.slot_selected_text};\n` +
-            `    --fp-resv-badge-bg: ${tokens.badge_bg};\n` +
-            `    --fp-resv-badge-text: ${tokens.badge_text};\n` +
-            `    --fp-resv-success: ${tokens.success};\n` +
-            `    --fp-resv-success-text: ${tokens.success_text};\n` +
-            `    --fp-resv-danger: ${tokens.danger};\n` +
-            `    --fp-resv-danger-text: ${tokens.danger_text};\n` +
-            `}`
-        );
+        const lines = [
+            `${scope} {`,
+            `    font-family: ${font};`,
+            `    font-size: ${fontSize}px;`,
+            `    --fp-resv-font-size-base: ${fontSize}px;`,
+            `    --fp-resv-heading-weight: ${headingWeight};`,
+            `    --fp-resv-radius: ${radius}px;`,
+            `    --fp-resv-shadow: ${shadow};`,
+            `    --fp-resv-space-unit: ${spacingUnit};`,
+            `    --fp-resv-space-xxs: calc(var(--fp-resv-space-unit) * 0.35);`,
+            `    --fp-resv-space-xs: calc(var(--fp-resv-space-unit) * 0.6);`,
+            `    --fp-resv-space-sm: calc(var(--fp-resv-space-unit) * 0.85);`,
+            `    --fp-resv-space-md: calc(var(--fp-resv-space-unit) * 1);`,
+            `    --fp-resv-space-lg: calc(var(--fp-resv-space-unit) * 1.6);`,
+            `    --fp-resv-space-xl: calc(var(--fp-resv-space-unit) * 2.4);`,
+            `    --fp-resv-focus-ring-width: ${focusWidth}px;`,
+            `    --fp-resv-primary: ${tokens.primary};`,
+            `    --fp-resv-on-primary: ${tokens.on_primary};`,
+            `    --fp-resv-primary-soft: ${tokens.primary_soft};`,
+            `    --fp-resv-background: ${tokens.background};`,
+            `    --fp-resv-surface: ${tokens.surface};`,
+            `    --fp-resv-surface-alt: ${tokens.surface_alt};`,
+            `    --fp-resv-text: ${tokens.text};`,
+            `    --fp-resv-muted: ${tokens.muted};`,
+            `    --fp-resv-accent: ${tokens.accent};`,
+            `    --fp-resv-accent-text: ${tokens.accent_text};`,
+            `    --fp-resv-focus: ${tokens.focus};`,
+            `    --fp-resv-outline: ${tokens.outline};`,
+            `    --fp-resv-divider: ${tokens.divider};`,
+            `    --fp-resv-slot-bg: ${tokens.slot_available_bg};`,
+            `    --fp-resv-slot-text: ${tokens.slot_available_text};`,
+            `    --fp-resv-slot-border: ${tokens.slot_available_border};`,
+            `    --fp-resv-slot-selected-bg: ${tokens.slot_selected_bg};`,
+            `    --fp-resv-slot-selected-text: ${tokens.slot_selected_text};`,
+            `    --fp-resv-badge-bg: ${tokens.badge_bg};`,
+            `    --fp-resv-badge-text: ${tokens.badge_text};`,
+            `    --fp-resv-success: ${tokens.success};`,
+            `    --fp-resv-success-text: ${tokens.success_text};`,
+            `    --fp-resv-danger: ${tokens.danger};`,
+            `    --fp-resv-danger-text: ${tokens.danger_text};`,
+            `}`,
+        ];
+
+        return lines.join('\n');
     }
 
     function buildDarkBlock(scope, tokens) {
@@ -396,6 +465,23 @@
         }
 
         return 'Fail';
+    }
+
+    function resolveSpacingUnit(scale) {
+        const map = {
+            compact: 0.85,
+            cozy: 1,
+            comfortable: 1.15,
+            spacious: 1.3,
+        };
+
+        const factor = map[scale] || map.cozy;
+        return `${parseFloat(factor.toFixed(3))}rem`;
+    }
+
+    function resolveHeadingWeight(value) {
+        const allowed = ['500', '600', '700'];
+        return allowed.includes(String(value)) ? String(value) : '600';
     }
 
     function clampInt(value, minValue, maxValue) {

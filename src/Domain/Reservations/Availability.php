@@ -873,6 +873,10 @@ final class Availability
             $normalized['room'] = $roomId;
         }
 
+        if (isset($criteria['meal']) && $criteria['meal'] !== '') {
+            $normalized['meal'] = (string) $criteria['meal'];
+        }
+
         if (isset($criteria['event_id'])) {
             $normalized['event_id'] = (int) $criteria['event_id'];
         }

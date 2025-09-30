@@ -55,14 +55,17 @@ final class AdminController
 
         $scriptHandle = 'fp-resv-admin-tables';
         $styleHandle  = 'fp-resv-admin-tables-style';
+        $baseHandle   = 'fp-resv-admin-shell';
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/tables-layout.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-tables.css';
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], Plugin::VERSION, true);
 
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+
         if (file_exists(Plugin::$dir . 'assets/css/admin-tables.css')) {
-            wp_enqueue_style($styleHandle, $styleUrl, [], Plugin::VERSION);
+            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], Plugin::VERSION);
         }
 
         wp_localize_script($scriptHandle, 'fpResvTablesSettings', [

@@ -23,9 +23,13 @@ use function wp_localize_script;
 final class AdminController
 {
     private const CAPABILITY = 'manage_options';
-    private const PAGE_SLUG  = 'fp-resv-reports';
+    private const PAGE_SLUG  = 'fp-resv-analytics';
 
     private ?string $pageHook = null;
+
+    public function __construct(private readonly Service $service)
+    {
+    }
 
     public function register(): void
     {
@@ -37,8 +41,8 @@ final class AdminController
     {
         $this->pageHook = add_submenu_page(
             'fp-resv-settings',
-            __('Dashboard & Report', 'fp-restaurant-reservations'),
-            __('Report', 'fp-restaurant-reservations'),
+            __('Report & Analytics', 'fp-restaurant-reservations'),
+            __('Report & Analytics', 'fp-restaurant-reservations'),
             self::CAPABILITY,
             self::PAGE_SLUG,
             [$this, 'renderPage']
@@ -51,44 +55,75 @@ final class AdminController
             return;
         }
 
-        $scriptHandle = 'fp-resv-admin-reports';
-        $styleHandle  = 'fp-resv-admin-reports-style';
+        $scriptHandle = 'fp-resv-admin-analytics';
+        $styleHandle  = 'fp-resv-admin-analytics-style';
+        $baseHandle   = 'fp-resv-admin-shell';
+        $chartHandle  = 'fp-resv-chart';
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/reports-dashboard.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-reports.css';
 
-        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], Plugin::VERSION, true);
-        wp_enqueue_style($styleHandle, $styleUrl, [], Plugin::VERSION);
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+
+        if (file_exists(Plugin::$dir . 'assets/css/admin-reports.css')) {
+            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], Plugin::VERSION);
+        }
+
+        wp_enqueue_script(
+            $chartHandle,
+            Plugin::$url . 'assets/vendor/chart.umd.min.js',
+            [],
+            Plugin::VERSION,
+            true
+        );
+
+        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch', $chartHandle], Plugin::VERSION, true);
 
         $end   = wp_date('Y-m-d');
-        $start = wp_date('Y-m-d', strtotime('-6 days'));
+        $start = wp_date('Y-m-d', strtotime('-29 days'));
 
-        wp_localize_script($scriptHandle, 'fpResvReportsSettings', [
+        wp_localize_script($scriptHandle, 'fpResvAnalyticsSettings', [
             'restRoot' => esc_url_raw(rest_url('fp-resv/v1')),
             'nonce'    => wp_create_nonce('wp_rest'),
             'defaultRange' => [
                 'start' => $start,
                 'end'   => $end,
             ],
+            'locations' => $this->service->listLocations(),
             'links' => [
                 'agenda'   => esc_url_raw(admin_url('admin.php?page=fp-resv-agenda')),
                 'tables'   => esc_url_raw(admin_url('admin.php?page=fp-resv-layout')),
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
             ],
             'i18n' => [
-                'title'           => __('Dashboard KPI giornaliera', 'fp-restaurant-reservations'),
-                'rangeLabel'      => __('Intervallo date', 'fp-restaurant-reservations'),
-                'summaryEmpty'    => __('Nessun dato disponibile per l\'intervallo selezionato.', 'fp-restaurant-reservations'),
-                'logsTitle'       => __('Log di sistema', 'fp-restaurant-reservations'),
-                'logsEmpty'       => __('Nessun evento registrato.', 'fp-restaurant-reservations'),
-                'channelMail'     => __('Email', 'fp-restaurant-reservations'),
-                'channelBrevo'    => __('Brevo', 'fp-restaurant-reservations'),
-                'channelAudit'    => __('Audit', 'fp-restaurant-reservations'),
-                'filtersApply'    => __('Aggiorna', 'fp-restaurant-reservations'),
-                'exportCsv'       => __('Esporta CSV', 'fp-restaurant-reservations'),
-                'exportExcel'     => __('Esporta Excel (;)', 'fp-restaurant-reservations'),
-                'downloadReady'   => __('Download pronto', 'fp-restaurant-reservations'),
-                'downloadFailed'  => __('Esportazione non riuscita. Riprova.', 'fp-restaurant-reservations'),
+                'title'             => __('Analytics di prenotazione', 'fp-restaurant-reservations'),
+                'rangeLabel'        => __('Intervallo date', 'fp-restaurant-reservations'),
+                'locationLabel'     => __('Sede', 'fp-restaurant-reservations'),
+                'allLocations'      => __('Tutte le sedi', 'fp-restaurant-reservations'),
+                'applyFilters'      => __('Aggiorna', 'fp-restaurant-reservations'),
+                'exportCsv'         => __('Esporta CSV', 'fp-restaurant-reservations'),
+                'loading'           => __('Caricamento analytics…', 'fp-restaurant-reservations'),
+                'empty'             => __('Nessun dato disponibile per i filtri selezionati.', 'fp-restaurant-reservations'),
+                'channelsTitle'     => __('Canali principali', 'fp-restaurant-reservations'),
+                'trendTitle'        => __('Trend giornaliero', 'fp-restaurant-reservations'),
+                'tableTitle'        => __('Sorgenti top', 'fp-restaurant-reservations'),
+                'tableEmpty'        => __('Nessuna sorgente tracciata.', 'fp-restaurant-reservations'),
+                'downloadReady'     => __('Esportazione pronta.', 'fp-restaurant-reservations'),
+                'downloadFailed'    => __('Esportazione non riuscita. Riprova.', 'fp-restaurant-reservations'),
+                'reservationsLabel' => __('Prenotazioni', 'fp-restaurant-reservations'),
+                'coversLabel'       => __('Coperti', 'fp-restaurant-reservations'),
+                'revenueLabel'      => __('Valore', 'fp-restaurant-reservations'),
+                'avgPartyLabel'     => __('Party medio', 'fp-restaurant-reservations'),
+                'avgTicketLabel'    => __('Ticket medio', 'fp-restaurant-reservations'),
+                'channelLabels'     => [
+                    'google_ads' => __('Google Ads', 'fp-restaurant-reservations'),
+                    'meta_ads'   => __('Meta Ads', 'fp-restaurant-reservations'),
+                    'organic'    => __('Traffico organico', 'fp-restaurant-reservations'),
+                    'direct'     => __('Accesso diretto', 'fp-restaurant-reservations'),
+                    'referral'   => __('Referral', 'fp-restaurant-reservations'),
+                    'email'      => __('Email / Newsletter', 'fp-restaurant-reservations'),
+                    'other'      => __('Altro', 'fp-restaurant-reservations'),
+                ],
             ],
         ]);
     }
@@ -103,6 +138,6 @@ final class AdminController
             return;
         }
 
-        echo '<div class="wrap"><h1>' . esc_html__('Dashboard & Report', 'fp-restaurant-reservations') . '</h1></div>';
+        echo '<div class="wrap"><h1>' . esc_html__('Report & Analytics', 'fp-restaurant-reservations') . '</h1></div>';
     }
 }

@@ -12,26 +12,59 @@ $encoded  = wp_json_encode($contrast);
 if (!is_string($encoded)) {
     $encoded = '[]';
 }
+
+$cssParts    = isset($previewData['css_parts']) && is_array($previewData['css_parts']) ? $previewData['css_parts'] : [];
+$baseCss     = isset($cssParts['base']) ? (string) $cssParts['base'] : '';
+$variables   = isset($cssParts['variables']) ? (string) $cssParts['variables'] : '';
+$darkCss     = isset($cssParts['dark']) ? (string) $cssParts['dark'] : '';
+$customCss   = isset($cssParts['custom']) ? (string) $cssParts['custom'] : '';
+$dynamicCss  = trim($variables . "\n" . $darkCss . "\n" . $customCss);
+
+ob_start();
 ?>
-<div
-    class="fp-resv-style-preview"
-    data-fp-resv-style-preview
-    data-contrast="<?php echo esc_attr($encoded); ?>"
->
-    <header class="fp-resv-style-preview__header">
-        <div>
-            <h2><?php echo esc_html__('Anteprima live', 'fp-restaurant-reservations'); ?></h2>
-            <p class="fp-resv-style-preview__subtitle">
-                <?php echo esc_html__('Aggiorna i campi a sinistra per vedere in tempo reale colori, tipografia e pulsanti del form.', 'fp-restaurant-reservations'); ?>
-            </p>
-        </div>
-    </header>
-    <div class="fp-resv-style-preview__widget">
+<!doctype html>
+<html lang="<?php echo esc_attr(get_locale()); ?>" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <style id="fp-resv-style-preview-base">
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            padding: 1.25rem;
+            box-sizing: border-box;
+            background: transparent;
+        }
+
+        .fp-resv-preview-shell {
+            margin: 0 auto;
+            max-width: 960px;
+            display: flex;
+            justify-content: center;
+        }
+<?php if ($baseCss !== '') : ?>
+<?php echo esc_html($baseCss); ?>
+<?php endif; ?>
+    </style>
+    <style id="fp-resv-style-preview-dynamic">
+<?php if ($dynamicCss !== '') : ?>
+<?php echo esc_html($dynamicCss); ?>
+<?php endif; ?>
+    </style>
+</head>
+<body>
+    <div class="fp-resv-preview-shell">
         <div class="fp-resv-widget" id="fp-resv-style-preview-widget" data-style-hash="<?php echo esc_attr($hash); ?>">
             <div class="fp-resv-widget__topbar">
                 <div class="fp-resv-widget__titles">
-                    <h2 class="fp-resv-widget__headline">Cena per due</h2>
-                    <p class="fp-resv-widget__subheadline">Scegli data, orario e completa i tuoi dati.</p>
+                    <h2 class="fp-resv-widget__headline"><?php echo esc_html__('Cena per due', 'fp-restaurant-reservations'); ?></h2>
+                    <p class="fp-resv-widget__subheadline"><?php echo esc_html__('Scegli data, orario e completa i tuoi dati.', 'fp-restaurant-reservations'); ?></p>
                 </div>
                 <a class="fp-resv-widget__pdf" href="#">
                     <?php echo esc_html__('Scarica PDF menù', 'fp-restaurant-reservations'); ?>
@@ -116,6 +149,34 @@ if (!is_string($encoded)) {
                 </ol>
             </form>
         </div>
+    </div>
+</body>
+</html>
+<?php
+$iframeHtml = ob_get_clean();
+?>
+<div
+    class="fp-resv-style-preview"
+    data-fp-resv-style-preview
+    data-contrast="<?php echo esc_attr($encoded); ?>"
+>
+    <header class="fp-resv-style-preview__header">
+        <div>
+            <h2><?php echo esc_html__('Anteprima live', 'fp-restaurant-reservations'); ?></h2>
+            <p class="fp-resv-style-preview__subtitle">
+                <?php echo esc_html__('Aggiorna i campi a sinistra per vedere in tempo reale colori, tipografia e pulsanti del form.', 'fp-restaurant-reservations'); ?>
+            </p>
+        </div>
+    </header>
+    <div class="fp-resv-style-preview__stage">
+        <iframe
+            class="fp-resv-style-preview__iframe"
+            data-style-iframe
+            title="<?php echo esc_attr__('Anteprima del form prenotazioni', 'fp-restaurant-reservations'); ?>"
+            sandbox="allow-same-origin"
+            loading="lazy"
+            srcdoc="<?php echo esc_attr($iframeHtml); ?>"
+        ><?php echo esc_html__('Il tuo browser non supporta l’anteprima incorporata.', 'fp-restaurant-reservations'); ?></iframe>
     </div>
     <section class="fp-resv-style-preview__contrast" data-contrast-list>
         <?php foreach ($contrast as $item) :

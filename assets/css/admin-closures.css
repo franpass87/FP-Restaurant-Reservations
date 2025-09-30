@@ -1,63 +1,58 @@
-.fp-resv-closures-wrap {
-    max-width: 960px;
-}
-
-.fp-resv-closures__placeholder {
-    margin-top: 24px;
-    padding: 24px;
-    border: 1px solid #dcdcdc;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-}
-
-.fp-resv-closures__header {
+.fp-resv-admin--closures .fp-resv-surface {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 20px;
 }
 
-.fp-resv-closures__title {
-    margin: 0;
-    font-size: 1.5rem;
-}
-
-.fp-resv-closures__description {
-    margin: 0;
-    color: #475569;
-}
-
-.fp-resv-closures__stats {
+.fp-resv-admin--closures .fp-resv-closures__stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
 }
 
-.fp-resv-closures__stat {
-    padding: 16px;
-    border-radius: 10px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+.fp-resv-admin--closures .fp-resv-closures__stat {
+    background: var(--fp-resv-admin-surface-alt);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    padding: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.fp-resv-closures__stat-label {
-    display: block;
-    font-size: 0.85rem;
-    color: #64748b;
+.fp-resv-admin--closures .fp-resv-closures__stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fp-resv-admin-muted);
 }
 
-.fp-resv-closures__stat-value {
-    display: block;
-    margin-top: 8px;
-    font-size: 1.4rem;
+.fp-resv-admin--closures .fp-resv-closures__stat-value {
+    font-size: 22px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--fp-resv-admin-text);
 }
 
-.fp-resv-closures__note {
+.fp-resv-admin--closures .fp-resv-closures__note {
     margin: 0;
-    font-style: italic;
-    color: #475569;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--closures [data-fp-resv-closures] {
+    min-height: 340px;
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    border: 1px dashed rgba(67, 56, 202, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: var(--fp-resv-admin-muted);
+    background: rgba(67, 56, 202, 0.04);
+}
+
+@media (max-width: 782px) {
+    .fp-resv-admin--closures [data-fp-resv-closures] {
+        padding: 18px;
+    }
 }

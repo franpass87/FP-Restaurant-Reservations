@@ -1,120 +1,112 @@
-.fp-resv-reports__app {
-    margin-top: 20px;
+.fp-resv-admin--analytics .fp-resv-admin__toolbar {
+    background: var(--fp-resv-admin-surface);
+    border-radius: var(--fp-resv-admin-radius);
+    box-shadow: var(--fp-resv-admin-shadow);
+    padding: clamp(20px, 2vw, 28px);
+    margin-bottom: var(--fp-resv-admin-gap);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(12px, 2vw, 20px);
+    align-items: flex-end;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__filters select,
+.fp-resv-admin--analytics .fp-resv-analytics__filters input[type="date"] {
+    min-width: 180px;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__filters button[data-action="export"] {
+    margin-left: auto;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__app {
     display: grid;
-    gap: 24px;
+    gap: var(--fp-resv-admin-gap);
 }
 
-.fp-resv-reports__filters {
-    display: flex;
-    flex-wrap: wrap;
+.fp-resv-admin--analytics .fp-resv-analytics__loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__empty {
+    margin: 0;
+    color: var(--fp-resv-admin-muted);
+    text-align: center;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--fp-resv-admin-gap);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__summary-card {
+    background: var(--fp-resv-admin-surface);
+    border-radius: var(--fp-resv-admin-radius);
+    box-shadow: var(--fp-resv-admin-shadow-soft);
+    padding: clamp(16px, 2vw, 22px);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__summary-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__summary-card p {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 600;
+    color: var(--fp-resv-admin-text);
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__card .fp-resv-card__body {
+    display: grid;
     gap: 16px;
-    align-items: flex-end;
-    justify-content: space-between;
 }
 
-.fp-resv-reports__dates {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-}
-
-.fp-resv-reports__dates label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-weight: 600;
-}
-
-.fp-resv-reports__export {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.fp-resv-reports__export-label {
-    font-weight: 600;
-}
-
-.fp-resv-card {
-    background: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.fp-resv-card__header {
-    border-bottom: 1px solid #dcdcde;
-    padding: 16px 20px 12px;
-}
-
-.fp-resv-card__header h2 {
-    margin: 0 0 4px;
-    font-size: 20px;
-}
-
-.fp-resv-card__header p {
-    margin: 0;
-    color: #50575e;
-}
-
-.fp-resv-card__body {
-    padding: 20px;
-}
-
-.fp-resv-reports__loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #50575e;
-}
-
-.fp-resv-reports__empty {
-    margin: 0;
-    color: #646970;
-}
-
-.fp-resv-reports__log-filters {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    margin-top: 12px;
-}
-
-.fp-resv-reports__log-filters label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-weight: 600;
-}
-
-.fp-resv-reports__log-search {
-    flex: 1 1 220px;
-}
-
-.fp-resv-reports__log-search input {
+.fp-resv-admin--analytics canvas {
     width: 100%;
+    min-height: 260px;
 }
 
-.tablenav-pages .button {
-    min-width: 34px;
+.fp-resv-admin--analytics table.widefat td,
+.fp-resv-admin--analytics table.widefat th {
+    vertical-align: middle;
 }
 
-@media (max-width: 782px) {
-    .fp-resv-reports__filters {
+.fp-resv-admin--analytics table.widefat td {
+    font-size: 13px;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__card[data-section="table"] .fp-resv-card__body {
+    overflow-x: auto;
+}
+
+@media (max-width: 960px) {
+    .fp-resv-admin--analytics .fp-resv-analytics__filters {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .fp-resv-reports__dates,
-    .fp-resv-reports__export,
-    .fp-resv-reports__log-filters {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .fp-resv-reports__export {
-        gap: 6px;
+    .fp-resv-admin--analytics .fp-resv-analytics__filters button[data-action="export"] {
+        margin-left: 0;
+        width: 100%;
     }
 }

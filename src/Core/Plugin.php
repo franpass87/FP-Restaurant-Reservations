@@ -7,6 +7,7 @@ namespace FP\Resv\Core;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Privacy;
 use FP\Resv\Core\Scheduler;
+use FP\Resv\Core\Security;
 use FP\Resv\Domain\Brevo\AutomationService as BrevoAutomation;
 use FP\Resv\Domain\Brevo\Client as BrevoClient;
 use FP\Resv\Domain\Brevo\Mapper as BrevoMapper;
@@ -16,9 +17,15 @@ use FP\Resv\Domain\Closures\REST as ClosuresREST;
 use FP\Resv\Domain\Closures\Service as ClosuresService;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
+use FP\Resv\Domain\Diagnostics\AdminController as DiagnosticsAdminController;
+use FP\Resv\Domain\Diagnostics\REST as DiagnosticsREST;
+use FP\Resv\Domain\Diagnostics\Service as DiagnosticsService;
 use FP\Resv\Domain\Events\CPT as EventsCPT;
 use FP\Resv\Domain\Events\REST as EventsREST;
 use FP\Resv\Domain\Events\Service as EventsService;
+use FP\Resv\Domain\QA\CLI as QASeederCLI;
+use FP\Resv\Domain\QA\REST as QASeederREST;
+use FP\Resv\Domain\QA\Seeder as QASeeder;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\REST as PaymentsREST;
 use FP\Resv\Domain\Payments\StripeService;
@@ -92,6 +99,7 @@ final class Plugin
         $container->register('settings.language', $languageSettings);
 
         Consent::init($options);
+        Security::boot();
 
         $mailer = new Mailer();
         $mailer->registerHooks();
@@ -161,6 +169,20 @@ final class Plugin
         $container->register(ReportsService::class, $reportsService);
         $container->register('reports.service', $reportsService);
 
+        $diagnosticsService = new DiagnosticsService($wpdb, $paymentsRepository, $reservationsRepository);
+        $container->register(DiagnosticsService::class, $diagnosticsService);
+        $container->register('diagnostics.service', $diagnosticsService);
+
+        $qaSeeder = new QASeeder($reservationsRepository, $customersRepository, $paymentsRepository, $wpdb);
+        $container->register(QASeeder::class, $qaSeeder);
+        $container->register('qa.seeder', $qaSeeder);
+
+        $qaSeederRest = new QASeederREST($qaSeeder);
+        $qaSeederRest->register();
+
+        $qaSeederCli = new QASeederCLI($qaSeeder);
+        $qaSeederCli->register();
+
         $brevoRepository = new BrevoRepository($wpdb);
         $container->register(BrevoRepository::class, $brevoRepository);
         $container->register('brevo.repository', $brevoRepository);
@@ -225,10 +247,15 @@ final class Plugin
             $container->register(ClosuresAdminController::class, $closuresAdmin);
             $container->register('closures.admin_controller', $closuresAdmin);
 
-            $reportsAdmin = new ReportsAdminController();
+            $reportsAdmin = new ReportsAdminController($reportsService);
             $reportsAdmin->register();
             $container->register(ReportsAdminController::class, $reportsAdmin);
             $container->register('reports.admin_controller', $reportsAdmin);
+
+            $diagnosticsAdmin = new DiagnosticsAdminController($diagnosticsService);
+            $diagnosticsAdmin->register();
+            $container->register(DiagnosticsAdminController::class, $diagnosticsAdmin);
+            $container->register('diagnostics.admin_controller', $diagnosticsAdmin);
         }
 
         Migrations::run();
@@ -274,6 +301,11 @@ final class Plugin
         $reportsRest->register();
         $container->register(ReportsREST::class, $reportsRest);
         $container->register('reports.rest', $reportsRest);
+
+        $diagnosticsRest = new DiagnosticsREST($diagnosticsService);
+        $diagnosticsRest->register();
+        $container->register(DiagnosticsREST::class, $diagnosticsRest);
+        $container->register('diagnostics.rest', $diagnosticsRest);
 
         $widgets = new WidgetController();
         $widgets->boot();

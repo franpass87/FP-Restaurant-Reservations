@@ -150,6 +150,8 @@ function firstFocusable(section) {
     return section.querySelector(selectors);
 }
 
+const STEP_ORDER = ['date', 'party', 'slots', 'details', 'confirm'];
+
 function safeJson(response) {
     return response.text().then((text) => {
         if (!text) {
@@ -163,7 +165,7 @@ function safeJson(response) {
     });
 }
 
-class OnePageForm {
+class FormApp {
     constructor(root) {
         this.root = root;
         this.dataset = parseDataset(root);
@@ -174,8 +176,23 @@ class OnePageForm {
         this.integrations = this.config.integrations || this.config.features || {};
 
         this.form = root.querySelector('[data-fp-resv-form]');
+        const defaultOrder = Array.from(STEP_ORDER);
         this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll('[data-fp-resv-section]')) : [];
+        const dynamicOrder = this.sections.map((section) => section.getAttribute('data-step') || '').filter(Boolean);
+        this.stepOrder = Array.from(new Set(defaultOrder.concat(dynamicOrder)));
+        if (this.sections.length > 1) {
+            this.sections.sort((a, b) => this.getStepOrderIndex(a) - this.getStepOrderIndex(b));
+        }
+
         this.progress = this.form ? this.form.querySelector('[data-fp-resv-progress]') : null;
+        this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll('[data-step]')) : [];
+        if (this.progress && this.progressItems.length > 1) {
+            this.progressItems
+                .sort((a, b) => this.getStepOrderIndex(a) - this.getStepOrderIndex(b))
+                .forEach((item) => {
+                    this.progress.appendChild(item);
+                });
+        }
         this.submitButton = this.form ? this.form.querySelector('[data-fp-resv-submit]') : null;
         this.submitLabel = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-label]') || this.submitButton : null;
         this.submitSpinner = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-spinner]') : null;
@@ -217,6 +234,7 @@ class OnePageForm {
             slotsUpdated: this.messages.msg_slots_updated || 'Availability updated.',
             slotsEmpty: this.messages.slots_empty || '',
             selectMeal: this.messages.msg_select_meal || 'Select a meal to view available times.',
+            slotsError: this.messages.msg_slots_error || 'We could not update available times. Please try again.',
             invalidPhone: this.messages.msg_invalid_phone || 'Enter a valid phone number (minimum 6 digits).',
             invalidEmail: this.messages.msg_invalid_email || 'Enter a valid email address.',
             submitError: this.messages.msg_submit_error || 'We could not complete your reservation. Please try again.',
@@ -266,6 +284,13 @@ class OnePageForm {
         document.addEventListener('fp-resv:reservation:confirmed', this.handleReservationConfirmed);
         window.addEventListener('fp-resv:reservation:confirmed', this.handleReservationConfirmed);
         window.addEventListener('focus', this.handleWindowFocus);
+    }
+
+    getStepOrderIndex(target) {
+        const key = target && target.getAttribute ? target.getAttribute('data-step') || '' : String(target || '');
+        const normalized = typeof key === 'string' ? key : '';
+        const index = this.stepOrder.indexOf(normalized);
+        return index === -1 ? this.stepOrder.length + 1 : index;
     }
 
     initializeSections() {
@@ -553,7 +578,9 @@ class OnePageForm {
         }
 
         const _this = this;
-        const items = this.progress.querySelectorAll('[data-step]');
+        const items = (this.progressItems && this.progressItems.length)
+            ? this.progressItems
+            : Array.prototype.slice.call(this.progress.querySelectorAll('[data-step]'));
         let progressValue = 0;
         const total = items.length || 1;
 
@@ -714,6 +741,16 @@ class OnePageForm {
             this.updateSubmitState();
             return false;
         }
+
+        const submitEvent = this.events.submit || 'reservation_submit';
+        const submitContext = this.collectAvailabilityParams();
+        pushDataLayerEvent(submitEvent, {
+            source: 'form',
+            form_id: this.form && this.form.id ? this.form.id : this.root.id || '',
+            date: submitContext.date,
+            party: submitContext.party,
+            meal: submitContext.meal,
+        });
 
         this.preparePhonePayload();
         this.state.sending = true;
@@ -1119,10 +1156,15 @@ class OnePageForm {
     }
 }
 
+if (typeof window !== 'undefined') {
+    window.FPResv = window.FPResv || {};
+    window.FPResv.FormApp = FormApp;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const widgets = document.querySelectorAll('[data-fp-resv]');
     Array.prototype.forEach.call(widgets, function (widget) {
-        new OnePageForm(widget);
+        new FormApp(widget);
     });
 });
 
