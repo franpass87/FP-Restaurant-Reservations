@@ -66,7 +66,7 @@ ob_start();
                     <h2 class="fp-resv-widget__headline"><?php echo esc_html__('Cena per due', 'fp-restaurant-reservations'); ?></h2>
                     <p class="fp-resv-widget__subheadline"><?php echo esc_html__('Scegli data, orario e completa i tuoi dati.', 'fp-restaurant-reservations'); ?></p>
                 </div>
-                <a class="fp-resv-widget__pdf" href="#">
+                <a class="fp-resv-widget__pdf fp-btn fp-btn--ghost" href="#">
                     <?php echo esc_html__('Scarica PDF menù', 'fp-restaurant-reservations'); ?>
                 </a>
             </div>
@@ -89,7 +89,7 @@ ob_start();
                             </label>
                         </div>
                         <footer class="fp-resv-step__footer">
-                            <button type="button" class="fp-resv-button fp-resv-button--primary"><?php echo esc_html__('Prosegui', 'fp-restaurant-reservations'); ?></button>
+                            <button type="button" class="fp-resv-button fp-resv-button--primary fp-btn fp-btn--primary"><?php echo esc_html__('Prosegui', 'fp-restaurant-reservations'); ?></button>
                         </footer>
                     </li>
                     <li class="fp-resv-step" data-step="slots">
@@ -109,8 +109,8 @@ ob_start();
                             </div>
                         </div>
                         <footer class="fp-resv-step__footer">
-                            <button type="button" class="fp-resv-button fp-resv-button--ghost"><?php echo esc_html__('Indietro', 'fp-restaurant-reservations'); ?></button>
-                            <button type="button" class="fp-resv-button fp-resv-button--primary"><?php echo esc_html__('Continua', 'fp-restaurant-reservations'); ?></button>
+                            <button type="button" class="fp-resv-button fp-resv-button--ghost fp-btn fp-btn--ghost"><?php echo esc_html__('Indietro', 'fp-restaurant-reservations'); ?></button>
+                            <button type="button" class="fp-resv-button fp-resv-button--primary fp-btn fp-btn--primary"><?php echo esc_html__('Continua', 'fp-restaurant-reservations'); ?></button>
                         </footer>
                     </li>
                     <li class="fp-resv-step" data-step="confirm">
@@ -143,7 +143,7 @@ ob_start();
                             </section>
                         </div>
                         <footer class="fp-resv-step__footer">
-                            <button type="button" class="fp-resv-button fp-resv-button--primary"><?php echo esc_html__('Conferma prenotazione', 'fp-restaurant-reservations'); ?></button>
+                            <button type="button" class="fp-resv-button fp-resv-button--primary fp-btn fp-btn--primary"><?php echo esc_html__('Conferma prenotazione', 'fp-restaurant-reservations'); ?></button>
                         </footer>
                     </li>
                 </ol>

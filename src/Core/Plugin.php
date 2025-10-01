@@ -277,7 +277,7 @@ final class Plugin
         $container->register(PaymentsREST::class, $paymentsRest);
         $container->register('payments.rest', $paymentsRest);
 
-        $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar);
+        $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar, $tablesLayout);
         $adminRest->register();
         $container->register(ReservationsAdminREST::class, $adminRest);
         $container->register('reservations.admin_rest', $adminRest);

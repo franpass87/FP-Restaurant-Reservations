@@ -9,7 +9,6 @@ use function __;
 use function add_action;
 use function add_submenu_page;
 use function admin_url;
-use function esc_html;
 use function esc_html__;
 use function is_array;
 use function esc_url_raw;
@@ -21,6 +20,7 @@ use function wp_date;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
+use function wp_strip_all_tags;
 
 final class AdminController
 {
@@ -87,8 +87,8 @@ final class AdminController
         foreach ($this->service->getChannels() as $key => $channel) {
             $columns = is_array($channel['columns'] ?? null) ? $channel['columns'] : [];
             $channels[$key] = [
-                'label'       => esc_html($this->resolveChannelLabel($key, (string) $channel['label'])),
-                'description' => esc_html($this->resolveChannelDescription($key, (string) $channel['description'])),
+                'label'       => wp_strip_all_tags($this->resolveChannelLabel($key, (string) $channel['label'])),
+                'description' => wp_strip_all_tags($this->resolveChannelDescription($key, (string) $channel['description'])),
                 'statuses'    => $this->mapStatusLabels($channel['statuses']),
                 'columns'     => $this->mapColumns($key, $columns),
             ];
@@ -170,7 +170,7 @@ final class AdminController
 
             $mapping[] = [
                 'value' => $status,
-                'label' => esc_html($label),
+                'label' => wp_strip_all_tags($label),
             ];
         }
 
@@ -215,7 +215,7 @@ final class AdminController
 
             $mapped[] = [
                 'key'   => $key,
-                'label' => esc_html($label),
+                'label' => wp_strip_all_tags($label),
             ];
         }
 

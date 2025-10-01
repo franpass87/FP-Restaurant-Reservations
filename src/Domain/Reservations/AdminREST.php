@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Reservations;
 use DateInterval;
 use DateTimeImmutable;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
+use FP\Resv\Domain\Tables\LayoutService;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -36,6 +37,7 @@ use function sanitize_textarea_field;
 use function strtolower;
 use function trim;
 use function substr;
+use function sprintf;
 use function wp_timezone;
 
 final class AdminREST
@@ -43,7 +45,8 @@ final class AdminREST
     public function __construct(
         private readonly Repository $reservations,
         private readonly Service $service,
-        private readonly ?GoogleCalendarService $calendar = null
+        private readonly ?GoogleCalendarService $calendar = null,
+        private readonly ?LayoutService $layout = null
     ) {
     }
 
@@ -190,6 +193,10 @@ final class AdminREST
         $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
         $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
 
+        $overview = $this->layout?->getOverview() ?? ['rooms' => [], 'groups' => []];
+        $days      = $this->buildAgendaDays($reservations);
+        $tables    = $this->flattenAgendaTables($overview);
+
         return rest_ensure_response([
             'range'        => [
                 'mode'  => $rangeMode,
@@ -197,6 +204,10 @@ final class AdminREST
                 'end'   => $end->format('Y-m-d'),
             ],
             'reservations' => $reservations,
+            'days'         => array_values($days),
+            'tables'       => $tables,
+            'rooms'        => $overview['rooms'] ?? [],
+            'groups'       => $overview['groups'] ?? [],
             'meta'         => [
                 'generated_at' => gmdate('c'),
             ],
@@ -395,6 +406,157 @@ final class AdminREST
             'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
             'moved'       => true,
         ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $reservations
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function buildAgendaDays(array $reservations): array
+    {
+        $days = [];
+
+        foreach ($reservations as $reservation) {
+            $date = (string) ($reservation['date'] ?? '');
+            if ($date === '') {
+                continue;
+            }
+
+            if (!isset($days[$date])) {
+                $days[$date] = [
+                    'date'          => $date,
+                    'reservations'  => [],
+                ];
+            }
+
+            $days[$date]['reservations'][] = $this->normalizeAgendaDayReservation($reservation);
+        }
+
+        foreach ($days as &$day) {
+            usort($day['reservations'], static function (array $left, array $right): int {
+                $leftKey = ($left['time'] ?? '') . '|' . ($left['table_id'] ?? 0);
+                $rightKey = ($right['time'] ?? '') . '|' . ($right['table_id'] ?? 0);
+
+                return $leftKey <=> $rightKey;
+            });
+        }
+
+        return $days;
+    }
+
+    /**
+     * @param array<string, mixed> $reservation
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeAgendaDayReservation(array $reservation): array
+    {
+        $customer = isset($reservation['customer']) && is_array($reservation['customer'])
+            ? $reservation['customer']
+            : [];
+
+        return [
+            'id'        => (int) $reservation['id'],
+            'status'    => (string) ($reservation['status'] ?? 'pending'),
+            'date'      => (string) ($reservation['date'] ?? ''),
+            'time'      => (string) ($reservation['time'] ?? ''),
+            'party'     => (int) ($reservation['party'] ?? 0),
+            'room_id'   => isset($reservation['room_id']) ? (int) $reservation['room_id'] : null,
+            'table_id'  => isset($reservation['table_id']) ? (int) $reservation['table_id'] : null,
+            'notes'     => (string) ($reservation['notes'] ?? ''),
+            'allergies' => (string) ($reservation['allergies'] ?? ''),
+            'customer'  => $this->summarizeAgendaCustomer($customer),
+            'meta'      => [
+                'customer' => $customer,
+                'visited_at' => $reservation['visited_at'] ?? null,
+                'calendar_event_id' => $reservation['calendar_event_id'] ?? null,
+                'calendar_sync_status' => $reservation['calendar_sync_status'] ?? null,
+                'calendar_synced_at' => $reservation['calendar_synced_at'] ?? null,
+                'calendar_last_error' => $reservation['calendar_last_error'] ?? null,
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $customer
+     *
+     * @return array<string, mixed>
+     */
+    private function summarizeAgendaCustomer(array $customer): array
+    {
+        $firstName = isset($customer['first_name']) ? (string) $customer['first_name'] : '';
+        $lastName  = isset($customer['last_name']) ? (string) $customer['last_name'] : '';
+        $email     = isset($customer['email']) ? (string) $customer['email'] : '';
+        $phone     = isset($customer['phone']) ? (string) $customer['phone'] : '';
+
+        $name = trim($firstName . ' ' . $lastName);
+        if ($name === '') {
+            $name = $email !== '' ? $email : $phone;
+        }
+
+        return [
+            'id'    => isset($customer['id']) ? (int) $customer['id'] : null,
+            'name'  => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'language' => isset($customer['language']) ? (string) $customer['language'] : '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $overview
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function flattenAgendaTables(array $overview): array
+    {
+        if (!isset($overview['rooms']) || !is_array($overview['rooms'])) {
+            return [];
+        }
+
+        $tables = [];
+
+        foreach ($overview['rooms'] as $room) {
+            if (!is_array($room)) {
+                continue;
+            }
+
+            $roomId   = isset($room['id']) ? (int) $room['id'] : null;
+            $roomName = isset($room['name']) ? (string) $room['name'] : '';
+
+            if (!isset($room['tables']) || !is_array($room['tables'])) {
+                continue;
+            }
+
+            foreach ($room['tables'] as $table) {
+                if (!is_array($table)) {
+                    continue;
+                }
+
+                $tables[] = [
+                    'id'        => isset($table['id']) ? (int) $table['id'] : null,
+                    'room_id'   => $roomId,
+                    'label'     => isset($table['code']) ? (string) $table['code'] : '',
+                    'seats_min' => isset($table['seats_min']) ? $table['seats_min'] : null,
+                    'seats_std' => isset($table['seats_std']) ? $table['seats_std'] : null,
+                    'seats_max' => isset($table['seats_max']) ? $table['seats_max'] : null,
+                    'status'    => isset($table['status']) ? (string) $table['status'] : '',
+                    'active'    => !empty($table['active']),
+                    'room_name' => $roomName,
+                    'order_index' => isset($table['order_index']) ? (int) $table['order_index'] : 0,
+                ];
+            }
+        }
+
+        usort($tables, static function (array $left, array $right): int {
+            $leftKey = sprintf('%05d-%05d', (int) ($left['room_id'] ?? 0), (int) ($left['order_index'] ?? 0));
+            $rightKey = sprintf('%05d-%05d', (int) ($right['room_id'] ?? 0), (int) ($right['order_index'] ?? 0));
+
+            return $leftKey <=> $rightKey;
+        });
+
+        return $tables;
     }
 
     private function checkPermissions(): bool
