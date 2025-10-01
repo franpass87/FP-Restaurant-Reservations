@@ -26,7 +26,7 @@ $policyVersion = isset($privacy['policy_version']) ? (string) $privacy['policy_v
 $marketingEnabled = !empty($privacy['marketing_enabled']);
 $profilingEnabled = !empty($privacy['profiling_enabled']);
 $style      = $context['style'] ?? [];
-$progressLabels = is_array($strings['steps_labels'] ?? null) ? $strings['steps_labels'] : [];
+$progressLabels = is_array($strings['steps'] ?? null) ? $strings['steps'] : [];
 $meals = isset($context['meals']) && is_array($context['meals']) ? array_values($context['meals']) : [];
 $hints = is_array($strings['hints'] ?? null) ? $strings['hints'] : [];
 $noticeMessage = '';
@@ -57,7 +57,7 @@ $styleId   = $styleHash !== '' ? 'fp-resv-style-' . $styleHash : 'fp-resv-style-
 
 if ($styleCss !== '') :
     ?>
-    <style id="<?php echo esc_attr($styleId); ?>"><?php echo esc_html($styleCss); ?></style>
+    <style id="<?php echo esc_attr($styleId); ?>"><?php echo wp_strip_all_tags($styleCss); ?></style>
     <?php
 endif;
 ?>
@@ -68,29 +68,6 @@ endif;
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
     data-fp-resv-app
 >
-    <div class="fp-resv-widget__topbar fp-topbar fp-section">
-        <div class="fp-resv-widget__titles">
-            <h2 class="fp-resv-widget__headline"><?php echo esc_html($strings['headline'] ?? ''); ?></h2>
-            <?php if (!empty($strings['subheadline'])) : ?>
-                <p class="fp-resv-widget__subheadline"><?php echo esc_html($strings['subheadline']); ?></p>
-            <?php endif; ?>
-        </div>
-        <?php if ($pdfUrl !== '') : ?>
-            <a
-                class="fp-resv-widget__pdf fp-btn fp-btn--ghost"
-                href="<?php echo esc_url($pdfUrl); ?>"
-                target="_blank"
-                rel="noopener"
-                <?php if ($pdfTooltip !== '') : ?>
-                    title="<?php echo esc_attr($pdfTooltip); ?>"
-                <?php endif; ?>
-                data-fp-resv-event="<?php echo esc_attr($events['pdf'] ?? 'pdf_download_click'); ?>"
-                data-fp-resv-label="<?php echo esc_attr($pdfLabel); ?>"
-            >
-                <?php echo esc_html($pdfLabel); ?>
-            </a>
-        <?php endif; ?>
-    </div>
     <form
         class="fp-resv-widget__form fp-section"
         data-fp-resv-form
@@ -99,6 +76,29 @@ endif;
         data-fp-resv-start="<?php echo esc_attr($events['start'] ?? 'reservation_start'); ?>"
         novalidate
     >
+        <div class="fp-resv-widget__topbar fp-topbar fp-section">
+            <div class="fp-resv-widget__titles">
+                <h2 class="fp-resv-widget__headline"><?php echo esc_html($strings['headline'] ?? ''); ?></h2>
+                <?php if (!empty($strings['subheadline'])) : ?>
+                    <p class="fp-resv-widget__subheadline"><?php echo esc_html($strings['subheadline']); ?></p>
+                <?php endif; ?>
+            </div>
+            <?php if ($pdfUrl !== '') : ?>
+                <a
+                    class="fp-resv-widget__pdf fp-btn fp-btn--ghost"
+                    href="<?php echo esc_url($pdfUrl); ?>"
+                    target="_blank"
+                    rel="noopener"
+                    <?php if ($pdfTooltip !== '') : ?>
+                        title="<?php echo esc_attr($pdfTooltip); ?>"
+                    <?php endif; ?>
+                    data-fp-resv-event="<?php echo esc_attr($events['pdf'] ?? 'pdf_download_click'); ?>"
+                    data-fp-resv-label="<?php echo esc_attr($pdfLabel); ?>"
+                >
+                    <?php echo esc_html($pdfLabel); ?>
+                </a>
+            <?php endif; ?>
+        </div>
         <input type="hidden" name="fp_resv_meal" value="">
         <input type="hidden" name="fp_resv_price_per_person" value="">
         <input type="hidden" name="fp_resv_location" value="<?php echo esc_attr($config['location'] ?? 'default'); ?>">
@@ -109,6 +109,7 @@ endif;
         <input type="hidden" name="fp_resv_phone_e164" value="">
         <input type="hidden" name="fp_resv_phone_cc" value="<?php echo esc_attr($config['defaults']['phone_country_code'] ?? '39'); ?>">
         <input type="hidden" name="fp_resv_phone_local" value="">
+        <input type="hidden" name="fp_resv_time" value="" data-fp-resv-field="time">
         <input type="hidden" name="fp_resv_slot_start" value="">
         <div class="fp-resv-widget__feedback" aria-live="polite">
             <div class="fp-alert fp-alert--success" data-fp-resv-success hidden tabindex="-1"></div>
@@ -119,10 +120,20 @@ endif;
                 </button>
             </div>
         </div>
-        <label class="fp-resv-field fp-resv-field--honeypot fp-field" aria-hidden="true" tabindex="-1">
-            <span class="screen-reader-text"><?php esc_html_e('Lascia vuoto questo campo', 'fp-restaurant-reservations'); ?></span>
-            <input class="fp-input" type="text" name="fp_resv_hp" value="" autocomplete="off">
-        </label>
+        <div class="fp-resv-field fp-resv-field--honeypot fp-field">
+            <label class="screen-reader-text" for="<?php echo esc_attr($formId); ?>-hp">
+                <?php esc_html_e('Lascia vuoto questo campo', 'fp-restaurant-reservations'); ?>
+            </label>
+            <input
+                class="fp-input"
+                type="text"
+                id="<?php echo esc_attr($formId); ?>-hp"
+                name="fp_resv_hp"
+                value=""
+                autocomplete="off"
+                tabindex="-1"
+            >
+        </div>
         <?php if ($steps !== []) : ?>
             <div class="fp-resv-progress" data-fp-resv-progress-shell>
                 <ul class="fp-progress" data-fp-resv-progress aria-label="<?php esc_attr_e('Avanzamento prenotazione', 'fp-restaurant-reservations'); ?>">
@@ -142,48 +153,6 @@ endif;
                     <?php endforeach; ?>
                 </ul>
             </div>
-        <?php endif; ?>
-        <?php if ($meals !== []) : ?>
-            <section class="fp-section fp-meals" data-fp-resv-meals>
-                <header class="fp-meals__header">
-                    <h3 class="fp-meals__title"><?php echo esc_html($strings['meals']['title'] ?? ($strings['steps_labels']['slots'] ?? '')); ?></h3>
-                    <?php if (!empty($strings['meals']['subtitle'] ?? '')) : ?>
-                        <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
-                    <?php endif; ?>
-                </header>
-                <div class="fp-meals__list" role="group">
-                    <?php foreach ($meals as $meal) : ?>
-                        <?php
-                        $mealKey   = isset($meal['key']) ? (string) $meal['key'] : '';
-                        $mealLabel = isset($meal['label']) ? (string) $meal['label'] : $mealKey;
-                        $mealBadge = isset($meal['badge']) ? (string) $meal['badge'] : '';
-                        $mealBadgeIcon = isset($meal['badge_icon']) ? (string) $meal['badge_icon'] : '';
-                        $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
-                        $mealNotice = isset($meal['notice']) ? (string) $meal['notice'] : '';
-                        $mealPrice  = isset($meal['price']) ? (float) $meal['price'] : 0.0;
-                        $isActive  = !empty($meal['active']);
-                        ?>
-                        <button
-                            type="button"
-                            class="fp-meal-pill"
-                            data-fp-resv-meal="<?php echo esc_attr($mealKey); ?>"
-                            data-meal-label="<?php echo esc_attr($mealLabel); ?>"
-                            data-meal-notice="<?php echo esc_attr($mealNotice); ?>"
-                            data-meal-price="<?php echo esc_attr($mealPrice); ?>"
-                            <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
-                        >
-                            <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>
-                            <?php if ($mealBadge !== '') : ?>
-                                <span class="fp-badge"<?php echo $mealBadgeIcon !== '' ? ' data-icon="' . esc_attr($mealBadgeIcon) . '"' : ''; ?>><?php echo esc_html($mealBadge); ?></span>
-                            <?php endif; ?>
-                            <?php if ($mealHint !== '') : ?>
-                                <span class="fp-hint"><?php echo esc_html($mealHint); ?></span>
-                            <?php endif; ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-                <p class="fp-meals__notice fp-hint" data-fp-resv-meal-notice hidden></p>
-            </section>
         <?php endif; ?>
         <?php if ($noticeMessage !== '') : ?>
             <aside class="fp-alert fp-alert--info" role="status">
@@ -230,15 +199,48 @@ endif;
                                         <?php endif; ?>
                                     </label>
                                 </div>
-                                <div class="fp-resv-field fp-field">
-                                    <label>
-                                        <span><?php echo esc_html($strings['fields']['time'] ?? ''); ?></span>
-                                        <input class="fp-input" type="time" name="fp_resv_time" data-fp-resv-field="time">
-                                        <?php if (!empty($hints['time'] ?? '')) : ?>
-                                            <small class="fp-hint"><?php echo esc_html($hints['time']); ?></small>
-                                        <?php endif; ?>
-                                    </label>
-                                </div>
+                                <?php if ($meals !== []) : ?>
+                                    <section class="fp-meals" data-fp-resv-meals>
+                                        <header class="fp-meals__header">
+                                            <h3 class="fp-meals__title"><?php echo esc_html($strings['meals']['title'] ?? ($strings['steps']['slots'] ?? '')); ?></h3>
+                                            <?php if (!empty($strings['meals']['subtitle'] ?? '')) : ?>
+                                                <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
+                                            <?php endif; ?>
+                                        </header>
+                                        <div class="fp-meals__list" role="group">
+                                            <?php foreach ($meals as $meal) : ?>
+                                                <?php
+                                                $mealKey   = isset($meal['key']) ? (string) $meal['key'] : '';
+                                                $mealLabel = isset($meal['label']) ? (string) $meal['label'] : $mealKey;
+                                                $mealBadge = isset($meal['badge']) ? (string) $meal['badge'] : '';
+                                                $mealBadgeIcon = isset($meal['badge_icon']) ? (string) $meal['badge_icon'] : '';
+                                                $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
+                                                $mealNotice = isset($meal['notice']) ? (string) $meal['notice'] : '';
+                                                $mealPrice  = isset($meal['price']) ? (float) $meal['price'] : 0.0;
+                                                $isActive  = !empty($meal['active']);
+                                                ?>
+                                                <button
+                                                    type="button"
+                                                    class="fp-meal-pill"
+                                                    data-fp-resv-meal="<?php echo esc_attr($mealKey); ?>"
+                                                    data-meal-label="<?php echo esc_attr($mealLabel); ?>"
+                                                    data-meal-notice="<?php echo esc_attr($mealNotice); ?>"
+                                                    data-meal-price="<?php echo esc_attr($mealPrice); ?>"
+                                                    <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
+                                                >
+                                                    <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>
+                                                    <?php if ($mealBadge !== '') : ?>
+                                                        <span class="fp-badge"<?php echo $mealBadgeIcon !== '' ? ' data-icon="' . esc_attr($mealBadgeIcon) . '"' : ''; ?>><?php echo esc_html($mealBadge); ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if ($mealHint !== '') : ?>
+                                                        <span class="fp-hint"><?php echo esc_html($mealHint); ?></span>
+                                                    <?php endif; ?>
+                                                </button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <p class="fp-meals__notice fp-hint" data-fp-resv-meal-notice hidden></p>
+                                    </section>
+                                <?php endif; ?>
                                 <?php break;
                             case 'party': ?>
                                 <div class="fp-resv-field fp-field">
@@ -377,7 +379,7 @@ endif;
             <?php
             $submitLabel = $strings['actions']['submit'] ?? __('Book now', 'fp-restaurant-reservations');
             $ctaDisabled = $strings['messages']['cta_complete_fields'] ?? __('Complete required fields', 'fp-restaurant-reservations');
-            $submitHint  = $strings['messages']['submit_hint'] ?? __('Completa tutti i passaggi per prenotare.', 'fp-restaurant-reservations');
+            $submitHint  = $strings['messages']['submit_hint'] ?? __('Complete all steps to book.', 'fp-restaurant-reservations');
             $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Complete required fields to enable booking.', 'fp-restaurant-reservations');
             $submitHintId = $formId . '-submit-hint';
             ?>
