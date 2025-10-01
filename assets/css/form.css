@@ -460,6 +460,38 @@
     letter-spacing: 0.01em;
 }
 
+.fp-resv-field--phone .fp-resv-phone-input {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: stretch;
+    gap: 0.65rem;
+}
+
+.fp-resv-phone-input .fp-input {
+    min-height: 48px;
+}
+
+.fp-resv-phone-input .fp-input--prefix {
+    max-width: 8rem;
+    text-align: center;
+    padding-inline: 0.65rem;
+    flex: 0 0 auto;
+}
+
+.fp-resv-phone-input__static {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 5rem;
+    padding: 0.75rem 1rem;
+    border-radius: calc(var(--fp-resv-radius-lg) * 0.55);
+    border: 1px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.45));
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--fp-resv-color-muted);
+    font-weight: 600;
+    flex: 0 0 auto;
+}
+
 .fp-hint {
     font-size: 0.78em;
     color: var(--fp-resv-color-muted);
@@ -692,6 +724,11 @@
 
 .fp-resv-step[aria-hidden="true"],
 .fp-resv-step[hidden] {
+    display: none !important;
+}
+
+.fp-resv-step[data-state="locked"],
+.fp-resv-step[data-state="completed"] {
     display: none !important;
 }
 

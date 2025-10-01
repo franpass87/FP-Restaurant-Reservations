@@ -34,6 +34,7 @@ use function is_email;
 use function json_decode;
 use function ltrim;
 use function preg_match;
+use function preg_match_all;
 use function preg_split;
 use function register_setting;
 use function sanitize_email;
@@ -75,6 +76,7 @@ final class AdminPages
      * @var array<string, array<string, mixed>>
      */
     private array $pages;
+    private bool $settingsRegistered = false;
 
     public function __construct()
     {
@@ -228,6 +230,12 @@ final class AdminPages
 
     public function registerSettings(): void
     {
+        if ($this->settingsRegistered) {
+            return;
+        }
+
+        $this->settingsRegistered = true;
+
         foreach ($this->pages as $pageKey => $page) {
             $optionGroup = (string) $page['option_group'];
             $optionName  = (string) $page['option_name'];
@@ -765,6 +773,9 @@ final class AdminPages
                 if (!empty($options['service_hours_definition'])) {
                     $this->validateServiceHoursDefinition($pageKey, (string) $options['service_hours_definition']);
                 }
+                if (!empty($options['frontend_meals'])) {
+                    $this->validateMealPlanDefinition((string) $options['frontend_meals']);
+                }
                 if (!empty($options['table_turnover_minutes']) && !empty($options['slot_interval_minutes'])) {
                     $turnover = (int) $options['table_turnover_minutes'];
                     $slot     = (int) $options['slot_interval_minutes'];
@@ -1143,29 +1154,32 @@ final class AdminPages
         if ($source !== '') {
             $lines = preg_split('/\n/', $source) ?: [];
             foreach ($lines as $line) {
-                $line = trim((string) $line);
-                if ($line === '' || !str_contains($line, '=')) {
-                    continue;
-                }
-
-                [$day, $ranges] = array_map('trim', explode('=', $line, 2));
-                $day = strtolower($day);
-                if (!isset($result[$day])) {
-                    continue;
-                }
-
-                $segments = preg_split('/[|,]/', $ranges) ?: [];
-                foreach ($segments as $segment) {
-                    $segment = trim((string) $segment);
-                    if ($segment === '') {
+                $entries = $this->splitServiceHoursEntries((string) $line);
+                foreach ($entries as $entry) {
+                    if ($entry === '' || !str_contains($entry, '=')) {
                         continue;
                     }
 
-                    if (preg_match('/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $segment, $matches) !== 1) {
+                    [$day, $ranges] = array_map('trim', explode('=', $entry, 2));
+                    $day            = strtolower($day);
+
+                    if (!isset($result[$day])) {
                         continue;
                     }
 
-                    $result[$day][] = ['start' => $matches[1], 'end' => $matches[2]];
+                    $segments = preg_split('/[|,]/', $ranges) ?: [];
+                    foreach ($segments as $segment) {
+                        $segment = trim((string) $segment);
+                        if ($segment === '') {
+                            continue;
+                        }
+
+                        if (preg_match('/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $segment, $matches) !== 1) {
+                            continue;
+                        }
+
+                        $result[$day][] = ['start' => $matches[1], 'end' => $matches[2]];
+                    }
                 }
             }
         }
@@ -1303,56 +1317,7 @@ final class AdminPages
 
     private function validateServiceHoursDefinition(string $pageKey, string $definition): void
     {
-        $lines       = preg_split('/\n/', $definition) ?: [];
-        $allowedDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        $invalid     = [];
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-
-            if (!str_contains($line, '=')) {
-                $invalid[] = $line;
-                continue;
-            }
-
-            [$day, $ranges] = array_map('trim', explode('=', $line, 2));
-            $day            = strtolower($day);
-
-            if (!in_array($day, $allowedDays, true)) {
-                $invalid[] = $line;
-                continue;
-            }
-
-            $segments = preg_split('/[|,]/', $ranges) ?: [];
-            if ($segments === []) {
-                $invalid[] = $line;
-                continue;
-            }
-
-            foreach ($segments as $segment) {
-                $segment = trim($segment);
-                if ($segment === '') {
-                    $invalid[] = $line;
-                    continue 2;
-                }
-
-                if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
-                    $invalid[] = $line;
-                    continue 2;
-                }
-
-                $startMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
-                $endMinutes   = ((int) $matches[3] * 60) + (int) $matches[4];
-
-                if ($endMinutes <= $startMinutes) {
-                    $invalid[] = $line;
-                    continue 2;
-                }
-            }
-        }
+        $invalid = $this->collectInvalidServiceHoursEntries($definition);
 
         if ($invalid !== []) {
             $this->addError(
@@ -1364,6 +1329,149 @@ final class AdminPages
                 )
             );
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function collectInvalidServiceHoursEntries(string $definition): array
+    {
+        $lines       = preg_split('/\n/', $definition) ?: [];
+        $allowedDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        $invalid     = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            $entries = $this->splitServiceHoursEntries($line);
+
+            foreach ($entries as $entry) {
+                $entry = trim($entry);
+                if ($entry === '') {
+                    continue;
+                }
+
+                if (!str_contains($entry, '=')) {
+                    $invalid[] = $entry;
+                    continue;
+                }
+
+                [$day, $ranges] = array_map('trim', explode('=', $entry, 2));
+                $day            = strtolower($day);
+
+                if (!in_array($day, $allowedDays, true)) {
+                    $invalid[] = $entry;
+                    continue;
+                }
+
+                $segments = preg_split('/[|,]/', $ranges) ?: [];
+                if ($segments === []) {
+                    $invalid[] = $entry;
+                    continue;
+                }
+
+                $invalidEntry = false;
+                foreach ($segments as $segment) {
+                    $segment = trim($segment);
+                    if ($segment === '') {
+                        $invalidEntry = true;
+                        break;
+                    }
+
+                    if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
+                        $invalidEntry = true;
+                        break;
+                    }
+
+                    $startMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
+                    $endMinutes   = ((int) $matches[3] * 60) + (int) $matches[4];
+
+                    if ($endMinutes <= $startMinutes) {
+                        $invalidEntry = true;
+                        break;
+                    }
+                }
+
+                if ($invalidEntry) {
+                    $invalid[] = $entry;
+                }
+            }
+        }
+
+        return $invalid;
+    }
+
+    private function validateMealPlanDefinition(string $definition): void
+    {
+        if (trim($definition) === '') {
+            return;
+        }
+
+        $meals = MealPlan::parse($definition);
+        if ($meals === []) {
+            return;
+        }
+
+        foreach ($meals as $meal) {
+            if (!is_array($meal)) {
+                continue;
+            }
+
+            $hoursDefinition = isset($meal['hours_definition']) ? (string) $meal['hours_definition'] : '';
+            if ($hoursDefinition === '') {
+                continue;
+            }
+
+            $invalid = $this->collectInvalidServiceHoursEntries($hoursDefinition);
+            if ($invalid === []) {
+                continue;
+            }
+
+            $label = isset($meal['label']) ? (string) $meal['label'] : '';
+            $key   = isset($meal['key']) ? sanitize_key((string) $meal['key']) : '';
+
+            $this->addError(
+                'general',
+                'invalid_service_hours_meal_' . ($key !== '' ? $key : md5($hoursDefinition)),
+                sprintf(
+                    __('Gli orari di servizio configurati per %1$s non sono validi: %2$s', 'fp-restaurant-reservations'),
+                    $label !== '' ? $label : ($key !== '' ? strtoupper($key) : __('Servizio', 'fp-restaurant-reservations')),
+                    implode(', ', array_map('wp_strip_all_tags', $invalid))
+                )
+            );
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function splitServiceHoursEntries(string $line): array
+    {
+        $normalized = trim(str_replace("\xc2\xa0", ' ', $line));
+        if ($normalized === '') {
+            return [];
+        }
+
+        $matches = [];
+        if (preg_match_all('/(?:^|\s+)([A-Za-z]{3})\s*=\s*(.+?)(?=\s*$|\s+[A-Za-z]{3}\s*=)/u', $normalized, $matches, PREG_SET_ORDER) > 0) {
+            $entries = [];
+            foreach ($matches as $match) {
+                if (!is_array($match) || !isset($match[1], $match[2])) {
+                    continue;
+                }
+
+                $entries[] = $match[1] . '=' . trim($match[2]);
+            }
+
+            if ($entries !== []) {
+                return $entries;
+            }
+        }
+
+        return [$normalized];
     }
 
     private function isValidPlaceId(string $placeId): bool
@@ -1479,7 +1587,7 @@ final class AdminPages
                                 'type'        => 'textarea',
                                 'rows'        => 5,
                                 'default'     => '',
-                                'description' => __('Inserisci un pasto per riga nel formato `*chiave|Etichetta|Hint opzionale|Messaggio opzionale|Prezzo opzionale|Badge opzionale|Icona badge opzionale`. Aggiungi `*` prima della chiave per indicare il pasto predefinito.', 'fp-restaurant-reservations'),
+                                'description' => __('Inserisci un pasto per riga nel formato `*chiave|Etichetta|Hint opzionale|Messaggio opzionale|Prezzo opzionale|Badge opzionale|Icona badge opzionale`. Aggiungi `*` prima della chiave per indicare il pasto predefinito. Puoi definire impostazioni specifiche aggiungendo coppie chiave=valore come `hours=mon:12:30-15:00;sat:19:00-23:00`, `slot=15`, `turn=120`, `buffer=15`, `parallel=6`, `capacity=40`.', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],

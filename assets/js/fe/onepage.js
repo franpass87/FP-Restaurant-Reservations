@@ -210,6 +210,7 @@ class FormApp {
         this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field=\"party\"]') : null;
         this.summaryTargets = Array.prototype.slice.call(root.querySelectorAll('[data-fp-resv-summary]'));
         this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field=\"phone\"]') : null;
+        this.phonePrefixField = this.form ? this.form.querySelector('[data-fp-resv-field=\"phone_prefix\"]') : null;
         this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_e164\"]') : null;
         this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_cc\"]') : null;
         this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_local\"]') : null;
@@ -258,6 +259,7 @@ class FormApp {
 
         this.bind();
         this.initializeSections();
+        this.initializePhoneField();
         this.initializeMeals();
         this.initializeDateField();
         this.initializeAvailability();
@@ -334,6 +336,67 @@ class FormApp {
                 _this.applyMealSelection(button);
             }
         });
+    }
+
+    initializePhoneField() {
+        if (this.phonePrefixField) {
+            this.updatePhoneCountryFromPrefix();
+            return;
+        }
+
+        if (this.phoneField) {
+            applyMask(this.phoneField, this.getPhoneCountryCode());
+        }
+    }
+
+    updatePhoneCountryFromPrefix() {
+        if (!this.phonePrefixField) {
+            return;
+        }
+
+        const code = normalizeCountryCode(this.phonePrefixField.value);
+        let targetCode = code;
+
+        if (targetCode === '') {
+            if (this.phoneCountryCode) {
+                const normalizedState = normalizeCountryCode(this.phoneCountryCode);
+                if (normalizedState) {
+                    targetCode = normalizedState;
+                }
+            }
+        }
+
+        if (targetCode === '' && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
+            const normalizedHidden = normalizeCountryCode(this.hiddenPhoneCc.value);
+            if (normalizedHidden) {
+                targetCode = normalizedHidden;
+            }
+        }
+
+        if (targetCode === '') {
+            const defaults = (this.config && this.config.defaults) || {};
+            if (defaults.phone_country_code) {
+                const normalizedDefaults = normalizeCountryCode(defaults.phone_country_code);
+                if (normalizedDefaults) {
+                    targetCode = normalizedDefaults;
+                }
+            }
+        }
+
+        if (targetCode === '') {
+            targetCode = '39';
+        }
+
+        if (this.hiddenPhoneCc) {
+            this.hiddenPhoneCc.value = targetCode;
+        }
+        if (code !== '') {
+            this.phoneCountryCode = code;
+        }
+
+        if (this.phoneField) {
+            applyMask(this.phoneField, targetCode);
+        }
     }
 
     initializeDateField() {
@@ -438,6 +501,8 @@ class FormApp {
 
         if (target === this.phoneField) {
             applyMask(this.phoneField, this.getPhoneCountryCode());
+        } else if (target === this.phonePrefixField) {
+            this.updatePhoneCountryFromPrefix();
         }
 
         this.updateSummary();
@@ -999,7 +1064,10 @@ class FormApp {
             contactValue = email.value.trim();
         }
         if (phone && phone.value) {
-            contactValue = contactValue !== '' ? contactValue + ' / ' + phone.value.trim() : phone.value.trim();
+            const prefixCode = this.getPhoneCountryCode();
+            const prefixDisplay = prefixCode ? '+' + prefixCode + ' ' : '';
+            const phoneDisplay = prefixDisplay + phone.value.trim();
+            contactValue = contactValue !== '' ? contactValue + ' / ' + phoneDisplay : phoneDisplay;
         }
 
         this.summaryTargets.forEach(function (target) {
@@ -1149,6 +1217,27 @@ class FormApp {
                 payload[key] = value;
             }
         });
+
+        if (this.phoneField) {
+            const phoneData = buildPayload(this.phoneField, this.getPhoneCountryCode());
+            if (phoneData.e164) {
+                payload.fp_resv_phone = phoneData.e164;
+            }
+            if (phoneData.country) {
+                payload.fp_resv_phone_cc = phoneData.country;
+            }
+            if (phoneData.local) {
+                payload.fp_resv_phone_local = phoneData.local;
+            }
+        }
+
+        if (this.phonePrefixField && this.phonePrefixField.value && !payload.fp_resv_phone_cc) {
+            const normalizedPrefix = normalizeCountryCode(this.phonePrefixField.value);
+            if (normalizedPrefix) {
+                payload.fp_resv_phone_cc = normalizedPrefix;
+            }
+        }
+
         return payload;
     }
 
@@ -1426,13 +1515,33 @@ class FormApp {
     }
 
     getPhoneCountryCode() {
+        if (this.phonePrefixField && this.phonePrefixField.value) {
+            const fromPrefix = normalizeCountryCode(this.phonePrefixField.value);
+            if (fromPrefix) {
+                return fromPrefix;
+            }
+        }
+
         if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-            return normalizeCountryCode(this.hiddenPhoneCc.value) || '39';
+            const fromHidden = normalizeCountryCode(this.hiddenPhoneCc.value);
+            if (fromHidden) {
+                return fromHidden;
+            }
+        }
+
+        if (this.phoneCountryCode) {
+            const fromState = normalizeCountryCode(this.phoneCountryCode);
+            if (fromState) {
+                return fromState;
+            }
         }
 
         const defaults = (this.config && this.config.defaults) || {};
         if (defaults.phone_country_code) {
-            return normalizeCountryCode(defaults.phone_country_code) || '39';
+            const fromDefaults = normalizeCountryCode(defaults.phone_country_code);
+            if (fromDefaults) {
+                return fromDefaults;
+            }
         }
 
         return '39';
