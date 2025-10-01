@@ -59,7 +59,7 @@ use function wp_json_encode;
 use function wp_salt;
 use const FILTER_VALIDATE_EMAIL;
 
-final class Service
+class Service
 {
     public const ALLOWED_STATUSES = [
         'pending',

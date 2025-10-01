@@ -32,7 +32,7 @@ use function trim;
 use const ARRAY_A;
 use wpdb;
 
-final class Availability
+class Availability
 {
     private const DEFAULT_TIMEZONE = 'Europe/Rome';
 

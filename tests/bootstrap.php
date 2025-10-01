@@ -16,6 +16,15 @@ spl_autoload_register(static function (string $class) use ($rootDir): void {
     }
 });
 
+if (!class_exists('wpdb')) {
+    class wpdb
+    {
+        public string $prefix = 'wp_';
+        public int $insert_id = 0;
+        public string $last_error = '';
+    }
+}
+
 require_once __DIR__ . '/Support/FakeWpdb.php';
 
 if (!defined('ARRAY_A')) {
@@ -104,6 +113,16 @@ function esc_url_raw(string $url): string
 function esc_html(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function esc_attr(string $text): string
+{
+    return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function esc_url(string $url): string
+{
+    return filter_var($url, FILTER_SANITIZE_URL) ?: '';
 }
 
 function esc_html__(string $text, string $domain = 'default'): string
