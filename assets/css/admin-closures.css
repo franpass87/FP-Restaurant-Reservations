@@ -33,26 +33,158 @@
     color: var(--fp-resv-admin-text);
 }
 
-.fp-resv-admin--closures .fp-resv-closures__note {
+.fp-resv-closures-app__shell {
+    display: grid;
+    gap: 20px;
+}
+
+.fp-resv-closures-app__toolbar {
+    display: grid;
+    gap: 6px;
+}
+
+.fp-resv-closures-app__toolbar h2 {
     margin: 0;
-    font-size: 13px;
+    font-size: 1.35rem;
+}
+
+.fp-resv-closures-app__toolbar p {
+    margin: 0;
     color: var(--fp-resv-admin-muted);
 }
 
-.fp-resv-admin--closures [data-fp-resv-closures] {
-    min-height: 340px;
+.fp-resv-closures-form {
+    border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: calc(var(--fp-resv-admin-radius) - 2px);
-    border: 1px dashed rgba(67, 56, 202, 0.35);
+    padding: 20px;
+    background: var(--fp-resv-admin-surface-alt);
+    box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.18);
+    display: grid;
+    gap: 16px;
+}
+
+.fp-resv-closures-form header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.fp-resv-closures-form__grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fp-resv-closures-form__field {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-closures-form__field--wide {
+    grid-column: 1 / -1;
+}
+
+.fp-resv-closures-form__field span {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--fp-resv-admin-muted);
-    background: rgba(67, 56, 202, 0.04);
+}
+
+.fp-resv-closures-form__field input,
+.fp-resv-closures-form__field select,
+.fp-resv-closures-form__field textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-sizing: border-box;
+    background: #fff;
+    color: #0f172a;
+}
+
+.fp-resv-closures-form__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.fp-resv-closures-list {
+    display: grid;
+    gap: 16px;
+}
+
+.fp-resv-closure-card {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    padding: 16px 18px;
+    background: #fff;
+    box-shadow: 0 20px 40px -36px rgba(15, 23, 42, 0.4);
+    display: grid;
+    gap: 10px;
+}
+
+.fp-resv-closure-card.is-inactive {
+    opacity: 0.7;
+}
+
+.fp-resv-closure-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.fp-resv-closure-card__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(67, 56, 202, 0.12);
+    color: rgba(67, 56, 202, 1);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.fp-resv-closure-card__range {
+    margin: 0;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.fp-resv-closure-card__meta {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.fp-resv-closure-card__note {
+    margin: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(148, 163, 184, 0.12);
+    color: #1f2937;
+}
+
+.fp-resv-closures-empty {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--fp-resv-admin-muted);
+    text-align: center;
+}
+
+.fp-resv-closures-error {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #b91c1c;
+    font-weight: 600;
 }
 
 @media (max-width: 782px) {
-    .fp-resv-admin--closures [data-fp-resv-closures] {
-        padding: 18px;
+    .fp-resv-closures-form__grid {
+        grid-template-columns: 1fr;
     }
 }

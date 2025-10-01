@@ -97,8 +97,19 @@ final class Availability
         $bufferMinutes     = max(0, (int) $this->options->getField('fp_resv_general', 'buffer_before_minutes', '15'));
         $maxParallel       = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
         $waitlistEnabled   = $this->options->getField('fp_resv_general', 'enable_waitlist', '0') === '1';
-        $mergeStrategy     = (string) $this->options->getField('fp_resv_rooms', 'merge_strategy', 'smart');
-        $defaultRoomCap    = max(1, (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40'));
+        $mergeStrategy     = (string) $this->options->getField(
+            'fp_resv_general',
+            'merge_strategy',
+            $this->options->getField('fp_resv_rooms', 'merge_strategy', 'smart')
+        );
+        $defaultRoomCap    = max(
+            1,
+            (int) $this->options->getField(
+                'fp_resv_general',
+                'default_room_capacity',
+                $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40')
+            )
+        );
 
         $rooms      = $this->loadRooms($roomId);
         $tables     = $this->loadTables($roomId);

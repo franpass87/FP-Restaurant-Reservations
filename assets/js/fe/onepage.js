@@ -269,8 +269,9 @@ class FormApp {
     }
 
     bind() {
-        this.form.addEventListener('input', this.handleFormInput.bind(this), true);
-        this.form.addEventListener('change', this.handleFormInput.bind(this), true);
+        const handleInput = this.handleFormInput.bind(this);
+        this.form.addEventListener('input', handleInput, true);
+        this.form.addEventListener('change', handleInput, true);
         this.form.addEventListener('focusin', this.handleFirstInteraction.bind(this));
         this.form.addEventListener('blur', this.handleFieldBlur.bind(this), true);
         this.form.addEventListener('keydown', this.handleKeydown.bind(this), true);
@@ -335,6 +336,35 @@ class FormApp {
         if (!this.availabilityRoot) {
             return;
         }
+
+        this.availabilityRoot.addEventListener('click', (event) => {
+            if (this.availabilityController) {
+                return;
+            }
+
+            const target = event.target instanceof HTMLElement
+                ? event.target.closest('button[data-slot]')
+                : null;
+
+            if (!target) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const slot = {
+                start: target.getAttribute('data-slot') || '',
+                label: target.textContent || '',
+                status: target.getAttribute('data-slot-status') || '',
+            };
+
+            const buttons = this.availabilityRoot.querySelectorAll('button[data-slot]');
+            Array.prototype.forEach.call(buttons, (button) => {
+                button.setAttribute('aria-pressed', button === target ? 'true' : 'false');
+            });
+
+            this.handleSlotSelected(slot);
+        });
 
         const schedule = () => {
             if (!this.availabilityController) {
@@ -667,6 +697,12 @@ class FormApp {
         const silent = options && options.silent === true;
         this.state.sectionStates[key] = state;
         section.setAttribute('data-state', state);
+
+        if (state === 'completed') {
+            section.setAttribute('data-complete-hidden', 'true');
+        } else {
+            section.removeAttribute('data-complete-hidden');
+        }
 
         const isActive = state === 'active';
         section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
@@ -1086,10 +1122,25 @@ class FormApp {
             if (slot && slot.start) {
                 timeField.setAttribute('data-slot-start', slot.start);
             }
+            try {
+                timeField.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (error) {
+                // noop
+            }
         }
 
         if (this.hiddenSlot) {
             this.hiddenSlot.value = slot && slot.start ? slot.start : '';
+        }
+
+        const slotsSection = this.sections.find((section) => (section.getAttribute('data-step') || '') === 'slots');
+        if (slotsSection) {
+            this.ensureSectionActive(slotsSection);
+            if (slot && slot.start) {
+                this.completeSection(slotsSection, true);
+            } else {
+                this.updateSectionAttributes(slotsSection, 'active');
+            }
         }
 
         this.updateSummary();

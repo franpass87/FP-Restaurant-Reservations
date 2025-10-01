@@ -80,6 +80,12 @@ final class AdminController
                 'description'   => __('Disegna la mappa dei tavoli con drag & drop, merge/split e suggerimenti automatici.', 'fp-restaurant-reservations'),
                 'empty'         => __('Aggiungi una sala per iniziare a progettare il layout.', 'fp-restaurant-reservations'),
                 'createRoomCta' => __('Crea sala', 'fp-restaurant-reservations'),
+                'newRoomTitle'  => __('Nuova sala', 'fp-restaurant-reservations'),
+                'newRoomName'   => __('Nome sala', 'fp-restaurant-reservations'),
+                'newRoomCapacity' => __('Capienza stimata', 'fp-restaurant-reservations'),
+                'newRoomColor'  => __('Colore identificativo', 'fp-restaurant-reservations'),
+                'modalCancel'   => __('Annulla', 'fp-restaurant-reservations'),
+                'modalCreate'   => __('Crea sala', 'fp-restaurant-reservations'),
             ],
         ]);
     }

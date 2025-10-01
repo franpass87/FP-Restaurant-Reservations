@@ -102,6 +102,11 @@ final class AdminPages
             wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
         }
 
+        if ($page === 'fp-resv-settings') {
+            wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], Plugin::VERSION);
+            wp_enqueue_script('fp-resv-service-hours', Plugin::$url . 'assets/js/admin/service-hours.js', [], Plugin::VERSION, true);
+        }
+
         if ($page !== 'fp-resv-style') {
             return;
         }
@@ -287,6 +292,13 @@ final class AdminPages
             $options = [];
         }
 
+        if (!array_key_exists($fieldKey, $options) && isset($field['legacy_option'])) {
+            $legacyOption = get_option((string) $field['legacy_option'], []);
+            if (is_array($legacyOption) && array_key_exists($fieldKey, $legacyOption)) {
+                $options[$fieldKey] = $legacyOption[$fieldKey];
+            }
+        }
+
         $value = $options[$fieldKey] ?? ($field['default'] ?? ($field['type'] === 'checkbox' ? '0' : ''));
         $phonePrefixPreview = null;
 
@@ -306,6 +318,35 @@ final class AdminPages
                 echo esc_textarea($display);
                 echo '</textarea>';
                 $phonePrefixPreview = $map;
+                break;
+            case 'service_hours':
+                $inputId   = $optionKey . '-' . $fieldKey . '-service-hours';
+                $state     = $this->decodeServiceHoursDefinition($value);
+                $stateJson = wp_json_encode($state);
+                if (!is_string($stateJson)) {
+                    $stateJson = '{}';
+                }
+
+                $configJson = wp_json_encode($this->getServiceHoursConfig());
+                if (!is_string($configJson)) {
+                    $configJson = '{}';
+                }
+
+                $rawValue = is_string($value) ? $value : $this->encodeServiceHoursDefinition($state);
+
+                echo '<textarea'
+                    . ' id="' . esc_attr($inputId) . '"'
+                    . ' name="' . esc_attr($inputName) . '"'
+                    . ' data-service-hours-input'
+                    . ' hidden'
+                >' . esc_textarea($rawValue) . '</textarea>';
+                echo '<div'
+                    . ' class="fp-resv-service-hours"'
+                    . ' data-service-hours'
+                    . ' data-target="#' . esc_attr($inputId) . '"'
+                    . ' data-value="' . esc_attr($stateJson) . '"'
+                    . ' data-config="' . esc_attr($configJson) . '"'
+                . '></div>';
                 break;
             case 'textarea':
                 $rows = (int) ($field['rows'] ?? 5);
@@ -395,6 +436,7 @@ final class AdminPages
         }
 
         $menuTitle = (string) ($page['menu_title'] ?? $page['page_title']);
+        $breadcrumbLabel = (string) ($page['breadcrumb'] ?? $menuTitle);
         $subtitle  = $this->describePage($pageKey);
         $headingId = $page['slug'] . '-title';
         $formId    = 'fp-resv-settings-form-' . $pageKey;
@@ -419,7 +461,7 @@ final class AdminPages
         echo '<nav class="fp-resv-admin__breadcrumbs" aria-label="' . esc_attr__('Percorso', 'fp-restaurant-reservations') . '">';
         echo '<a href="' . esc_url(admin_url('admin.php?page=fp-resv-settings')) . '">' . esc_html__('FP Reservations', 'fp-restaurant-reservations') . '</a>';
         echo '<span class="fp-resv-admin__breadcrumb-separator" aria-hidden="true">/</span>';
-        echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($menuTitle) . '</span>';
+        echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($breadcrumbLabel) . '</span>';
         echo '</nav>';
         echo '<div>';
         echo '<h1 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
@@ -1063,6 +1105,146 @@ final class AdminPages
     }
 
     /**
+     * @return array<string, array<int, array<string, string>>>
+     */
+    private function decodeServiceHoursDefinition(mixed $value): array
+    {
+        $days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        $result = array_fill_keys($days, []);
+
+        if (is_array($value)) {
+            foreach ($value as $day => $ranges) {
+                $day = strtolower((string) $day);
+                if (!isset($result[$day]) || !is_array($ranges)) {
+                    continue;
+                }
+
+                foreach ($ranges as $range) {
+                    if (!is_array($range)) {
+                        continue;
+                    }
+
+                    $start = isset($range['start']) ? (string) $range['start'] : '';
+                    $end   = isset($range['end']) ? (string) $range['end'] : '';
+                    if ($start === '' || $end === '' || !preg_match('/^\d{2}:\d{2}$/', $start) || !preg_match('/^\d{2}:\d{2}$/', $end)) {
+                        continue;
+                    }
+
+                    $result[$day][] = ['start' => $start, 'end' => $end];
+                }
+            }
+        }
+
+        $source = '';
+        if (is_string($value)) {
+            $source = $value;
+        }
+
+        if ($source !== '') {
+            $lines = preg_split('/\n/', $source) ?: [];
+            foreach ($lines as $line) {
+                $line = trim((string) $line);
+                if ($line === '' || !str_contains($line, '=')) {
+                    continue;
+                }
+
+                [$day, $ranges] = array_map('trim', explode('=', $line, 2));
+                $day = strtolower($day);
+                if (!isset($result[$day])) {
+                    continue;
+                }
+
+                $segments = preg_split('/[|,]/', $ranges) ?: [];
+                foreach ($segments as $segment) {
+                    $segment = trim((string) $segment);
+                    if ($segment === '') {
+                        continue;
+                    }
+
+                    if (preg_match('/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $segment, $matches) !== 1) {
+                        continue;
+                    }
+
+                    $result[$day][] = ['start' => $matches[1], 'end' => $matches[2]];
+                }
+            }
+        }
+
+        foreach ($result as &$ranges) {
+            $unique = [];
+            foreach ($ranges as $range) {
+                $key = $range['start'] . '-' . $range['end'];
+                $unique[$key] = $range;
+            }
+            $ranges = array_values($unique);
+        }
+        unset($ranges);
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, array<int, array<string, string>>> $map
+     */
+    private function encodeServiceHoursDefinition(array $map): string
+    {
+        $order = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        $lines = [];
+
+        foreach ($order as $day) {
+            if (!isset($map[$day]) || !is_array($map[$day]) || $map[$day] === []) {
+                continue;
+            }
+
+            $ranges = [];
+            foreach ($map[$day] as $range) {
+                if (!is_array($range)) {
+                    continue;
+                }
+
+                $start = isset($range['start']) ? (string) $range['start'] : '';
+                $end   = isset($range['end']) ? (string) $range['end'] : '';
+                if ($start === '' || $end === '' || !preg_match('/^\d{2}:\d{2}$/', $start) || !preg_match('/^\d{2}:\d{2}$/', $end)) {
+                    continue;
+                }
+
+                $ranges[] = $start . '-' . $end;
+            }
+
+            if ($ranges !== []) {
+                $lines[] = $day . '=' . implode('|', $ranges);
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getServiceHoursConfig(): array
+    {
+        return [
+            'days'    => [
+                ['key' => 'mon', 'label' => __('Lunedì', 'fp-restaurant-reservations'), 'short' => __('Lun', 'fp-restaurant-reservations')],
+                ['key' => 'tue', 'label' => __('Martedì', 'fp-restaurant-reservations'), 'short' => __('Mar', 'fp-restaurant-reservations')],
+                ['key' => 'wed', 'label' => __('Mercoledì', 'fp-restaurant-reservations'), 'short' => __('Mer', 'fp-restaurant-reservations')],
+                ['key' => 'thu', 'label' => __('Giovedì', 'fp-restaurant-reservations'), 'short' => __('Gio', 'fp-restaurant-reservations')],
+                ['key' => 'fri', 'label' => __('Venerdì', 'fp-restaurant-reservations'), 'short' => __('Ven', 'fp-restaurant-reservations')],
+                ['key' => 'sat', 'label' => __('Sabato', 'fp-restaurant-reservations'), 'short' => __('Sab', 'fp-restaurant-reservations')],
+                ['key' => 'sun', 'label' => __('Domenica', 'fp-restaurant-reservations'), 'short' => __('Dom', 'fp-restaurant-reservations')],
+            ],
+            'strings' => [
+                'addRange'    => __('Aggiungi fascia', 'fp-restaurant-reservations'),
+                'removeRange' => __('Rimuovi', 'fp-restaurant-reservations'),
+                'from'        => __('Dalle', 'fp-restaurant-reservations'),
+                'to'          => __('Alle', 'fp-restaurant-reservations'),
+                'closed'      => __('Chiuso', 'fp-restaurant-reservations'),
+            ],
+        ];
+    }
+
+    /**
      * @param array<string, string> $map
      */
     private function renderPhonePrefixPreview(array $map): string
@@ -1227,6 +1409,7 @@ final class AdminPages
             'general' => [
                 'page_title'   => __('Impostazioni generali', 'fp-restaurant-reservations'),
                 'menu_title'   => __('Generali', 'fp-restaurant-reservations'),
+                'breadcrumb'   => __('Generali', 'fp-restaurant-reservations'),
                 'slug'         => 'fp-resv-settings',
                 'option_group' => 'fp_resv_general',
                 'option_name'  => 'fp_resv_general',
@@ -1293,10 +1476,9 @@ final class AdminPages
                         'fields'      => [
                             'service_hours_definition' => [
                                 'label'       => __('Orari di servizio', 'fp-restaurant-reservations'),
-                                'type'        => 'textarea',
-                                'rows'        => 5,
+                                'type'        => 'service_hours',
                                 'default'     => "mon=19:00-23:00\ntue=19:00-23:00\nwed=19:00-23:00\nthu=19:00-23:00\nfri=19:00-23:30\nsat=12:30-15:00|19:00-23:30\nsun=12:30-15:00",
-                                'description' => __('Formato: giorno=HH:MM-HH:MM separando i turni con la barra verticale. Giorni ammessi: mon,tue,wed,thu,fri,sat,sun.', 'fp-restaurant-reservations'),
+                                'description' => __('Configura fasce orarie per ciascun giorno senza ricordare la sintassi.', 'fp-restaurant-reservations'),
                             ],
                             'slot_interval_minutes' => [
                                 'label'       => __('Intervallo slot (minuti)', 'fp-restaurant-reservations'),
@@ -1327,6 +1509,66 @@ final class AdminPages
                                 'min'         => 1,
                                 'max'         => 40,
                                 'description' => __('Limite di richieste contemporanee quando i tavoli non sono assegnati.', 'fp-restaurant-reservations'),
+                            ],
+                        ],
+                    ],
+                    'general-layout-preferences' => [
+                        'title'       => __('Sale & tavoli', 'fp-restaurant-reservations'),
+                        'description' => __('Configura le preferenze del planner sale, delle combinazioni tavoli e dei suggerimenti automatici.', 'fp-restaurant-reservations'),
+                        'fields'      => [
+                            'layout_unit' => [
+                                'label'          => __('Unità di misura layout', 'fp-restaurant-reservations'),
+                                'type'           => 'select',
+                                'options'        => [
+                                    'meters' => __('Metri', 'fp-restaurant-reservations'),
+                                    'feet'   => __('Piedi', 'fp-restaurant-reservations'),
+                                ],
+                                'default'        => 'meters',
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
+                            'default_room_capacity' => [
+                                'label'          => __('Capienza sala predefinita', 'fp-restaurant-reservations'),
+                                'type'           => 'integer',
+                                'default'        => '40',
+                                'min'            => 1,
+                                'max'            => 200,
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
+                            'merge_strategy' => [
+                                'label'          => __('Strategia merge tavoli', 'fp-restaurant-reservations'),
+                                'type'           => 'select',
+                                'options'        => [
+                                    'manual' => __('Solo manuale', 'fp-restaurant-reservations'),
+                                    'smart'  => __('Suggerisci automaticamente combinazioni', 'fp-restaurant-reservations'),
+                                ],
+                                'default'        => 'smart',
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
+                            'split_confirmation' => [
+                                'label'          => __('Conferma separazione tavoli', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Richiedi conferma prima di dividere tavoli uniti.', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
+                            'grid_size' => [
+                                'label'          => __('Dimensione griglia (px)', 'fp-restaurant-reservations'),
+                                'type'           => 'integer',
+                                'default'        => '20',
+                                'min'            => 5,
+                                'max'            => 80,
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
+                            'suggestion_strategy' => [
+                                'label'          => __('Suggeritore tavolo', 'fp-restaurant-reservations'),
+                                'type'           => 'select',
+                                'options'        => [
+                                    'capacity' => __('Priorità capienza', 'fp-restaurant-reservations'),
+                                    'distance' => __('Distanza da ingressi/uscite', 'fp-restaurant-reservations'),
+                                    'hybrid'   => __('Bilanciato', 'fp-restaurant-reservations'),
+                                ],
+                                'default'        => 'hybrid',
+                                'legacy_option'  => 'fp_resv_rooms',
                             ],
                         ],
                     ],
@@ -1814,69 +2056,6 @@ final class AdminPages
                                 'type'           => 'checkbox',
                                 'checkbox_label' => __('Abilita eventi ricorrenti settimanali/mensili per le chiusure.', 'fp-restaurant-reservations'),
                                 'default'        => '1',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            'rooms' => [
-                'page_title'   => __('Sale & Tavoli', 'fp-restaurant-reservations'),
-                'menu_title'   => __('Sale & Tavoli', 'fp-restaurant-reservations'),
-                'slug'         => 'fp-resv-rooms',
-                'option_group' => 'fp_resv_rooms',
-                'option_name'  => 'fp_resv_rooms',
-                'sections'     => [
-                    'rooms-defaults' => [
-                        'title'       => __('Layout e suggerimenti', 'fp-restaurant-reservations'),
-                        'description' => __('Preferenze usate dal layout editor e dal motore suggerimenti tavoli.', 'fp-restaurant-reservations'),
-                        'fields'      => [
-                            'layout_unit' => [
-                                'label'       => __('Unità di misura layout', 'fp-restaurant-reservations'),
-                                'type'        => 'select',
-                                'options'     => [
-                                    'meters' => __('Metri', 'fp-restaurant-reservations'),
-                                    'feet'   => __('Piedi', 'fp-restaurant-reservations'),
-                                ],
-                                'default'     => 'meters',
-                            ],
-                            'default_room_capacity' => [
-                                'label'       => __('Capienza sala predefinita', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '40',
-                                'min'         => 1,
-                                'max'         => 200,
-                            ],
-                            'merge_strategy' => [
-                                'label'       => __('Strategia merge tavoli', 'fp-restaurant-reservations'),
-                                'type'        => 'select',
-                                'options'     => [
-                                    'manual' => __('Solo manuale', 'fp-restaurant-reservations'),
-                                    'smart'  => __('Suggerisci automaticamente combinazioni', 'fp-restaurant-reservations'),
-                                ],
-                                'default'     => 'smart',
-                            ],
-                            'split_confirmation' => [
-                                'label'          => __('Conferma separazione tavoli', 'fp-restaurant-reservations'),
-                                'type'           => 'checkbox',
-                                'checkbox_label' => __('Richiedi conferma prima di dividere tavoli uniti.', 'fp-restaurant-reservations'),
-                                'default'        => '1',
-                            ],
-                            'grid_size' => [
-                                'label'       => __('Dimensione griglia (px)', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '20',
-                                'min'         => 5,
-                                'max'         => 80,
-                            ],
-                            'suggestion_strategy' => [
-                                'label'       => __('Suggeritore tavolo', 'fp-restaurant-reservations'),
-                                'type'        => 'select',
-                                'options'     => [
-                                    'capacity'  => __('Priorità capienza', 'fp-restaurant-reservations'),
-                                    'distance'  => __('Distanza da ingressi/uscite', 'fp-restaurant-reservations'),
-                                    'hybrid'    => __('Bilanciato', 'fp-restaurant-reservations'),
-                                ],
-                                'default'     => 'hybrid',
                             ],
                         ],
                     ],
