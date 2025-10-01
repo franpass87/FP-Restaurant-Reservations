@@ -209,6 +209,20 @@
     transition: background 200ms ease, color 200ms ease, transform 200ms ease, width 180ms ease;
 }
 
+.fp-progress__item:not([aria-disabled="true"]) {
+    cursor: pointer;
+}
+
+.fp-progress__item[aria-disabled="true"] {
+    cursor: default;
+    pointer-events: none;
+}
+
+.fp-progress__item:focus-visible {
+    outline: 3px solid var(--fp-resv-color-primary);
+    outline-offset: 2px;
+}
+
 .fp-progress__item::after {
     content: '';
     position: absolute;
@@ -642,6 +656,11 @@
     box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
     animation: fp-resv-fade-in 220ms ease;
     scroll-margin-top: clamp(6rem, 12vw, 7.5rem);
+}
+
+.fp-resv-step[aria-hidden="true"],
+.fp-resv-step[hidden] {
+    display: none !important;
 }
 
 .fp-resv-step[data-state="locked"] {

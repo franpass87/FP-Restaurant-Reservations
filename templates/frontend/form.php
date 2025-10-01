@@ -13,6 +13,11 @@ $config     = $context['config'] ?? [];
 $strings    = $context['strings'] ?? [];
 $steps      = $context['steps'] ?? [];
 $pdfUrl     = isset($context['pdf_url']) ? (string) $context['pdf_url'] : '';
+$pdfLabel   = isset($strings['pdf_label']) ? (string) $strings['pdf_label'] : '';
+$pdfTooltip = isset($strings['pdf_tooltip']) ? (string) $strings['pdf_tooltip'] : '';
+if ($pdfUrl !== '' && $pdfLabel === '') {
+    $pdfLabel = __('Download menu (PDF)', 'fp-restaurant-reservations');
+}
 $dataLayer  = $context['data_layer'] ?? [];
 $events     = $dataLayer['events'] ?? [];
 $privacy    = $context['privacy'] ?? [];
@@ -76,10 +81,13 @@ endif;
                 href="<?php echo esc_url($pdfUrl); ?>"
                 target="_blank"
                 rel="noopener"
+                <?php if ($pdfTooltip !== '') : ?>
+                    title="<?php echo esc_attr($pdfTooltip); ?>"
+                <?php endif; ?>
                 data-fp-resv-event="<?php echo esc_attr($events['pdf'] ?? 'pdf_download_click'); ?>"
-                data-fp-resv-label="<?php echo esc_attr($strings['pdf_label'] ?? ''); ?>"
+                data-fp-resv-label="<?php echo esc_attr($pdfLabel); ?>"
             >
-                <?php echo esc_html($strings['pdf_label'] ?? ''); ?>
+                <?php echo esc_html($pdfLabel); ?>
             </a>
         <?php endif; ?>
     </div>
@@ -197,6 +205,7 @@ endif;
                     data-state="<?php echo $isActive ? 'active' : 'locked'; ?>"
                     aria-hidden="<?php echo $isActive ? 'false' : 'true'; ?>"
                     aria-expanded="<?php echo $isActive ? 'true' : 'false'; ?>"
+                    <?php echo $isActive ? '' : 'hidden'; ?>
                     role="region"
                     aria-labelledby="<?php echo esc_attr($titleId); ?>"
                 >
