@@ -4,6 +4,7 @@
  */
 
 $settingsUrl = admin_url('admin.php?page=fp-resv-settings');
+$serviceSettingsUrl = $settingsUrl . '#general-service-hours';
 $headingId   = 'fp-resv-closures-title';
 ?>
 <div class="fp-resv-admin fp-resv-admin--closures" role="region" aria-labelledby="<?php echo esc_attr($headingId); ?>">
@@ -24,7 +25,7 @@ $headingId   = 'fp-resv-closures-title';
             </div>
         </div>
         <div class="fp-resv-admin__actions">
-            <a class="button" href="<?php echo esc_url($settingsUrl); ?>">
+            <a class="button" href="<?php echo esc_url($serviceSettingsUrl); ?>">
                 <?php esc_html_e('Impostazioni', 'fp-restaurant-reservations'); ?>
             </a>
             <a class="button button-primary" href="#fp-resv-closures-app">

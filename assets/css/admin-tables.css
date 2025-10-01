@@ -147,6 +147,87 @@
     background: #94a3b8;
 }
 
+.fp-resv-tables-modal[hidden] {
+    display: none;
+}
+
+.fp-resv-tables-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.fp-resv-tables-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+.fp-resv-tables-modal__dialog {
+    position: relative;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.6);
+    padding: 24px;
+    width: min(420px, calc(100% - 32px));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fp-resv-tables-modal__header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.fp-resv-tables-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fp-resv-tables-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-tables-modal__field span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.fp-resv-tables-modal__field input[type="text"],
+.fp-resv-tables-modal__field input[type="number"],
+.fp-resv-tables-modal__field input[type="color"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-sizing: border-box;
+}
+
+.fp-resv-tables-modal__field input[type="color"] {
+    height: 44px;
+    padding: 4px;
+}
+
+.fp-resv-tables-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.fp-resv-tables-modal__actions .button {
+    border-radius: 8px;
+    padding: 6px 16px;
+}
+
 @media (max-width: 960px) {
     .fp-resv-admin--tables .fp-resv-tables-layout {
         grid-template-columns: 1fr;

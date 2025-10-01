@@ -524,8 +524,9 @@
     gap: 0.75rem;
     padding: 1rem;
     border-radius: calc(var(--fp-resv-radius-lg) * 0.75);
-    border: 1px dashed var(--fp-resv-divider, rgba(148, 163, 184, 0.4));
-    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid var(--fp-resv-slot-border, rgba(148, 163, 184, 0.35));
+    background: var(--fp-resv-slot-bg, rgba(148, 163, 184, 0.1));
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
 }
 
 .fp-slots__status,
@@ -552,9 +553,9 @@
 }
 
 .fp-slots__list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.65rem;
     padding: 0;
     margin: 0;
     list-style: none;
@@ -562,12 +563,12 @@
 
 .fp-slots__list button {
     border-radius: 999px;
-    border: 1px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.55));
-    background: var(--fp-resv-color-surface);
-    color: var(--fp-resv-color-text);
+    border: 1px solid var(--fp-resv-slot-border, rgba(148, 163, 184, 0.55));
+    background: var(--fp-resv-slot-bg, #ffffff);
+    color: var(--fp-resv-slot-text, #0f172a);
     padding: 0.55rem 0.95rem;
     font-size: 0.9em;
-    transition: transform 160ms ease, box-shadow 160ms ease;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
 }
 
 .fp-slots__list button:hover,
@@ -575,6 +576,8 @@
 .fp-slots__list button[aria-pressed="true"] {
     transform: translateY(-1px);
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    background: var(--fp-resv-slot-selected-bg, #4338ca);
+    color: var(--fp-resv-slot-selected-text, #ffffff);
 }
 
 .fp-btn,
@@ -678,6 +681,10 @@
 
 .fp-resv-step[aria-hidden="true"],
 .fp-resv-step[hidden] {
+    display: none !important;
+}
+
+.fp-resv-step[data-complete-hidden="true"] {
     display: none !important;
 }
 

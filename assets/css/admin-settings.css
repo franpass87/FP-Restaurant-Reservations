@@ -1,0 +1,100 @@
+.fp-resv-service-hours {
+    display: block;
+    margin-top: 12px;
+}
+
+.fp-resv-service-hours__grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fp-resv-service-hours__day {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: calc(var(--fp-resv-admin-radius, 16px) - 2px);
+    padding: 16px;
+    background: var(--fp-resv-admin-surface-alt, #f8fafc);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fp-resv-service-hours__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.fp-resv-service-hours__header h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.fp-resv-service-hours__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-service-hours__ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fp-resv-service-hours__range {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.fp-resv-service-hours__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 120px;
+}
+
+.fp-resv-service-hours__field span {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-service-hours__field input[type="time"] {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: #fff;
+    color: #0f172a;
+}
+
+.fp-resv-service-hours__remove {
+    align-self: center;
+    margin-left: auto;
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.fp-resv-service-hours__empty {
+    margin: 0;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-service-hours__add {
+    align-self: flex-start;
+}
+
+@media (max-width: 600px) {
+    .fp-resv-service-hours__grid {
+        grid-template-columns: 1fr;
+    }
+}

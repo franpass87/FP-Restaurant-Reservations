@@ -566,6 +566,11 @@ final class Style
 %s .fp-resv-slots {
     display: grid;
     gap: 0.75rem;
+    padding: 1rem;
+    border-radius: calc(var(--fp-resv-radius-lg) * 0.75);
+    border: 1px solid var(--fp-resv-slot-border);
+    background: var(--fp-resv-slot-bg);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
 }
 %s .fp-resv-slots__status,
 %s .fp-resv-slots__empty {
@@ -575,7 +580,7 @@ final class Style
 }
 %s .fp-resv-slots__list {
     display: grid;
-    gap: 0.75rem;
+    gap: 0.65rem;
     list-style: none;
     padding: 0;
     margin: 0;
@@ -583,9 +588,9 @@ final class Style
 }
 %s .fp-resv-slots__list button {
     border-radius: 999px;
-    border: 1px solid var(--fp-resv-divider);
-    background: var(--fp-resv-surface);
-    color: var(--fp-resv-text);
+    border: 1px solid var(--fp-resv-slot-border);
+    background: var(--fp-resv-slot-bg);
+    color: var(--fp-resv-slot-text);
     padding: 0.55rem 0.95rem;
     font-size: 0.9rem;
     transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
@@ -595,8 +600,8 @@ final class Style
 %s .fp-resv-slots__list button[aria-pressed="true"] {
     transform: translateY(-1px);
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-    background: var(--fp-resv-primary-soft);
-    color: var(--fp-resv-on-primary);
+    background: var(--fp-resv-slot-selected-bg);
+    color: var(--fp-resv-slot-selected-text);
 }
 %s .fp-resv-badge {
     display: inline-flex;

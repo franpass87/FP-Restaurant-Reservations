@@ -12,6 +12,25 @@
     padding: 0;
 }
 
+.fp-resv-style-admin__form .form-table {
+    width: 100%;
+}
+
+.fp-resv-style-admin__form .form-table .regular-text,
+.fp-resv-style-admin__form .form-table select,
+.fp-resv-style-admin__form .form-table textarea,
+.fp-resv-style-admin__form .form-table input[type="number"],
+.fp-resv-style-admin__form .form-table input[type="text"],
+.fp-resv-style-admin__form .form-table .wp-color-picker {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.fp-resv-style-admin__form .wp-picker-container {
+    width: 100%;
+}
+
 .fp-resv-style-admin__preview {
     display: grid;
     gap: 24px;

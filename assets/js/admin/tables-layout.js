@@ -1,4 +1,4 @@
-/* global wp, fpResvTablesSettings */
+/* global fpResvTablesSettings */
 (function () {
     const root = document.querySelector('[data-fp-resv-tables]');
     if (!root) {
@@ -6,21 +6,39 @@
     }
 
     const settings = window.fpResvTablesSettings || {};
-    const apiFetch = (path, options = {}) => {
-        const { apiFetch: wpApiFetch } = wp || {};
-        if (!wpApiFetch) {
-            // eslint-disable-next-line no-console
-            console.warn('wp.apiFetch non disponibile');
-            return Promise.reject(new Error('apiFetch unavailable'));
-        }
+    const restRoot = ((settings.restRoot || '/wp-json/fp-resv/v1')).replace(/\/$/, '');
+    const request = (path, options = {}) => {
+        const url = typeof path === 'string' && path.startsWith('http')
+            ? path
+            : `${restRoot}${path}`;
 
-        return wpApiFetch({
-            path: `fp-resv/v1${path}`,
-            method: 'GET',
+        const config = {
+            method: options.method || 'GET',
             headers: {
+                'Content-Type': 'application/json',
                 'X-WP-Nonce': settings.nonce || '',
             },
-            ...options,
+            credentials: 'same-origin',
+        };
+
+        if (options.data) {
+            config.body = JSON.stringify(options.data);
+        }
+
+        return fetch(url, config).then((response) => {
+            if (!response.ok) {
+                return response.json().catch(() => ({})).then((payload) => {
+                    const error = new Error(payload && payload.message ? payload.message : 'Request failed');
+                    error.status = response.status;
+                    throw error;
+                });
+            }
+
+            if (response.status === 204) {
+                return null;
+            }
+
+            return response.json();
         });
     };
 
@@ -32,6 +50,8 @@
         rooms: initialRooms,
         scale: 1,
     };
+
+    let modalOpen = false;
 
     const template = document.createElement('template');
     template.innerHTML = `
@@ -55,6 +75,32 @@
             <aside class="fp-resv-tables-sidebar" data-region="rooms"></aside>
             <section class="fp-resv-tables-canvas" data-region="canvas"></section>
         </div>
+        <div class="fp-resv-tables-modal" data-modal hidden>
+            <div class="fp-resv-tables-modal__backdrop" data-modal-close></div>
+            <div class="fp-resv-tables-modal__dialog" role="dialog" aria-modal="true">
+                <header class="fp-resv-tables-modal__header">
+                    <h2>${(settings.strings && settings.strings.newRoomTitle) || 'Nuova sala'}</h2>
+                </header>
+                <form class="fp-resv-tables-modal__form" data-modal-form>
+                    <label class="fp-resv-tables-modal__field">
+                        <span>${(settings.strings && settings.strings.newRoomName) || 'Nome sala'}</span>
+                        <input type="text" data-field="name" required>
+                    </label>
+                    <label class="fp-resv-tables-modal__field">
+                        <span>${(settings.strings && settings.strings.newRoomCapacity) || 'Capienza stimata'}</span>
+                        <input type="number" min="0" step="1" data-field="capacity" placeholder="40">
+                    </label>
+                    <label class="fp-resv-tables-modal__field">
+                        <span>${(settings.strings && settings.strings.newRoomColor) || 'Colore identificativo'}</span>
+                        <input type="color" data-field="color" value="#4338ca">
+                    </label>
+                    <footer class="fp-resv-tables-modal__actions">
+                        <button type="button" class="button" data-modal-cancel>${(settings.strings && settings.strings.modalCancel) || 'Annulla'}</button>
+                        <button type="submit" class="button button-primary" data-modal-submit>${(settings.strings && settings.strings.modalCreate) || 'Crea sala'}</button>
+                    </footer>
+                </form>
+            </div>
+        </div>
     `;
 
     root.classList.add('fp-resv-tables-ready');
@@ -63,6 +109,68 @@
 
     const sidebar = root.querySelector('[data-region="rooms"]');
     const canvas = root.querySelector('[data-region="canvas"]');
+    const modal = root.querySelector('[data-modal]');
+    const modalForm = modal ? modal.querySelector('[data-modal-form]') : null;
+    const modalName = modal ? modal.querySelector('[data-field="name"]') : null;
+    const modalCapacity = modal ? modal.querySelector('[data-field="capacity"]') : null;
+    const modalColor = modal ? modal.querySelector('[data-field="color"]') : null;
+    const modalSubmit = modal ? modal.querySelector('[data-modal-submit]') : null;
+
+    const resetModalForm = () => {
+        if (modalForm) {
+            modalForm.reset();
+        }
+        if (modalColor) {
+            modalColor.value = '#4338ca';
+        }
+    };
+
+    const closeModal = () => {
+        if (!modal) {
+            return;
+        }
+        modal.hidden = true;
+        modal.removeAttribute('data-open');
+        modalOpen = false;
+        if (modalSubmit) {
+            modalSubmit.disabled = false;
+        }
+        resetModalForm();
+    };
+
+    const openModal = () => {
+        if (!modal) {
+            return;
+        }
+        modal.hidden = false;
+        modal.setAttribute('data-open', 'true');
+        modalOpen = true;
+        resetModalForm();
+        if (modalName) {
+            modalName.focus();
+            modalName.select();
+        }
+    };
+
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+            if (target.hasAttribute('data-modal-close') || target.hasAttribute('data-modal-cancel')) {
+                event.preventDefault();
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modalOpen) {
+                event.preventDefault();
+                closeModal();
+            }
+        });
+    }
 
     const renderRooms = () => {
         if (!sidebar) {
@@ -144,33 +252,18 @@
 
     const refresh = () => {
         root.dataset.state = 'loading';
-        return apiFetch('/tables/overview')
+        return request('/tables/overview')
             .then((payload) => {
                 state.rooms = Array.isArray(payload.rooms) ? payload.rooms : [];
                 renderRooms();
                 renderCanvas();
             })
+            .catch((error) => {
+                window.alert((error && error.message) ? error.message : 'Impossibile aggiornare le sale.');
+            })
             .finally(() => {
                 root.dataset.state = '';
             });
-    };
-
-    const createRoom = () => {
-        const name = window.prompt('Nome sala');
-        if (!name) {
-            return;
-        }
-
-        const payload = {
-            name,
-            capacity: 0,
-            active: true,
-        };
-
-        apiFetch('/tables/rooms', {
-            method: 'POST',
-            data: payload,
-        }).then(refresh);
     };
 
     const createTable = (roomId) => {
@@ -188,14 +281,16 @@
             pos_y: 40,
         };
 
-        apiFetch('/tables', {
+        request('/tables', {
             method: 'POST',
             data: payload,
-        }).then(refresh);
+        }).then(refresh).catch((error) => {
+            window.alert((error && error.message) ? error.message : 'Impossibile creare il tavolo.');
+        });
     };
 
     const showSuggestion = (roomId) => {
-        apiFetch(`/tables/suggest?room_id=${roomId}&party=2`).then((result) => {
+        request(`/tables/suggest?room_id=${roomId}&party=2`).then((result) => {
             const best = result && result.best ? result.best : null;
             if (!best) {
                 window.alert('Nessuna combinazione trovata.');
@@ -208,7 +303,7 @@
     };
 
     const persistPosition = (tableId, x, y) => {
-        apiFetch('/tables/positions', {
+        request('/tables/positions', {
             method: 'POST',
             data: {
                 positions: [{ id: tableId, x, y }],
@@ -218,6 +313,57 @@
             console.error('Unable to persist table position', error);
         });
     };
+
+    if (modalForm) {
+        modalForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (!modalName) {
+                return;
+            }
+
+            const name = modalName.value.trim();
+            if (name === '') {
+                modalName.focus();
+                return;
+            }
+
+            const capacityValue = modalCapacity && modalCapacity.value !== ''
+                ? Number.parseInt(modalCapacity.value, 10)
+                : 0;
+            let colorValue = modalColor && typeof modalColor.value === 'string'
+                ? modalColor.value.trim()
+                : '';
+            if (colorValue !== '') {
+                colorValue = `#${colorValue.replace(/^#+/, '')}`.slice(0, 7);
+            }
+
+            if (modalSubmit) {
+                modalSubmit.disabled = true;
+            }
+
+            request('/tables/rooms', {
+                method: 'POST',
+                data: {
+                    name,
+                    capacity: Number.isFinite(capacityValue) ? capacityValue : 0,
+                    color: colorValue,
+                    active: true,
+                },
+            })
+                .then(() => {
+                    closeModal();
+                    refresh();
+                })
+                .catch((error) => {
+                    window.alert((error && error.message) ? error.message : 'Impossibile creare la sala.');
+                })
+                .finally(() => {
+                    if (modalSubmit) {
+                        modalSubmit.disabled = false;
+                    }
+                });
+        });
+    }
 
     const startDrag = (event, node) => {
         event.preventDefault();
@@ -265,7 +411,7 @@
         }
 
         if (action === 'add-room') {
-            createRoom();
+            openModal();
         }
 
         if (action === 'refresh') {
