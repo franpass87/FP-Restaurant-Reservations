@@ -277,6 +277,11 @@ class FormApp {
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         this.root.addEventListener('click', this.handleDelegatedTrackingEvent);
 
+        if (this.progress) {
+            this.progress.addEventListener('click', this.handleProgressClick.bind(this));
+            this.progress.addEventListener('keydown', this.handleProgressKeydown.bind(this));
+        }
+
         if (this.errorRetry) {
             this.errorRetry.addEventListener('click', this.handleRetrySubmit.bind(this));
         }
@@ -301,7 +306,7 @@ class FormApp {
             if (index === 0) {
                 _this.dispatchSectionUnlocked(key);
             }
-            _this.updateSectionAttributes(section, _this.state.sectionStates[key]);
+            _this.updateSectionAttributes(section, _this.state.sectionStates[key], { silent: true });
         });
 
         this.updateProgressIndicators();
@@ -458,6 +463,101 @@ class FormApp {
         event.preventDefault();
     }
 
+    handleProgressClick(event) {
+        if (!this.progress) {
+            return;
+        }
+
+        const target = event.target && typeof event.target.closest === 'function'
+            ? event.target.closest('[data-step]')
+            : null;
+
+        if (!target || !this.progress.contains(target)) {
+            return;
+        }
+
+        const key = target.getAttribute('data-step') || '';
+        if (!key) {
+            return;
+        }
+
+        const state = this.state.sectionStates[key];
+        if (!state || state === 'locked') {
+            return;
+        }
+
+        event.preventDefault();
+        this.activateSectionByKey(key);
+    }
+
+    handleProgressKeydown(event) {
+        if (!this.progress) {
+            return;
+        }
+
+        if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar' && event.key !== 'Space') {
+            return;
+        }
+
+        const target = event.target && typeof event.target.closest === 'function'
+            ? event.target.closest('[data-step]')
+            : null;
+
+        if (!target || !this.progress.contains(target)) {
+            return;
+        }
+
+        const key = target.getAttribute('data-step') || '';
+        if (!key) {
+            return;
+        }
+
+        const state = this.state.sectionStates[key];
+        if (!state || state === 'locked') {
+            return;
+        }
+
+        event.preventDefault();
+        this.activateSectionByKey(key);
+    }
+
+    activateSectionByKey(key) {
+        const targetSection = this.sections.find(function (section) {
+            return (section.getAttribute('data-step') || '') === key;
+        });
+
+        if (!targetSection) {
+            return;
+        }
+
+        let reachedTarget = false;
+
+        this.sections.forEach((section) => {
+            const sectionKey = section.getAttribute('data-step') || '';
+            if (sectionKey === key) {
+                reachedTarget = true;
+                this.updateSectionAttributes(section, 'active', { silent: true });
+                this.dispatchSectionUnlocked(sectionKey);
+            } else if (!reachedTarget) {
+                const previousState = this.state.sectionStates[sectionKey];
+                const state = previousState === 'locked' ? 'locked' : 'completed';
+                this.updateSectionAttributes(section, state, { silent: true });
+            } else {
+                this.updateSectionAttributes(section, 'locked', { silent: true });
+            }
+        });
+
+        this.updateProgressIndicators();
+        this.scrollIntoView(targetSection);
+        requestAnimationFrame(() => {
+            const focusTarget = targetSection.querySelector('input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
+            if (focusTarget && typeof focusTarget.focus === 'function') {
+                focusTarget.focus({ preventScroll: true });
+            }
+        });
+        this.updateSubmitState();
+    }
+
     handleRetrySubmit(event) {
         event.preventDefault();
         this.clearError();
@@ -562,14 +662,29 @@ class FormApp {
         pushDataLayerEvent(eventName, { section: key });
     }
 
-    updateSectionAttributes(section, state) {
+    updateSectionAttributes(section, state, options = {}) {
         const key = section.getAttribute('data-step') || '';
+        const silent = options && options.silent === true;
         this.state.sectionStates[key] = state;
         section.setAttribute('data-state', state);
-        section.setAttribute('aria-hidden', state === 'locked' ? 'true' : 'false');
-        section.setAttribute('aria-expanded', state === 'active' ? 'true' : 'false');
 
-        this.updateProgressIndicators();
+        const isActive = state === 'active';
+        section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        section.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+
+        if (isActive) {
+            section.hidden = false;
+            section.removeAttribute('hidden');
+            section.removeAttribute('inert');
+        } else {
+            section.hidden = true;
+            section.setAttribute('hidden', '');
+            section.setAttribute('inert', '');
+        }
+
+        if (!silent) {
+            this.updateProgressIndicators();
+        }
     }
 
     updateProgressIndicators() {
@@ -589,6 +704,13 @@ class FormApp {
             const state = _this.state.sectionStates[key] || 'locked';
             item.setAttribute('data-state', state);
             item.setAttribute('data-progress-state', state === 'completed' ? 'done' : state);
+            const isLocked = state === 'locked';
+            item.tabIndex = isLocked ? -1 : 0;
+            if (isLocked) {
+                item.setAttribute('aria-disabled', 'true');
+            } else {
+                item.removeAttribute('aria-disabled');
+            }
             if (state === 'active') {
                 item.setAttribute('aria-current', 'step');
                 progressValue = Math.max(progressValue, index + 0.5);
