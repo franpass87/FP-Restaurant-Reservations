@@ -26,12 +26,15 @@ use FP\Resv\Domain\Events\Service as EventsService;
 use FP\Resv\Domain\QA\CLI as QASeederCLI;
 use FP\Resv\Domain\QA\REST as QASeederREST;
 use FP\Resv\Domain\QA\Seeder as QASeeder;
+use FP\Resv\Domain\Diagnostics\Logger as DiagnosticsLogger;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\REST as PaymentsREST;
 use FP\Resv\Domain\Payments\StripeService;
 use FP\Resv\Domain\Reservations\AdminController as ReservationsAdminController;
 use FP\Resv\Domain\Reservations\AdminREST as ReservationsAdminREST;
 use FP\Resv\Domain\Reservations\Availability as AvailabilityService;
+use FP\Resv\Domain\Reservations\AvailabilityCache;
+use FP\Resv\Domain\Reservations\CLI as ReservationsCLI;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Reservations\REST as ReservationsREST;
 use FP\Resv\Domain\Reservations\Service as ReservationsService;
@@ -54,6 +57,8 @@ use FP\Resv\Domain\Tables\Repository as TablesRepository;
 use FP\Resv\Domain\Tables\REST as TablesREST;
 use FP\Resv\Frontend\WidgetController;
 use function is_admin;
+use function register_deactivation_hook;
+use function wp_clear_scheduled_hook;
 
 final class Plugin
 {
@@ -73,6 +78,7 @@ final class Plugin
         Autoloader::register();
 
         register_activation_hook($file, [self::class, 'onActivate']);
+        register_deactivation_hook($file, [self::class, 'onDeactivate']);
         add_action('plugins_loaded', [self::class, 'onPluginsLoaded']);
     }
 
@@ -81,6 +87,12 @@ final class Plugin
         ServiceContainer::getInstance();
 
         Migrations::run();
+    }
+
+    public static function onDeactivate(): void
+    {
+        wp_clear_scheduled_hook('fp_resv_run_postvisit_jobs');
+        wp_clear_scheduled_hook('fp_resv_retention_cleanup');
     }
 
     public static function onPluginsLoaded(): void
@@ -111,6 +123,10 @@ final class Plugin
         $container->register('settings.style', $styleSettings);
 
         global $wpdb;
+
+        $logger = new DiagnosticsLogger($wpdb);
+        $container->register(DiagnosticsLogger::class, $logger);
+        $container->register('diagnostics.logger', $logger);
 
         $paymentsRepository = new PaymentsRepository($wpdb);
         $container->register(PaymentsRepository::class, $paymentsRepository);
@@ -160,10 +176,14 @@ final class Plugin
             $mailer,
             $customersRepository,
             $stripe,
+            $tablesRepository,
+            $availability,
             $googleCalendar
         );
         $container->register(ReservationsService::class, $reservationsService);
         $container->register('reservations.service', $reservationsService);
+
+        AvailabilityCache::bootstrap();
 
         $reportsService = new ReportsService($wpdb, $reservationsRepository, $paymentsRepository);
         $container->register(ReportsService::class, $reportsService);
@@ -182,6 +202,9 @@ final class Plugin
 
         $qaSeederCli = new QASeederCLI($qaSeeder);
         $qaSeederCli->register();
+
+        $reservationsCli = new ReservationsCLI();
+        $reservationsCli->register();
 
         $brevoRepository = new BrevoRepository($wpdb);
         $container->register(BrevoRepository::class, $brevoRepository);

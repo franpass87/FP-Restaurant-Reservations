@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Tables;
 
+use FP\Resv\Core\Security;
 use InvalidArgumentException;
 use WP_Error;
 use WP_REST_Request;
@@ -11,7 +12,6 @@ use WP_REST_Response;
 use WP_REST_Server;
 use function add_action;
 use function count;
-use function current_user_can;
 use function is_array;
 use function register_rest_route;
 use function rest_ensure_response;
@@ -284,7 +284,7 @@ final class REST
 
     private function canManage(): bool
     {
-        return current_user_can('manage_options');
+        return Security::currentUserCanManage();
     }
 
     /**

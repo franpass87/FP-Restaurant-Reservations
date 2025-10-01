@@ -18,6 +18,7 @@ use function fclose;
 use function fopen;
 use function fputcsv;
 use function fwrite;
+use function implode;
 use function is_array;
 use function is_numeric;
 use function is_string;
@@ -109,9 +110,9 @@ final class Service
         $totals    = [
             'reservations' => 0,
             'covers'       => 0,
-            'value'        => 0.0,
+            'values'       => [],
         ];
-        $currencies = [];
+        $currencyCounts = [];
 
         $table = $this->reservations->tableName();
         $where = 'date BETWEEN %s AND %s AND status <> %s';
@@ -146,18 +147,21 @@ final class Service
 
                 $covers = (int) ($row['party'] ?? 0);
                 $value  = $this->normalizeFloat($row['value'] ?? null);
-                $currency = (string) ($row['currency'] ?? '');
-                if ($currency !== '') {
-                    $currencies[$currency] = true;
+                $currency = strtoupper((string) ($row['currency'] ?? ''));
+                if ($currency === '') {
+                    $currency = 'UNKNOWN';
                 }
+
+                $totals['values'][$currency] = ($totals['values'][$currency] ?? 0.0) + $value;
+                $currencyCounts[$currency] = ($currencyCounts[$currency] ?? 0) + 1;
 
                 $buckets[$date]['reservations'] += 1;
                 $buckets[$date]['covers']       += $covers;
-                $buckets[$date]['value']        += $value;
+                $buckets[$date]['values'][$currency] = ($buckets[$date]['values'][$currency] ?? 0.0) + $value;
+                $buckets[$date]['value'] += $value;
 
                 $totals['reservations'] += 1;
                 $totals['covers']       += $covers;
-                $totals['value']        += $value;
 
                 $source   = strtolower(trim((string) ($row['utm_source'] ?? '')));
                 $medium   = strtolower(trim((string) ($row['utm_medium'] ?? '')));
@@ -166,7 +170,8 @@ final class Service
 
                 $channels[$channel]['reservations'] += 1;
                 $channels[$channel]['covers']       += $covers;
-                $channels[$channel]['value']        += $value;
+                $channels[$channel]['values'][$currency] = ($channels[$channel]['values'][$currency] ?? 0.0) + $value;
+                $channels[$channel]['value'] += $value;
 
                 $key = $source . '|' . $medium . '|' . $campaign;
                 if (!isset($sources[$key])) {
@@ -177,20 +182,26 @@ final class Service
                         'reservations'  => 0,
                         'covers'        => 0,
                         'value'         => 0.0,
+                        'values'        => [],
                     ];
                 }
 
                 $sources[$key]['reservations'] += 1;
                 $sources[$key]['covers']       += $covers;
-                $sources[$key]['value']        += $value;
+                $sources[$key]['values'][$currency] = ($sources[$key]['values'][$currency] ?? 0.0) + $value;
+                $sources[$key]['value'] += $value;
             }
         }
 
-        $currencyList = array_keys($currencies);
+        $currencyList = array_keys($totals['values']);
         $primaryCurrency = $currencyList[0] ?? '';
 
         foreach ($buckets as &$bucket) {
-            $bucket['value'] = round((float) $bucket['value'], 2);
+            foreach ($bucket['values'] as $code => $amount) {
+                $bucket['values'][$code] = round((float) $amount, 2);
+            }
+
+            $bucket['value'] = $bucket['values'][$primaryCurrency] ?? 0.0;
         }
         unset($bucket);
 
@@ -198,7 +209,11 @@ final class Service
             $channelBucket['share'] = $totals['reservations'] > 0
                 ? round(($channelBucket['reservations'] / $totals['reservations']) * 100, 2)
                 : 0.0;
-            $channelBucket['value'] = round((float) $channelBucket['value'], 2);
+            foreach ($channelBucket['values'] as $code => $amount) {
+                $channelBucket['values'][$code] = round((float) $amount, 2);
+            }
+
+            $channelBucket['value'] = $channelBucket['values'][$primaryCurrency] ?? 0.0;
         }
         unset($channelBucket);
 
@@ -208,13 +223,29 @@ final class Service
         });
 
         $topSources = array_map(function (array $row) use ($totals): array {
-            $row['value'] = round((float) $row['value'], 2);
+            foreach ($row['values'] as $code => $amount) {
+                $row['values'][$code] = round((float) $amount, 2);
+            }
+
+            $row['value'] = $row['values'][$this->resolvePrimaryCurrency($row['values'])] ?? 0.0;
             $row['share'] = $totals['reservations'] > 0
                 ? round(($row['reservations'] / $totals['reservations']) * 100, 2)
                 : 0.0;
 
             return $row;
         }, $topSources);
+
+        foreach ($totals['values'] as $code => $amount) {
+            $totals['values'][$code] = round((float) $amount, 2);
+        }
+
+        $totals['value'] = $totals['values'][$primaryCurrency] ?? 0.0;
+
+        $avgTicketBreakdown = [];
+        foreach ($totals['values'] as $code => $amount) {
+            $count = $currencyCounts[$code] ?? 0;
+            $avgTicketBreakdown[$code] = $count > 0 ? round($amount / $count, 2) : 0.0;
+        }
 
         return [
             'range' => [
@@ -224,14 +255,15 @@ final class Service
             'summary' => [
                 'reservations' => $totals['reservations'],
                 'covers'       => $totals['covers'],
-                'value'        => round((float) $totals['value'], 2),
+                'value'        => $totals['value'],
+                'values'       => $totals['values'],
                 'avg_party'    => $totals['reservations'] > 0
                     ? round($totals['covers'] / $totals['reservations'], 2)
                     : 0.0,
-                'avg_ticket'   => $totals['reservations'] > 0
-                    ? round($totals['value'] / $totals['reservations'], 2)
-                    : 0.0,
+                'avg_ticket'   => $avgTicketBreakdown[$primaryCurrency] ?? 0.0,
+                'avg_ticket_breakdown' => $avgTicketBreakdown,
                 'currency'     => $primaryCurrency,
+                'currencies'   => $currencyList,
             ],
             'channels'   => array_values($channels),
             'trend'      => array_values($buckets),
@@ -250,14 +282,21 @@ final class Service
 
         $headers = ['source', 'medium', 'campaign', 'reservations', 'covers', 'value', 'share'];
 
-        $rows = array_map(static function (array $row): array {
+        $rows = array_map(function (array $row): array {
+            $values = $row['values'] ?? [];
+            if (is_array($values)) {
+                $valueString = $this->formatCurrencyMap($values);
+            } else {
+                $valueString = number_format((float) ($row['value'] ?? 0.0), 2, '.', '');
+            }
+
             return [
                 'source'       => $row['source'] !== '' ? $row['source'] : 'direct',
                 'medium'       => $row['medium'],
                 'campaign'     => $row['campaign'],
                 'reservations' => (string) $row['reservations'],
                 'covers'       => (string) $row['covers'],
-                'value'        => number_format((float) $row['value'], 2, '.', ''),
+                'value'        => $valueString,
                 'share'        => number_format((float) $row['share'], 2, '.', ''),
             ];
         }, $analytics['topSources']);
@@ -632,6 +671,23 @@ final class Service
     }
 
     /**
+     * @param array<string, float> $amounts
+     */
+    private function formatCurrencyMap(array $amounts): string
+    {
+        if ($amounts === []) {
+            return '0.00';
+        }
+
+        $parts = [];
+        foreach ($amounts as $currency => $amount) {
+            $parts[] = $currency . ' ' . number_format((float) $amount, 2, '.', '');
+        }
+
+        return implode('; ', $parts);
+    }
+
+    /**
      * @return array<string, array<string, float|int|string>>
      */
     private function bootstrapChannelBuckets(): array
@@ -643,6 +699,7 @@ final class Service
                 'reservations' => 0,
                 'covers'       => 0,
                 'value'        => 0.0,
+                'values'       => [],
                 'share'        => 0.0,
             ];
         }
@@ -665,6 +722,7 @@ final class Service
                 'reservations' => 0,
                 'covers'       => 0,
                 'value'        => 0.0,
+                'values'       => [],
             ];
         }
 
@@ -734,5 +792,19 @@ final class Service
         }
 
         return 0.0;
+    }
+
+    /**
+     * @param array<string, float> $values
+     */
+    private function resolvePrimaryCurrency(array $values): string
+    {
+        if ($values === []) {
+            return '';
+        }
+
+        arsort($values);
+
+        return (string) array_key_first($values);
     }
 }

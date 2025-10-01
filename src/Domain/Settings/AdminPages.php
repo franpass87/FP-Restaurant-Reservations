@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Settings;
 
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Security;
 use FP\Resv\Core\ServiceContainer;
 use function __;
 use function add_action;
@@ -15,7 +16,6 @@ use function add_settings_field;
 use function add_settings_section;
 use function add_submenu_page;
 use function array_key_first;
-use function current_user_can;
 use function admin_url;
 use function check_admin_referer;
 use function do_settings_sections;
@@ -68,7 +68,6 @@ use const INPUT_GET;
 
 final class AdminPages
 {
-    private const CAPABILITY = 'manage_options';
     private const DEFAULT_PHONE_PREFIX_MAP = ['+39' => 'IT'];
 
     /**
@@ -79,6 +78,11 @@ final class AdminPages
     public function __construct()
     {
         $this->pages = $this->definePages();
+    }
+
+    private function capability(): string
+    {
+        return Security::managementCapability();
     }
 
     public function register(): void
@@ -152,7 +156,7 @@ final class AdminPages
 
     public function handleStyleReset(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
+        if (!Security::currentUserCanManage()) {
             wp_safe_redirect(admin_url());
             exit;
         }
@@ -198,7 +202,7 @@ final class AdminPages
         add_menu_page(
             (string) $firstPage['page_title'],
             __('FP Reservations', 'fp-restaurant-reservations'),
-            self::CAPABILITY,
+            $this->capability(),
             $firstPage['slug'],
             function () use ($firstKey): void {
                 $this->renderSettingsPage($firstKey);
@@ -212,7 +216,7 @@ final class AdminPages
                 $firstPage['slug'],
                 (string) $page['page_title'],
                 (string) $page['menu_title'],
-                self::CAPABILITY,
+                $this->capability(),
                 $page['slug'],
                 function () use ($pageKey): void {
                     $this->renderSettingsPage($pageKey);
@@ -377,7 +381,7 @@ final class AdminPages
 
     private function renderSettingsPage(string $pageKey): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
+        if (!Security::currentUserCanManage()) {
             return;
         }
 

@@ -214,9 +214,9 @@
   function resetSummary() {
     updateText(summaryReservations, '0');
     updateText(summaryCovers, '0');
-    updateText(summaryValue, formatCurrency(0));
+    updateText(summaryValue, formatCurrencyValue(0, state.currency || 'EUR'));
     updateText(summaryAvgParty, '0');
-    updateText(summaryAvgTicket, formatCurrency(0));
+    updateText(summaryAvgTicket, formatCurrencyValue(0, state.currency || 'EUR'));
   }
 
   function renderSummary(summary) {
@@ -227,9 +227,16 @@
 
     updateText(summaryReservations, formatNumber(summary.reservations || 0));
     updateText(summaryCovers, formatNumber(summary.covers || 0));
-    updateText(summaryValue, formatCurrency(summary.value || 0));
+    if (summary.currency) {
+      state.currency = summary.currency;
+    }
+
+    updateText(summaryValue, formatCurrencyBreakdown(summary.values || {}, summary.currency || state.currency));
     updateText(summaryAvgParty, formatDecimal(summary.avg_party || 0));
-    updateText(summaryAvgTicket, formatCurrency(summary.avg_ticket || 0));
+    updateText(
+      summaryAvgTicket,
+      formatCurrencyBreakdown(summary.avg_ticket_breakdown || {}, summary.currency || state.currency)
+    );
   }
 
   function renderChannels(channels) {
@@ -402,7 +409,7 @@
       appendCell(tr, row.campaign || '');
       appendCell(tr, formatNumber(row.reservations || 0));
       appendCell(tr, formatNumber(row.covers || 0));
-      appendCell(tr, formatCurrency(row.value || 0));
+      appendCell(tr, formatCurrencyBreakdown(row.values || {}, state.currency));
       appendCell(tr, formatDecimal(row.share || 0) + '%');
       tableBody.appendChild(tr);
     });
@@ -524,18 +531,51 @@
   }
 
   function formatCurrency(value) {
+    return formatCurrencyValue(value, state.currency || 'EUR');
+  }
+
+  function formatCurrencyValue(value, currency) {
     var number = Number(value) || 0;
-    var currency = state.currency || 'EUR';
+    var code = currency || 'EUR';
     try {
       return new Intl.NumberFormat(undefined, {
         style: 'currency',
-        currency: currency,
+        currency: code,
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(number);
     } catch (error) {
-      return currency + ' ' + formatDecimal(number);
+      return code + ' ' + formatDecimal(number);
     }
+  }
+
+  function formatCurrencyBreakdown(values, primaryCurrency) {
+    if (!values || typeof values !== 'object') {
+      return formatCurrencyValue(0, primaryCurrency || state.currency || 'EUR');
+    }
+
+    var keys = Object.keys(values);
+    if (keys.length === 0) {
+      return formatCurrencyValue(0, primaryCurrency || state.currency || 'EUR');
+    }
+
+    var chosen = primaryCurrency && values.hasOwnProperty(primaryCurrency) ? primaryCurrency : keys[0];
+    var primaryValue = values[chosen];
+    var formattedPrimary = formatCurrencyValue(primaryValue, chosen);
+
+    var extras = keys
+      .filter(function (key) {
+        return key !== chosen;
+      })
+      .map(function (code) {
+        return formatCurrencyValue(values[code], code);
+      });
+
+    if (extras.length === 0) {
+      return formattedPrimary;
+    }
+
+    return formattedPrimary + ' (' + extras.join(', ') + ')';
   }
 
   function speak(message) {

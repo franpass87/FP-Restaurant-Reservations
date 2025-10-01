@@ -14,6 +14,7 @@ use WP_User;
 use wpdb;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Domain\Settings\Options;
+use function __;
 use function absint;
 use function array_key_exists;
 use function array_map;
@@ -21,6 +22,7 @@ use function array_unique;
 use function array_values;
 use function count;
 use function current_time;
+use function do_action;
 use function get_current_user_id;
 use function in_array;
 use function is_array;
@@ -31,6 +33,7 @@ use function preg_match;
 use function sanitize_key;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
+use function sprintf;
 use function sort;
 use function strtolower;
 use function trim;
@@ -77,10 +80,12 @@ final class Service
 
         $model = $this->find($id);
         if ($model === null) {
-            throw new RuntimeException('Closure created but not found.');
+            throw new RuntimeException(__('Chiusura creata ma non trovata.', 'fp-restaurant-reservations'));
         }
 
         $this->logAudit('create', null, $model);
+
+        do_action('fp_resv_closure_saved', $model);
 
         return $model;
     }
@@ -92,7 +97,7 @@ final class Service
     {
         $existing = $this->find($id);
         if ($existing === null) {
-            throw new InvalidArgumentException('Closure not found.');
+            throw new InvalidArgumentException(__('Chiusura non trovata.', 'fp-restaurant-reservations'));
         }
 
         $normalized = $this->normalizePayload($data, $existing);
@@ -100,10 +105,12 @@ final class Service
 
         $model = $this->find($id);
         if ($model === null) {
-            throw new RuntimeException('Closure updated but not found.');
+            throw new RuntimeException(__('Chiusura aggiornata ma non trovata.', 'fp-restaurant-reservations'));
         }
 
         $this->logAudit('update', $existing, $model);
+
+        do_action('fp_resv_closure_saved', $model);
 
         return $model;
     }
@@ -112,7 +119,7 @@ final class Service
     {
         $existing = $this->find($id);
         if ($existing === null) {
-            throw new InvalidArgumentException('Closure not found.');
+            throw new InvalidArgumentException(__('Chiusura non trovata.', 'fp-restaurant-reservations'));
         }
 
         $table = $this->wpdb->prefix . 'fp_closures';
@@ -126,13 +133,15 @@ final class Service
         );
 
         if ($updated === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to deactivate closure.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile disattivare la chiusura.', 'fp-restaurant-reservations'));
         }
 
         $updatedModel = $this->find($id);
         if ($updatedModel !== null) {
             $this->logAudit('deactivate', $existing, $updatedModel);
         }
+
+        do_action('fp_resv_closure_deleted', $id);
     }
 
     /**
@@ -141,13 +150,13 @@ final class Service
     public function preview(DateTimeImmutable $start, DateTimeImmutable $end, array $filters = []): array
     {
         if ($end < $start) {
-            throw new InvalidArgumentException('The end date must be after the start date.');
+            throw new InvalidArgumentException(__('La data di fine deve essere successiva alla data di inizio.', 'fp-restaurant-reservations'));
         }
 
         $diff = $start->diff($end);
         if ($diff->days !== false && $diff->days > self::MAX_PREVIEW_DAYS) {
             throw new InvalidArgumentException(sprintf(
-                'Seleziona un intervallo inferiore o uguale a %d giorni per la preview.',
+                __('Seleziona un intervallo inferiore o uguale a %d giorni per la preview.', 'fp-restaurant-reservations'),
                 self::MAX_PREVIEW_DAYS
             ));
         }
@@ -375,11 +384,11 @@ final class Service
         $end   = $this->parseDateTime($data['end_at'] ?? null, $timezone) ?? $existing?->endAt ?? null;
 
         if (!$start instanceof DateTimeImmutable || !$end instanceof DateTimeImmutable) {
-            throw new InvalidArgumentException('Start and end date are required.');
+            throw new InvalidArgumentException(__('Sono richieste una data e un orario di inizio e fine.', 'fp-restaurant-reservations'));
         }
 
         if ($end <= $start) {
-            throw new InvalidArgumentException('The end datetime must be after the start datetime.');
+            throw new InvalidArgumentException(__('La data di fine deve essere successiva alla data di inizio.', 'fp-restaurant-reservations'));
         }
 
         $roomId  = null;
@@ -388,14 +397,14 @@ final class Service
         if ($scope === 'room' || $scope === 'table') {
             $roomId = isset($data['room_id']) ? absint($data['room_id']) : $existing?->roomId;
             if ($roomId === null || $roomId <= 0) {
-                throw new InvalidArgumentException('Seleziona una sala valida per la chiusura.');
+                throw new InvalidArgumentException(__('Seleziona una sala valida per la chiusura.', 'fp-restaurant-reservations'));
             }
         }
 
         if ($scope === 'table') {
             $tableId = isset($data['table_id']) ? absint($data['table_id']) : $existing?->tableId;
             if ($tableId === null || $tableId <= 0) {
-                throw new InvalidArgumentException('Seleziona un tavolo valido per la chiusura.');
+                throw new InvalidArgumentException(__('Seleziona un tavolo valido per la chiusura.', 'fp-restaurant-reservations'));
             }
         }
 
@@ -444,7 +453,7 @@ final class Service
         try {
             return new DateTimeImmutable($value, $timezone);
         } catch (\Exception $exception) {
-            throw new InvalidArgumentException('Formato data/ora non valido: ' . $exception->getMessage());
+            throw new InvalidArgumentException(sprintf(__('Formato data/ora non valido: %s', 'fp-restaurant-reservations'), $exception->getMessage()));
         }
     }
 
@@ -457,7 +466,7 @@ final class Service
     {
         $type = sanitize_key((string) ($recurrence['type'] ?? ''));
         if (!in_array($type, ['daily', 'weekly', 'monthly'], true)) {
-            throw new InvalidArgumentException('Tipo di ricorrenza non supportato.');
+            throw new InvalidArgumentException(__('Tipo di ricorrenza non supportato.', 'fp-restaurant-reservations'));
         }
 
         $result = ['type' => $type];
@@ -498,7 +507,7 @@ final class Service
         }
 
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
-            throw new InvalidArgumentException('Le date di ricorrenza devono essere nel formato YYYY-MM-DD.');
+            throw new InvalidArgumentException(__('Le date di ricorrenza devono essere nel formato YYYY-MM-DD.', 'fp-restaurant-reservations'));
         }
 
         return $value;
@@ -571,7 +580,7 @@ final class Service
 
         $result = $this->wpdb->insert($table, $data);
         if ($result === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to create closure.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile creare la chiusura.', 'fp-restaurant-reservations'));
         }
 
         return (int) $this->wpdb->insert_id;
@@ -587,7 +596,7 @@ final class Service
 
         $result = $this->wpdb->update($table, $data, ['id' => $id]);
         if ($result === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to update closure.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile aggiornare la chiusura.', 'fp-restaurant-reservations'));
         }
     }
 

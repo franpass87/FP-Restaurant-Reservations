@@ -17,6 +17,7 @@ use function array_values;
 use function implode;
 use function is_array;
 use function is_email;
+use function esc_sql;
 use function md5;
 use function sanitize_email;
 use function sprintf;
@@ -153,13 +154,32 @@ final class Privacy
         $reservationsCount = $this->reservations->anonymizeOlderThan($cutoff);
         $customersCount    = $this->customers->anonymizeInactive($cutoff, $this->reservations->tableName());
         $surveysCount      = $this->anonymizeSurveysOlderThan($cutoff);
+        $mailLogsCount     = $this->cleanupLogTable($this->wpdb->prefix . 'fp_mail_log', 'created_at', $cutoff);
+        $brevoLogsCount    = $this->cleanupLogTable($this->wpdb->prefix . 'fp_brevo_log', 'created_at', $cutoff);
 
         return [
             'reservations' => $reservationsCount,
             'customers'    => $customersCount,
             'surveys'      => $surveysCount,
+            'mail_logs'    => $mailLogsCount,
+            'brevo_logs'   => $brevoLogsCount,
             'cutoff_date'  => $cutoff->format('Y-m-d'),
         ];
+    }
+
+    private function cleanupLogTable(string $table, string $dateColumn, DateTimeImmutable $cutoff): int
+    {
+        $table = esc_sql($table);
+        $dateColumn = esc_sql($dateColumn);
+
+        $sql = $this->wpdb->prepare(
+            'DELETE FROM ' . $table . ' WHERE ' . $dateColumn . ' < %s',
+            $cutoff->format('Y-m-d H:i:s')
+        );
+
+        $result = $this->wpdb->query($sql);
+
+        return $result === false ? 0 : (int) $result;
     }
 
     private function resolveCutoffDate(): ?DateTimeImmutable

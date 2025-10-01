@@ -45,7 +45,7 @@ final class Availability
     ];
 
     /** @var string[] */
-    private const ACTIVE_STATUSES = ['pending', 'confirmed', 'seated'];
+    private const ACTIVE_STATUSES = ['pending', 'pending_payment', 'confirmed', 'seated'];
 
     public function __construct(private readonly Options $options, private readonly wpdb $wpdb)
     {
@@ -61,6 +61,7 @@ final class Availability
         $dateString = isset($criteria['date']) ? trim((string) $criteria['date']) : '';
         $party      = isset($criteria['party']) ? (int) $criteria['party'] : 0;
         $roomId     = isset($criteria['room']) ? (int) $criteria['room'] : null;
+        $locationId = isset($criteria['location']) ? trim((string) $criteria['location']) : '';
 
         if ($dateString === '' || !$this->isValidDate($dateString)) {
             throw new InvalidArgumentException(__('La data richiesta non è valida.', 'fp-restaurant-reservations'));
@@ -103,7 +104,15 @@ final class Availability
         $rooms      = $this->loadRooms($roomId);
         $tables     = $this->loadTables($roomId);
         $closures   = $this->loadClosures($dayStart, $dayEnd, $timezone);
-        $reservations = $this->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
+        $reservations = $this->loadReservations(
+            $dayStart,
+            $dayEnd,
+            $roomId,
+            $turnoverMinutes,
+            $bufferMinutes,
+            $timezone,
+            $locationId !== '' ? $locationId : null
+        );
 
         $roomCapacities = $this->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
         $slots          = [];
@@ -462,14 +471,25 @@ final class Availability
         ?int $roomId,
         int $turnoverMinutes,
         int $bufferMinutes,
-        DateTimeZone $timezone
+        DateTimeZone $timezone,
+        ?string $locationId
     ): array {
         $table    = $this->wpdb->prefix . 'fp_reservations';
         $statuses = "'" . implode("','", self::ACTIVE_STATUSES) . "'";
-        $sql      = $this->wpdb->prepare(
-            "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statuses})",
-            $dayStart->format('Y-m-d')
-        );
+        $query    = "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statuses})";
+        $params   = [$dayStart->format('Y-m-d')];
+
+        if ($roomId !== null) {
+            $query   .= ' AND (room_id IS NULL OR room_id = %d)';
+            $params[] = $roomId;
+        }
+
+        if ($locationId !== null) {
+            $query   .= ' AND (location_id IS NULL OR location_id = %s)';
+            $params[] = $locationId;
+        }
+
+        $sql = $this->wpdb->prepare($query, ...$params);
 
         $rows = $this->wpdb->get_results($sql, ARRAY_A);
         if (!is_array($rows)) {
@@ -478,10 +498,6 @@ final class Availability
 
         $reservations = [];
         foreach ($rows as $row) {
-            if ($roomId !== null && $row['room_id'] !== null && (int) $row['room_id'] !== $roomId) {
-                continue;
-            }
-
             $time       = (string) $row['time'];
             $start      = new DateTimeImmutable($dayStart->format('Y-m-d') . ' ' . $time, $timezone);
             $windowFrom = $start->sub(new DateInterval('PT' . $bufferMinutes . 'M'));
@@ -871,6 +887,10 @@ final class Availability
 
         if ($roomId !== null) {
             $normalized['room'] = $roomId;
+        }
+
+        if (isset($criteria['location']) && $criteria['location'] !== '') {
+            $normalized['location'] = (string) $criteria['location'];
         }
 
         if (isset($criteria['meal']) && $criteria['meal'] !== '') {

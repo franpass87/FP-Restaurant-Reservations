@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Payments;
 
 use FP\Resv\Domain\Settings\Options;
 use RuntimeException;
+use function __;
 use WP_Error;
 use function apply_filters;
 use function current_time;
@@ -179,13 +180,13 @@ final class StripeService
     public function createReservationIntent(int $reservationId, array $reservation, ?float $amountOverride = null): array
     {
         if (!$this->isEnabled()) {
-            throw new RuntimeException('Stripe payments are disabled.');
+            throw new RuntimeException(__('I pagamenti Stripe sono disabilitati.', 'fp-restaurant-reservations'));
         }
 
         $amount   = $amountOverride ?? $this->calculateReservationAmount($reservation, $reservationId);
         $amount   = round($amount, 2);
         if ($amount <= 0) {
-            throw new RuntimeException('Invalid payment amount.');
+            throw new RuntimeException(__('L\'importo del pagamento non è valido.', 'fp-restaurant-reservations'));
         }
 
         $currency = strtoupper((string) ($reservation['currency'] ?? $this->currency()));
@@ -211,7 +212,7 @@ final class StripeService
 
         $record = $this->repository->find($paymentId);
         if ($record === null) {
-            throw new RuntimeException('Payment record could not be stored.');
+            throw new RuntimeException(__('Impossibile salvare il record di pagamento.', 'fp-restaurant-reservations'));
         }
 
         return $this->formatPaymentRecord($record);
@@ -221,12 +222,12 @@ final class StripeService
     {
         $record = $this->repository->find($paymentId);
         if ($record === null) {
-            throw new RuntimeException('Payment not found.');
+            throw new RuntimeException(__('Pagamento non trovato.', 'fp-restaurant-reservations'));
         }
 
         $intentId = (string) ($record['external_id'] ?? '');
         if ($intentId === '') {
-            throw new RuntimeException('Stripe intent id missing.');
+            throw new RuntimeException(__('ID dell\'intent Stripe mancante.', 'fp-restaurant-reservations'));
         }
 
         $intent = $this->request('GET', '/payment_intents/' . rawurlencode($intentId));
@@ -238,7 +239,7 @@ final class StripeService
 
         $updated = $this->repository->find((int) $record['id']);
         if ($updated === null) {
-            throw new RuntimeException('Unable to reload updated payment.');
+            throw new RuntimeException(__('Impossibile ricaricare il pagamento aggiornato.', 'fp-restaurant-reservations'));
         }
 
         return $this->formatPaymentRecord($updated);
@@ -248,12 +249,12 @@ final class StripeService
     {
         $record = $this->repository->find($paymentId);
         if ($record === null) {
-            throw new RuntimeException('Payment not found.');
+            throw new RuntimeException(__('Pagamento non trovato.', 'fp-restaurant-reservations'));
         }
 
         $intentId = (string) ($record['external_id'] ?? '');
         if ($intentId === '') {
-            throw new RuntimeException('Stripe intent id missing.');
+            throw new RuntimeException(__('ID dell\'intent Stripe mancante.', 'fp-restaurant-reservations'));
         }
 
         $intent = $this->request('POST', '/payment_intents/' . rawurlencode($intentId) . '/capture');
@@ -265,7 +266,7 @@ final class StripeService
 
         $updated = $this->repository->find((int) $record['id']);
         if ($updated === null) {
-            throw new RuntimeException('Unable to reload captured payment.');
+            throw new RuntimeException(__('Impossibile ricaricare il pagamento acquisito.', 'fp-restaurant-reservations'));
         }
 
         return $this->formatPaymentRecord($updated);
@@ -275,12 +276,12 @@ final class StripeService
     {
         $record = $this->repository->find($paymentId);
         if ($record === null) {
-            throw new RuntimeException('Payment not found.');
+            throw new RuntimeException(__('Pagamento non trovato.', 'fp-restaurant-reservations'));
         }
 
         $intentId = (string) ($record['external_id'] ?? '');
         if ($intentId === '') {
-            throw new RuntimeException('Stripe intent id missing.');
+            throw new RuntimeException(__('ID dell\'intent Stripe mancante.', 'fp-restaurant-reservations'));
         }
 
         $intent = $this->request('POST', '/payment_intents/' . rawurlencode($intentId) . '/cancel', [
@@ -294,7 +295,7 @@ final class StripeService
 
         $updated = $this->repository->find((int) $record['id']);
         if ($updated === null) {
-            throw new RuntimeException('Unable to reload voided payment.');
+            throw new RuntimeException(__('Impossibile ricaricare il pagamento annullato.', 'fp-restaurant-reservations'));
         }
 
         return $this->formatPaymentRecord($updated);
@@ -304,12 +305,12 @@ final class StripeService
     {
         $record = $this->repository->find($paymentId);
         if ($record === null) {
-            throw new RuntimeException('Payment not found.');
+            throw new RuntimeException(__('Pagamento non trovato.', 'fp-restaurant-reservations'));
         }
 
         $intentId = (string) ($record['external_id'] ?? '');
         if ($intentId === '') {
-            throw new RuntimeException('Stripe intent id missing.');
+            throw new RuntimeException(__('ID dell\'intent Stripe mancante.', 'fp-restaurant-reservations'));
         }
 
         $payload = [
@@ -329,7 +330,7 @@ final class StripeService
 
         $updated = $this->repository->find((int) $record['id']);
         if ($updated === null) {
-            throw new RuntimeException('Unable to reload refunded payment.');
+            throw new RuntimeException(__('Impossibile ricaricare il pagamento rimborsato.', 'fp-restaurant-reservations'));
         }
 
         return $this->formatPaymentRecord($updated);
@@ -472,7 +473,7 @@ final class StripeService
     {
         $secret = $this->secretKey();
         if ($secret === '') {
-            throw new RuntimeException('Stripe secret key is missing.');
+            throw new RuntimeException(__('La chiave segreta di Stripe è mancante.', 'fp-restaurant-reservations'));
         }
 
         $headers = [
@@ -492,19 +493,19 @@ final class StripeService
 
         $response = wp_remote_request(self::API_BASE . $path, $args);
         if ($response instanceof WP_Error) {
-            throw new RuntimeException('Stripe request failed: ' . $response->get_error_message());
+            throw new RuntimeException(sprintf(__('Richiesta a Stripe non riuscita: %s', 'fp-restaurant-reservations'), $response->get_error_message()));
         }
 
         $code = wp_remote_retrieve_response_code($response);
         $raw  = wp_remote_retrieve_body($response);
         $data = json_decode($raw, true);
         if (!is_array($data)) {
-            throw new RuntimeException('Stripe API returned an invalid response.');
+            throw new RuntimeException(__('Le API di Stripe hanno restituito una risposta non valida.', 'fp-restaurant-reservations'));
         }
 
         if ($code >= 400) {
             $message = $data['error']['message'] ?? wp_remote_retrieve_response_message($response);
-            throw new RuntimeException(sprintf('Stripe API error (%d): %s', $code, (string) $message));
+            throw new RuntimeException(sprintf(__('Errore API Stripe (%d): %s', 'fp-restaurant-reservations'), $code, (string) $message));
         }
 
         return $data;

@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 $rootDir = dirname(__DIR__);
 
+require_once $rootDir . '/vendor/autoload.php';
+
+if (class_exists(\DG\BypassFinals::class)) {
+    \DG\BypassFinals::enable();
+}
+
 spl_autoload_register(static function (string $class) use ($rootDir): void {
     if (str_starts_with($class, 'FP\\Resv\\')) {
         $relative = substr($class, strlen('FP\\Resv\\'));
@@ -15,6 +21,12 @@ spl_autoload_register(static function (string $class) use ($rootDir): void {
         }
     }
 });
+
+if (!class_exists('wpdb')) {
+    class wpdb
+    {
+    }
+}
 
 require_once __DIR__ . '/Support/FakeWpdb.php';
 
@@ -34,6 +46,10 @@ if (!defined('MINUTE_IN_SECONDS')) {
     define('MINUTE_IN_SECONDS', 60);
 }
 
+if (!defined('WEEK_IN_SECONDS')) {
+    define('WEEK_IN_SECONDS', 7 * DAY_IN_SECONDS);
+}
+
 FP\Resv\Core\Plugin::$dir = $rootDir . '/';
 FP\Resv\Core\Plugin::$file = $rootDir . '/fp-restaurant-reservations.php';
 FP\Resv\Core\Plugin::$url  = 'https://example.test/wp-content/plugins/fp-restaurant-reservations/';
@@ -42,6 +58,7 @@ $GLOBALS['__wp_tests_options']    = [];
 $GLOBALS['__wp_tests_transients'] = [];
 $GLOBALS['__wp_tests_mail_log']   = [];
 $GLOBALS['__wp_tests_actions']    = [];
+$GLOBALS['__wp_tests_scripts']    = [];
 
 function get_option(string $name, mixed $default = null): mixed
 {
@@ -51,6 +68,13 @@ function get_option(string $name, mixed $default = null): mixed
 function update_option(string $name, mixed $value): bool
 {
     $GLOBALS['__wp_tests_options'][$name] = $value;
+
+    return true;
+}
+
+function delete_option(string $name): bool
+{
+    unset($GLOBALS['__wp_tests_options'][$name]);
 
     return true;
 }
@@ -81,6 +105,15 @@ function sanitize_email(string $email): string
     return filter_var($email, FILTER_SANITIZE_EMAIL) ?: '';
 }
 
+function wp_unslash(mixed $value): mixed
+{
+    if (is_array($value)) {
+        return array_map('wp_unslash', $value);
+    }
+
+    return is_string($value) ? stripslashes($value) : $value;
+}
+
 function sanitize_key(string $key): string
 {
     return preg_replace('/[^a-z0-9_\-]/', '', strtolower($key)) ?? '';
@@ -101,7 +134,17 @@ function esc_url_raw(string $url): string
     return $url;
 }
 
+function esc_url(string $url): string
+{
+    return $url;
+}
+
 function esc_html(string $text): string
+{
+    return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function esc_attr(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
@@ -126,6 +169,13 @@ function add_query_arg(array $args, string $url): string
     }
 
     return $base . '?' . http_build_query($query);
+}
+
+function wp_parse_url(string $url): array
+{
+    $parts = parse_url($url);
+
+    return is_array($parts) ? $parts : [];
 }
 
 function home_url(string $path = '/', ?string $scheme = null): string
@@ -184,6 +234,16 @@ function apply_filters(string $hook, mixed $value, mixed ...$args): mixed
     return $value;
 }
 
+function add_filter(string $hook, callable $callback, int $priority = 10, int $acceptedArgs = 1): void
+{
+    $GLOBALS['__wp_tests_actions'][] = ['add_filter', $hook, $priority, $acceptedArgs];
+}
+
+function remove_filter(string $hook, callable $callback, int $priority = 10): void
+{
+    $GLOBALS['__wp_tests_actions'][] = ['remove_filter', $hook, $priority];
+}
+
 function do_action(string $hook, mixed ...$args): void
 {
     $GLOBALS['__wp_tests_actions'][] = [$hook, $args];
@@ -211,6 +271,44 @@ function rest_ensure_response(mixed $data): WP_REST_Response
     }
 
     return new WP_REST_Response($data);
+}
+
+function wp_register_script(string $handle, string $src, array $deps = [], string|bool|null $ver = false, bool $in_footer = false): void
+{
+    $GLOBALS['__wp_tests_scripts'][$handle] = [
+        'src'       => $src,
+        'deps'      => $deps,
+        'version'   => $ver,
+        'in_footer' => $in_footer,
+        'inline'    => [
+            'before' => [],
+            'after'  => [],
+        ],
+        'enqueued'  => false,
+    ];
+}
+
+function wp_enqueue_script(string $handle, string $src = '', array $deps = [], string|bool|null $ver = false, bool $in_footer = false): void
+{
+    if ($src !== '') {
+        wp_register_script($handle, $src, $deps, $ver, $in_footer);
+    }
+
+    if (!isset($GLOBALS['__wp_tests_scripts'][$handle])) {
+        wp_register_script($handle, '', [], false, false);
+    }
+
+    $GLOBALS['__wp_tests_scripts'][$handle]['enqueued'] = true;
+}
+
+function wp_add_inline_script(string $handle, string $data, string $position = 'after'): void
+{
+    if (!isset($GLOBALS['__wp_tests_scripts'][$handle])) {
+        wp_register_script($handle, '', [], false, false);
+    }
+
+    $position = $position === 'before' ? 'before' : 'after';
+    $GLOBALS['__wp_tests_scripts'][$handle]['inline'][$position][] = $data;
 }
 
 function get_bloginfo(string $show): string

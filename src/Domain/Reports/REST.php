@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reports;
 
+use FP\Resv\Core\Security;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -11,7 +12,6 @@ use WP_REST_Server;
 use function __;
 use function add_action;
 use function base64_encode;
-use function current_user_can;
 use function register_rest_route;
 use function rest_ensure_response;
 use function sanitize_text_field;
@@ -197,7 +197,7 @@ final class REST
 
     public function checkPermissions(): bool|WP_Error
     {
-        if (!current_user_can('manage_options')) {
+        if (!Security::currentUserCanManage()) {
             return new WP_Error(
                 'fp_resv_forbidden',
                 __('Non hai i permessi per visualizzare questi report.', 'fp-restaurant-reservations'),

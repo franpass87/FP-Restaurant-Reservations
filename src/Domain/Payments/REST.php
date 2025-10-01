@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Payments;
 
 use FP\Resv\Core\Logging;
+use FP\Resv\Core\Security;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use RuntimeException;
 use Throwable;
@@ -15,7 +16,6 @@ use WP_REST_Server;
 use function __;
 use function absint;
 use function add_action;
-use function current_user_can;
 use function is_array;
 use function is_string;
 use function register_rest_route;
@@ -213,7 +213,7 @@ final class REST
 
     private function checkAdminPermission(): bool
     {
-        return current_user_can('manage_options');
+        return Security::currentUserCanManage();
     }
 
     private function applyReservationStatus(int $reservationId, string $paymentStatus): ?string

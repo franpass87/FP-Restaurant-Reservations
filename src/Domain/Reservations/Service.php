@@ -9,6 +9,8 @@ use DateTimeZone;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService as StripePayments;
+use FP\Resv\Domain\Reservations\ManageTokens;
+use FP\Resv\Domain\Tables\Repository as TablesRepository;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Helpers;
@@ -20,6 +22,7 @@ use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\Options;
 use Throwable;
 use RuntimeException;
+use InvalidArgumentException;
 use function absint;
 use function current_time;
 use function add_query_arg;
@@ -65,6 +68,7 @@ final class Service
         'pending',
         'pending_payment',
         'confirmed',
+        'seated',
         'waitlist',
         'cancelled',
         'no-show',
@@ -77,6 +81,8 @@ final class Service
         private readonly Mailer $mailer,
         private readonly CustomersRepository $customers,
         private readonly StripePayments $stripe,
+        private readonly TablesRepository $tables,
+        private readonly Availability $availability,
         private readonly ?GoogleCalendarService $calendar = null
     ) {
     }
@@ -110,7 +116,7 @@ final class Service
         }
 
         $attribution = DataLayer::attribution();
-        foreach (['utm_source', 'utm_medium', 'utm_campaign'] as $utmKey) {
+        foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'fbclid', 'msclkid', 'ttclid'] as $utmKey) {
             if ($sanitized[$utmKey] === '' && isset($attribution[$utmKey])) {
                 $sanitized[$utmKey] = $attribution[$utmKey];
             }
@@ -131,10 +137,38 @@ final class Service
 
         $this->guardCalendarConflicts($sanitized['date'], $sanitized['time'], $status);
 
+        if ($sanitized['room_id'] !== null) {
+            $room = $this->tables->findRoom((int) $sanitized['room_id']);
+            if ($room === null) {
+                throw new RuntimeException(__('La sala selezionata non è valida.', 'fp-restaurant-reservations'));
+            }
+        }
+
+        if ($sanitized['table_id'] !== null) {
+            $table = $this->tables->findTable((int) $sanitized['table_id']);
+            if ($table === null) {
+                throw new RuntimeException(__('Il tavolo selezionato non è valido.', 'fp-restaurant-reservations'));
+            }
+
+            $tableRoomId = (int) ($table['room_id'] ?? 0);
+            if ($tableRoomId > 0) {
+                if ($sanitized['room_id'] !== null && $tableRoomId !== (int) $sanitized['room_id']) {
+                    throw new RuntimeException(__('Il tavolo selezionato appartiene a un\'altra sala.', 'fp-restaurant-reservations'));
+                }
+
+                if ($sanitized['room_id'] === null) {
+                    $sanitized['room_id'] = $tableRoomId;
+                }
+            }
+        }
+
         $customerId = $this->customers->upsert($sanitized['email'], [
             'first_name' => $sanitized['first_name'],
             'last_name'  => $sanitized['last_name'],
             'phone'      => $sanitized['phone'],
+            'phone_e164' => $sanitized['phone_e164'],
+            'phone_country' => $sanitized['phone_country'],
+            'phone_national'=> $sanitized['phone_national'],
             'lang'       => $sanitized['language'] ?: $sanitized['locale'],
             'marketing_consent' => $sanitized['marketing_consent'],
             'profiling_consent' => $sanitized['profiling_consent'],
@@ -142,20 +176,35 @@ final class Service
             'consent_version'   => $sanitized['policy_version'],
         ]);
 
+        $reservationTime = $sanitized['time'] . ':00';
+
+        if ($this->repository->hasDuplicate($customerId, $sanitized['date'], $reservationTime, $sanitized['location'])) {
+            throw new RuntimeException(__('Esiste già una prenotazione per questo cliente nello stesso orario.', 'fp-restaurant-reservations'));
+        }
+
+        $this->assertSlotAvailable($sanitized, $status);
+
         $reservationData = [
             'status'    => $status,
             'date'      => $sanitized['date'],
-            'time'      => $sanitized['time'] . ':00',
+            'time'      => $reservationTime,
             'party'     => $sanitized['party'],
             'notes'     => $sanitized['notes'],
             'allergies' => $sanitized['allergies'],
             'utm_source'   => $sanitized['utm_source'],
             'utm_medium'   => $sanitized['utm_medium'],
             'utm_campaign' => $sanitized['utm_campaign'],
+            'utm_content'  => $sanitized['utm_content'],
+            'utm_term'     => $sanitized['utm_term'],
+            'gclid'        => $sanitized['gclid'],
+            'fbclid'       => $sanitized['fbclid'],
+            'msclkid'      => $sanitized['msclkid'],
+            'ttclid'       => $sanitized['ttclid'],
             'lang'         => $sanitized['language'],
             'location_id'  => $sanitized['location'],
             'value'        => $sanitized['value'],
             'currency'     => $sanitized['currency'],
+            'price_per_person' => $sanitized['price_per_person'],
             'customer_id'  => $customerId,
             'room_id'      => $sanitized['room_id'],
             'table_id'     => $sanitized['table_id'],
@@ -165,7 +214,7 @@ final class Service
 
         $reservation = $this->repository->find($reservationId);
         if ($reservation === null) {
-            throw new RuntimeException('Reservation created but could not be retrieved.');
+            throw new RuntimeException(__('Prenotazione creata ma non recuperabile.', 'fp-restaurant-reservations'));
         }
 
         $manageUrl = $this->generateManageUrl($reservationId, $sanitized['email']);
@@ -254,6 +303,79 @@ final class Service
     /**
      * @param array<string, mixed> $payload
      */
+    private function assertSlotAvailable(array $payload, string $status): void
+    {
+        if (!in_array($status, ['pending', 'pending_payment', 'confirmed', 'seated'], true)) {
+            return;
+        }
+
+        $criteria = [
+            'date'  => $payload['date'],
+            'party' => (int) $payload['party'],
+        ];
+
+        if (is_string($payload['meal']) && $payload['meal'] !== '') {
+            $criteria['meal'] = $payload['meal'];
+        }
+
+        if ($payload['room_id'] !== null) {
+            $criteria['room'] = (int) $payload['room_id'];
+        }
+
+        if (is_string($payload['location']) && $payload['location'] !== '') {
+            $criteria['location'] = $payload['location'];
+        }
+
+        try {
+            $result = $this->availability->findSlots($criteria);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException(
+                __('Impossibile verificare la disponibilità per lo slot selezionato.', 'fp-restaurant-reservations'),
+                0,
+                $exception
+            );
+        }
+
+        $targetLabel = substr((string) $payload['time'], 0, 5);
+        $slots       = $result['slots'] ?? [];
+
+        if (!is_array($slots)) {
+            $slots = [];
+        }
+
+        foreach ($slots as $slot) {
+            if (!is_array($slot)) {
+                continue;
+            }
+
+            $label = (string) ($slot['label'] ?? '');
+            if ($label !== $targetLabel) {
+                continue;
+            }
+
+            $slotStatus = (string) ($slot['status'] ?? '');
+            if (!in_array($slotStatus, ['blocked', 'full'], true)) {
+                return;
+            }
+
+            $message = __('Il turno selezionato non è più disponibile. Scegli un altro orario.', 'fp-restaurant-reservations');
+            $reasons = $slot['reasons'] ?? [];
+            if (is_array($reasons) && $reasons !== []) {
+                $firstReason = $reasons[0];
+                if (is_string($firstReason) && $firstReason !== '') {
+                    $message = $firstReason;
+                }
+            }
+
+            throw new RuntimeException($message);
+        }
+
+        throw new RuntimeException(__('Il turno selezionato non è disponibile.', 'fp-restaurant-reservations'));
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function sanitizePayload(array $payload): array
     {
         $defaults = [
@@ -264,6 +386,9 @@ final class Service
             'last_name'   => '',
             'email'       => '',
             'phone'       => '',
+            'phone_e164'  => '',
+            'phone_country' => '',
+            'phone_national'=> '',
             'notes'       => '',
             'allergies'   => '',
             'meal'        => '',
@@ -274,6 +399,12 @@ final class Service
             'utm_source'  => '',
             'utm_medium'  => '',
             'utm_campaign'=> '',
+            'utm_content' => '',
+            'utm_term'    => '',
+            'gclid'       => '',
+            'fbclid'      => '',
+            'msclkid'     => '',
+            'ttclid'      => '',
             'marketing_consent' => false,
             'profiling_consent' => false,
             'policy_version'    => '',
@@ -294,6 +425,9 @@ final class Service
         $payload['last_name']  = sanitize_text_field((string) $payload['last_name']);
         $payload['email']      = sanitize_email((string) $payload['email']);
         $payload['phone']      = sanitize_text_field((string) $payload['phone']);
+        $payload['phone_e164'] = sanitize_text_field((string) $payload['phone_e164']);
+        $payload['phone_country'] = sanitize_text_field((string) $payload['phone_country']);
+        $payload['phone_national'] = sanitize_text_field((string) $payload['phone_national']);
         $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
         $payload['allergies']  = sanitize_textarea_field((string) $payload['allergies']);
         $payload['meal']       = sanitize_text_field((string) $payload['meal']);
@@ -307,6 +441,12 @@ final class Service
         $payload['utm_source'] = sanitize_text_field((string) $payload['utm_source']);
         $payload['utm_medium'] = sanitize_text_field((string) $payload['utm_medium']);
         $payload['utm_campaign'] = sanitize_text_field((string) $payload['utm_campaign']);
+        $payload['utm_content'] = sanitize_text_field((string) $payload['utm_content']);
+        $payload['utm_term'] = sanitize_text_field((string) $payload['utm_term']);
+        $payload['gclid'] = sanitize_text_field((string) $payload['gclid']);
+        $payload['fbclid'] = sanitize_text_field((string) $payload['fbclid']);
+        $payload['msclkid'] = sanitize_text_field((string) $payload['msclkid']);
+        $payload['ttclid'] = sanitize_text_field((string) $payload['ttclid']);
         $payload['status']     = $payload['status'] !== null ? sanitize_text_field((string) $payload['status']) : '';
         $payload['status']     = $payload['status'] !== '' ? strtolower($payload['status']) : null;
         $payload['marketing_consent'] = $this->toBool($payload['marketing_consent']);
@@ -358,23 +498,23 @@ final class Service
     private function assertPayload(array $payload): void
     {
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $payload['date'])) {
-            throw new RuntimeException('Invalid reservation date.');
+            throw new RuntimeException(__('La data della prenotazione non è valida.', 'fp-restaurant-reservations'));
         }
 
         if (!preg_match('/^\d{2}:\d{2}$/', $payload['time'])) {
-            throw new RuntimeException('Invalid reservation time.');
+            throw new RuntimeException(__('L\'orario della prenotazione non è valido.', 'fp-restaurant-reservations'));
         }
 
         if ($payload['party'] < 1) {
-            throw new RuntimeException('Invalid party size.');
+            throw new RuntimeException(__('Il numero di coperti indicato non è valido.', 'fp-restaurant-reservations'));
         }
 
         if ($payload['first_name'] === '' || $payload['last_name'] === '') {
-            throw new RuntimeException('Customer name is required.');
+            throw new RuntimeException(__('È necessario indicare il nome e il cognome del cliente.', 'fp-restaurant-reservations'));
         }
 
         if ($payload['email'] === '' || filter_var($payload['email'], FILTER_VALIDATE_EMAIL) === false) {
-            throw new RuntimeException('A valid email is required.');
+            throw new RuntimeException(__('È necessario fornire un indirizzo email valido.', 'fp-restaurant-reservations'));
         }
     }
 
@@ -423,10 +563,12 @@ final class Service
 
     private function generateManageToken(int $reservationId, string $email): string
     {
-        $email = strtolower(trim($email));
-        $data  = sprintf('%d|%s', $reservationId, $email);
+        return ManageTokens::issue($reservationId, $email);
+    }
 
-        return hash_hmac('sha256', $data, wp_salt('fp_resv_manage'));
+    public function verifyManageToken(int $reservationId, string $email, string $token): bool
+    {
+        return ManageTokens::verify($reservationId, $email, $token);
     }
 
     /**
@@ -599,17 +741,27 @@ final class Service
         $subject = sprintf($subjectTemplate, $formattedDate);
 
         $lines = [];
-        $lines[] = sprintf((string) ($customerCopy['intro'] ?? 'Hi %1$s %2$s,'), $payload['first_name'], $payload['last_name']);
+        $lines[] = sprintf(
+            (string) ($customerCopy['intro'] ?? __('Ciao %1$s %2$s,', 'fp-restaurant-reservations')),
+            $payload['first_name'],
+            $payload['last_name']
+        );
         $lines[] = '';
         $lines[] = sprintf(
-            (string) ($customerCopy['body'] ?? 'Thank you for booking for %1$d guests on %2$s at %3$s.'),
+            (string) ($customerCopy['body'] ?? __('Grazie per aver prenotato per %1$d persone il %2$s alle %3$s.', 'fp-restaurant-reservations')),
             $payload['party'],
             $formattedDate,
             $formattedTime
         );
-        $lines[] = sprintf((string) ($customerCopy['status'] ?? 'Reservation status: %s.'), $statusLabel);
+        $lines[] = sprintf(
+            (string) ($customerCopy['status'] ?? __('Stato della prenotazione: %s.', 'fp-restaurant-reservations')),
+            $statusLabel
+        );
         $lines[] = '';
-        $lines[] = sprintf((string) ($customerCopy['manage'] ?? 'Manage your reservation here: %s'), $manageUrl);
+        $lines[] = sprintf(
+            (string) ($customerCopy['manage'] ?? __('Gestisci la tua prenotazione qui: %s', 'fp-restaurant-reservations')),
+            $manageUrl
+        );
         if (!empty($customerCopy['outro'])) {
             $lines[] = '';
             $lines[] = (string) $customerCopy['outro'];

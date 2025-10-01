@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Tables;
 
 use RuntimeException;
 use wpdb;
+use function __;
 use function absint;
 use function array_fill;
 use function array_map;
@@ -99,7 +100,7 @@ final class Repository
 
         $result = $this->wpdb->insert($this->roomsTable(), $payload);
         if ($result === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to create room.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile creare la sala.', 'fp-restaurant-reservations'));
         }
 
         return (int) $this->wpdb->insert_id;
@@ -139,7 +140,7 @@ final class Repository
         );
 
         if ($updated === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to update room.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile aggiornare la sala.', 'fp-restaurant-reservations'));
         }
     }
 
@@ -199,7 +200,7 @@ final class Repository
 
         $result = $this->wpdb->insert($this->tablesTable(), $payload);
         if ($result === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to create table.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile creare il tavolo.', 'fp-restaurant-reservations'));
         }
 
         return (int) $this->wpdb->insert_id;
@@ -220,7 +221,7 @@ final class Repository
         );
 
         if ($updated === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to update table.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile aggiornare il tavolo.', 'fp-restaurant-reservations'));
         }
     }
 
@@ -250,7 +251,7 @@ final class Repository
 
         $result = $this->wpdb->query($this->wpdb->prepare($sql, ...$params));
         if ($result === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to update join group.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile aggiornare il gruppo di unione.', 'fp-restaurant-reservations'));
         }
     }
 
@@ -267,7 +268,7 @@ final class Repository
         );
 
         if ($updated === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: 'Unable to update table position.');
+            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile aggiornare la posizione del tavolo.', 'fp-restaurant-reservations'));
         }
     }
 

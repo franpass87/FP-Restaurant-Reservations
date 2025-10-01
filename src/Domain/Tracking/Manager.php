@@ -6,14 +6,19 @@ namespace FP\Resv\Domain\Tracking;
 
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\DataLayer;
+use FP\Resv\Core\Plugin;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
 use FP\Resv\Domain\Settings\Options;
 use function add_action;
 use function array_filter;
+use function array_slice;
 use function count;
+use function defined;
 use function esc_url_raw;
+use function function_exists;
+use function get_option;
 use function home_url;
-use function is_admin;
+use function is_array;
 use function is_numeric;
 use function is_string;
 use function max;
@@ -21,8 +26,14 @@ use function round;
 use function sanitize_text_field;
 use function strtolower;
 use function substr;
+use function time;
+use function sprintf;
+use function update_option;
 use function wp_json_encode;
 use function wp_unslash;
+use function wp_add_inline_script;
+use function wp_enqueue_script;
+use function wp_register_script;
 use function rawurlencode;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
@@ -55,6 +66,8 @@ final class Manager
      */
     private ?array $settings = null;
 
+    private const PENDING_ATTR_OPTION = 'fp_resv_pending_attribution';
+
     public function __construct(Options $options, GA4 $ga4, Ads $ads, Meta $meta, Clarity $clarity)
     {
         $this->options = $options;
@@ -67,15 +80,17 @@ final class Manager
     public function boot(): void
     {
         add_action('init', [$this, 'captureAttribution']);
-        add_action('wp_head', [$this, 'renderHead'], 1);
+        add_action('init', [$this, 'maybeFlushPendingAttribution'], 20);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
         add_action('wp_footer', [$this, 'renderFooter'], 90);
         add_action('fp_resv_reservation_created', [$this, 'handleReservationCreated'], 10, 3);
         add_action('fp_resv_event_booked', [$this, 'handleEventBooked'], 10, 4);
+        add_action('fp_resv_consent_updated', [$this, 'maybeFlushPendingAttribution']);
     }
 
     public function captureAttribution(): void
     {
-        if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        if (($this->isAdmin() || (defined('REST_REQUEST') && REST_REQUEST))) {
             return;
         }
 
@@ -99,12 +114,19 @@ final class Manager
             return;
         }
 
+        if (!$this->hasTrackingConsent()) {
+            $this->queueAttribution($params);
+
+            return;
+        }
+
         DataLayer::storeAttribution($params, (int) ($this->settings()['tracking_utm_cookie_days'] ?? 90));
+        $this->maybeFlushPendingAttribution();
     }
 
-    public function renderHead(): void
+    public function enqueueScripts(): void
     {
-        if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        if ($this->isAdmin() || (defined('REST_REQUEST') && REST_REQUEST)) {
             return;
         }
 
@@ -117,15 +139,26 @@ final class Manager
 
         $gtagId = $this->ga4->measurementId() !== '' ? $this->ga4->measurementId() : $this->ads->gtagLoaderId();
         if ($gtagId !== '') {
-            printf('<script async src="%s"></script>' . "\n", esc_url_raw('https://www.googletagmanager.com/gtag/js?id=' . rawurlencode($gtagId)));
+            wp_enqueue_script(
+                'fp-resv-gtag',
+                'https://www.googletagmanager.com/gtag/js?id=' . rawurlencode($gtagId),
+                [],
+                null,
+                false
+            );
         }
 
-        printf('<script id="fp-resv-tracking-config">%s</script>' . "\n", $this->generateBootstrapScript($json));
+        $handle = 'fp-resv-tracking';
+        $src    = Plugin::$url . 'assets/js/tracking-bootstrap.js';
+
+        wp_register_script($handle, esc_url_raw($src), [], Plugin::VERSION, true);
+        wp_enqueue_script($handle);
+        wp_add_inline_script($handle, $this->generateBootstrapScript($json), 'before');
     }
 
     public function renderFooter(): void
     {
-        if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        if ($this->isAdmin() || (defined('REST_REQUEST') && REST_REQUEST)) {
             return;
         }
 
@@ -139,7 +172,11 @@ final class Manager
             return;
         }
 
-        printf('<script id="fp-resv-tracking-events">(function(w){w.dataLayer=w.dataLayer||[];var e=%s;if(!w.fpResvTracking){w.fpResvTracking={};}if(typeof w.fpResvTracking.dispatch!=="function"){w.fpResvTracking.dispatch=function(){return null;};}for(var i=0;i<e.length;i++){w.dataLayer.push(e[i]);w.fpResvTracking.dispatch(e[i]);}})(window);</script>' . "\n", $json);
+        $script = '(function(w){w.dataLayer=w.dataLayer||[];var e=%s;if(!w.fpResvTracking){w.fpResvTracking={};}'
+            . 'if(typeof w.fpResvTracking.dispatch!=="function"){w.fpResvTracking.dispatch=function(){return null;};}'
+            . 'for(var i=0;i<e.length;i++){w.dataLayer.push(e[i]);w.fpResvTracking.dispatch(e[i]);}})(window);';
+
+        wp_add_inline_script('fp-resv-tracking', sprintf($script, $json), 'after');
     }
 
     /**
@@ -197,6 +234,35 @@ final class Manager
         DataLayer::push($event);
 
         $this->maybeDispatchEstimatedPurchase($payload, $reservation, $currency);
+    }
+
+    public function maybeFlushPendingAttribution(): void
+    {
+        if (!$this->hasTrackingConsent()) {
+            return;
+        }
+
+        $queue = get_option(self::PENDING_ATTR_OPTION, []);
+        if (!is_array($queue) || $queue === []) {
+            return;
+        }
+
+        $ttl = (int) ($this->settings()['tracking_utm_cookie_days'] ?? 90);
+
+        foreach ($queue as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $values = $item['values'] ?? null;
+            if (!is_array($values) || $values === []) {
+                continue;
+            }
+
+            DataLayer::storeAttribution($values, $ttl);
+        }
+
+        update_option(self::PENDING_ATTR_OPTION, []);
     }
 
     /**
@@ -463,5 +529,37 @@ JS;
         ];
 
         DataLayer::push($event);
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+    private function queueAttribution(array $params): void
+    {
+        $queue = get_option(self::PENDING_ATTR_OPTION, []);
+        if (!is_array($queue)) {
+            $queue = [];
+        }
+
+        $queue[] = [
+            'values'    => $params,
+            'stored_at' => time(),
+        ];
+
+        if (count($queue) > 10) {
+            $queue = array_slice($queue, -10);
+        }
+
+        update_option(self::PENDING_ATTR_OPTION, $queue);
+    }
+
+    private function hasTrackingConsent(): bool
+    {
+        return Consent::has('analytics') || Consent::has('ads');
+    }
+
+    private function isAdmin(): bool
+    {
+        return function_exists('is_admin') ? is_admin() : false;
     }
 }

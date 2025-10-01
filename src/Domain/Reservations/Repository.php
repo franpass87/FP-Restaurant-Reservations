@@ -107,7 +107,7 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
+        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.phone_e164, c.phone_country, c.phone_national, c.lang AS customer_lang '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.date BETWEEN %s AND %s '
@@ -121,6 +121,32 @@ final class Repository
         return is_array($rows) ? $rows : [];
     }
 
+    public function hasDuplicate(int $customerId, string $date, string $time, ?string $locationId): bool
+    {
+        if ($customerId <= 0) {
+            return false;
+        }
+
+        $sql = 'SELECT id FROM ' . $this->tableName() . ' WHERE customer_id = %d AND date = %s AND time = %s';
+        $params = [$customerId, $date, $time];
+
+        if ($locationId === null || $locationId === '') {
+            $sql .= ' AND location_id IS NULL';
+        } else {
+            $sql    .= ' AND location_id = %s';
+            $params[] = $locationId;
+        }
+
+        $sql .= ' LIMIT 1';
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, ...$params),
+            ARRAY_A
+        );
+
+        return is_array($rows) && $rows !== [];
+    }
+
     /**
      * @param array<string, mixed> $filters
      *
@@ -132,7 +158,7 @@ final class Repository
         $roomsTable  = $this->wpdb->prefix . 'fp_rooms';
 
         $sql = 'SELECT r.*, '
-            . 'c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang, '
+            . 'c.first_name, c.last_name, c.email, c.phone, c.phone_e164, c.phone_country, c.phone_national, c.lang AS customer_lang, '
             . 't.code AS table_code, rm.name AS room_name '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
@@ -172,7 +198,8 @@ final class Repository
         }
 
         $sql = 'SELECT id, status, date, time, party, notes, allergies, utm_source, utm_medium, utm_campaign, '
-            . 'location_id, value, currency, created_at, updated_at, visited_at '
+            . 'utm_content, utm_term, gclid, fbclid, msclkid, ttclid, '
+            . 'location_id, value, currency, price_per_person, created_at, updated_at, visited_at '
             . 'FROM ' . $this->tableName() . ' '
             . 'WHERE customer_id = %d '
             . 'ORDER BY date DESC, time DESC';
@@ -190,7 +217,7 @@ final class Repository
      */
     public function findAgendaEntry(int $id): ?array
     {
-        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
+        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.phone_e164, c.phone_country, c.phone_national, c.lang AS customer_lang '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.id = %d';
@@ -250,7 +277,9 @@ final class Repository
     {
         $sql = $this->wpdb->prepare(
             'UPDATE ' . $this->tableName()
-            . ' SET notes = NULL, allergies = NULL, utm_source = NULL, utm_medium = NULL, utm_campaign = NULL '
+            . ' SET notes = NULL, allergies = NULL, utm_source = NULL, utm_medium = NULL, utm_campaign = NULL,'
+            . ' utm_content = NULL, utm_term = NULL, gclid = NULL, fbclid = NULL, msclkid = NULL, ttclid = NULL,'
+            . ' customer_id = NULL, location_id = NULL, table_id = NULL, room_id = NULL, value = NULL, currency = NULL, price_per_person = NULL '
             . 'WHERE date < %s',
             $cutoff->format('Y-m-d')
         );
@@ -264,7 +293,8 @@ final class Repository
     {
         $sql = $this->wpdb->prepare(
             'UPDATE ' . $this->tableName()
-            . ' SET customer_id = NULL, notes = NULL, allergies = NULL, utm_source = NULL, utm_medium = NULL, utm_campaign = NULL '
+            . ' SET customer_id = NULL, notes = NULL, allergies = NULL, utm_source = NULL, utm_medium = NULL, utm_campaign = NULL,'
+            . ' utm_content = NULL, utm_term = NULL, gclid = NULL, fbclid = NULL, msclkid = NULL, ttclid = NULL '
             . 'WHERE customer_id = %d',
             $customerId
         );

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reports;
 
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Security;
 use function __;
 use function add_action;
 use function add_submenu_page;
@@ -19,10 +20,10 @@ use function wp_date;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
+use function wp_set_script_translations;
 
 final class AdminController
 {
-    private const CAPABILITY = 'manage_options';
     private const PAGE_SLUG  = 'fp-resv-analytics';
 
     private ?string $pageHook = null;
@@ -43,7 +44,7 @@ final class AdminController
             'fp-resv-settings',
             __('Report & Analytics', 'fp-restaurant-reservations'),
             __('Report & Analytics', 'fp-restaurant-reservations'),
-            self::CAPABILITY,
+            Security::managementCapability(),
             self::PAGE_SLUG,
             [$this, 'renderPage']
         );
@@ -78,6 +79,10 @@ final class AdminController
         );
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch', $chartHandle], Plugin::VERSION, true);
+
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations($scriptHandle, 'fp-restaurant-reservations', Plugin::$dir . 'languages');
+        }
 
         $end   = wp_date('Y-m-d');
         $start = wp_date('Y-m-d', strtotime('-29 days'));

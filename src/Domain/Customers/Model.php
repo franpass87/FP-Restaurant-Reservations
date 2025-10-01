@@ -12,6 +12,9 @@ final class Model
     public string $lastName = '';
     public string $name = '';
     public string $phone = '';
+    public string $phoneE164 = '';
+    public string $phoneCountry = '';
+    public string $phoneNational = '';
     public string $lang = '';
     public bool $marketingConsent = false;
     public bool $profilingConsent = false;

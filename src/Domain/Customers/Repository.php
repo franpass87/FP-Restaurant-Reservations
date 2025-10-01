@@ -39,6 +39,9 @@ final class Repository
         $model->lastName  = (string) ($row['last_name'] ?? '');
         $model->lang    = isset($row['lang']) ? (string) $row['lang'] : '';
         $model->phone   = isset($row['phone']) ? (string) $row['phone'] : '';
+        $model->phoneE164 = isset($row['phone_e164']) ? (string) $row['phone_e164'] : '';
+        $model->phoneCountry = isset($row['phone_country']) ? (string) $row['phone_country'] : '';
+        $model->phoneNational = isset($row['phone_national']) ? (string) $row['phone_national'] : '';
         $model->name    = trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''));
         $model->marketingConsent = ((int) ($row['marketing_consent'] ?? 0)) === 1;
         $model->profilingConsent = ((int) ($row['profiling_consent'] ?? 0)) === 1;
@@ -59,6 +62,9 @@ final class Repository
             'last_name'         => '',
             'email'             => $email,
             'phone'             => '',
+            'phone_e164'        => null,
+            'phone_country'     => null,
+            'phone_national'    => null,
             'lang'              => null,
             'marketing_consent' => 0,
             'profiling_consent' => 0,
@@ -78,6 +84,13 @@ final class Repository
             $payload['consent_version'] = $payload['consent_version'] !== ''
                 ? (string) $payload['consent_version']
                 : null;
+        }
+
+        foreach (['phone_e164', 'phone_country', 'phone_national'] as $key) {
+            if (isset($payload[$key])) {
+                $value = (string) $payload[$key];
+                $payload[$key] = $value !== '' ? $value : null;
+            }
         }
 
         if ($existing !== null) {
@@ -109,6 +122,9 @@ final class Repository
                 'last_name'         => '',
                 'email'             => $placeholderEmail,
                 'phone'             => null,
+                'phone_e164'        => null,
+                'phone_country'     => null,
+                'phone_national'    => null,
                 'lang'              => null,
                 'marketing_consent' => 0,
                 'profiling_consent' => 0,

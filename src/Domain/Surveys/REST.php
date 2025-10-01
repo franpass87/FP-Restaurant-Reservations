@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Surveys;
 
+use FP\Resv\Core\Helpers;
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\Options;
@@ -16,6 +18,7 @@ use wpdb;
 use function __;
 use function absint;
 use function add_action;
+use function apply_filters;
 use function current_time;
 use function do_action;
 use function esc_html;
@@ -60,6 +63,7 @@ final class REST
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [$this, 'handleSubmit'],
                 'permission_callback' => '__return_true',
+                'args'                => $this->requestArgs(),
             ]
         );
     }
@@ -74,6 +78,33 @@ final class REST
         $email = sanitize_email((string) $request->get_param('email'));
         if ($email === '' || !is_email($email)) {
             return new WP_Error('fp_resv_survey_invalid_email', __('Email non valida.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $rateConfig = $this->resolveRateLimit($request);
+        $ip         = Helpers::clientIp();
+        $limitKey   = 'survey:' . $reservationId . ':' . $ip;
+        $limitResult = RateLimiter::check($limitKey, $rateConfig['limit'], $rateConfig['seconds']);
+        if (!$limitResult['allowed']) {
+            $retryAfter = $limitResult['retry_after'] > 0 ? $limitResult['retry_after'] : $rateConfig['seconds'];
+
+            $response = new WP_REST_Response(
+                [
+                    'code'    => 'fp_resv_survey_rate_limited',
+                    'message' => __('Hai già inviato un feedback recentemente. Riprova più tardi.', 'fp-restaurant-reservations'),
+                    'data'    => [
+                        'status'      => 429,
+                        'retry_after' => $retryAfter,
+                    ],
+                ],
+                429
+            );
+
+            $response->set_headers([
+                'Retry-After'   => (string) max(1, $retryAfter),
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]);
+
+            return $response;
         }
 
         $token = (string) $request->get_param('token');
@@ -154,6 +185,127 @@ final class REST
             'review_url' => $reviewUrl,
             'html'       => $html,
         ]);
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function requestArgs(): array
+    {
+        $starsValidator = function ($value): bool {
+            if ($value === null || $value === '') {
+                return true;
+            }
+
+            $int = absint($value);
+
+            return $int >= 0 && $int <= 5;
+        };
+
+        $npsValidator = function ($value): bool {
+            if ($value === null || $value === '') {
+                return true;
+            }
+
+            $int = absint($value);
+
+            return $int >= 0 && $int <= 10;
+        };
+
+        return [
+            'reservation_id' => [
+                'type'              => 'integer',
+                'required'          => true,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => static function ($value): bool {
+                    return absint($value) > 0;
+                },
+            ],
+            'email' => [
+                'type'              => 'string',
+                'required'          => true,
+                'sanitize_callback' => 'sanitize_email',
+                'validate_callback' => static function ($value): bool {
+                    return is_email($value) !== false;
+                },
+            ],
+            'token' => [
+                'type'              => 'string',
+                'required'          => true,
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'stars_food' => [
+                'type'              => 'integer',
+                'required'          => false,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => $starsValidator,
+            ],
+            'stars_service' => [
+                'type'              => 'integer',
+                'required'          => false,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => $starsValidator,
+            ],
+            'stars_atmosphere' => [
+                'type'              => 'integer',
+                'required'          => false,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => $starsValidator,
+            ],
+            'nps' => [
+                'type'              => 'integer',
+                'required'          => false,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => $npsValidator,
+            ],
+            'comment' => [
+                'type'              => 'string',
+                'required'          => false,
+                'sanitize_callback' => 'sanitize_textarea_field',
+            ],
+            'lang' => [
+                'type'              => 'string',
+                'required'          => false,
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+        ];
+    }
+
+    /**
+     * @return array{limit:int, seconds:int}
+     */
+    private function resolveRateLimit(WP_REST_Request $request): array
+    {
+        $config = apply_filters('fp_resv_rate_limit_surveys', [
+            'limit'   => 3,
+            'seconds' => 300,
+        ], $request);
+
+        $limit   = 3;
+        $seconds = 300;
+
+        if (is_array($config)) {
+            if (isset($config['limit'])) {
+                $limit = (int) $config['limit'];
+            }
+
+            if (isset($config['seconds'])) {
+                $seconds = (int) $config['seconds'];
+            }
+        }
+
+        if ($limit < 1) {
+            $limit = 3;
+        }
+
+        if ($seconds < 1) {
+            $seconds = 300;
+        }
+
+        return [
+            'limit'   => $limit,
+            'seconds' => $seconds,
+        ];
     }
 
     private function tableName(): string

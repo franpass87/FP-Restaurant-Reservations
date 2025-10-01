@@ -22,6 +22,7 @@ use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_register_script;
 use function wp_register_style;
+use function wp_set_script_translations;
 
 final class WidgetController
 {
@@ -79,6 +80,10 @@ final class WidgetController
 
         wp_enqueue_script(self::HANDLE_MODULE);
 
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations(self::HANDLE_MODULE, 'fp-restaurant-reservations', Plugin::$dir . 'languages');
+        }
+
         if ($legacyExists) {
             wp_register_script(
                 self::HANDLE_LEGACY,
@@ -89,6 +94,10 @@ final class WidgetController
             );
 
             wp_enqueue_script(self::HANDLE_LEGACY);
+
+            if (function_exists('wp_set_script_translations')) {
+                wp_set_script_translations(self::HANDLE_LEGACY, 'fp-restaurant-reservations', Plugin::$dir . 'languages');
+            }
         }
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Core;
 
 use DateTimeImmutable;
+use FP\Resv\Core\Security;
 use DateTimeZone;
 use WP_Error;
 use WP_REST_Request;
@@ -12,7 +13,6 @@ use WP_REST_Response;
 use WP_REST_Server;
 use function __;
 use function add_action;
-use function current_user_can;
 use function esc_html;
 use function esc_html__;
 use function get_bloginfo;
@@ -39,7 +39,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [self::class, 'handleEmailTest'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => Security::currentUserCanManage(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',
@@ -59,7 +59,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [self::class, 'handlePrivacyExport'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => Security::currentUserCanManage(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',
@@ -75,7 +75,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::DELETABLE,
                 'callback'            => [self::class, 'handlePrivacyDelete'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => Security::currentUserCanManage(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',

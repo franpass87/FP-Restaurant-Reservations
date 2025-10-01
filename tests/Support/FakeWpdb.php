@@ -6,7 +6,7 @@ namespace Tests\Support;
 
 use RuntimeException;
 
-class FakeWpdb
+class FakeWpdb extends \wpdb
 {
     public string $prefix = 'wp_';
     public int $insert_id = 0;
@@ -112,7 +112,88 @@ class FakeWpdb
             return $rows;
         }
 
-        return [];
+        if (preg_match('/FROM\s+([`\\w]+)/i', $query, $matches) !== 1) {
+            return [];
+        }
+
+        $table = $this->normalizeTable($matches[1]);
+        $rows  = array_values($this->tables[$table] ?? []);
+
+        $normalized = strtolower($query);
+
+        if (str_contains($normalized, ' where ')) {
+            $rows = array_filter($rows, function (array $row) use ($query, $normalized): bool {
+                if (str_contains($normalized, ' active = 1') && (int) ($row['active'] ?? 0) !== 1) {
+                    return false;
+                }
+
+                if (preg_match("/(?<!_)id\s*=\s*(\d+)/i", $query, $match) === 1) {
+                    if ((int) ($row['id'] ?? 0) !== (int) $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match('/room_id\s*=\s*(\d+)/i', $query, $match) === 1) {
+                    if ((int) ($row['room_id'] ?? 0) !== (int) $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match('/room_id\s+is\s+null\s+or\s+room_id\s*=\s*(\d+)/i', $query, $match) === 1) {
+                    $roomId = (int) $match[1];
+                    $value  = $row['room_id'] ?? null;
+                    if ($value !== null && (int) $value !== $roomId) {
+                        return false;
+                    }
+                }
+
+                if (preg_match("/location_id\s*=\s*'([^']*)'/i", $query, $match) === 1) {
+                    if ((string) ($row['location_id'] ?? '') !== $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match("/location_id\s+is\s+null\s+or\s+location_id\s*=\s*'([^']*)'/i", $query, $match) === 1) {
+                    $location = $row['location_id'] ?? null;
+                    if ($location !== null && (string) $location !== $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match("/date\s*=\s*'([^']+)'/i", $query, $match) === 1) {
+                    if ((string) ($row['date'] ?? '') !== $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match("/time\s*=\s*'([^']+)'/i", $query, $match) === 1) {
+                    if ((string) ($row['time'] ?? '') !== $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match('/customer_id\s*=\s*(\d+)/i', $query, $match) === 1) {
+                    $rowCustomer = (int) ($row['customer_id'] ?? 0);
+                    if ($rowCustomer !== (int) $match[1]) {
+                        return false;
+                    }
+                }
+
+                if (preg_match("/status\s+in\s*\(([^)]+)\)/i", $query, $match) === 1) {
+                    $statuses = array_map(static function (string $status): string {
+                        return trim($status, "' \"");
+                    }, explode(',', $match[1]));
+
+                    if (!in_array((string) ($row['status'] ?? ''), $statuses, true)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        return array_values($rows);
     }
 
     public function get_table(string $table): array

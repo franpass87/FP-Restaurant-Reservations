@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Security;
 use InvalidArgumentException;
 use function __;
 use function add_action;
@@ -21,11 +22,11 @@ use function wp_create_nonce;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
+use function wp_set_script_translations;
 use function wp_timezone;
 
 final class AdminController
 {
-    private const CAPABILITY = 'manage_options';
     private const PAGE_SLUG = 'fp-resv-closures-app';
 
     private ?string $pageHook = null;
@@ -46,7 +47,7 @@ final class AdminController
             'fp-resv-settings',
             __('Chiusure & orari speciali', 'fp-restaurant-reservations'),
             __('Chiusure', 'fp-restaurant-reservations'),
-            self::CAPABILITY,
+            Security::managementCapability(),
             self::PAGE_SLUG,
             [$this, 'renderPage']
         );
@@ -66,6 +67,10 @@ final class AdminController
         $styleUrl  = Plugin::$url . 'assets/css/admin-closures.css';
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], Plugin::VERSION, true);
+
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations($scriptHandle, 'fp-restaurant-reservations', Plugin::$dir . 'languages');
+        }
 
         wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
 

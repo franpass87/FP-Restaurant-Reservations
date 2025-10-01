@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Events;
 use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\RateLimiter;
+use FP\Resv\Core\Security;
 use InvalidArgumentException;
 use RuntimeException;
 use WP_Error;
@@ -17,7 +18,7 @@ use function __;
 use function absint;
 use function add_action;
 use function apply_filters;
-use function current_user_can;
+use function is_array;
 use function is_string;
 use function register_rest_route;
 use function rest_ensure_response;
@@ -73,7 +74,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleListTickets'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => Security::currentUserCanManage(),
             ]
         );
 
@@ -83,7 +84,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleExportTickets'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => Security::currentUserCanManage(),
             ]
         );
     }
@@ -132,8 +133,29 @@ final class REST
         }
 
         $ip = Helpers::clientIp();
-        if (!RateLimiter::allow('event:' . $ip, 5, 300)) {
-            return new WP_Error('fp_resv_events_rate_limited', __('Hai effettuato troppe richieste, riprova più tardi.', 'fp-restaurant-reservations'), ['status' => 429]);
+        $rateLimit   = $this->resolveRateLimit($request);
+        $limitResult = RateLimiter::check('event:' . $ip, $rateLimit['limit'], $rateLimit['seconds']);
+        if (!$limitResult['allowed']) {
+            $retryAfter = $limitResult['retry_after'] > 0 ? $limitResult['retry_after'] : $rateLimit['seconds'];
+
+            $response = new WP_REST_Response(
+                [
+                    'code'    => 'fp_resv_events_rate_limited',
+                    'message' => __('Hai effettuato troppe richieste, riprova più tardi.', 'fp-restaurant-reservations'),
+                    'data'    => [
+                        'status'      => 429,
+                        'retry_after' => $retryAfter,
+                    ],
+                ],
+                429
+            );
+
+            $response->set_headers([
+                'Retry-After'   => (string) max(1, $retryAfter),
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]);
+
+            return $response;
         }
 
         $eventId = absint($request->get_param('id'));
@@ -198,6 +220,43 @@ final class REST
         $tickets = $this->service->listTickets($eventId);
 
         return rest_ensure_response(['tickets' => $tickets]);
+    }
+
+    /**
+     * @return array{limit:int, seconds:int}
+     */
+    private function resolveRateLimit(WP_REST_Request $request): array
+    {
+        $config = apply_filters('fp_resv_rate_limit_events', [
+            'limit'   => 5,
+            'seconds' => 300,
+        ], $request);
+
+        $limit   = 5;
+        $seconds = 300;
+
+        if (is_array($config)) {
+            if (isset($config['limit'])) {
+                $limit = (int) $config['limit'];
+            }
+
+            if (isset($config['seconds'])) {
+                $seconds = (int) $config['seconds'];
+            }
+        }
+
+        if ($limit < 1) {
+            $limit = 5;
+        }
+
+        if ($seconds < 1) {
+            $seconds = 300;
+        }
+
+        return [
+            'limit'   => $limit,
+            'seconds' => $seconds,
+        ];
     }
 
     public function handleExportTickets(WP_REST_Request $request): WP_REST_Response|WP_Error

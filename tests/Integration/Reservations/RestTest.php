@@ -7,6 +7,8 @@ namespace Tests\Integration\Reservations;
 use FP\Resv\Domain\Reservations\Availability;
 use FP\Resv\Domain\Reservations\REST;
 use FP\Resv\Domain\Reservations\Service;
+use FP\Resv\Domain\Settings\Options;
+use Tests\Support\FakeWpdb;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use WP_Error;
@@ -24,7 +26,14 @@ final class RestTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->availability = $this->createMock(Availability::class);
+
+        $wpdb = new FakeWpdb();
+        $GLOBALS['wpdb'] = $wpdb;
+
+        update_option('fp_resv_general', []);
+        update_option('fp_resv_rooms', []);
+
+        $this->availability = new Availability(new Options(), $wpdb);
         $this->service      = $this->createMock(Service::class);
     }
 
@@ -59,6 +68,21 @@ final class RestTest extends TestCase
             'fp_resv_email'      => 'ada@example.test',
             'fp_resv_date'       => '2024-05-11',
             'fp_resv_time'       => '21:00',
+            'fp_resv_meal'       => 'dinner',
+            'fp_resv_status'     => 'confirmed',
+            'fp_resv_room_id'    => '3',
+            'fp_resv_table_id'   => '5',
+            'fp_resv_phone'      => '+39 055 123456',
+            'fp_resv_phone_e164' => '+39055123456',
+            'fp_resv_phone_cc'   => 'IT',
+            'fp_resv_phone_local'=> '055 123456',
+            'fp_resv_price_per_person' => '49.90',
+            'utm_content'       => 'hero-banner',
+            'utm_term'          => 'romantic',
+            'gclid'             => 'test-gclid',
+            'fbclid'            => 'test-fbclid',
+            'msclkid'           => 'test-msclkid',
+            'ttclid'            => 'test-ttclid',
         ]);
 
         $this->service
@@ -68,7 +92,22 @@ final class RestTest extends TestCase
                 return $payload['party'] === 3
                     && $payload['first_name'] === 'Ada'
                     && $payload['last_name'] === 'Lovelace'
-                    && $payload['email'] === 'ada@example.test';
+                    && $payload['email'] === 'ada@example.test'
+                    && $payload['meal'] === 'dinner'
+                    && $payload['status'] === 'confirmed'
+                    && $payload['room_id'] === '3'
+                    && $payload['table_id'] === '5'
+                    && $payload['phone'] === '+39 055 123456'
+                    && $payload['phone_e164'] === '+39055123456'
+                    && $payload['phone_country'] === 'IT'
+                    && $payload['phone_national'] === '055 123456'
+                    && $payload['price_per_person'] === '49.90'
+                    && $payload['utm_content'] === 'hero-banner'
+                    && $payload['utm_term'] === 'romantic'
+                    && $payload['gclid'] === 'test-gclid'
+                    && $payload['fbclid'] === 'test-fbclid'
+                    && $payload['msclkid'] === 'test-msclkid'
+                    && $payload['ttclid'] === 'test-ttclid';
             }))
             ->willReturn([
                 'id'         => 123,

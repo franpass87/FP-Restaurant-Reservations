@@ -8,6 +8,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use function add_filter;
+use function apply_filters;
 use function current_user_can;
 use function is_string;
 use function strpos;
@@ -21,7 +22,17 @@ final class Security
 
     public static function currentUserCanManage(): bool
     {
-        return current_user_can('manage_options');
+        return current_user_can(self::managementCapability());
+    }
+
+    public static function managementCapability(): string
+    {
+        $capability = apply_filters('fp_resv_management_capability', 'manage_options');
+        if (!is_string($capability) || $capability === '') {
+            return 'manage_options';
+        }
+
+        return $capability;
     }
 
     public static function enforceNoStoreHeaders(

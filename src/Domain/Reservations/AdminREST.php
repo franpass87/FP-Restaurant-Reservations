@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reservations;
 
 use DateInterval;
+use FP\Resv\Core\Security;
 use DateTimeImmutable;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use InvalidArgumentException;
@@ -23,7 +24,6 @@ use function array_values;
 use function add_action;
 use function do_action;
 use function current_time;
-use function current_user_can;
 use function gmdate;
 use function in_array;
 use function is_array;
@@ -399,7 +399,7 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        return current_user_can('manage_options');
+        return Security::currentUserCanManage();
     }
 
     private function sanitizeDate(mixed $value): ?string
@@ -475,6 +475,12 @@ final class AdminREST
             'utm_source' => $request->get_param('utm_source') ?? '',
             'utm_medium' => $request->get_param('utm_medium') ?? '',
             'utm_campaign' => $request->get_param('utm_campaign') ?? '',
+            'utm_content' => $request->get_param('utm_content') ?? '',
+            'utm_term' => $request->get_param('utm_term') ?? '',
+            'gclid' => $request->get_param('gclid') ?? '',
+            'fbclid' => $request->get_param('fbclid') ?? '',
+            'msclkid' => $request->get_param('msclkid') ?? '',
+            'ttclid' => $request->get_param('ttclid') ?? '',
             'status'     => $request->get_param('status') ?? null,
             'room_id'    => $request->get_param('room_id') ?? null,
             'table_id'   => $request->get_param('table_id') ?? null,

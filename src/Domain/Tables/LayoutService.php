@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Tables;
 
 use InvalidArgumentException;
 use RuntimeException;
+use function __;
 use function array_map;
 use function array_unique;
 use function array_values;
@@ -79,7 +80,7 @@ final class LayoutService
 
         $room = $this->repository->findRoom($roomId);
         if ($room === null) {
-            throw new RuntimeException('Room could not be loaded after save.');
+            throw new RuntimeException(__('Impossibile caricare la sala dopo il salvataggio.', 'fp-restaurant-reservations'));
         }
 
         return $this->roomToArray($this->hydrateRoom($room));
@@ -111,7 +112,7 @@ final class LayoutService
 
         $table = $this->repository->findTable($tableId);
         if ($table === null) {
-            throw new RuntimeException('Table could not be loaded after save.');
+            throw new RuntimeException(__('Impossibile caricare il tavolo dopo il salvataggio.', 'fp-restaurant-reservations'));
         }
 
         return $this->tableToArray($this->hydrateTable($table));
@@ -149,7 +150,7 @@ final class LayoutService
     public function mergeTables(array $tableIds, ?string $groupCode = null): array
     {
         if (count($tableIds) < 2) {
-            throw new InvalidArgumentException('At least two tables are required to create a merge group.');
+            throw new InvalidArgumentException(__('Sono necessari almeno due tavoli per creare un gruppo combinato.', 'fp-restaurant-reservations'));
         }
 
         $tables = [];
@@ -157,7 +158,7 @@ final class LayoutService
         foreach ($tableIds as $tableId) {
             $table = $this->repository->findTable((int) $tableId);
             if ($table === null) {
-                throw new InvalidArgumentException(sprintf('Table %d not found.', (int) $tableId));
+                throw new InvalidArgumentException(sprintf(__('Tavolo %d non trovato.', 'fp-restaurant-reservations'), (int) $tableId));
             }
 
             if ($roomId === null) {
@@ -165,7 +166,7 @@ final class LayoutService
             }
 
             if ((int) $table['room_id'] !== $roomId) {
-                throw new InvalidArgumentException('All tables in a merge group must belong to the same room.');
+                throw new InvalidArgumentException(__('Tutti i tavoli di un gruppo devono appartenere alla stessa sala.', 'fp-restaurant-reservations'));
             }
 
             $tables[] = $this->hydrateTable($table);
@@ -359,12 +360,12 @@ final class LayoutService
     {
         $name = isset($data['name']) ? trim((string) $data['name']) : '';
         if ($name === '') {
-            throw new InvalidArgumentException('Room name is required.');
+            throw new InvalidArgumentException(__('Il nome della sala è obbligatorio.', 'fp-restaurant-reservations'));
         }
 
         $color = isset($data['color']) ? trim((string) $data['color']) : '';
         if ($color !== '' && preg_match('/^#?[0-9a-fA-F]{6}$/', $color) !== 1) {
-            throw new InvalidArgumentException('Room color must be a valid hex value.');
+            throw new InvalidArgumentException(__('Il colore della sala deve essere un valore esadecimale valido.', 'fp-restaurant-reservations'));
         }
 
         if ($color !== '' && $color[0] !== '#') {
@@ -390,16 +391,16 @@ final class LayoutService
     {
         $code = isset($data['code']) ? trim((string) $data['code']) : '';
         if ($code === '') {
-            throw new InvalidArgumentException('Table code is required.');
+            throw new InvalidArgumentException(__('Il codice del tavolo è obbligatorio.', 'fp-restaurant-reservations'));
         }
 
         if (!isset($data['room_id'])) {
-            throw new InvalidArgumentException('Table room_id is required.');
+            throw new InvalidArgumentException(__('Il campo room_id del tavolo è obbligatorio.', 'fp-restaurant-reservations'));
         }
 
         $roomId = (int) $data['room_id'];
         if ($roomId <= 0) {
-            throw new InvalidArgumentException('Table room_id must be a positive integer.');
+            throw new InvalidArgumentException(__('Il campo room_id del tavolo deve essere un intero positivo.', 'fp-restaurant-reservations'));
         }
 
         $status = isset($data['status']) ? strtolower(trim((string) $data['status'])) : 'available';
@@ -440,14 +441,14 @@ final class LayoutService
     private function assertRoomExists(int $roomId): void
     {
         if ($roomId <= 0 || $this->repository->findRoom($roomId) === null) {
-            throw new InvalidArgumentException(sprintf('Room %d does not exist.', $roomId));
+            throw new InvalidArgumentException(sprintf(__('La sala %d non esiste.', 'fp-restaurant-reservations'), $roomId));
         }
     }
 
     private function assertTableExists(int $tableId): void
     {
         if ($tableId <= 0 || $this->repository->findTable($tableId) === null) {
-            throw new InvalidArgumentException(sprintf('Table %d does not exist.', $tableId));
+            throw new InvalidArgumentException(sprintf(__('Il tavolo %d non esiste.', 'fp-restaurant-reservations'), $tableId));
         }
     }
 
@@ -459,7 +460,7 @@ final class LayoutService
         }
 
         if (preg_match('/^[A-Za-z0-9_-]{3,30}$/', $code) !== 1) {
-            throw new InvalidArgumentException('Group code must contain only alphanumeric characters, dashes, or underscores.');
+            throw new InvalidArgumentException(__('Il codice del gruppo può contenere solo caratteri alfanumerici, trattini o underscore.', 'fp-restaurant-reservations'));
         }
 
         return strtolower($code);

@@ -9,7 +9,7 @@ use wpdb;
 final class Migrations
 {
     private const OPTION_KEY = 'fp_resv_db_version';
-    private const DB_VERSION = '2024.05.01';
+    private const DB_VERSION = '2024.06.02';
 
     public static function run(): void
     {
@@ -54,12 +54,19 @@ CREATE TABLE {$reservationsTable} (
     allergies TEXT,
     value DECIMAL(10,2) DEFAULT NULL,
     currency VARCHAR(3) DEFAULT NULL,
+    price_per_person DECIMAL(10,2) DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     visited_at DATETIME DEFAULT NULL,
     utm_source VARCHAR(100) DEFAULT NULL,
     utm_medium VARCHAR(100) DEFAULT NULL,
     utm_campaign VARCHAR(150) DEFAULT NULL,
+    utm_content VARCHAR(150) DEFAULT NULL,
+    utm_term VARCHAR(150) DEFAULT NULL,
+    gclid VARCHAR(191) DEFAULT NULL,
+    fbclid VARCHAR(191) DEFAULT NULL,
+    msclkid VARCHAR(191) DEFAULT NULL,
+    ttclid VARCHAR(191) DEFAULT NULL,
     lang VARCHAR(10) DEFAULT NULL,
     location_id VARCHAR(64) DEFAULT NULL,
     calendar_event_id VARCHAR(191) DEFAULT NULL,
@@ -72,7 +79,9 @@ CREATE TABLE {$reservationsTable} (
     KEY customer_id (customer_id),
     KEY room_table (room_id, table_id),
     KEY lang (lang),
-    KEY calendar_event_id (calendar_event_id)
+    KEY location (location_id),
+    KEY calendar_event_id (calendar_event_id),
+    UNIQUE KEY reservation_customer_slot (date, time, location_id, customer_id)
 ) {$charsetCollate};
 SQL;
 
@@ -84,6 +93,9 @@ CREATE TABLE {$customersTable} (
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(191) NOT NULL,
     phone VARCHAR(40) DEFAULT NULL,
+    phone_e164 VARCHAR(40) DEFAULT NULL,
+    phone_country VARCHAR(4) DEFAULT NULL,
+    phone_national VARCHAR(40) DEFAULT NULL,
     lang VARCHAR(10) DEFAULT NULL,
     marketing_consent TINYINT(1) NOT NULL DEFAULT 0,
     profiling_consent TINYINT(1) NOT NULL DEFAULT 0,
@@ -201,6 +213,24 @@ CREATE TABLE {$ticketsTable} (
 ) {$charsetCollate};
 SQL;
 
+        $logsTable = $prefix . 'fp_resv_logs';
+        $tables[]  = <<<SQL
+CREATE TABLE {$logsTable} (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    channel VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    context_json LONGTEXT DEFAULT NULL,
+    reservation_id BIGINT UNSIGNED DEFAULT NULL,
+    customer_id BIGINT UNSIGNED DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY channel (channel),
+    KEY reservation_id (reservation_id),
+    KEY customer_id (customer_id),
+    KEY created_at (created_at)
+) {$charsetCollate};
+SQL;
+
         $paymentsTable = $prefix . 'fp_payments';
         $tables[]      = <<<SQL
 CREATE TABLE {$paymentsTable} (
@@ -234,6 +264,7 @@ CREATE TABLE {$surveysTable} (
     nps TINYINT UNSIGNED DEFAULT NULL,
     comment TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     review_link_shown TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY  (id),
     KEY reservation_id (reservation_id),
