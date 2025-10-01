@@ -67,6 +67,13 @@ Tutte le schermate dell'area di amministrazione condividono un layout coerente (
 - I file distribuiti sono generati nella cartella `assets/dist/`; gli asset sorgente restano in `assets/js` e `assets/css`.
 - Il workflow GitHub `Build Plugin Zip` crea automaticamente lo ZIP pronto per l'upload ad ogni tag `v*`.
 
+## Release process
+
+1. Aggiorna il codice e assicurati che i test locali siano verdi.
+2. Esegui `bash build.sh --bump=patch` per incrementare la versione e generare lo ZIP (usa `--set-version=X.Y.Z` se necessario).
+3. Controlla il contenuto di `build/` e carica lo ZIP in WordPress oppure allegalo alla release.
+4. Crea un tag `vX.Y.Z` e `git push --tags` per attivare il workflow GitHub che pubblica lo ZIP come artefatto `plugin-zip`.
+
 ## Supporto
 
 Per assistenza o richieste commerciali scrivere a **info@francescopasseri.com**.
