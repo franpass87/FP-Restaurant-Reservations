@@ -6,6 +6,7 @@ namespace FP\Resv\Frontend;
 
 use FP\Resv\Core\DataLayer;
 use FP\Resv\Domain\Settings\Language;
+use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use FP\Resv\Domain\Settings\Style;
 use function apply_filters;
@@ -14,6 +15,7 @@ use function array_keys;
 use function array_map;
 use function explode;
 use function esc_url_raw;
+use function json_decode;
 use function is_array;
 use function is_numeric;
 use function is_string;
@@ -26,7 +28,9 @@ use function sprintf;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
+use function substr;
 use function trim;
+use function strtoupper;
 use function ucwords;
 use function wp_strip_all_tags;
 
@@ -92,7 +96,7 @@ final class FormContext
         $fallbackLocale   = $this->language->getFallbackLocale();
 
         $mealDefinition = isset($generalSettings['frontend_meals']) ? (string) $generalSettings['frontend_meals'] : '';
-        $rawMeals       = $this->parseMealDefinitions($mealDefinition);
+        $rawMeals       = MealPlan::parse($mealDefinition);
 
         $config = [
             'formId'          => $this->resolveFormId(),
@@ -109,9 +113,22 @@ final class FormContext
             ],
         ];
 
-        $meals = $this->normalizeMealList(apply_filters('fp_resv_form_meals', $rawMeals, $config));
+        $brevoSettings  = $this->options->getGroup('fp_resv_brevo', []);
+        $phonePrefixes  = $this->parsePhonePrefixOptions($brevoSettings['brevo_phone_prefix_map'] ?? null);
+        if ($phonePrefixes === []) {
+            $phonePrefixes = $this->defaultPhonePrefixes();
+        }
+
+        if ($phonePrefixes !== []) {
+            $config['phone_prefixes'] = $phonePrefixes;
+            $config['defaults']['phone_country_code'] = $phonePrefixes[0]['value'];
+        } else {
+            $config['defaults']['phone_country_code'] = '39';
+        }
+
+        $meals = MealPlan::normalizeList(apply_filters('fp_resv_form_meals', $rawMeals, $config));
         if ($meals !== []) {
-            $defaultMeal = $this->getDefaultMealKey($meals);
+            $defaultMeal = MealPlan::getDefaultKey($meals);
             if ($defaultMeal !== '') {
                 $config['defaults']['meal'] = $defaultMeal;
             }
@@ -207,202 +224,6 @@ final class FormContext
         ];
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function parseMealDefinitions(string $definition): array
-    {
-        if ($definition === '') {
-            return [];
-        }
-
-        $lines = preg_split("/\r\n|\r|\n/", $definition);
-        if (!is_array($lines)) {
-            return [];
-        }
-
-        $meals = [];
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-
-            $parts = array_map('trim', explode('|', $line));
-            if ($parts === []) {
-                continue;
-            }
-
-            $rawKey = array_shift($parts);
-            if (!is_string($rawKey) || $rawKey === '') {
-                continue;
-            }
-
-            $isActive = false;
-            if (str_starts_with($rawKey, '*')) {
-                $isActive = true;
-                $rawKey   = ltrim($rawKey, '* ');
-            }
-
-            if ($rawKey === '') {
-                continue;
-            }
-
-            $entry = [
-                'key'   => $rawKey,
-                'label' => $parts[0] ?? '',
-            ];
-
-            if (isset($parts[1])) {
-                $entry['hint'] = $parts[1];
-            }
-            if (isset($parts[2])) {
-                $entry['notice'] = $parts[2];
-            }
-            if (isset($parts[3])) {
-                $entry['price'] = $parts[3];
-            }
-            if (isset($parts[4])) {
-                $entry['badge'] = $parts[4];
-            }
-            if (isset($parts[5])) {
-                $entry['badge_icon'] = $parts[5];
-            }
-
-            if ($isActive) {
-                $entry['active'] = true;
-            }
-
-            $meals[] = $entry;
-        }
-
-        return $meals;
-    }
-
-    /**
-     * @param mixed $value
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function normalizeMealList(mixed $value): array
-    {
-        if (!is_array($value)) {
-            return [];
-        }
-
-        $meals          = [];
-        $defaultAssigned = false;
-
-        foreach ($value as $entry) {
-            if (!is_array($entry)) {
-                continue;
-            }
-
-            $key = isset($entry['key']) ? sanitize_key((string) $entry['key']) : '';
-            if ($key === '') {
-                continue;
-            }
-
-            $label = isset($entry['label']) ? sanitize_text_field((string) $entry['label']) : '';
-            if ($label === '') {
-                $label = ucwords(str_replace(['_', '-'], ' ', $key));
-            }
-
-            $meal = [
-                'key'   => $key,
-                'label' => $label,
-            ];
-
-            if (isset($entry['hint'])) {
-                $hint = sanitize_text_field((string) $entry['hint']);
-                if ($hint !== '') {
-                    $meal['hint'] = $hint;
-                }
-            }
-
-            if (isset($entry['notice'])) {
-                $notice = sanitize_text_field((string) $entry['notice']);
-                if ($notice !== '') {
-                    $meal['notice'] = $notice;
-                }
-            }
-
-            if (isset($entry['badge'])) {
-                $badge = sanitize_text_field((string) $entry['badge']);
-                if ($badge !== '') {
-                    $meal['badge'] = $badge;
-                }
-            }
-
-            if (isset($entry['badge_icon'])) {
-                $badgeIcon = sanitize_key((string) $entry['badge_icon']);
-                if ($badgeIcon !== '') {
-                    $meal['badge_icon'] = $badgeIcon;
-                }
-            }
-
-            if (isset($entry['price'])) {
-                $priceValue = $this->toFloat($entry['price']);
-                if ($priceValue !== null) {
-                    $meal['price'] = number_format($priceValue, 2, '.', '');
-                }
-            }
-
-            if (!$defaultAssigned && !empty($entry['active'])) {
-                $meal['active'] = true;
-                $defaultAssigned = true;
-            }
-
-            $meals[] = $meal;
-        }
-
-        if ($meals === []) {
-            return [];
-        }
-
-        if (!$defaultAssigned) {
-            $meals[0]['active'] = true;
-        }
-
-        return array_values($meals);
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $meals
-     */
-    private function getDefaultMealKey(array $meals): string
-    {
-        foreach ($meals as $meal) {
-            if (!empty($meal['active']) && isset($meal['key'])) {
-                return (string) $meal['key'];
-            }
-        }
-
-        return '';
-    }
-
-    private function toFloat(mixed $value): ?float
-    {
-        if (is_int($value) || is_float($value)) {
-            return (float) $value;
-        }
-
-        if (!is_string($value)) {
-            return null;
-        }
-
-        $normalized = str_replace(',', '.', trim($value));
-        if ($normalized === '') {
-            return null;
-        }
-
-        if (!is_numeric($normalized)) {
-            return null;
-        }
-
-        return (float) $normalized;
-    }
-
     private function resolveFormId(): string
     {
         $formId = isset($this->attributes['form_id']) ? (string) $this->attributes['form_id'] : '';
@@ -492,6 +313,7 @@ final class FormContext
             'pdf_tooltip' => (string) ($formStrings['pdf_tooltip'] ?? ''),
             'steps'       => is_array($formStrings['steps_labels'] ?? null) ? $formStrings['steps_labels'] : [],
             'fields'      => is_array($formStrings['fields'] ?? null) ? $formStrings['fields'] : [],
+            'meals'       => is_array($formStrings['meals'] ?? null) ? $formStrings['meals'] : [],
             'actions'     => is_array($formStrings['actions'] ?? null) ? $formStrings['actions'] : [],
             'summary'     => is_array($formStrings['summary'] ?? null) ? $formStrings['summary'] : [],
             'messages'    => is_array($formStrings['messages'] ?? null) ? $formStrings['messages'] : [],
@@ -523,6 +345,124 @@ final class FormContext
         }
 
         return $steps;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function parsePhonePrefixOptions(mixed $raw): array
+    {
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $map = [];
+
+        foreach ($decoded as $prefix => $language) {
+            if (!is_string($prefix)) {
+                continue;
+            }
+
+            $normalizedPrefix = $this->normalizePhonePrefix($prefix);
+            if ($normalizedPrefix === '') {
+                continue;
+            }
+
+            $languageCode = $this->normalizePhoneLanguage(is_string($language) ? $language : '');
+            if (!array_key_exists($normalizedPrefix, $map)) {
+                $map[$normalizedPrefix] = $languageCode;
+            }
+        }
+
+        if ($map === []) {
+            return [];
+        }
+
+        $options = [];
+
+        foreach ($map as $prefix => $language) {
+            $digits = preg_replace('/[^0-9]/', '', substr($prefix, 1));
+            if (!is_string($digits) || $digits === '') {
+                continue;
+            }
+
+            $label = $prefix;
+            if ($language !== '') {
+                $label .= ' · ' . $language;
+            }
+
+            $options[] = [
+                'prefix'   => $prefix,
+                'value'    => $digits,
+                'language' => $language,
+                'label'    => $label,
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function defaultPhonePrefixes(): array
+    {
+        return [
+            [
+                'prefix'   => '+39',
+                'value'    => '39',
+                'language' => 'IT',
+                'label'    => '+39 · IT',
+            ],
+        ];
+    }
+
+    private function normalizePhonePrefix(string $prefix): string
+    {
+        $normalized = str_replace(' ', '', trim($prefix));
+        if ($normalized === '') {
+            return '';
+        }
+
+        if (str_starts_with($normalized, '00')) {
+            $normalized = '+' . substr($normalized, 2);
+        } elseif (!str_starts_with($normalized, '+')) {
+            $normalized = '+' . ltrim($normalized, '+');
+        }
+
+        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
+        if (!is_string($digits) || $digits === '') {
+            return '';
+        }
+
+        return '+' . $digits;
+    }
+
+    private function normalizePhoneLanguage(string $value): string
+    {
+        $upper = strtoupper(trim($value));
+        if ($upper === '') {
+            return 'INT';
+        }
+
+        if (str_starts_with($upper, 'IT')) {
+            return 'IT';
+        }
+
+        if (str_starts_with($upper, 'EN')) {
+            return 'EN';
+        }
+
+        if (str_starts_with($upper, 'INT')) {
+            return 'INT';
+        }
+
+        return 'INT';
     }
 }
 

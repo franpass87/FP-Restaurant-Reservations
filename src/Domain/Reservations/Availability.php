@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use InvalidArgumentException;
 use function __;
@@ -23,6 +24,7 @@ use function max;
 use function min;
 use function preg_match;
 use function preg_split;
+use function sanitize_key;
 use function sprintf;
 use function str_contains;
 use function strtolower;
@@ -46,6 +48,11 @@ final class Availability
 
     /** @var string[] */
     private const ACTIVE_STATUSES = ['pending', 'confirmed', 'seated'];
+
+    /**
+     * @var array<string, array<string, mixed>>|null
+     */
+    private ?array $mealPlanCache = null;
 
     public function __construct(private readonly Options $options, private readonly wpdb $wpdb)
     {
@@ -78,7 +85,9 @@ final class Availability
         $dayStart = new DateTimeImmutable($dateString . ' 00:00:00', $timezone);
         $dayEnd   = $dayStart->setTime(23, 59, 59);
 
-        $schedule = $this->resolveSchedule($dayStart);
+        $mealKey      = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
+        $mealSettings = $this->resolveMealSettings($mealKey);
+        $schedule     = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
         if ($schedule === []) {
             return [
                 'date'      => $dayStart->format('Y-m-d'),
@@ -92,10 +101,10 @@ final class Availability
             ];
         }
 
-        $slotInterval      = max(5, (int) $this->options->getField('fp_resv_general', 'slot_interval_minutes', '15'));
-        $turnoverMinutes   = max($slotInterval, (int) $this->options->getField('fp_resv_general', 'table_turnover_minutes', '120'));
-        $bufferMinutes     = max(0, (int) $this->options->getField('fp_resv_general', 'buffer_before_minutes', '15'));
-        $maxParallel       = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
+        $slotInterval    = $mealSettings['slot_interval'];
+        $turnoverMinutes = $mealSettings['turnover'];
+        $bufferMinutes   = $mealSettings['buffer'];
+        $maxParallel     = $mealSettings['max_parallel'];
         $waitlistEnabled   = $this->options->getField('fp_resv_general', 'enable_waitlist', '0') === '1';
         $mergeStrategy     = (string) $this->options->getField(
             'fp_resv_general',
@@ -175,11 +184,15 @@ final class Availability
 
                 $baseCapacity = $this->resolveCapacityForScope($roomCapacities, $roomId, $hasPhysicalTables);
                 $capacity     = $this->applyCapacityReductions(
-                    $baseCapacity,
-                    $availableTables,
-                    $unassignedCapacity,
-                    $closureEffect['capacity_percent']
-                );
+                $baseCapacity,
+                $availableTables,
+                $unassignedCapacity,
+                $closureEffect['capacity_percent']
+            );
+
+                if ($mealSettings['capacity_limit'] !== null) {
+                    $capacity = min($capacity, $mealSettings['capacity_limit']);
+                }
 
                 $status  = $this->determineStatus($capacity, $party, $closureEffect['capacity_percent']);
                 $reasons = $closureEffect['reasons'];
@@ -241,20 +254,79 @@ final class Availability
     }
 
     /**
-     * @return array<int, array{start:int,end:int}>
+     * @return array<string, mixed>
      */
-    private function resolveSchedule(DateTimeImmutable $day): array
+    private function resolveMealSettings(string $mealKey): array
     {
-        $raw       = (string) $this->options->getField('fp_resv_general', 'service_hours_definition', '');
-        $parsed    = $this->parseScheduleDefinition($raw);
-        $dayKey    = strtolower($day->format('D'));
-        $schedule  = $parsed[$dayKey] ?? [];
+        $defaultScheduleRaw = (string) $this->options->getField('fp_resv_general', 'service_hours_definition', '');
+        $scheduleMap        = $this->parseScheduleDefinition($defaultScheduleRaw);
+        $slotInterval       = max(5, (int) $this->options->getField('fp_resv_general', 'slot_interval_minutes', '15'));
+        $turnoverMinutes    = max($slotInterval, (int) $this->options->getField('fp_resv_general', 'table_turnover_minutes', '120'));
+        $bufferMinutes      = max(0, (int) $this->options->getField('fp_resv_general', 'buffer_before_minutes', '15'));
+        $maxParallel        = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
+        $capacityLimit      = null;
 
-        return $schedule;
+        if ($mealKey !== '') {
+            $plan = $this->getMealPlan();
+            if (isset($plan[$mealKey])) {
+                $meal = $plan[$mealKey];
+                if (!empty($meal['hours_definition'])) {
+                    $mealSchedule = $this->parseScheduleDefinition((string) $meal['hours_definition']);
+                    if ($mealSchedule !== []) {
+                        $scheduleMap = $mealSchedule;
+                    }
+                }
+
+                if (!empty($meal['slot_interval'])) {
+                    $slotInterval = max(5, (int) $meal['slot_interval']);
+                }
+
+                if (!empty($meal['turnover'])) {
+                    $turnoverMinutes = max($slotInterval, (int) $meal['turnover']);
+                }
+
+                if (!empty($meal['buffer'])) {
+                    $bufferMinutes = max(0, (int) $meal['buffer']);
+                }
+
+                if (!empty($meal['max_parallel'])) {
+                    $maxParallel = max(1, (int) $meal['max_parallel']);
+                }
+
+                if (!empty($meal['capacity'])) {
+                    $capacityLimit = max(1, (int) $meal['capacity']);
+                }
+            }
+        }
+
+        if ($turnoverMinutes < $slotInterval) {
+            $turnoverMinutes = $slotInterval;
+        }
+
+        return [
+            'schedule'       => $scheduleMap,
+            'slot_interval'  => $slotInterval,
+            'turnover'       => $turnoverMinutes,
+            'buffer'         => $bufferMinutes,
+            'max_parallel'   => $maxParallel,
+            'capacity_limit' => $capacityLimit,
+        ];
     }
 
     /**
-     * @return array<string, array<int, array{start:int,end:int}>>
+     * @param array<string, array<int, array{start:int,end:int}>> $scheduleMap
+     *
+     * @return array<int, array{start:int,end:int}>
+     */
+    private function resolveScheduleForDay(DateTimeImmutable $day, array $scheduleMap): array
+    {
+        $dayKey = strtolower($day->format('D'));
+
+        return $scheduleMap[$dayKey] ?? [];
+    }
+
+    /**
+     * @return array<int, array{start:int,end:int}>
      */
     private function parseScheduleDefinition(string $raw): array
     {
@@ -303,6 +375,22 @@ final class Availability
         }
 
         return $schedule;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function getMealPlan(): array
+    {
+        if ($this->mealPlanCache !== null) {
+            return $this->mealPlanCache;
+        }
+
+        $definition = (string) $this->options->getField('fp_resv_general', 'frontend_meals', '');
+        $parsed     = MealPlan::parse($definition);
+        $this->mealPlanCache = MealPlan::indexByKey($parsed);
+
+        return $this->mealPlanCache;
     }
 
     /**

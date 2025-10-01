@@ -1,55 +1,55 @@
-const W = /\D+/g;
-function D(r) {
-  return r ? String(r).replace(W, "") : "";
+const J = /\D+/g;
+function B(r) {
+  return r ? String(r).replace(J, "") : "";
 }
-function C(r) {
-  const t = D(r);
+function b(r) {
+  const t = B(r);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function _(r) {
-  return D(r);
+function k(r) {
+  return B(r);
 }
-function J(r, t) {
-  const e = C(r), i = _(t);
+function G(r, t) {
+  const e = b(r), i = k(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
-function G(r) {
-  const t = _(r);
+function X(r) {
+  const t = k(r);
   return t.length >= 6 && t.length <= 15;
 }
-function X(r) {
-  const t = _(r);
+function Y(r) {
+  const t = k(r);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
-  let s = 0, a = 0;
+  let s = 0, n = 0;
   for (; s < t.length; ) {
-    const n = t.length - s;
-    let l = e[a % e.length];
-    n <= 4 && (l = n), i.push(t.slice(s, s + l)), s += l, a += 1;
+    const a = t.length - s;
+    let l = e[n % e.length];
+    a <= 4 && (l = a), i.push(t.slice(s, s + l)), s += l, n += 1;
   }
   return { masked: i.join(" "), digits: t };
 }
-function Y(r, t) {
-  const e = r.value, { masked: i } = X(e), s = r.selectionStart;
+function q(r, t) {
+  const e = r.value, { masked: i } = Y(e), s = r.selectionStart;
   if (r.value = i, s !== null) {
-    const a = i.length - e.length, n = Math.max(0, s + a);
-    r.setSelectionRange(n, n);
+    const n = i.length - e.length, a = Math.max(0, s + n);
+    r.setSelectionRange(a, a);
   }
-  r.setAttribute("data-phone-local", _(r.value)), r.setAttribute("data-phone-cc", C(t));
+  r.setAttribute("data-phone-local", k(r.value)), r.setAttribute("data-phone-cc", b(t));
 }
-function M(r, t) {
-  const e = _(r.value), i = C(t);
+function L(r, t) {
+  const e = k(r.value), i = b(t);
   return {
-    e164: J(i, e),
+    e164: G(i, e),
     local: e,
     country: i
   };
 }
-let q = null;
-const T = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (r) => window.requestIdleCallback(r) : (r) => window.setTimeout(() => r(Date.now()), 1);
+let I = null;
+const D = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (r) => window.requestIdleCallback(r) : (r) => window.setTimeout(() => r(Date.now()), 1);
 function $() {
-  return q || (q = Promise.resolve().then(() => ut)), q;
+  return I || (I = Promise.resolve().then(() => ht)), I;
 }
 function Q(r) {
   const t = r.getAttribute("data-fp-resv");
@@ -62,13 +62,13 @@ function Q(r) {
   }
   return {};
 }
-function h(r, t) {
+function u(r, t) {
   if (!r)
     return null;
   const e = Object.assign({ event: r }, t || {});
   return window.dataLayer = window.dataLayer || [], window.dataLayer.push(e), window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(e), e;
 }
-function B(r, t) {
+function V(r, t) {
   if (!r)
     return null;
   if (typeof r.closest == "function")
@@ -82,7 +82,7 @@ function B(r, t) {
   return null;
 }
 function Z(r) {
-  return B(r, "data-fp-resv-section");
+  return V(r, "data-fp-resv-section");
 }
 function tt(r, t) {
   if (!r)
@@ -123,7 +123,7 @@ function st(r) {
   return r ? r.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex="0"]') : null;
 }
 const rt = ["date", "party", "slots", "details", "confirm"];
-function at(r) {
+function nt(r) {
   return r.text().then((t) => {
     if (!t)
       return {};
@@ -134,15 +134,15 @@ function at(r) {
     }
   });
 }
-class V {
+class z {
   constructor(t) {
     this.root = t, this.dataset = Q(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(rt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
-    this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, a) => this.getStepOrderIndex(s) - this.getStepOrderIndex(a)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, a) => this.getStepOrderIndex(s) - this.getStepOrderIndex(a)).forEach((s) => {
+    this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, n) => this.getStepOrderIndex(s) - this.getStepOrderIndex(n)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, n) => this.getStepOrderIndex(s) - this.getStepOrderIndex(n)).forEach((s) => {
       this.progress.appendChild(s);
-    }), this.submitButton = this.form ? this.form.querySelector("[data-fp-resv-submit]") : null, this.submitLabel = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-label]") || this.submitButton : null, this.submitSpinner = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-spinner]") : null, this.submitHint = this.form ? this.form.querySelector("[data-fp-resv-submit-hint]") : null, this.successAlert = this.form ? this.form.querySelector("[data-fp-resv-success]") : null, this.errorAlert = this.form ? this.form.querySelector("[data-fp-resv-error]") : null, this.errorMessage = this.form ? this.form.querySelector("[data-fp-resv-error-message]") : null, this.errorRetry = this.form ? this.form.querySelector("[data-fp-resv-error-retry]") : null, this.mealButtons = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-meal]")), this.mealNotice = t.querySelector("[data-fp-resv-meal-notice]"), this.hiddenMeal = this.form ? this.form.querySelector('input[name="fp_resv_meal"]') : null, this.hiddenPrice = this.form ? this.form.querySelector('input[name="fp_resv_price_per_person"]') : null, this.hiddenSlot = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, this.dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null, this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field="party"]') : null, this.summaryTargets = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-summary]")), this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field="phone"]') : null, this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name="fp_resv_phone_e164"]') : null, this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name="fp_resv_phone_cc"]') : null, this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name="fp_resv_phone_local"]') : null, this.availabilityRoot = this.form ? this.form.querySelector("[data-fp-resv-slots]") : null, this.state = {
+    }), this.submitButton = this.form ? this.form.querySelector("[data-fp-resv-submit]") : null, this.submitLabel = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-label]") || this.submitButton : null, this.submitSpinner = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-spinner]") : null, this.submitHint = this.form ? this.form.querySelector("[data-fp-resv-submit-hint]") : null, this.successAlert = this.form ? this.form.querySelector("[data-fp-resv-success]") : null, this.errorAlert = this.form ? this.form.querySelector("[data-fp-resv-error]") : null, this.errorMessage = this.form ? this.form.querySelector("[data-fp-resv-error-message]") : null, this.errorRetry = this.form ? this.form.querySelector("[data-fp-resv-error-retry]") : null, this.mealButtons = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-meal]")), this.mealNotice = t.querySelector("[data-fp-resv-meal-notice]"), this.hiddenMeal = this.form ? this.form.querySelector('input[name="fp_resv_meal"]') : null, this.hiddenPrice = this.form ? this.form.querySelector('input[name="fp_resv_price_per_person"]') : null, this.hiddenSlot = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, this.dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null, this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field="party"]') : null, this.summaryTargets = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-summary]")), this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field="phone"]') : null, this.phonePrefixField = this.form ? this.form.querySelector('[data-fp-resv-field="phone_prefix"]') : null, this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name="fp_resv_phone_e164"]') : null, this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name="fp_resv_phone_cc"]') : null, this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name="fp_resv_phone_local"]') : null, this.availabilityRoot = this.form ? this.form.querySelector("[data-fp-resv-slots]") : null, this.state = {
       started: !1,
       formValidEmitted: !1,
       sectionStates: {},
@@ -166,7 +166,7 @@ class V {
       invalidEmail: this.messages.msg_invalid_email || "Enter a valid email address.",
       submitError: this.messages.msg_submit_error || "We could not complete your reservation. Please try again.",
       submitSuccess: this.messages.msg_submit_success || "Reservation sent successfully."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateSummary(), T(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateSummary(), D(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -192,6 +192,35 @@ class V {
         i.preventDefault(), t.handleFirstInteraction(), t.handleMealSelection(e);
       }), e.hasAttribute("data-active") && t.hiddenMeal && t.applyMealSelection(e);
     });
+  }
+  initializePhoneField() {
+    if (this.phonePrefixField) {
+      this.updatePhoneCountryFromPrefix();
+      return;
+    }
+    this.phoneField && q(this.phoneField, this.getPhoneCountryCode());
+  }
+  updatePhoneCountryFromPrefix() {
+    if (!this.phonePrefixField)
+      return;
+    const t = b(this.phonePrefixField.value);
+    let e = t;
+    if (e === "" && this.phoneCountryCode) {
+      const i = b(this.phoneCountryCode);
+      i && (e = i);
+    }
+    if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
+      const i = b(this.hiddenPhoneCc.value);
+      i && (e = i);
+    }
+    if (e === "") {
+      const i = this.config && this.config.defaults || {};
+      if (i.phone_country_code) {
+        const s = b(i.phone_country_code);
+        s && (e = s);
+      }
+    }
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && q(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -219,9 +248,9 @@ class V {
         start: i.getAttribute("data-slot") || "",
         label: i.textContent || "",
         status: i.getAttribute("data-slot-status") || ""
-      }, a = this.availabilityRoot.querySelectorAll("button[data-slot]");
-      Array.prototype.forEach.call(a, (n) => {
-        n.setAttribute("aria-pressed", n === i ? "true" : "false");
+      }, n = this.availabilityRoot.querySelectorAll("button[data-slot]");
+      Array.prototype.forEach.call(n, (a) => {
+        a.setAttribute("aria-pressed", a === i ? "true" : "false");
       }), this.handleSlotSelected(s);
     });
     const t = () => {
@@ -231,7 +260,7 @@ class V {
       }
       this.scheduleAvailabilityUpdate();
     };
-    T(() => {
+    D(() => {
       $().then((e) => {
         !e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot || (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
@@ -250,7 +279,7 @@ class V {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField && Y(this.phoneField, this.getPhoneCountryCode()), this.updateSummary();
+    this.handleFirstInteraction(), e === this.phoneField ? q(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
     const i = Z(e);
     if (!i) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
@@ -316,13 +345,13 @@ class V {
       return;
     let i = !1;
     this.sections.forEach((s) => {
-      const a = s.getAttribute("data-step") || "";
-      if (a === t)
-        i = !0, this.updateSectionAttributes(s, "active", { silent: !0 }), this.dispatchSectionUnlocked(a);
+      const n = s.getAttribute("data-step") || "";
+      if (n === t)
+        i = !0, this.updateSectionAttributes(s, "active", { silent: !0 }), this.dispatchSectionUnlocked(n);
       else if (i)
         this.updateSectionAttributes(s, "locked", { silent: !0 });
       else {
-        const l = this.state.sectionStates[a] === "locked" ? "locked" : "completed";
+        const l = this.state.sectionStates[n] === "locked" ? "locked" : "completed";
         this.updateSectionAttributes(s, l, { silent: !0 });
       }
     }), this.updateProgressIndicators(), this.scrollIntoView(e), requestAnimationFrame(() => {
@@ -338,7 +367,7 @@ class V {
       i.removeAttribute("data-active"), i.setAttribute("aria-pressed", "false");
     }), t.setAttribute("data-active", "true"), t.setAttribute("aria-pressed", "true"), this.applyMealSelection(t);
     const e = this.events.meal_selected || "meal_selected";
-    h(e, {
+    u(e, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
     }), this.scheduleAvailabilityUpdate();
@@ -356,21 +385,21 @@ class V {
     const e = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
     if (e && (e.value = "", e.removeAttribute("data-slot-start")), this.availabilityRoot) {
       const s = this.availabilityRoot.querySelectorAll('button[data-slot][aria-pressed="true"]');
-      Array.prototype.forEach.call(s, (a) => {
-        a.setAttribute("aria-pressed", "false");
+      Array.prototype.forEach.call(s, (n) => {
+        n.setAttribute("aria-pressed", "false");
       });
     }
     const i = this.sections.find((s) => (s.getAttribute("data-step") || "") === "slots");
     if (i) {
-      const s = i.getAttribute("data-step") || "", a = this.state.sectionStates[s] || "locked";
+      const s = i.getAttribute("data-step") || "", n = this.state.sectionStates[s] || "locked";
       this.updateSectionAttributes(i, "locked", { silent: !0 });
-      const n = this.sections.indexOf(i);
-      if (n !== -1)
-        for (let l = n + 1; l < this.sections.length; l += 1) {
+      const a = this.sections.indexOf(i);
+      if (a !== -1)
+        for (let l = a + 1; l < this.sections.length; l += 1) {
           const f = this.sections[l];
           this.updateSectionAttributes(f, "locked", { silent: !0 });
         }
-      this.updateProgressIndicators(), (t.forceRewind && s || a === "completed" || a === "active") && this.activateSectionByKey(s);
+      this.updateProgressIndicators(), (t.forceRewind && s || n === "completed" || n === "active") && this.activateSectionByKey(s);
     }
     t.schedule !== !1 && this.scheduleAvailabilityUpdate(), this.updateSummary(), this.updateSubmitState();
   }
@@ -385,11 +414,11 @@ class V {
     const s = this.sections.indexOf(t);
     if (s === -1)
       return;
-    const a = this.sections[s + 1];
-    if (!a)
+    const n = this.sections[s + 1];
+    if (!n)
       return;
-    const n = a.getAttribute("data-step") || String(s + 1);
-    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(a, "active"), this.dispatchSectionUnlocked(n), this.scrollIntoView(a));
+    const a = n.getAttribute("data-step") || String(s + 1);
+    this.state.sectionStates[a] !== "completed" && (this.state.sectionStates[a] = "active", this.updateSectionAttributes(n, "active"), this.dispatchSectionUnlocked(a), this.scrollIntoView(n));
   }
   navigateToPrevious(t) {
     const e = this.sections.indexOf(t);
@@ -414,13 +443,13 @@ class V {
       return;
     this.state.unlocked[t] = !0;
     const e = this.events.section_unlocked || "section_unlocked";
-    h(e, { section: t });
+    u(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
-    const s = t.getAttribute("data-step") || "", a = i && i.silent === !0;
+    const s = t.getAttribute("data-step") || "", n = i && i.silent === !0;
     this.state.sectionStates[s] = e, t.setAttribute("data-state", e), e === "completed" ? t.setAttribute("data-complete-hidden", "true") : t.removeAttribute("data-complete-hidden");
-    const n = e === "active";
-    t.setAttribute("aria-hidden", n ? "false" : "true"), t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert")) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", "")), a || this.updateProgressIndicators();
+    const a = e === "active";
+    t.setAttribute("aria-hidden", a ? "false" : "true"), t.setAttribute("aria-expanded", a ? "true" : "false"), a ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert")) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", "")), n || this.updateProgressIndicators();
   }
   updateProgressIndicators() {
     if (!this.progress)
@@ -428,14 +457,14 @@ class V {
     const t = this, e = this.progressItems && this.progressItems.length ? this.progressItems : Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]"));
     let i = 0;
     const s = e.length || 1;
-    Array.prototype.forEach.call(e, function(n, l) {
-      const f = n.getAttribute("data-step") || "", d = t.state.sectionStates[f] || "locked";
-      n.setAttribute("data-state", d), n.setAttribute("data-progress-state", d === "completed" ? "done" : d);
-      const p = d === "locked";
-      n.tabIndex = p ? -1 : 0, p ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), d === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), d === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
+    Array.prototype.forEach.call(e, function(a, l) {
+      const f = a.getAttribute("data-step") || "", c = t.state.sectionStates[f] || "locked";
+      a.setAttribute("data-state", c), a.setAttribute("data-progress-state", c === "completed" ? "done" : c);
+      const p = c === "locked";
+      a.tabIndex = p ? -1 : 0, p ? a.setAttribute("aria-disabled", "true") : a.removeAttribute("aria-disabled"), c === "active" ? (a.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : a.removeAttribute("aria-current"), c === "completed" ? (a.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : a.removeAttribute("data-completed");
     });
-    const a = Math.min(100, Math.max(0, Math.round(i / s * 100)));
-    this.progress.style.setProperty("--fp-progress-fill", a + "%");
+    const n = Math.min(100, Math.max(0, Math.round(i / s * 100)));
+    this.progress.style.setProperty("--fp-progress-fill", n + "%");
   }
   isSectionValid(t) {
     const e = t.querySelectorAll("[data-fp-resv-field]");
@@ -456,41 +485,45 @@ class V {
     }
     if (t && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
-      h(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
+      u(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
   }
   setSubmitButtonState(t, e) {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    et(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && h("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    et(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && u("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), a = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), f = this.form.querySelector('[data-fp-resv-field="notes"]');
-    let d = "";
-    s && s.value && (d = s.value.trim()), a && a.value && (d = (d + " " + a.value.trim()).trim());
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), a = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), f = this.form.querySelector('[data-fp-resv-field="notes"]');
+    let c = "";
+    s && s.value && (c = s.value.trim()), n && n.value && (c = (c + " " + n.value.trim()).trim());
     let p = "";
-    n && n.value && (p = n.value.trim()), l && l.value && (p = p !== "" ? p + " / " + l.value.trim() : l.value.trim()), this.summaryTargets.forEach(function(y) {
-      switch (y.getAttribute("data-fp-resv-summary")) {
+    if (a && a.value && (p = a.value.trim()), l && l.value) {
+      const m = this.getPhoneCountryCode(), E = (m ? "+" + m + " " : "") + l.value.trim();
+      p = p !== "" ? p + " / " + E : E;
+    }
+    this.summaryTargets.forEach(function(m) {
+      switch (m.getAttribute("data-fp-resv-summary")) {
         case "date":
-          y.textContent = t && t.value ? t.value : "";
+          m.textContent = t && t.value ? t.value : "";
           break;
         case "time":
-          y.textContent = e && e.value ? e.value : "";
+          m.textContent = e && e.value ? e.value : "";
           break;
         case "party":
-          y.textContent = i && i.value ? i.value : "";
+          m.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          y.textContent = d;
+          m.textContent = c;
           break;
         case "contact":
-          y.textContent = p;
+          m.textContent = p;
           break;
         case "notes":
-          y.textContent = f && f.value ? f.value : "";
+          m.textContent = f && f.value ? f.value : "";
           break;
       }
     });
@@ -499,17 +532,17 @@ class V {
     if (t.preventDefault(), !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
-    h(e, {
+    u(e, {
       source: "form",
       form_id: this.form && this.form.id ? this.form.id : this.root.id || "",
       date: i.date,
       party: i.party,
       meal: i.meal
     }), this.preparePhonePayload(), this.state.sending = !0, this.updateSubmitState(), this.clearError();
-    const s = this.serializeForm(), a = this.getReservationEndpoint(), n = performance.now();
+    const s = this.serializeForm(), n = this.getReservationEndpoint(), a = performance.now();
     let l = 0;
     try {
-      const f = await fetch(a, {
+      const f = await fetch(n, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -519,17 +552,17 @@ class V {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (l = Math.round(performance.now() - n), h("ui_latency", { op: "submit", ms: l }), !f.ok) {
-        const p = await at(f), y = p && p.message || this.copy.submitError;
-        throw Object.assign(new Error(y), {
+      if (l = Math.round(performance.now() - a), u("ui_latency", { op: "submit", ms: l }), !f.ok) {
+        const p = await nt(f), m = p && p.message || this.copy.submitError;
+        throw Object.assign(new Error(m), {
           status: f.status,
           payload: p
         });
       }
-      const d = await f.json();
-      this.handleSubmitSuccess(d);
+      const c = await f.json();
+      this.handleSubmitSuccess(c);
     } catch (f) {
-      l || (l = Math.round(performance.now() - n), h("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(f, l);
+      l || (l = Math.round(performance.now() - a), u("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(f, l);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -539,46 +572,54 @@ class V {
     this.clearError();
     const e = t && t.message || this.copy.submitSuccess;
     this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, typeof this.successAlert.focus == "function" && this.successAlert.focus()), t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
-      i && i.event && h(i.event, i);
+      i && i.event && u(i.event, i);
     });
   }
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError;
     this.errorAlert && this.errorMessage && (this.errorMessage.textContent = s, this.errorAlert.hidden = !1), this.state.hintOverride = s, this.updateSubmitState();
-    const a = this.events.submit_error || "submit_error";
-    h(a, { code: i, latency: e });
+    const n = this.events.submit_error || "submit_error";
+    u(n, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.state.hintOverride = "";
   }
   serializeForm() {
     const t = new FormData(this.form), e = {};
-    return t.forEach((i, s) => {
+    if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
-    }), e;
+    }), this.phoneField) {
+      const i = L(this.phoneField, this.getPhoneCountryCode());
+      i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
+    }
+    if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
+      const i = b(this.phonePrefixField.value);
+      i && (e.fp_resv_phone_cc = i);
+    }
+    return e;
   }
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = M(this.phoneField, this.getPhoneCountryCode());
+    const t = L(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = M(this.phoneField, this.getPhoneCountryCode());
+    const t = L(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    G(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), h("phone_validation_error", { field: "phone" }), h("ui_validation_error", { field: "phone" }));
+    X(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), u("phone_validation_error", { field: "phone" }), u("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (t.value.trim() === "") {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), h("ui_validation_error", { field: "email" }));
+    t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), u("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -618,10 +659,10 @@ class V {
     i && (this.ensureSectionActive(i), t && t.start ? this.completeSection(i, !0) : this.updateSectionAttributes(i, "active")), this.updateSummary(), this.updateSubmitState();
   }
   handleAvailabilityLatency(t) {
-    h("ui_latency", { op: "availability", ms: Math.round(t) });
+    u("ui_latency", { op: "availability", ms: Math.round(t) });
   }
   handleAvailabilityRetry(t) {
-    h("availability_retry", { attempt: t });
+    u("availability_retry", { attempt: t });
   }
   handleWindowFocus() {
     this.availabilityController && typeof this.availabilityController.revalidate == "function" && this.availabilityController.revalidate();
@@ -630,30 +671,30 @@ class V {
     if (this.state.started)
       return;
     const t = this.events.start || "reservation_start";
-    h(t, { source: "form" }), this.state.started = !0;
+    u(t, { source: "form" }), this.state.started = !0;
   }
   handleDelegatedTrackingEvent(t) {
     const e = t.target instanceof HTMLElement ? t.target : null;
     if (!e)
       return;
-    const i = B(e, "data-fp-resv-event");
+    const i = V(e, "data-fp-resv-event");
     if (!i)
       return;
     const s = i.getAttribute("data-fp-resv-event");
     if (!s)
       return;
-    let a = tt(i, "data-fp-resv-payload");
-    if ((!a || typeof a != "object") && (a = {}), a.trigger || (a.trigger = t.type || "click"), !a.href && i instanceof HTMLAnchorElement && i.href && (a.href = i.href), !a.label) {
-      const n = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
-      n && (a.label = n.trim());
+    let n = tt(i, "data-fp-resv-payload");
+    if ((!n || typeof n != "object") && (n = {}), n.trigger || (n.trigger = t.type || "click"), !n.href && i instanceof HTMLAnchorElement && i.href && (n.href = i.href), !n.label) {
+      const a = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
+      a && (n.label = a.trim());
     }
-    h(s, a);
+    u(s, n);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
       return;
     const e = t.detail || {}, i = this.events.confirmed || "reservation_confirmed";
-    h(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && h(this.events.purchase || "purchase", e.purchase);
+    u(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && u(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
     typeof t.scrollIntoView == "function" && t.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -674,16 +715,34 @@ class V {
     let i = !1;
     const s = this.form.querySelector('[data-fp-resv-field="consent"]');
     s && "checked" in s && (e.analytics = s.checked ? "granted" : "denied", e.clarity = s.checked ? "granted" : "denied", i = !0);
-    const a = this.form.querySelector('[data-fp-resv-field="marketing_consent"]');
-    a && "checked" in a && (e.ads = a.checked ? "granted" : "denied", i = !0);
-    const n = this.form.querySelector('[data-fp-resv-field="profiling_consent"]');
-    n && "checked" in n && (e.personalization = n.checked ? "granted" : "denied", i = !0), i && t.updateConsent(e);
+    const n = this.form.querySelector('[data-fp-resv-field="marketing_consent"]');
+    n && "checked" in n && (e.ads = n.checked ? "granted" : "denied", i = !0);
+    const a = this.form.querySelector('[data-fp-resv-field="profiling_consent"]');
+    a && "checked" in a && (e.personalization = a.checked ? "granted" : "denied", i = !0), i && t.updateConsent(e);
   }
   getPhoneCountryCode() {
-    if (this.hiddenPhoneCc && this.hiddenPhoneCc.value)
-      return C(this.hiddenPhoneCc.value) || "39";
+    if (this.phonePrefixField && this.phonePrefixField.value) {
+      const e = b(this.phonePrefixField.value);
+      if (e)
+        return e;
+    }
+    if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
+      const e = b(this.hiddenPhoneCc.value);
+      if (e)
+        return e;
+    }
+    if (this.phoneCountryCode) {
+      const e = b(this.phoneCountryCode);
+      if (e)
+        return e;
+    }
     const t = this.config && this.config.defaults || {};
-    return t.phone_country_code && C(t.phone_country_code) || "39";
+    if (t.phone_country_code) {
+      const e = b(t.phone_country_code);
+      if (e)
+        return e;
+    }
+    return "39";
   }
   getReservationEndpoint() {
     const t = this.config.endpoints || {};
@@ -708,11 +767,11 @@ class V {
     ).catch(() => null)), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = V);
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = z);
 document.addEventListener("DOMContentLoaded", function() {
   const r = document.querySelectorAll("[data-fp-resv]");
   Array.prototype.forEach.call(r, function(t) {
-    new V(t);
+    new z(t);
   });
 });
 document.addEventListener("fp-resv:tracking:push", function(r) {
@@ -722,156 +781,156 @@ document.addEventListener("fp-resv:tracking:push", function(r) {
   if (!e)
     return;
   const i = t.payload || t.data || {};
-  h(e, i && typeof i == "object" ? i : {});
+  u(e, i && typeof i == "object" ? i : {});
 });
-const nt = 400, ot = 6e4, lt = 3, O = 600;
-function ct(r, t) {
+const at = 400, ot = 6e4, lt = 3, O = 600;
+function dt(r, t) {
   let e;
   try {
     e = new URL(r, window.location.origin);
   } catch {
-    const s = window.location.origin.replace(/\/$/, ""), a = r.startsWith("/") ? s + r : s + "/" + r;
-    e = new URL(a, window.location.origin);
+    const s = window.location.origin.replace(/\/$/, ""), n = r.startsWith("/") ? s + r : s + "/" + r;
+    e = new URL(n, window.location.origin);
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function L(r) {
+function R(r) {
   for (; r.firstChild; )
     r.removeChild(r.firstChild);
 }
-function dt(r) {
-  const t = r.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), a = t.querySelector("[data-fp-resv-slots-boundary]"), n = a ? a.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
-  let f = null, d = null, p = null;
-  n && n.addEventListener("click", () => {
-    d && P(d, 0);
+function ct(r) {
+  const t = r.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), a = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
+  let f = null, c = null, p = null;
+  a && a.addEventListener("click", () => {
+    c && F(c, 0);
   });
-  function y(o, c) {
-    const v = typeof c == "string" ? c : c ? "loading" : "idle", m = typeof o == "string" ? o : "";
-    e && (e.textContent = m, e.setAttribute("data-state", v));
-    const S = v === "loading";
-    t.setAttribute("data-loading", S ? "true" : "false"), i && i.setAttribute("aria-busy", S ? "true" : "false");
-  }
-  function I() {
-    if (!i)
-      return;
-    L(i);
-    const o = r.skeletonCount || 4;
-    for (let c = 0; c < o; c += 1) {
-      const v = document.createElement("li"), m = document.createElement("span");
-      m.className = "fp-skeleton", v.appendChild(m), i.appendChild(v);
-    }
-  }
-  function F(o) {
-    s && (s.hidden = !1);
-    const c = !o || !o.meal ? r.strings && r.strings.selectMeal || "" : r.strings && r.strings.slotsEmpty || "";
-    y(c, "idle"), i && L(i);
-  }
-  function z() {
-    s && (s.hidden = !0);
+  function m(o, d) {
+    const v = typeof d == "string" ? d : d ? "loading" : "idle", y = typeof o == "string" ? o : "";
+    e && (e.textContent = y, e.setAttribute("data-state", v));
+    const A = v === "loading";
+    t.setAttribute("data-loading", A ? "true" : "false"), i && i.setAttribute("aria-busy", A ? "true" : "false");
   }
   function x() {
-    a && (a.hidden = !0);
-  }
-  function U(o) {
-    if (r.strings && r.strings.slotsError || r.strings && r.strings.submitError, a) {
-      const c = a.querySelector("[data-fp-resv-slots-boundary-message]");
-      c && (c.textContent = o), a.hidden = !1;
+    if (!i)
+      return;
+    R(i);
+    const o = r.skeletonCount || 4;
+    for (let d = 0; d < o; d += 1) {
+      const v = document.createElement("li"), y = document.createElement("span");
+      y.className = "fp-skeleton", v.appendChild(y), i.appendChild(v);
     }
-    y(o, "error");
   }
-  function j(o, c) {
+  function E(o) {
+    s && (s.hidden = !1);
+    const d = !o || !o.meal ? r.strings && r.strings.selectMeal || "" : r.strings && r.strings.slotsEmpty || "";
+    m(d, "idle"), i && R(i);
+  }
+  function U() {
+    s && (s.hidden = !0);
+  }
+  function M() {
+    n && (n.hidden = !0);
+  }
+  function H(o) {
+    if (r.strings && r.strings.slotsError || r.strings && r.strings.submitError, n) {
+      const d = n.querySelector("[data-fp-resv-slots-boundary-message]");
+      d && (d.textContent = o), n.hidden = !1;
+    }
+    m(o, "error");
+  }
+  function j(o, d) {
     const v = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(v, (m) => {
-      m.setAttribute("aria-pressed", m === c ? "true" : "false");
+    Array.prototype.forEach.call(v, (y) => {
+      y.setAttribute("aria-pressed", y === d ? "true" : "false");
     }), p = o, typeof r.onSlotSelected == "function" && r.onSlotSelected(o);
   }
-  function R(o, c) {
-    if (x(), z(), !i)
+  function T(o, d) {
+    if (M(), U(), !i)
       return;
-    L(i);
+    R(i);
     const v = o && Array.isArray(o.slots) ? o.slots : [];
     if (v.length === 0) {
-      F(c);
+      E(d);
       return;
     }
-    v.forEach((m) => {
-      const S = document.createElement("li"), g = document.createElement("button");
-      g.type = "button", g.textContent = m.label || "", g.dataset.slot = m.start || "", g.dataset.slotStatus = m.status || "", g.setAttribute("aria-pressed", p && p.start === m.start ? "true" : "false"), g.addEventListener("click", () => j(m, g)), S.appendChild(g), i.appendChild(S);
-    }), y(r.strings && r.strings.slotsUpdated || "", !1);
+    v.forEach((y) => {
+      const A = document.createElement("li"), S = document.createElement("button");
+      S.type = "button", S.textContent = y.label || "", S.dataset.slot = y.start || "", S.dataset.slotStatus = y.status || "", S.setAttribute("aria-pressed", p && p.start === y.start ? "true" : "false"), S.addEventListener("click", () => j(y, S)), A.appendChild(S), i.appendChild(A);
+    }), m(r.strings && r.strings.slotsUpdated || "", !1);
   }
-  function P(o, c) {
-    if (d = o, !o || !o.date || !o.party) {
-      F(o);
+  function F(o, d) {
+    if (c = o, !o || !o.date || !o.party) {
+      E(o);
       return;
     }
-    const v = JSON.stringify([o.date, o.meal, o.party]), m = l.get(v);
-    if (m && Date.now() - m.timestamp < ot && c === 0) {
-      R(m.payload, o);
+    const v = JSON.stringify([o.date, o.meal, o.party]), y = l.get(v);
+    if (y && Date.now() - y.timestamp < ot && d === 0) {
+      T(y.payload, o);
       return;
     }
-    x(), I(), y(r.strings && r.strings.updatingSlots || "Updating availability…", "loading");
-    const S = ct(r.endpoint, o), g = performance.now();
-    fetch(S, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((u) => u.json().catch(() => ({})).then((E) => {
-      if (!u.ok) {
-        const b = new Error("availability_error");
-        b.status = u.status, b.payload = E;
-        const A = u.headers.get("Retry-After");
-        if (A) {
-          const w = Number.parseInt(A, 10);
-          Number.isFinite(w) && (b.retryAfter = w);
+    M(), x(), m(r.strings && r.strings.updatingSlots || "Updating availability…", "loading");
+    const A = dt(r.endpoint, o), S = performance.now();
+    fetch(A, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((h) => h.json().catch(() => ({})).then((_) => {
+      if (!h.ok) {
+        const g = new Error("availability_error");
+        g.status = h.status, g.payload = _;
+        const w = h.headers.get("Retry-After");
+        if (w) {
+          const C = Number.parseInt(w, 10);
+          Number.isFinite(C) && (g.retryAfter = C);
         }
-        throw b;
+        throw g;
       }
-      return E;
-    })).then((u) => {
-      const E = performance.now() - g;
-      typeof r.onLatency == "function" && r.onLatency(E), l.set(v, { payload: u, timestamp: Date.now() }), R(u, o);
-    }).catch((u) => {
-      const E = performance.now() - g;
-      typeof r.onLatency == "function" && r.onLatency(E);
-      const b = u && u.payload && typeof u.payload == "object" ? u.payload.data || {} : {}, A = typeof u.status == "number" ? u.status : b && typeof b.status == "number" ? b.status : 0;
-      let w = 0;
-      if (u && typeof u.retryAfter == "number" && Number.isFinite(u.retryAfter))
-        w = u.retryAfter;
-      else if (b && typeof b.retry_after < "u") {
-        const k = Number.parseInt(b.retry_after, 10);
-        Number.isFinite(k) && (w = k);
+      return _;
+    })).then((h) => {
+      const _ = performance.now() - S;
+      typeof r.onLatency == "function" && r.onLatency(_), l.set(v, { payload: h, timestamp: Date.now() }), T(h, o);
+    }).catch((h) => {
+      const _ = performance.now() - S;
+      typeof r.onLatency == "function" && r.onLatency(_);
+      const g = h && h.payload && typeof h.payload == "object" ? h.payload.data || {} : {}, w = typeof h.status == "number" ? h.status : g && typeof g.status == "number" ? g.status : 0;
+      let C = 0;
+      if (h && typeof h.retryAfter == "number" && Number.isFinite(h.retryAfter))
+        C = h.retryAfter;
+      else if (g && typeof g.retry_after < "u") {
+        const P = Number.parseInt(g.retry_after, 10);
+        Number.isFinite(P) && (C = P);
       }
-      if (c >= lt - 1 ? !1 : A === 429 || A >= 500 && A < 600 ? !0 : A === 0) {
-        const k = c + 1;
-        typeof r.onRetry == "function" && r.onRetry(k);
-        const K = w > 0 ? Math.max(w * 1e3, O) : O * Math.pow(2, c);
-        window.setTimeout(() => P(o, k), K);
+      if (d >= lt - 1 ? !1 : w === 429 || w >= 500 && w < 600 ? !0 : w === 0) {
+        const P = d + 1;
+        typeof r.onRetry == "function" && r.onRetry(P);
+        const W = C > 0 ? Math.max(C * 1e3, O) : O * Math.pow(2, d);
+        window.setTimeout(() => F(o, P), W);
         return;
       }
-      const H = u && u.payload && (u.payload.message || u.payload.code) || b && b.message || r.strings && r.strings.slotsError || r.strings && r.strings.submitError || "We could not update available times. Please try again.";
-      U(H);
+      const K = h && h.payload && (h.payload.message || h.payload.code) || g && g.message || r.strings && r.strings.slotsError || r.strings && r.strings.submitError || "We could not update available times. Please try again.";
+      H(K);
     });
   }
   return {
     schedule(o) {
       f && window.clearTimeout(f);
-      const c = o || (typeof r.getParams == "function" ? r.getParams() : null);
-      if (!c || !c.date || !c.party) {
-        d = c, F(c || {});
+      const d = o || (typeof r.getParams == "function" ? r.getParams() : null);
+      if (!d || !d.date || !d.party) {
+        c = d, E(d || {});
         return;
       }
       f = window.setTimeout(() => {
-        P(c, 0);
-      }, nt);
+        F(d, 0);
+      }, at);
     },
     revalidate() {
-      if (!d)
+      if (!c)
         return;
-      const o = JSON.stringify([d.date, d.meal, d.party]);
-      l.delete(o), P(d, 0);
+      const o = JSON.stringify([c.date, c.meal, c.party]);
+      l.delete(o), F(c, 0);
     },
     getSelection() {
       return p;
     }
   };
 }
-const ut = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ht = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createAvailabilityController: dt
+  createAvailabilityController: ct
 }, Symbol.toStringTag, { value: "Module" }));
