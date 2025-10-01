@@ -246,6 +246,21 @@
     min-height: 38px;
 }
 
+.fp-resv-admin select {
+    padding-right: 38px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%235B667A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 8px;
+}
+
+.fp-resv-admin select::-ms-expand {
+    display: none;
+}
+
 .fp-resv-admin input:focus-visible,
 .fp-resv-admin select:focus-visible,
 .fp-resv-admin textarea:focus-visible,

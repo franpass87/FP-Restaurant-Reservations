@@ -13,10 +13,6 @@ $settingsUrl = admin_url('admin.php?page=fp-resv-settings');
 $headingId   = 'fp-resv-agenda-title';
 
 $tabs = [
-    'agenda'       => [
-        'label' => __('Calendario', 'fp-restaurant-reservations'),
-        'url'   => $baseUrl,
-    ],
     'arrivi-oggi'  => [
         'label' => __('In arrivo oggi', 'fp-restaurant-reservations'),
         'url'   => add_query_arg('tab', 'arrivi-oggi', $baseUrl),
@@ -24,6 +20,10 @@ $tabs = [
     'settimana'    => [
         'label' => __('Arrivi settimana', 'fp-restaurant-reservations'),
         'url'   => add_query_arg('tab', 'settimana', $baseUrl),
+    ],
+    'agenda'       => [
+        'label' => __('Calendario', 'fp-restaurant-reservations'),
+        'url'   => $baseUrl,
     ],
 ];
 ?>
@@ -68,6 +68,49 @@ $tabs = [
             </nav>
 
             <div id="fp-resv-agenda-app" class="fp-resv-agenda-app" data-fp-resv-agenda>
+                <section class="fp-resv-calendar" data-role="calendar" hidden>
+                    <header class="fp-resv-calendar__toolbar">
+                        <div class="fp-resv-calendar__nav">
+                            <button type="button" class="button" data-action="agenda-prev">
+                                <?php esc_html_e('Giorno precedente', 'fp-restaurant-reservations'); ?>
+                            </button>
+                            <button type="button" class="button" data-action="agenda-today">
+                                <?php esc_html_e('Oggi', 'fp-restaurant-reservations'); ?>
+                            </button>
+                            <button type="button" class="button" data-action="agenda-next">
+                                <?php esc_html_e('Giorno successivo', 'fp-restaurant-reservations'); ?>
+                            </button>
+                        </div>
+                        <div class="fp-resv-calendar__filters">
+                            <label>
+                                <span class="screen-reader-text"><?php esc_html_e('Seleziona giorno', 'fp-restaurant-reservations'); ?></span>
+                                <input type="date" data-role="agenda-date" />
+                            </label>
+                            <label>
+                                <span class="screen-reader-text"><?php esc_html_e('Filtra sala', 'fp-restaurant-reservations'); ?></span>
+                                <select data-role="agenda-room"></select>
+                            </label>
+                            <label>
+                                <span class="screen-reader-text"><?php esc_html_e('Seleziona vista', 'fp-restaurant-reservations'); ?></span>
+                                <select data-role="agenda-view">
+                                    <option value="day"><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></option>
+                                    <option value="week"><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></option>
+                                </select>
+                            </label>
+                            <button type="button" class="button button-primary" data-action="agenda-create">
+                                <?php esc_html_e('Nuova prenotazione', 'fp-restaurant-reservations'); ?>
+                            </button>
+                        </div>
+                    </header>
+                    <div class="fp-resv-calendar__body" data-role="agenda-body">
+                        <div class="fp-resv-calendar__summary">
+                            <h2 class="fp-resv-admin__title" data-role="agenda-title"></h2>
+                            <p class="fp-resv-calendar__hint" data-role="agenda-hint"></p>
+                        </div>
+                        <p class="fp-resv-calendar__empty" data-role="agenda-empty" hidden></p>
+                        <div class="fp-resv-calendar__grid" data-role="agenda-grid"></div>
+                    </div>
+                </section>
                 <section class="fp-resv-arrivals" data-role="arrivals" hidden>
                     <header class="fp-resv-arrivals__header">
                         <h2 class="fp-resv-admin__title" data-role="arrivals-title"></h2>

@@ -4,6 +4,259 @@
     gap: 20px;
 }
 
+.fp-resv-admin--agenda [data-role="calendar"] {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__filters input,
+.fp-resv-admin--agenda .fp-resv-calendar__filters select {
+    min-width: 150px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__summary {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__hint {
+    margin: 0;
+    color: var(--fp-resv-admin-muted);
+    font-size: 14px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__empty {
+    font-size: 14px;
+    color: var(--fp-resv-admin-muted);
+    margin: 0;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__empty.is-error {
+    color: var(--fp-resv-admin-danger, #dc2626);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__day-view {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__day-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline {
+    display: grid;
+    gap: 1px;
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    overflow: hidden;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-row {
+    display: grid;
+    grid-template-columns: 120px repeat(auto-fit, minmax(200px, 1fr));
+    background: var(--fp-resv-admin-surface);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-row--header {
+    background: var(--fp-resv-admin-surface-alt);
+    font-weight: 600;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-time {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+    border-right: 1px solid rgba(15, 23, 42, 0.08);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-slot {
+    min-height: 80px;
+    padding: 10px 12px;
+    border-left: 1px solid rgba(15, 23, 42, 0.06);
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--fp-resv-admin-surface);
+    position: relative;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-slot--header {
+    min-height: auto;
+    background: transparent;
+    border-top: none;
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-slot--unassigned {
+    background: rgba(96, 165, 250, 0.08);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-slot.is-droppable {
+    outline: 2px dashed var(--fp-resv-admin-accent-strong);
+    outline-offset: -4px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__timeline-slot.is-inactive {
+    opacity: 0.5;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+    cursor: grab;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation.is-dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation-time {
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation-name {
+    font-weight: 600;
+    margin: 0;
+    font-size: 15px;
+    color: var(--fp-resv-admin-text);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation-meta {
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation-notes {
+    font-size: 13px;
+    margin: 0;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation.status-confirmed {
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation.status-visited {
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation.status-no-show {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__grid--week {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-day {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--fp-resv-admin-surface);
+    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 16px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-day-header {
+    margin: 0;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: capitalize;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 8px;
+    background: var(--fp-resv-admin-surface-alt);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-item strong {
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-meta {
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__week-empty {
+    font-size: 13px;
+    color: var(--fp-resv-admin-muted);
+}
+
 .fp-resv-admin--agenda [data-role="arrivals"] {
     display: flex;
     flex-direction: column;
