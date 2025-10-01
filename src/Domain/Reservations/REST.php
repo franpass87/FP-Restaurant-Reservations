@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations;
 
+use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Service;

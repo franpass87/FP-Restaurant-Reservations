@@ -7,25 +7,32 @@ namespace FP\Resv\Core;
 use DateTimeImmutable;
 use DateTimeZone;
 use function array_filter;
+use function array_key_exists;
 use function array_map;
 use function array_merge;
 use function count;
+use function filter_var;
 use function floor;
 use function gmdate;
 use function implode;
+use function is_array;
 use function is_string;
 use function sprintf;
 use function str_replace;
 use function strlen;
 use function strtoupper;
+use function strpbrk;
+use function stripos;
 use function substr;
 use function trim;
 use function uniqid;
+use const FILTER_NULL_ON_FAILURE;
+use const FILTER_VALIDATE_BOOLEAN;
 
 final class ICS
 {
     /**
-     * @param array{uid?:string,summary?:string,description?:string,location?:string,organizer?:string,url?:string,attendees?:array<int, string>,start:DateTimeImmutable,end:DateTimeImmutable,timezone?:string} $data
+     * @param array{uid?:string,summary?:string,description?:string,location?:string,organizer?:string,url?:string,attendees?:array<int, string|array<string, mixed>>,start:DateTimeImmutable,end:DateTimeImmutable,timezone?:string} $data
      */
     public static function generate(array $data): string
     {
@@ -71,11 +78,12 @@ final class ICS
             $lines[] = self::foldLine('URL:' . self::escapeText($url));
         }
         foreach ($attendees as $attendee) {
-            if (!is_string($attendee) || $attendee === '') {
+            $formatted = self::formatAttendee($attendee);
+            if ($formatted === '') {
                 continue;
             }
 
-            $lines[] = self::foldLine('ATTENDEE:' . self::escapeText($attendee));
+            $lines[] = $formatted;
         }
         $lines[] = 'END:VEVENT';
         $lines[] = 'END:VCALENDAR';
@@ -158,12 +166,12 @@ final class ICS
 
         if ($daylight !== null) {
             [$prev, $curr] = $daylight;
-            $sections = array_merge($sections, self::buildTransition('DAYLIGHT', $prev, $curr));
+            $sections = array_merge($sections, self::buildTransition('DAYLIGHT', $prev, $curr, $timezone));
         }
 
         if ($standard !== null) {
             [$prev, $curr] = $standard;
-            $sections = array_merge($sections, self::buildTransition('STANDARD', $prev, $curr));
+            $sections = array_merge($sections, self::buildTransition('STANDARD', $prev, $curr, $timezone));
         }
 
         $sections[] = 'END:VTIMEZONE';
@@ -177,14 +185,16 @@ final class ICS
      *
      * @return array<int, string>
      */
-    private static function buildTransition(string $type, array $previous, array $current): array
+    private static function buildTransition(string $type, array $previous, array $current, DateTimeZone $timezone): array
     {
+        $transition = (new DateTimeImmutable('@' . (int) $current['ts']))->setTimezone($timezone);
+
         return [
             'BEGIN:' . strtoupper($type),
             'TZOFFSETFROM:' . self::formatOffset((int) $previous['offset']),
             'TZOFFSETTO:' . self::formatOffset((int) $current['offset']),
             'TZNAME:' . strtoupper((string) $current['abbr']),
-            'DTSTART:' . gmdate('Ymd\THis', (int) $current['ts']),
+            'DTSTART:' . $transition->format('Ymd\THis'),
             'END:' . strtoupper($type),
         ];
     }
@@ -197,5 +207,78 @@ final class ICS
         $minutes = (int) floor(($offset % 3600) / 60);
 
         return sprintf('%s%02d%02d', $sign, $hours, $minutes);
+    }
+
+    private static function formatAttendee(mixed $attendee): string
+    {
+        if (is_string($attendee)) {
+            $attendee = trim($attendee);
+            if ($attendee === '') {
+                return '';
+            }
+
+            return self::foldLine('ATTENDEE:' . self::escapeText($attendee));
+        }
+
+        if (!is_array($attendee)) {
+            return '';
+        }
+
+        $email = $attendee['email'] ?? null;
+        if (!is_string($email)) {
+            return '';
+        }
+
+        $email = trim($email);
+        if ($email === '') {
+            return '';
+        }
+
+        if (stripos($email, 'mailto:') !== 0) {
+            $email = 'mailto:' . $email;
+        }
+
+        $parameters = ['ATTENDEE'];
+
+        $name = isset($attendee['name']) && is_string($attendee['name']) ? trim($attendee['name']) : '';
+        if ($name !== '') {
+            $parameters[] = 'CN=' . self::escapeParameterValue($name);
+        }
+
+        $role = isset($attendee['role']) && is_string($attendee['role']) ? trim($attendee['role']) : '';
+        if ($role !== '') {
+            $parameters[] = 'ROLE=' . strtoupper($role);
+        }
+
+        if (array_key_exists('rsvp', $attendee)) {
+            $rsvp = filter_var($attendee['rsvp'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($rsvp === null) {
+                $rsvp = (bool) $attendee['rsvp'];
+            }
+
+            $parameters[] = 'RSVP=' . ($rsvp ? 'TRUE' : 'FALSE');
+        }
+
+        $type = isset($attendee['type']) && is_string($attendee['type']) ? trim($attendee['type']) : '';
+        if ($type !== '') {
+            $parameters[] = 'CUTYPE=' . strtoupper($type);
+        }
+
+        $status = isset($attendee['status']) && is_string($attendee['status']) ? trim($attendee['status']) : '';
+        if ($status !== '') {
+            $parameters[] = 'PARTSTAT=' . strtoupper($status);
+        }
+
+        return self::foldLine(implode(';', $parameters) . ':' . self::escapeText($email));
+    }
+
+    private static function escapeParameterValue(string $value): string
+    {
+        $value = trim($value);
+        $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+
+        return strpbrk($escaped, ':;, ') !== false
+            ? '"' . $escaped . '"'
+            : $escaped;
     }
 }

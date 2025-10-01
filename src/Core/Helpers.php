@@ -8,6 +8,7 @@ use function array_map;
 use function ctype_digit;
 use function explode;
 use function filter_var;
+use function preg_match;
 use function str_contains;
 use function stripos;
 use function strlen;
@@ -16,6 +17,7 @@ use function strrpos;
 use function substr_count;
 use function substr;
 use function trim;
+use const FILTER_FLAG_IPV4;
 use const FILTER_FLAG_NO_PRIV_RANGE;
 use const FILTER_FLAG_NO_RES_RANGE;
 use const FILTER_VALIDATE_IP;
@@ -97,6 +99,11 @@ final class Helpers
             return '';
         }
 
+        $mapped = self::validateIpv4MappedAddress($normalized, $allowPrivate);
+        if ($mapped !== '') {
+            return $mapped;
+        }
+
         if ($allowPrivate) {
             return filter_var($normalized, FILTER_VALIDATE_IP) !== false ? $normalized : '';
         }
@@ -161,5 +168,21 @@ final class Helpers
         }
 
         return trim($token, "\"' ");
+    }
+
+    private static function validateIpv4MappedAddress(string $value, bool $allowPrivate): string
+    {
+        if (preg_match('/^::ffff:(.+)$/i', $value, $matches) !== 1) {
+            return '';
+        }
+
+        $flags = FILTER_FLAG_IPV4;
+        if (!$allowPrivate) {
+            $flags |= FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+        }
+
+        return filter_var($matches[1], FILTER_VALIDATE_IP, $flags) !== false
+            ? '::ffff:' . $matches[1]
+            : '';
     }
 }
