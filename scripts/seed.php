@@ -63,6 +63,12 @@ $seed = new class($wpdb) {
                 'sat=12:00-15:30|19:00-23:30',
                 'sun=11:30-15:30'
             ]),
+            'frontend_meals'            => implode("\n", [
+                '*lunch|Pranzo|Disponibile dal lunedì al venerdì.|Include acqua e caffè.|22.00|Menu business',
+                'aperitivo|Aperitivo|Drink + tapas dalle 18:00.|Prenotazione di 90 minuti.|18.50|Nuovo',
+                'dinner|Cena|Percorso degustazione 4 portate.||34.00|Best seller',
+                'brunch|Brunch|Sabato e domenica dalle 11:30.|Bevande calde illimitate.|28.00|Weekend',
+            ]),
         ]);
 
         $this->mergeOption('fp_resv_rooms', [
