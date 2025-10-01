@@ -97,4 +97,31 @@ if (file_put_contents($pluginFile, $updated) === false) {
     exit(1);
 }
 
+$pluginClass = __DIR__ . '/../src/Core/Plugin.php';
+if (is_file($pluginClass)) {
+    if (!is_readable($pluginClass) || !is_writable($pluginClass)) {
+        fwrite(STDERR, "Plugin class file is not readable or writable: {$pluginClass}\n");
+        exit(1);
+    }
+
+    $pluginClassContents = file_get_contents($pluginClass);
+    if ($pluginClassContents === false) {
+        fwrite(STDERR, "Unable to read plugin class file: {$pluginClass}\n");
+        exit(1);
+    }
+
+    $versionConstPattern = '/(public\s+const\s+VERSION\s*=\s*\')(?:[^\']+)(\';)/';
+    $versionUpdated      = preg_replace($versionConstPattern, '$1' . $newVersion . '$2', $pluginClassContents, 1, $constCount);
+
+    if ($versionUpdated === null || $constCount === 0) {
+        fwrite(STDERR, "Failed to update Plugin::VERSION constant.\n");
+        exit(1);
+    }
+
+    if (file_put_contents($pluginClass, $versionUpdated) === false) {
+        fwrite(STDERR, "Failed to write updated plugin class file.\n");
+        exit(1);
+    }
+}
+
 fwrite(STDOUT, $newVersion . "\n");

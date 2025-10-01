@@ -99,6 +99,10 @@ final class Manager
             return;
         }
 
+        if (!Consent::has('ads')) {
+            return;
+        }
+
         DataLayer::storeAttribution($params, (int) ($this->settings()['tracking_utm_cookie_days'] ?? 90));
     }
 

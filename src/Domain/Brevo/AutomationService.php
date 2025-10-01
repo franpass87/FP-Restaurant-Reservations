@@ -439,8 +439,8 @@ final class AutomationService
     private function sendNegativeAlert(int $reservationId, array $result, string $customerEmail): void
     {
         $settings = $this->options->getGroup('fp_resv_notifications', []);
-        $emails   = $this->parseEmails((string) ($settings['restaurant_emails'] ?? ''));
-        $emails   = array_merge($emails, $this->parseEmails((string) ($settings['webmaster_emails'] ?? '')));
+        $emails   = $this->parseEmails($settings['restaurant_emails'] ?? []);
+        $emails   = array_merge($emails, $this->parseEmails($settings['webmaster_emails'] ?? []));
         $emails   = array_values(array_unique($emails));
 
         if ($emails === []) {
@@ -472,15 +472,37 @@ final class AutomationService
         );
     }
 
-    private function parseEmails(string $list): array
+    /**
+     * @param string|array<int|string, mixed> $list
+     */
+    private function parseEmails(string|array $list): array
     {
-        if ($list === '') {
-            return [];
+        if (is_array($list)) {
+            $candidates = array_map(static fn ($email): string => trim((string) $email), $list);
+        } else {
+            if ($list === '') {
+                return [];
+            }
+
+            $candidates = array_map('trim', preg_split('/[,;\n]/', $list) ?: []);
         }
 
-        $parts = array_map('trim', explode(',', $list));
+        $valid = [];
 
-        return array_values(array_filter($parts, static fn (string $email): bool => $email !== ''));
+        foreach ($candidates as $email) {
+            if ($email === '') {
+                continue;
+            }
+
+            $sanitized = sanitize_email($email);
+            if ($sanitized === '' || !is_email($sanitized)) {
+                continue;
+            }
+
+            $valid[] = $sanitized;
+        }
+
+        return array_values(array_unique($valid));
     }
 
     private function defaultListIds(): array
