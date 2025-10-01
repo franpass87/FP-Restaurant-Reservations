@@ -1,5 +1,7 @@
 # Future Improvement Tasks
 
+This list reflects the current codebase as of the latest repository refresh, ensuring the suggestions remain compatible with the present implementation.
+
 Below are ten proposed enhancements for the plugin, captured as actionable task stubs for future pull requests.
 
 :::task-stub{title="Add REST parameter schema for reservation creation"}
