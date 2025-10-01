@@ -24,7 +24,7 @@ use function trim;
 use function wp_mail;
 use function wp_strip_all_tags;
 
-final class Mailer
+class Mailer
 {
     private const MAX_RETRY_ATTEMPTS = 3;
 
