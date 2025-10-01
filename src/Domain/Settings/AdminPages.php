@@ -339,14 +339,14 @@ final class AdminPages
                     . ' name="' . esc_attr($inputName) . '"'
                     . ' data-service-hours-input'
                     . ' hidden'
-                >' . esc_textarea($rawValue) . '</textarea>';
+                    . '>' . esc_textarea($rawValue) . '</textarea>';
                 echo '<div'
                     . ' class="fp-resv-service-hours"'
                     . ' data-service-hours'
                     . ' data-target="#' . esc_attr($inputId) . '"'
                     . ' data-value="' . esc_attr($stateJson) . '"'
                     . ' data-config="' . esc_attr($configJson) . '"'
-                . '></div>';
+                    . '></div>';
                 break;
             case 'textarea':
                 $rows = (int) ($field['rows'] ?? 5);
@@ -1467,6 +1467,19 @@ final class AdminPages
                                 'min'         => 1,
                                 'max'         => 120,
                                 'description' => __('I dati delle prenotazioni verranno anonimizzati dopo il periodo indicato.', 'fp-restaurant-reservations'),
+                            ],
+                        ],
+                    ],
+                    'general-meals' => [
+                        'title'       => __('Pasti & turni frontend', 'fp-restaurant-reservations'),
+                        'description' => __('Definisci i pulsanti di selezione pasto mostrati nel primo step del form.', 'fp-restaurant-reservations'),
+                        'fields'      => [
+                            'frontend_meals' => [
+                                'label'       => __('Pasti disponibili', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea',
+                                'rows'        => 5,
+                                'default'     => '',
+                                'description' => __('Inserisci un pasto per riga nel formato `*chiave|Etichetta|Hint opzionale|Messaggio opzionale|Prezzo opzionale|Badge opzionale|Icona badge opzionale`. Aggiungi `*` prima della chiave per indicare il pasto predefinito.', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],

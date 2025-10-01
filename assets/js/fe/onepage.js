@@ -206,6 +206,8 @@ class FormApp {
         this.hiddenMeal = this.form ? this.form.querySelector('input[name=\"fp_resv_meal\"]') : null;
         this.hiddenPrice = this.form ? this.form.querySelector('input[name=\"fp_resv_price_per_person\"]') : null;
         this.hiddenSlot = this.form ? this.form.querySelector('input[name=\"fp_resv_slot_start\"]') : null;
+        this.dateField = this.form ? this.form.querySelector('[data-fp-resv-field=\"date\"]') : null;
+        this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field=\"party\"]') : null;
         this.summaryTargets = Array.prototype.slice.call(root.querySelectorAll('[data-fp-resv-summary]'));
         this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field=\"phone\"]') : null;
         this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_e164\"]') : null;
@@ -257,6 +259,7 @@ class FormApp {
         this.bind();
         this.initializeSections();
         this.initializeMeals();
+        this.initializeDateField();
         this.initializeAvailability();
         this.syncConsentState();
         this.updateSubmitState();
@@ -275,6 +278,7 @@ class FormApp {
         this.form.addEventListener('focusin', this.handleFirstInteraction.bind(this));
         this.form.addEventListener('blur', this.handleFieldBlur.bind(this), true);
         this.form.addEventListener('keydown', this.handleKeydown.bind(this), true);
+        this.form.addEventListener('click', this.handleNavClick.bind(this));
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         this.root.addEventListener('click', this.handleDelegatedTrackingEvent);
 
@@ -330,6 +334,25 @@ class FormApp {
                 _this.applyMealSelection(button);
             }
         });
+    }
+
+    initializeDateField() {
+        if (!this.dateField) {
+            return;
+        }
+
+        const openPicker = () => {
+            if (typeof this.dateField.showPicker === 'function') {
+                try {
+                    this.dateField.showPicker();
+                } catch (error) {
+                    // Alcuni browser (es. Safari) potrebbero non supportare showPicker: ignora.
+                }
+            }
+        };
+
+        this.dateField.addEventListener('focus', openPicker);
+        this.dateField.addEventListener('click', openPicker);
     }
 
     initializeAvailability() {
@@ -437,6 +460,9 @@ class FormApp {
 
         const fieldKey = target.getAttribute('data-fp-resv-field') || '';
         if (fieldKey === 'date' || fieldKey === 'party' || fieldKey === 'slots' || fieldKey === 'time') {
+            if (fieldKey === 'date' || fieldKey === 'party') {
+                this.clearSlotSelection({ schedule: false });
+            }
             this.scheduleAvailabilityUpdate();
         }
 
@@ -491,6 +517,31 @@ class FormApp {
         }
 
         event.preventDefault();
+    }
+
+    handleNavClick(event) {
+        const trigger = event.target instanceof HTMLElement
+            ? event.target.closest('[data-fp-resv-nav]')
+            : null;
+
+        if (!trigger) {
+            return;
+        }
+
+        const section = trigger.closest('[data-fp-resv-section]');
+        if (!section) {
+            return;
+        }
+
+        event.preventDefault();
+        this.handleFirstInteraction();
+
+        const direction = trigger.getAttribute('data-fp-resv-nav');
+        if (direction === 'prev') {
+            this.navigateToPrevious(section);
+        } else if (direction === 'next') {
+            this.navigateToNext(section);
+        }
     }
 
     handleProgressClick(event) {
@@ -625,6 +676,8 @@ class FormApp {
             this.hiddenPrice.value = price !== null ? String(price) : '';
         }
 
+        this.clearSlotSelection({ schedule: false });
+
         const notice = button.getAttribute('data-meal-notice');
         if (this.mealNotice) {
             if (notice && notice.trim() !== '') {
@@ -636,6 +689,54 @@ class FormApp {
             }
         }
 
+        this.updateSubmitState();
+    }
+
+    clearSlotSelection(options = {}) {
+        if (this.hiddenSlot) {
+            this.hiddenSlot.value = '';
+        }
+
+        const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
+        if (timeField) {
+            timeField.value = '';
+            timeField.removeAttribute('data-slot-start');
+        }
+
+        if (this.availabilityRoot) {
+            const selectedButtons = this.availabilityRoot.querySelectorAll('button[data-slot][aria-pressed="true"]');
+            Array.prototype.forEach.call(selectedButtons, (button) => {
+                button.setAttribute('aria-pressed', 'false');
+            });
+        }
+
+        const slotsSection = this.sections.find((section) => (section.getAttribute('data-step') || '') === 'slots');
+        if (slotsSection) {
+            const slotsKey = slotsSection.getAttribute('data-step') || '';
+            const previousState = this.state.sectionStates[slotsKey] || 'locked';
+
+            this.updateSectionAttributes(slotsSection, 'locked', { silent: true });
+
+            const slotsIndex = this.sections.indexOf(slotsSection);
+            if (slotsIndex !== -1) {
+                for (let index = slotsIndex + 1; index < this.sections.length; index += 1) {
+                    const section = this.sections[index];
+                    this.updateSectionAttributes(section, 'locked', { silent: true });
+                }
+            }
+
+            this.updateProgressIndicators();
+
+            if ((options.forceRewind && slotsKey) || previousState === 'completed' || previousState === 'active') {
+                this.activateSectionByKey(slotsKey);
+            }
+        }
+
+        if (options.schedule !== false) {
+            this.scheduleAvailabilityUpdate();
+        }
+
+        this.updateSummary();
         this.updateSubmitState();
     }
 
@@ -680,6 +781,42 @@ class FormApp {
             this.dispatchSectionUnlocked(nextKey);
             this.scrollIntoView(nextSection);
         }
+    }
+
+    navigateToPrevious(section) {
+        const index = this.sections.indexOf(section);
+        if (index <= 0) {
+            return;
+        }
+
+        const previousSection = this.sections[index - 1];
+        if (!previousSection) {
+            return;
+        }
+
+        const previousKey = previousSection.getAttribute('data-step') || '';
+        if (!previousKey) {
+            return;
+        }
+
+        this.activateSectionByKey(previousKey);
+    }
+
+    navigateToNext(section) {
+        if (!this.isSectionValid(section)) {
+            const invalid = this.findFirstInvalid(section);
+            if (invalid) {
+                if (typeof invalid.reportValidity === 'function') {
+                    invalid.reportValidity();
+                }
+                if (typeof invalid.focus === 'function') {
+                    invalid.focus({ preventScroll: false });
+                }
+            }
+            return;
+        }
+
+        this.completeSection(section, true);
     }
 
     dispatchSectionUnlocked(key) {
@@ -1091,13 +1228,21 @@ class FormApp {
         }
     }
 
+    findFirstInvalid(section) {
+        if (!section) {
+            return null;
+        }
+
+        return section.querySelector('[data-fp-resv-field]:invalid, [required]:invalid');
+    }
+
     collectAvailabilityParams() {
-        const dateField = this.form.querySelector('[data-fp-resv-field=\"date\"]');
-        const partyField = this.form.querySelector('[data-fp-resv-field=\"party\"]');
         const meal = this.hiddenMeal ? this.hiddenMeal.value : '';
+        const dateValue = this.dateField && this.dateField.value ? this.dateField.value : '';
+        const partyValue = this.partyField && this.partyField.value ? this.partyField.value : '';
         return {
-            date: dateField && dateField.value ? dateField.value : '',
-            party: partyField && partyField.value ? partyField.value : '',
+            date: dateValue,
+            party: partyValue,
             meal,
         };
     }
@@ -1116,6 +1261,7 @@ class FormApp {
     }
 
     handleSlotSelected(slot) {
+        this.handleFirstInteraction();
         const timeField = this.form.querySelector('[data-fp-resv-field=\"time\"]');
         if (timeField) {
             timeField.value = slot && slot.label ? slot.label : '';

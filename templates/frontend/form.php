@@ -28,6 +28,19 @@ $profilingEnabled = !empty($privacy['profiling_enabled']);
 $style      = $context['style'] ?? [];
 $progressLabels = is_array($strings['steps'] ?? null) ? $strings['steps'] : [];
 $meals = isset($context['meals']) && is_array($context['meals']) ? array_values($context['meals']) : [];
+$defaultMeal = null;
+foreach ($meals as $meal) {
+    if (!empty($meal['active'])) {
+        $defaultMeal = $meal;
+        break;
+    }
+}
+if ($defaultMeal === null && $meals !== []) {
+    $defaultMeal = $meals[0];
+}
+$defaultMealKey   = isset($defaultMeal['key']) ? (string) $defaultMeal['key'] : '';
+$defaultMealPrice = isset($defaultMeal['price']) ? (string) $defaultMeal['price'] : '';
+$defaultMealNotice = isset($defaultMeal['notice']) ? (string) $defaultMeal['notice'] : '';
 $hints = is_array($strings['hints'] ?? null) ? $strings['hints'] : [];
 $noticeMessage = '';
 if (isset($context['notice']) && is_string($context['notice'])) {
@@ -99,8 +112,8 @@ endif;
                 </a>
             <?php endif; ?>
         </div>
-        <input type="hidden" name="fp_resv_meal" value="">
-        <input type="hidden" name="fp_resv_price_per_person" value="">
+        <input type="hidden" name="fp_resv_meal" value="<?php echo esc_attr($defaultMealKey); ?>">
+        <input type="hidden" name="fp_resv_price_per_person" value="<?php echo esc_attr($defaultMealPrice); ?>">
         <input type="hidden" name="fp_resv_location" value="<?php echo esc_attr($config['location'] ?? 'default'); ?>">
         <input type="hidden" name="fp_resv_locale" value="<?php echo esc_attr($config['locale'] ?? 'it_IT'); ?>">
         <input type="hidden" name="fp_resv_language" value="<?php echo esc_attr($config['language'] ?? 'it'); ?>">
@@ -160,12 +173,17 @@ endif;
                 <p><?php echo esc_html($noticeMessage); ?></p>
             </aside>
         <?php endif; ?>
+        <?php $totalSteps = count($steps); ?>
         <ol class="fp-resv-widget__steps" data-fp-resv-steps>
             <?php foreach ($steps as $index => $step) : ?>
                 <?php
                 $stepKey = (string) ($step['key'] ?? '');
                 $isActive = $index === 0;
                 $titleId = $formId . '-section-title-' . $stepKey;
+                $hasPrevious = $index > 0;
+                $hasNext = $index < $totalSteps - 1;
+                $previousLabel = $strings['actions']['back'] ?? __('Indietro', 'fp-restaurant-reservations');
+                $nextLabel = $strings['actions']['continue'] ?? __('Continua', 'fp-restaurant-reservations');
                 ?>
                 <li
                     class="fp-resv-step fp-section"
@@ -216,7 +234,7 @@ endif;
                                                 $mealBadgeIcon = isset($meal['badge_icon']) ? (string) $meal['badge_icon'] : '';
                                                 $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
                                                 $mealNotice = isset($meal['notice']) ? (string) $meal['notice'] : '';
-                                                $mealPrice  = isset($meal['price']) ? (float) $meal['price'] : 0.0;
+                                                $mealPrice  = isset($meal['price']) ? (string) $meal['price'] : '';
                                                 $isActive  = !empty($meal['active']);
                                                 ?>
                                                 <button
@@ -238,7 +256,13 @@ endif;
                                                 </button>
                                             <?php endforeach; ?>
                                         </div>
-                                        <p class="fp-meals__notice fp-hint" data-fp-resv-meal-notice hidden></p>
+                                        <p
+                                            class="fp-meals__notice fp-hint"
+                                            data-fp-resv-meal-notice
+                                            <?php echo $defaultMealNotice === '' ? 'hidden' : ''; ?>
+                                        >
+                                            <?php echo esc_html($defaultMealNotice); ?>
+                                        </p>
                                     </section>
                                 <?php endif; ?>
                                 <?php break;
@@ -372,6 +396,20 @@ endif;
                         }
                         ?>
                     </div>
+                    <?php if ($hasPrevious || $hasNext) : ?>
+                        <footer class="fp-resv-step__footer">
+                            <?php if ($hasPrevious) : ?>
+                                <button type="button" class="fp-btn fp-btn--ghost" data-fp-resv-nav="prev">
+                                    <?php echo esc_html($previousLabel); ?>
+                                </button>
+                            <?php endif; ?>
+                            <?php if ($hasNext) : ?>
+                                <button type="button" class="fp-btn fp-btn--primary" data-fp-resv-nav="next">
+                                    <?php echo esc_html($nextLabel); ?>
+                                </button>
+                            <?php endif; ?>
+                        </footer>
+                    <?php endif; ?>
                 </li>
             <?php endforeach; ?>
         </ol>

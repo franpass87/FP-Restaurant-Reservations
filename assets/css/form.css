@@ -519,7 +519,8 @@
     transform: scale(1.05);
 }
 
-.fp-slots {
+.fp-slots,
+.fp-resv-slots {
     display: grid;
     gap: 0.75rem;
     padding: 1rem;
@@ -530,29 +531,35 @@
 }
 
 .fp-slots__status,
-.fp-slots__empty {
+.fp-slots__empty,
+.fp-resv-slots__status,
+.fp-resv-slots__empty {
     margin: 0;
     color: var(--fp-resv-color-muted);
     font-size: 0.9em;
 }
 
-.fp-slots__status[data-state="loading"] {
+.fp-slots__status[data-state="loading"],
+.fp-resv-slots__status[data-state="loading"] {
     font-style: italic;
 }
 
-.fp-slots__status[data-state="error"] {
+.fp-slots__status[data-state="error"],
+.fp-resv-slots__status[data-state="error"] {
     color: var(--fp-resv-color-error);
     font-weight: 600;
 }
 
-.fp-slots__boundary {
+.fp-slots__boundary,
+.fp-resv-slots__boundary {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
 }
 
-.fp-slots__list {
+.fp-slots__list,
+.fp-resv-slots__list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 0.65rem;
@@ -561,7 +568,8 @@
     list-style: none;
 }
 
-.fp-slots__list button {
+.fp-slots__list button,
+.fp-resv-slots__list button {
     border-radius: 999px;
     border: 1px solid var(--fp-resv-slot-border, rgba(148, 163, 184, 0.55));
     background: var(--fp-resv-slot-bg, #ffffff);
@@ -573,7 +581,10 @@
 
 .fp-slots__list button:hover,
 .fp-slots__list button:focus-visible,
-.fp-slots__list button[aria-pressed="true"] {
+.fp-slots__list button[aria-pressed="true"],
+.fp-resv-slots__list button:hover,
+.fp-resv-slots__list button:focus-visible,
+.fp-resv-slots__list button[aria-pressed="true"] {
     transform: translateY(-1px);
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
     background: var(--fp-resv-slot-selected-bg, #4338ca);
@@ -709,6 +720,10 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
+}
+
+.fp-resv-step__footer [data-fp-resv-nav="prev"] {
+    margin-inline-end: auto;
 }
 
 .fp-resv-widget__actions {
@@ -891,7 +906,8 @@
     .fp-btn,
     .fp-resv-button,
     .fp-resv-step,
-    .fp-slots__list button {
+    .fp-slots__list button,
+    .fp-resv-slots__list button {
         transition: none !important;
     }
 

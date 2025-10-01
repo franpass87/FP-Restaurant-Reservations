@@ -11,16 +11,23 @@ use FP\Resv\Domain\Settings\Style;
 use function apply_filters;
 use function array_key_exists;
 use function array_keys;
+use function array_map;
+use function explode;
 use function esc_url_raw;
 use function is_array;
 use function is_numeric;
 use function is_string;
+use function preg_split;
 use function preg_replace;
 use function sanitize_html_class;
 use function sanitize_key;
+use function sanitize_text_field;
 use function sprintf;
+use function str_replace;
+use function str_starts_with;
 use function strtolower;
 use function trim;
+use function ucwords;
 use function wp_strip_all_tags;
 
 final class FormContext
@@ -84,6 +91,9 @@ final class FormContext
         ]);
         $fallbackLocale   = $this->language->getFallbackLocale();
 
+        $mealDefinition = isset($generalSettings['frontend_meals']) ? (string) $generalSettings['frontend_meals'] : '';
+        $rawMeals       = $this->parseMealDefinitions($mealDefinition);
+
         $config = [
             'formId'          => $this->resolveFormId(),
             'location'        => $this->resolveLocation(),
@@ -98,6 +108,14 @@ final class FormContext
                 'waitlistEnabled' => ($generalSettings['enable_waitlist'] ?? '0') === '1',
             ],
         ];
+
+        $meals = $this->normalizeMealList(apply_filters('fp_resv_form_meals', $rawMeals, $config));
+        if ($meals !== []) {
+            $defaultMeal = $this->getDefaultMealKey($meals);
+            if ($defaultMeal !== '') {
+                $config['defaults']['meal'] = $defaultMeal;
+            }
+        }
 
         $dictionary  = $this->language->getStrings($languageData['language']);
         $formStrings = is_array($dictionary['form'] ?? null) ? $dictionary['form'] : [];
@@ -181,11 +199,208 @@ final class FormContext
             'data_layer'  => $dataLayer,
             'style'       => $stylePayload,
             'privacy'     => $privacy,
+            'meals'       => $meals,
             'meta'        => [
                 'supported_locales' => $supportedLocales,
                 'pdf_locales'       => $pdfMapKeys,
             ],
         ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function parseMealDefinitions(string $definition): array
+    {
+        if ($definition === '') {
+            return [];
+        }
+
+        $lines = preg_split("/\r\n|\r|\n/", $definition);
+        if (!is_array($lines)) {
+            return [];
+        }
+
+        $meals = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            $parts = array_map('trim', explode('|', $line));
+            if ($parts === []) {
+                continue;
+            }
+
+            $rawKey = array_shift($parts);
+            if (!is_string($rawKey) || $rawKey === '') {
+                continue;
+            }
+
+            $isActive = false;
+            if (str_starts_with($rawKey, '*')) {
+                $isActive = true;
+                $rawKey   = ltrim($rawKey, '* ');
+            }
+
+            if ($rawKey === '') {
+                continue;
+            }
+
+            $entry = [
+                'key'   => $rawKey,
+                'label' => $parts[0] ?? '',
+            ];
+
+            if (isset($parts[1])) {
+                $entry['hint'] = $parts[1];
+            }
+            if (isset($parts[2])) {
+                $entry['notice'] = $parts[2];
+            }
+            if (isset($parts[3])) {
+                $entry['price'] = $parts[3];
+            }
+            if (isset($parts[4])) {
+                $entry['badge'] = $parts[4];
+            }
+            if (isset($parts[5])) {
+                $entry['badge_icon'] = $parts[5];
+            }
+
+            if ($isActive) {
+                $entry['active'] = true;
+            }
+
+            $meals[] = $entry;
+        }
+
+        return $meals;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeMealList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $meals          = [];
+        $defaultAssigned = false;
+
+        foreach ($value as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $key = isset($entry['key']) ? sanitize_key((string) $entry['key']) : '';
+            if ($key === '') {
+                continue;
+            }
+
+            $label = isset($entry['label']) ? sanitize_text_field((string) $entry['label']) : '';
+            if ($label === '') {
+                $label = ucwords(str_replace(['_', '-'], ' ', $key));
+            }
+
+            $meal = [
+                'key'   => $key,
+                'label' => $label,
+            ];
+
+            if (isset($entry['hint'])) {
+                $hint = sanitize_text_field((string) $entry['hint']);
+                if ($hint !== '') {
+                    $meal['hint'] = $hint;
+                }
+            }
+
+            if (isset($entry['notice'])) {
+                $notice = sanitize_text_field((string) $entry['notice']);
+                if ($notice !== '') {
+                    $meal['notice'] = $notice;
+                }
+            }
+
+            if (isset($entry['badge'])) {
+                $badge = sanitize_text_field((string) $entry['badge']);
+                if ($badge !== '') {
+                    $meal['badge'] = $badge;
+                }
+            }
+
+            if (isset($entry['badge_icon'])) {
+                $badgeIcon = sanitize_key((string) $entry['badge_icon']);
+                if ($badgeIcon !== '') {
+                    $meal['badge_icon'] = $badgeIcon;
+                }
+            }
+
+            if (isset($entry['price'])) {
+                $priceValue = $this->toFloat($entry['price']);
+                if ($priceValue !== null) {
+                    $meal['price'] = number_format($priceValue, 2, '.', '');
+                }
+            }
+
+            if (!$defaultAssigned && !empty($entry['active'])) {
+                $meal['active'] = true;
+                $defaultAssigned = true;
+            }
+
+            $meals[] = $meal;
+        }
+
+        if ($meals === []) {
+            return [];
+        }
+
+        if (!$defaultAssigned) {
+            $meals[0]['active'] = true;
+        }
+
+        return array_values($meals);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $meals
+     */
+    private function getDefaultMealKey(array $meals): string
+    {
+        foreach ($meals as $meal) {
+            if (!empty($meal['active']) && isset($meal['key'])) {
+                return (string) $meal['key'];
+            }
+        }
+
+        return '';
+    }
+
+    private function toFloat(mixed $value): ?float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $normalized = str_replace(',', '.', trim($value));
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (!is_numeric($normalized)) {
+            return null;
+        }
+
+        return (float) $normalized;
     }
 
     private function resolveFormId(): string
