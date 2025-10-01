@@ -1,0 +1,153 @@
+{
+  "meta": {
+    "plugin": "FP Restaurant Reservations",
+    "date": "2025-10-01",
+    "wp_min": "6.6",
+    "php_targets": [
+      "8.2",
+      "8.3"
+    ]
+  },
+  "summary": {
+    "status": "audit_complete",
+    "files_scanned": 138,
+    "files_total": 138,
+    "issues_total": 4,
+    "by_severity": {
+      "critical": 0,
+      "high": 2,
+      "medium": 2,
+      "low": 0
+    },
+    "manifest": {
+      "current_hash": "5ad9d334137b619637165039cac9eea10c430b496fccea3b7c4d2ee977d2558a",
+      "previous_hash": "6d11ed4956fa97a10bf1b63ee97f13e1b2ae5e54e9cba8e5bbd95cbebc02acb8",
+      "notes": [
+        "Added QA tooling (tests/**, tools/bump-version.php) and vendor assets (assets/vendor/chart.*) to manifest coverage."
+      ]
+    }
+  },
+  "issues": [
+    {
+      "id": "ISSUE-001",
+      "severity": "high",
+      "category": [
+        "functional",
+        "notifications"
+      ],
+      "file": "src/Domain/Brevo/AutomationService.php",
+      "line": 441,
+      "snippet": "$emails = $this->parseEmails((string) ($settings['restaurant_emails'] ?? ''));",
+      "diagnosis": "Notification options store recipient lists as arrays; casting them to string yields 'Array', so parseEmails() returns ['Array'] and wp_mail() never reaches real addresses.",
+      "impact": "Negative survey alerts are silently dropped, preventing staff follow-up and downstream automations.",
+      "repro": [
+        "Configure restaurant/webmaster emails in settings",
+        "Submit a survey with negative scores",
+        "Observe missing alert email and Brevo log showing recipient 'Array'"
+      ],
+      "proposed_fix": "Treat notification options as arrays, merge them safely, and filter with is_email before calling wp_mail().",
+      "effort": "S",
+      "tags": [
+        "brevo",
+        "email",
+        "survey"
+      ]
+    },
+    {
+      "id": "ISSUE-002",
+      "severity": "high",
+      "category": [
+        "security",
+        "privacy"
+      ],
+      "file": "src/Domain/Tracking/Manager.php",
+      "line": 67,
+      "snippet": "DataLayer::storeAttribution($params, (int) ($this->settings()['tracking_utm_cookie_days'] ?? 90));",
+      "diagnosis": "captureAttribution() runs on init and always persists UTM data via DataLayer::storeAttribution, which sets the fp_resv_utm cookie without checking consent.",
+      "impact": "Marketing identifiers are stored before consent, breaching GDPR/ePrivacy obligations on EU deployments.",
+      "repro": [
+        "Visit the reservation page in a fresh session without granting consent",
+        "Inspect cookies: fp_resv_utm is present as soon as UTM params are in the URL"
+      ],
+      "proposed_fix": "Require Consent::has('ads') or a similar consent flag before calling DataLayer::storeAttribution, or defer storage until consent is granted.",
+      "effort": "M",
+      "tags": [
+        "consent",
+        "tracking",
+        "cookie"
+      ]
+    },
+    {
+      "id": "ISSUE-003",
+      "severity": "medium",
+      "category": [
+        "release",
+        "metadata"
+      ],
+      "file": "src/Core/Plugin.php",
+      "line": 60,
+      "snippet": "public const VERSION = '0.1.0';",
+      "diagnosis": "Plugin::VERSION still reports 0.1.0 while the main plugin header advertises 0.1.1, causing mismatched cache-busting and diagnostics.",
+      "impact": "Asset URLs may retain stale version strings and support tooling reports the wrong release.",
+      "repro": [
+        "Inspect plugin header (0.1.1) and Plugin::VERSION (0.1.0)",
+        "Observe enqueued assets use the outdated version query string"
+      ],
+      "proposed_fix": "Update Plugin::VERSION (and related metadata) to the current release value and keep both sources synchronized.",
+      "effort": "S",
+      "tags": [
+        "version",
+        "cache"
+      ]
+    },
+    {
+      "id": "ISSUE-004",
+      "severity": "medium",
+      "category": [
+        "release",
+        "automation"
+      ],
+      "file": "tools/bump-version.php",
+      "line": 6,
+      "snippet": "$pattern = '/^(\\s*\\*\\s*Version:\\s*)([^\\r\\n]+)/mi';",
+      "diagnosis": "Release helper updates only the plugin header, leaving Plugin::VERSION stale so each scripted bump reintroduces the version mismatch and stale asset cache-busting.",
+      "impact": "Automated releases misreport runtime version and fail to invalidate cached assets until someone fixes the constant manually.",
+      "repro": [
+        "Run php tools/bump-version.php --patch",
+        "Inspect src/Core/Plugin.php \u2014 VERSION constant remains old value"
+      ],
+      "proposed_fix": "Extend the script to also rewrite Plugin::VERSION (and related constants/tests) when bumping the header.",
+      "effort": "S",
+      "tags": [
+        "versioning",
+        "release",
+        "automation"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "compat": {
+    "deprecated": [],
+    "php_warnings": [],
+    "notes": [
+      "Plugin header still lists Requires at least: 6.5; align with target 6.6."
+    ]
+  },
+  "perf": {
+    "hotspots": [],
+    "autoload_options": [],
+    "cron": []
+  },
+  "i18n": {
+    "domain_issues": [],
+    "missing": []
+  },
+  "tests": {
+    "gaps": [
+      "No automated coverage for Brevo automation and consent gating"
+    ],
+    "suggestions": [
+      "Add unit tests around survey alerts and consent-dependent attribution storage."
+    ]
+  }
+}
