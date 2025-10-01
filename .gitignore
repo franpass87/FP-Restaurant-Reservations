@@ -12,6 +12,7 @@
 *.tmp
 *.temp
 *.lock
+!composer.lock
 .DS_Store
 Thumbs.db
 *.png
