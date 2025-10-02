@@ -23,6 +23,16 @@ if (is_readable($autoload)) {
     require $autoload;
 }
 
-require_once __DIR__ . '/src/Core/Plugin.php';
+require_once __DIR__ . '/src/Core/Requirements.php';
 
-FP\Resv\Core\Plugin::boot(__FILE__);
+if (!FP\Resv\Core\Requirements::validate()) {
+    return;
+}
+
+require_once __DIR__ . '/src/Core/BootstrapGuard.php';
+
+FP\Resv\Core\BootstrapGuard::run(__FILE__, static function (): void {
+    require_once __DIR__ . '/src/Core/Plugin.php';
+
+    FP\Resv\Core\Plugin::boot(__FILE__);
+});
