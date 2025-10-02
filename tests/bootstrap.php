@@ -51,6 +51,7 @@ $GLOBALS['__wp_tests_options']    = [];
 $GLOBALS['__wp_tests_transients'] = [];
 $GLOBALS['__wp_tests_mail_log']   = [];
 $GLOBALS['__wp_tests_actions']    = [];
+$GLOBALS['__wp_tests_hooks']      = [];
 
 function get_option(string $name, mixed $default = null): mixed
 {
@@ -159,10 +160,10 @@ function trailingslashit(string $value): string
     return rtrim($value, '/') . '/';
 }
 
-function wp_json_encode(mixed $data): string|false
+function wp_json_encode(mixed $data, int $options = 0, int $depth = 512): string|false
 {
     try {
-        return json_encode($data, JSON_THROW_ON_ERROR);
+        return json_encode($data, JSON_THROW_ON_ERROR | $options, $depth);
     } catch (Throwable) {
         return false;
     }
@@ -206,11 +207,58 @@ function apply_filters(string $hook, mixed $value, mixed ...$args): mixed
 function do_action(string $hook, mixed ...$args): void
 {
     $GLOBALS['__wp_tests_actions'][] = [$hook, $args];
+
+    if (!isset($GLOBALS['__wp_tests_hooks'][$hook])) {
+        return;
+    }
+
+    ksort($GLOBALS['__wp_tests_hooks'][$hook]);
+
+    foreach ($GLOBALS['__wp_tests_hooks'][$hook] as $priority => $callbacks) {
+        foreach ($callbacks as $callback) {
+            $callable     = $callback['callback'];
+            $acceptedArgs = $callback['accepted_args'];
+            $arguments    = $acceptedArgs > 0
+                ? array_slice($args, 0, $acceptedArgs)
+                : [];
+
+            $callable(...$arguments);
+        }
+    }
 }
 
-function add_action(string $hook, callable $callback): void
+function add_action(string $hook, callable $callback, int $priority = 10, int $acceptedArgs = 1): void
 {
-    $GLOBALS['__wp_tests_actions'][] = ['add_action', $hook];
+    $GLOBALS['__wp_tests_actions'][] = ['add_action', $hook, $priority];
+
+    $GLOBALS['__wp_tests_hooks'][$hook][$priority][] = [
+        'callback'      => $callback,
+        'accepted_args' => $acceptedArgs,
+    ];
+}
+
+function has_action(string $hook, mixed $callback = false): int|false
+{
+    if (!isset($GLOBALS['__wp_tests_hooks'][$hook])) {
+        return false;
+    }
+
+    if ($callback === false) {
+        $priorities = array_keys($GLOBALS['__wp_tests_hooks'][$hook]);
+        sort($priorities);
+
+        return $priorities[0] ?? false;
+    }
+
+    foreach ($GLOBALS['__wp_tests_hooks'][$hook] as $priority => $callbacks) {
+        foreach ($callbacks as $stored) {
+            if ($stored['callback'] === $callback) {
+                return $priority;
+            }
+        }
+    }
+
+    return false;
 }
 
 function register_rest_route(string $namespace, string $route, array $args = []): void
