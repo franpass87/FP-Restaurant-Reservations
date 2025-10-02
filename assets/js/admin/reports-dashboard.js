@@ -9,6 +9,15 @@
     return;
   }
 
+  var wpI18n = window.wp && window.wp.i18n;
+  var translate = function (text) {
+    if (wpI18n && typeof wpI18n.__ === 'function') {
+      return wpI18n.__(text, 'fp-restaurant-reservations');
+    }
+
+    return text;
+  };
+
   var startInput = document.querySelector('[data-role="date-start"]');
   var endInput = document.querySelector('[data-role="date-end"]');
   var locationSelect = document.querySelector('[data-role="location"]');
@@ -326,7 +335,7 @@
         labels: labels,
         datasets: [
           {
-            label: settings.i18n ? settings.i18n.reservationsLabel : 'Prenotazioni',
+            label: settings.i18n ? settings.i18n.reservationsLabel : translate('Reservations'),
             data: reservations,
             borderColor: '#4361EE',
             backgroundColor: 'rgba(67, 97, 238, 0.16)',
@@ -335,7 +344,7 @@
             pointRadius: 2,
           },
           {
-            label: settings.i18n ? settings.i18n.coversLabel : 'Coperti',
+            label: settings.i18n ? settings.i18n.coversLabel : translate('Covers'),
             data: covers,
             borderColor: '#2EC4B6',
             backgroundColor: 'rgba(46, 196, 182, 0.16)',

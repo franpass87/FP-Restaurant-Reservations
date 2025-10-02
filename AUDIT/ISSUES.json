@@ -1,0 +1,86 @@
+[
+  {
+    "id": "ISS-0001",
+    "area": "frontend",
+    "title": "Stripe and Google Calendar integrations load via dynamic import of non-module scripts",
+    "severity": "high",
+    "cwe": "CWE-939",
+    "files": [
+      "assets/js/fe/onepage.js:1560-1583"
+    ],
+    "detected_via": ["static review"],
+    "explanation": "The reservation app attempts to load Stripe Checkout and the Google API client using dynamic import(). Those CDN bundles are classic scripts, not ES modules, and are usually served without the cross-origin headers required for module imports. Browsers will reject the module load, the promise is caught and resolved with null, and no fallback is triggered, so the global objects (window.Stripe, gapi) never become available. This breaks card payment collection and Google Calendar syncing on the frontend.",
+    "repro": "Open a reservation form with payments or Google Calendar enabled and observe the network console: the import() call rejects (type=module request or CORS), leaving window.Stripe undefined and the integration stuck.",
+    "suggested_fix": "Replace the import() calls with script tag injectors (e.g. createElement('script')) or enqueue the libraries via wp_enqueue_script so they load as classic scripts before using the integrations.",
+    "dependencies": [],
+    "confidence": 0.3
+  },
+  {
+    "id": "ISS-0002",
+    "area": "security",
+    "title": "Survey submission form lacks nonce-based CSRF protection",
+    "severity": "medium",
+    "cwe": "CWE-352",
+    "files": [
+      "templates/survey/form.php:21-57",
+      "src/Domain/Surveys/REST.php:52-120"
+    ],
+    "detected_via": ["static review"],
+    "explanation": "The public customer satisfaction form posts directly to the REST endpoint without outputting a WordPress nonce or verifying one on submit. The endpoint only checks a shared token tied to reservation id/email, so any site that knows or can guess those parameters can forge POST requests on behalf of a guest, causing bogus survey data without user intent.",
+    "repro": "Load the survey form and inspect the markup: no wp_nonce_field is present. Replay the POST from another origin using the same reservation_id/email/token values and the API accepts it because there is no nonce validation.",
+    "suggested_fix": "Add wp_nonce_field() to the form and require wp_verify_nonce() (or a separate one-time token) in the REST handler before persisting feedback.",
+    "dependencies": [],
+    "confidence": 0.4
+  },
+  {
+    "id": "ISS-0003",
+    "area": "frontend",
+    "title": "Reservation form has no server fallback when JavaScript is disabled",
+    "severity": "medium",
+    "cwe": "N/A",
+    "files": [
+      "templates/frontend/form.php:84-135"
+    ],
+    "detected_via": ["static review"],
+    "explanation": "The primary booking form renders with action=\"\" and relies entirely on the SPA script to hijack submission. Without JavaScript the browser posts back to the current page, but there is no PHP handler to accept the payload, so users with scripting disabled (or failing JS) cannot complete a reservation, resulting in a broken user flow.",
+    "repro": "Disable JavaScript in the browser, load a page with the [fp_reservations] form, fill required fields and submit. The request posts to the same URL and nothing processes the data, so the booking fails silently.",
+    "suggested_fix": "Provide a non-JS code path: set action to the REST endpoint or add a PHP handler hooked to template_redirect that can process standard POST submissions.",
+    "dependencies": [],
+    "confidence": 0.5
+  },
+  {
+    "id": "ISS-0004",
+    "area": "i18n",
+    "title": "Admin JS bundles contain hard-coded Italian fallbacks",
+    "severity": "medium",
+    "cwe": "CWE-227",
+    "files": [
+      "assets/js/admin/agenda-app.js:854-909",
+      "assets/js/admin/style-preview.js:46-54",
+      "assets/js/admin/reports-dashboard.js:329-329"
+    ],
+    "detected_via": ["static review"],
+    "explanation": "Multiple admin scripts use inline Italian strings as default UI labels (e.g. 'Prenotazione aggiornata.', 'Ripristinare lo stile di default?'). If localization data is missing or the script is used in another locale, these Italian phrases leak into the UI and cannot be translated through WordPress translation files.",
+    "repro": "Inspect the agenda and style preview scripts: they call announce() or alert() with Italian literals when localized strings are absent. In a non-Italian site, clearing the localized settings triggers these fallbacks and shows untranslated text.",
+    "suggested_fix": "Replace the hard-coded fallbacks with English defaults wrapped in wp.i18n.__() and register the scripts with wp_set_script_translations so they can be localized properly.",
+    "dependencies": [],
+    "confidence": 0.6
+  },
+  {
+    "id": "ISS-0005",
+    "area": "tooling",
+    "title": "npm lint:js script fails because ESLint config is missing",
+    "severity": "medium",
+    "cwe": "N/A",
+    "files": [
+      "package.json:8-14",
+      "npm run lint:js log:a6f012†L1-L20"
+    ],
+    "detected_via": ["npm","static review"],
+    "explanation": "The package.json exposes a lint:js task but there is no eslint.config.js/.eslintrc in the repository. Running the command aborts immediately with \"ESLint couldn't find an eslint.config\" error, so teams cannot lint or enforce JS coding standards.",
+    "repro": "Run `npm run lint:js`; ESLint exits with an error stating no configuration file was found (see captured log).",
+    "suggested_fix": "Add an ESLint configuration (eslint.config.js or migrate an .eslintrc) that matches the project's needs and commit it so the lint task succeeds.",
+    "dependencies": [],
+    "confidence": 0.9
+  }
+]

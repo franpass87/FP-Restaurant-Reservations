@@ -32,6 +32,7 @@ use function sanitize_email;
 use function sanitize_textarea_field;
 use function strtolower;
 use function trim;
+use function wp_verify_nonce;
 
 final class REST
 {
@@ -69,6 +70,19 @@ final class REST
         $reservationId = absint((string) $request->get_param('reservation_id'));
         if ($reservationId <= 0) {
             return new WP_Error('fp_resv_survey_invalid_reservation', __('Prenotazione non valida.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        $nonce = $request->get_param('fp_resv_survey_nonce') ?? $request->get_param('_wpnonce');
+        if (!is_string($nonce)) {
+            $nonce = $request->get_header('X-WP-Nonce');
+        }
+
+        if (!is_string($nonce) || !wp_verify_nonce($nonce, 'fp_resv_submit_survey')) {
+            return new WP_Error(
+                'fp_resv_survey_invalid_nonce',
+                __('Verifica di sicurezza non superata. Aggiorna la pagina e riprova.', 'fp-restaurant-reservations'),
+                ['status' => 403]
+            );
         }
 
         $email = sanitize_email((string) $request->get_param('email'));

@@ -17,6 +17,14 @@
     const defaults = globals.defaults || {};
     const shadows = globals.shadows || {};
     const i18n = globals.i18n || {};
+    const wpI18n = window.wp && window.wp.i18n;
+    const translate = (text) => {
+        if (wpI18n && typeof wpI18n.__ === 'function') {
+            return wpI18n.__(text, 'fp-restaurant-reservations');
+        }
+
+        return text;
+    };
 
     let dynamicStyle = null;
     let pendingSettings = null;
@@ -45,7 +53,7 @@
 
     document.querySelectorAll('[data-style-reset]').forEach((button) => {
         button.addEventListener('click', (event) => {
-            const message = i18n.resetConfirm || 'Ripristinare lo stile di default?';
+            const message = i18n.resetConfirm || translate('Restore default style?');
             if (!window.confirm(message)) {
                 event.preventDefault();
             }
