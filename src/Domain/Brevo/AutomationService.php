@@ -394,7 +394,7 @@ final class AutomationService
                     [
                         'id'       => $reservationId,
                         'date'     => $reservation['date'] ?? '',
-                        'time'     => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
+                        'time'     => isset($reservation['time']) ? $this->mapper->normalizeTime($reservation['time']) : '',
                         'party'    => isset($reservation['party']) ? (int) $reservation['party'] : 0,
                         'status'   => $reservation['status'] ?? '',
                         'location' => $reservation['location_id'] ?? '',
