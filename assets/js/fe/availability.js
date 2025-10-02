@@ -1,3 +1,4 @@
+import { formatDebugMessage } from './debug.js';
 
 const DEBOUNCE_MS = 400;
 const CACHE_TTL_MS = 60000;
@@ -264,11 +265,13 @@ export function createAvailabilityController(options) {
                     return;
                 }
 
-                const message = (error && error.payload && (error.payload.message || error.payload.code))
+                const rawMessage = (error && error.payload && (error.payload.message || error.payload.code))
                     || (payloadData && payloadData.message)
                     || (options.strings && options.strings.slotsError)
                     || (options.strings && options.strings.submitError)
                     || 'We could not update available times. Please try again.';
+                const debugSource = (error && error.payload) || payloadData || null;
+                const message = formatDebugMessage(rawMessage, debugSource);
                 showBoundary(message);
             });
     }
