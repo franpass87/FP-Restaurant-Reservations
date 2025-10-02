@@ -110,7 +110,7 @@ if (is_file($pluginClass)) {
         exit(1);
     }
 
-    $versionConstPattern = '/((?:(?:public|protected|private)\s+)?const\s+VERSION\s*=\s*)([\'\"])(?:[^\'"\n\r]+)([\'\"])(\s*;)/m';
+    $versionConstPattern = '/((?:(?:public|protected|private)\s+)?const\s+VERSION\s*=\s*)([\'\"])(?:[^\'"\n\r]+)(\2)(\s*;)/m';
 
     $versionUpdated = preg_replace_callback(
         $versionConstPattern,
