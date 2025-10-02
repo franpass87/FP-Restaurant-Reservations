@@ -64,7 +64,7 @@ final class Plugin
      *
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
-    const VERSION = '0.1.1';
+    public const VERSION = '0.1.1';
 
     /**
      * @var string|null
