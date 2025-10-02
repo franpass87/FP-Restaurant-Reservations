@@ -6,10 +6,13 @@ namespace FP\Resv\Core;
 
 final class ServiceContainer
 {
-    private static ?self $instance = null;
+    /**
+     * @var self|null
+     */
+    private static $instance = null;
 
     /** @var array<string, mixed> */
-    private array $services = [];
+    private $services = [];
 
     private function __construct()
     {

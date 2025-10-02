@@ -44,11 +44,20 @@ final class BootstrapGuard
         E_USER_ERROR,
     ];
 
-    private static bool $bootstrapInProgress = false;
+    /**
+     * @var bool
+     */
+    private static $bootstrapInProgress = false;
 
-    private static bool $shutdownRegistered = false;
+    /**
+     * @var bool
+     */
+    private static $shutdownRegistered = false;
 
-    private static bool $failureRecorded = false;
+    /**
+     * @var bool
+     */
+    private static $failureRecorded = false;
 
     /**
      * @param callable():void $bootstrapper

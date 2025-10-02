@@ -27,21 +27,30 @@ final class Consent
     /**
      * @var array<string, string>
      */
-    private static array $state = [];
+    private static $state = [];
 
     /**
      * @var array{version: string, updated_at: int}
      */
-    private static array $meta = [
+    private static $meta = [
         'version'    => '1.0',
         'updated_at' => 0,
     ];
 
-    private static bool $initialized = false;
+    /**
+     * @var bool
+     */
+    private static $initialized = false;
 
-    private static int $cookieTtlDays = 180;
+    /**
+     * @var int
+     */
+    private static $cookieTtlDays = 180;
 
-    private static string $policyVersion = '1.0';
+    /**
+     * @var string
+     */
+    private static $policyVersion = '1.0';
 
     public static function init(Options $options): void
     {

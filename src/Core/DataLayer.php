@@ -26,7 +26,7 @@ final class DataLayer
     /**
      * @var array<int, array<string, mixed>>
      */
-    private static array $queue = [];
+    private static $queue = [];
 
     /**
      * @return array<string, mixed>

@@ -66,9 +66,20 @@ final class Plugin
      */
     public const VERSION = '0.1.1';
 
-    public static string $file;
-    public static string $dir;
-    public static string $url;
+    /**
+     * @var string|null
+     */
+    public static $file = null;
+
+    /**
+     * @var string|null
+     */
+    public static $dir = null;
+
+    /**
+     * @var string|null
+     */
+    public static $url = null;
 
     public static function boot(string $file): void
     {
