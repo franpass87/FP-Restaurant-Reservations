@@ -12,7 +12,6 @@ use function file_exists;
 use function file_put_contents;
 use function function_exists;
 use function is_array;
-use function mb_substr;
 use function preg_split;
 use function rename;
 use function sanitize_file_name;
@@ -192,7 +191,7 @@ class Mailer
         $stripped = trim(wp_strip_all_tags($message));
         $line     = preg_split('/\r?\n/', $stripped, 2)[0] ?? '';
 
-        return mb_substr($line, 0, 191);
+        return Helpers::substr($line, 0, 191);
     }
 
     /**

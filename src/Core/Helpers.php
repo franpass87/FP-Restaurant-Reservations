@@ -9,6 +9,8 @@ use function ctype_digit;
 use function explode;
 use function filter_var;
 use function preg_match;
+use function function_exists;
+use function mb_substr;
 use function str_contains;
 use function stripos;
 use function strlen;
@@ -42,6 +44,21 @@ final class Helpers
     public static function pluginUrl(): string
     {
         return Plugin::$url;
+    }
+
+    public static function substr(string $string, int $start, ?int $length = null): string
+    {
+        if (function_exists('mb_substr')) {
+            return $length === null
+                ? mb_substr($string, $start)
+                : mb_substr($string, $start, $length);
+        }
+
+        $result = $length === null
+            ? substr($string, $start)
+            : substr($string, $start, $length);
+
+        return $result === false ? '' : $result;
     }
 
     public static function clientIp(): string
