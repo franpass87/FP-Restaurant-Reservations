@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Diagnostics;
 
 use DateTimeImmutable;
+use FP\Resv\Core\Helpers;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
@@ -23,7 +24,6 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function ksort;
-use function mb_substr;
 use function number_format;
 use function rewind;
 use function sprintf;
@@ -475,9 +475,9 @@ final class Service
                 if (isset($row['meta_json']) && is_string($row['meta_json']) && $row['meta_json'] !== '') {
                     $decoded = json_decode($row['meta_json'], true);
                     if (is_array($decoded)) {
-                        $meta = mb_substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
+                        $meta = Helpers::substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
                     } else {
-                        $meta = mb_substr($row['meta_json'], 0, 180);
+                        $meta = Helpers::substr($row['meta_json'], 0, 180);
                     }
                 }
 
@@ -592,9 +592,9 @@ final class Service
                 if (is_string($payload) && $payload !== '') {
                     $decoded = json_decode($payload, true);
                     if (is_array($decoded)) {
-                        $details = mb_substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
+                        $details = Helpers::substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
                     } else {
-                        $details = mb_substr($payload, 0, 180);
+                        $details = Helpers::substr($payload, 0, 180);
                     }
                 }
 
@@ -834,9 +834,9 @@ final class Service
                 if (is_string($payload) && $payload !== '') {
                     $decoded = json_decode($payload, true);
                     if (is_array($decoded)) {
-                        $summary = mb_substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
+                        $summary = Helpers::substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
                     } else {
-                        $summary = mb_substr($payload, 0, 180);
+                        $summary = Helpers::substr($payload, 0, 180);
                     }
                 }
 
@@ -908,9 +908,9 @@ final class Service
                 if (is_string($payload) && $payload !== '') {
                     $decoded = json_decode($payload, true);
                     if (is_array($decoded)) {
-                        $summary = mb_substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
+                        $summary = Helpers::substr(json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 180);
                     } else {
-                        $summary = mb_substr($payload, 0, 180);
+                        $summary = Helpers::substr($payload, 0, 180);
                     }
                 }
 
