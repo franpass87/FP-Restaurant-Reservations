@@ -59,6 +59,11 @@ use function is_admin;
 
 final class Plugin
 {
+    /**
+     * Current plugin semantic version.
+     *
+     * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
+     */
     public const VERSION = '0.1.1';
 
     public static string $file;
