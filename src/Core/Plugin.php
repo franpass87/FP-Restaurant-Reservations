@@ -53,6 +53,8 @@ use FP\Resv\Domain\Tables\LayoutService as TablesLayoutService;
 use FP\Resv\Domain\Tables\Repository as TablesRepository;
 use FP\Resv\Domain\Tables\REST as TablesREST;
 use FP\Resv\Frontend\WidgetController;
+use Throwable;
+use function sprintf;
 use function is_admin;
 
 final class Plugin
@@ -72,8 +74,17 @@ final class Plugin
         require_once __DIR__ . '/Autoloader.php';
         Autoloader::register();
 
-        register_activation_hook($file, [self::class, 'onActivate']);
-        add_action('plugins_loaded', [self::class, 'onPluginsLoaded']);
+        register_activation_hook($file, static function (): void {
+            self::runBootstrapStage('activation', static function (): void {
+                self::onActivate();
+            });
+        });
+
+        add_action('plugins_loaded', static function (): void {
+            self::runBootstrapStage('bootstrap', static function (): void {
+                self::onPluginsLoaded();
+            });
+        });
     }
 
     public static function onActivate(): void
@@ -321,5 +332,50 @@ final class Plugin
         Scheduler::init();
 
         REST::init();
+    }
+
+    /**
+     * @param callable():void $callback
+     */
+    private static function runBootstrapStage(string $stage, callable $callback): void
+    {
+        try {
+            $callback();
+        } catch (Throwable $exception) {
+            self::logBootstrapFailure($stage, $exception);
+
+            throw $exception;
+        }
+    }
+
+    private static function logBootstrapFailure(string $stage, Throwable $exception): void
+    {
+        Logging::log(
+            'bootstrap',
+            sprintf('Plugin stage "%s" failed', $stage),
+            self::exceptionContext($stage, $exception)
+        );
+    }
+
+    private static function exceptionContext(string $stage, Throwable $exception): array
+    {
+        $previous = $exception->getPrevious();
+
+        return [
+            'stage'           => $stage,
+            'plugin_version'  => self::VERSION,
+            'plugin_file'     => self::$file ?? null,
+            'plugin_dir'      => self::$dir ?? null,
+            'plugin_url'      => self::$url ?? null,
+            'exception'       => $exception::class,
+            'message'         => $exception->getMessage(),
+            'code'            => $exception->getCode(),
+            'file'            => $exception->getFile(),
+            'line'            => $exception->getLine(),
+            'trace'           => $exception->getTraceAsString(),
+            'previous'        => $previous ? $previous::class : null,
+            'previous_message' => $previous ? $previous->getMessage() : null,
+            'previous_code'    => $previous ? $previous->getCode() : null,
+        ];
     }
 }
