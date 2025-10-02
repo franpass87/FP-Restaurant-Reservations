@@ -99,7 +99,7 @@ final class Manager
             return;
         }
 
-        if (!Consent::has('ads')) {
+        if (!Consent::has('ads') && !Consent::has('analytics')) {
             return;
         }
 
