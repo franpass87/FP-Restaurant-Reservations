@@ -281,7 +281,8 @@ final class BootstrapGuard
             if (function_exists('wp_date')) {
                 $formattedTime = wp_date('Y-m-d H:i:s', (int) $timestamp);
             } else {
-                $formattedTime = date('Y-m-d H:i:s', (int) $timestamp); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+                // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+                $formattedTime = date('Y-m-d H:i:s', (int) $timestamp);
             }
         }
 
