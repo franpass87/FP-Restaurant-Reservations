@@ -64,11 +64,22 @@ final class Plugin
      *
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
-    public const VERSION = '0.1.1';
+    const VERSION = '0.1.1';
 
-    public static string $file;
-    public static string $dir;
-    public static string $url;
+    /**
+     * @var string
+     */
+    public static $file = '';
+
+    /**
+     * @var string
+     */
+    public static $dir = '';
+
+    /**
+     * @var string
+     */
+    public static $url = '';
 
     public static function boot(string $file): void
     {
