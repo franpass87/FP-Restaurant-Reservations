@@ -110,8 +110,17 @@ if (is_file($pluginClass)) {
         exit(1);
     }
 
-    $versionConstPattern = '/(public\s+const\s+VERSION\s*=\s*\')(?:[^\']+)(\';)/';
-    $versionUpdated      = preg_replace($versionConstPattern, '$1' . $newVersion . '$2', $pluginClassContents, 1, $constCount);
+    $versionConstPattern = '/((?:(?:public|protected|private)\s+)?const\s+VERSION\s*=\s*)([\'\"])(?:[^\'"\n\r]+)(\2)(\s*;)/m';
+
+    $versionUpdated = preg_replace_callback(
+        $versionConstPattern,
+        static function (array $match) use ($newVersion): string {
+            return $match[1] . $match[2] . $newVersion . $match[3] . $match[4];
+        },
+        $pluginClassContents,
+        1,
+        $constCount
+    );
 
     if ($versionUpdated === null || $constCount === 0) {
         fwrite(STDERR, "Failed to update Plugin::VERSION constant.\n");
