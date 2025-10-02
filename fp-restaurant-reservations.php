@@ -18,6 +18,41 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$minPhp = '8.1';
+if (version_compare(PHP_VERSION, $minPhp, '<')) {
+    $message = sprintf(
+        /* translators: 1: Minimum supported PHP version, 2: Detected PHP version. */
+        'FP Restaurant Reservations richiede PHP %1$s o superiore. Questo sito esegue PHP %2$s.',
+        $minPhp,
+        PHP_VERSION
+    );
+
+    if (function_exists('add_action')) {
+        add_action('admin_notices', function () use ($message) {
+            if (!function_exists('esc_html')) {
+                echo '<div class="notice notice-error"><p>' . $message . '</p></div>';
+                return;
+            }
+
+            echo '<div class="notice notice-error"><p>' . esc_html($message) . '</p></div>';
+        });
+    }
+
+    if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+        deactivate_plugins(plugin_basename(__FILE__));
+    }
+
+    if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
+        \WP_CLI::warning($message);
+    }
+
+    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+        error_log('[FP Restaurant Reservations] ' . $message);
+    }
+
+    return;
+}
+
 $autoload = __DIR__ . '/vendor/autoload.php';
 if (is_readable($autoload)) {
     require $autoload;
