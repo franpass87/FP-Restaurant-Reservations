@@ -190,7 +190,8 @@ final class Repository
      */
     public function findAgendaEntry(int $id): ?array
     {
-        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
+        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang, '
+            . 'c.marketing_consent, c.profiling_consent '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.id = %d';

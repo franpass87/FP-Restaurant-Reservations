@@ -18,6 +18,7 @@ use function add_action;
 use function add_query_arg;
 use function apply_filters;
 use function array_filter;
+use function array_key_exists;
 use function array_map;
 use function array_values;
 use function ctype_digit;
@@ -74,45 +75,81 @@ final class AutomationService
             return;
         }
 
+        $status = strtolower((string) ($payload['status'] ?? ''));
+
         $contact = $this->mapper->mapReservation([
-            'email'        => $email,
-            'first_name'   => $payload['first_name'] ?? '',
-            'last_name'    => $payload['last_name'] ?? '',
-            'phone'        => $payload['phone'] ?? '',
-            'language'     => $payload['language'] ?? '',
-            'date'         => $payload['date'] ?? '',
-            'time'         => $payload['time'] ?? '',
-            'party'        => $payload['party'] ?? '',
-            'status'       => $payload['status'] ?? '',
-            'location'     => $payload['location'] ?? '',
-            'manage_url'   => $manageUrl,
-            'utm_source'   => $payload['utm_source'] ?? '',
-            'utm_medium'   => $payload['utm_medium'] ?? '',
-            'utm_campaign' => $payload['utm_campaign'] ?? '',
+            'email'              => $email,
+            'first_name'         => $payload['first_name'] ?? '',
+            'last_name'          => $payload['last_name'] ?? '',
+            'phone'              => $payload['phone'] ?? '',
+            'language'           => $payload['language'] ?? '',
+            'date'               => $payload['date'] ?? '',
+            'time'               => $payload['time'] ?? '',
+            'party'              => $payload['party'] ?? '',
+            'status'             => $status,
+            'location'           => $payload['location'] ?? '',
+            'manage_url'         => $manageUrl,
+            'notes'              => $payload['notes'] ?? '',
+            'marketing_consent'  => $payload['marketing_consent'] ?? null,
+            'reservation_id'     => $reservationId,
+            'value'              => $payload['value'] ?? null,
+            'currency'           => $payload['currency'] ?? '',
+            'utm_source'         => $payload['utm_source'] ?? '',
+            'utm_medium'         => $payload['utm_medium'] ?? '',
+            'utm_campaign'       => $payload['utm_campaign'] ?? '',
+            'gclid'              => $payload['gclid'] ?? '',
+            'fbclid'             => $payload['fbclid'] ?? '',
+            'msclkid'            => $payload['msclkid'] ?? '',
+            'ttclid'             => $payload['ttclid'] ?? '',
         ]);
 
         $this->syncContact($reservationId, $contact);
 
-        $status = strtolower((string) ($payload['status'] ?? ''));
+        $subscriptionContext = [
+            'forced_language' => $payload['language_forced'] ?? '',
+            'page_language'   => $payload['language'] ?? '',
+            'phone'           => $payload['phone'] ?? '',
+        ];
+
+        $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+
         if ($status === 'confirmed') {
-            $this->subscribeContact($reservationId, $contact, [
-                'forced_language' => $payload['language_forced'] ?? '',
-                'page_language'   => $payload['language'] ?? '',
-                'phone'           => $payload['phone'] ?? '',
-            ]);
+            $attributes = $contact['attributes'] ?? [];
+            $reservationDate = $attributes['RESERVATION_DATE'] ?? ($payload['date'] ?? '');
+            $reservationTime = $attributes['RESERVATION_TIME'] ?? ($payload['time'] ?? '');
+            $reservationParty = $attributes['RESERVATION_PARTY'] ?? (isset($payload['party']) ? (int) $payload['party'] : 0);
+            $eventProperties = $this->buildEventProperties(
+                $contact,
+                $attributes,
+                [
+                    'id'        => $reservationId,
+                    'date'      => $reservationDate,
+                    'time'      => $reservationTime,
+                    'party'     => $reservationParty,
+                    'status'    => 'confirmed',
+                    'location'  => $payload['location'] ?? '',
+                    'manage_url'=> $manageUrl,
+                ],
+                [
+                    'language'          => $payload['language'] ?? '',
+                    'notes'             => $payload['notes'] ?? '',
+                    'marketing_consent' => $payload['marketing_consent'] ?? null,
+                    'utm_source'        => $payload['utm_source'] ?? '',
+                    'utm_medium'        => $payload['utm_medium'] ?? '',
+                    'utm_campaign'      => $payload['utm_campaign'] ?? '',
+                    'gclid'             => $payload['gclid'] ?? '',
+                    'fbclid'            => $payload['fbclid'] ?? '',
+                    'msclkid'           => $payload['msclkid'] ?? '',
+                    'ttclid'            => $payload['ttclid'] ?? '',
+                    'value'             => $payload['value'] ?? null,
+                    'currency'          => $payload['currency'] ?? '',
+                ]
+            );
 
             $this->dispatchEvent(
                 'reservation_confirmed',
                 $email,
-                [
-                    'reservation' => [
-                        'id'     => $reservationId,
-                        'date'   => $payload['date'] ?? '',
-                        'time'   => $payload['time'] ?? '',
-                        'party'  => $payload['party'] ?? 0,
-                        'status' => $status,
-                    ],
-                ],
+                $eventProperties,
                 $reservationId
             );
         }
@@ -134,67 +171,117 @@ final class AutomationService
         }
 
         $contact = $this->mapper->mapReservation([
-            'email'        => $email,
-            'first_name'   => $context['first_name'] ?? ($context['customer']['first_name'] ?? ''),
-            'last_name'    => $context['last_name'] ?? ($context['customer']['last_name'] ?? ''),
-            'phone'        => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
-            'language'     => $context['customer']['language'] ?? ($context['customer_lang'] ?? ''),
-            'date'         => $context['date'] ?? '',
-            'time'         => isset($context['time']) ? substr((string) $context['time'], 0, 5) : '',
-            'party'        => $context['party'] ?? 0,
-            'status'       => $currentStatus,
-            'location'     => $context['location_id'] ?? '',
-            'manage_url'   => $context['manage_url'] ?? '',
+            'email'              => $email,
+            'first_name'         => $context['first_name'] ?? ($context['customer']['first_name'] ?? ''),
+            'last_name'          => $context['last_name'] ?? ($context['customer']['last_name'] ?? ''),
+            'phone'              => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
+            'language'           => $context['customer']['language'] ?? ($context['customer_lang'] ?? ''),
+            'date'               => $context['date'] ?? '',
+            'time'               => isset($context['time']) ? substr((string) $context['time'], 0, 5) : '',
+            'party'              => $context['party'] ?? 0,
+            'status'             => $currentStatus,
+            'location'           => $context['location_id'] ?? '',
+            'manage_url'         => $context['manage_url'] ?? '',
+            'notes'              => $context['notes'] ?? '',
+            'marketing_consent'  => $context['marketing_consent'] ?? ($context['customer']['marketing_consent'] ?? null),
+            'reservation_id'     => $reservationId,
+            'value'              => $context['value'] ?? null,
+            'currency'           => $context['currency'] ?? '',
+            'utm_source'         => $context['utm_source'] ?? '',
+            'utm_medium'         => $context['utm_medium'] ?? '',
+            'utm_campaign'       => $context['utm_campaign'] ?? '',
+            'gclid'              => $context['gclid'] ?? '',
+            'fbclid'             => $context['fbclid'] ?? '',
+            'msclkid'            => $context['msclkid'] ?? '',
+            'ttclid'             => $context['ttclid'] ?? '',
         ]);
 
         $this->syncContact($reservationId, $contact);
 
-        if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed') {
-            $subscriptionContext = [
-                'forced_language' => $context['customer']['language'] ?? '',
-                'page_language'   => $context['customer_lang'] ?? '',
-                'phone'           => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
-            ];
+        $subscriptionContext = [
+            'forced_language' => $context['customer']['language'] ?? '',
+            'page_language'   => $context['customer_lang'] ?? '',
+            'phone'           => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
+        ];
 
-            $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+        $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+
+        $attributes = $contact['attributes'] ?? [];
+        $reservationDate = $attributes['RESERVATION_DATE'] ?? ($context['date'] ?? '');
+        $reservationTime = $attributes['RESERVATION_TIME'] ?? (isset($context['time']) ? substr((string) $context['time'], 0, 5) : '');
+        $reservationParty = $attributes['RESERVATION_PARTY'] ?? (isset($context['party']) ? (int) $context['party'] : 0);
+
+        if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed') {
+            $eventProperties = $this->buildEventProperties(
+                $contact,
+                $attributes,
+                [
+                    'id'        => $reservationId,
+                    'date'      => $reservationDate,
+                    'time'      => $reservationTime,
+                    'party'     => $reservationParty,
+                    'status'    => 'confirmed',
+                    'location'  => $context['location_id'] ?? '',
+                    'manage_url'=> $context['manage_url'] ?? '',
+                ],
+                [
+                    'language'          => $context['customer_lang'] ?? ($context['customer']['language'] ?? ''),
+                    'notes'             => $context['notes'] ?? '',
+                    'marketing_consent' => $context['marketing_consent'] ?? ($context['customer']['marketing_consent'] ?? null),
+                    'utm_source'        => $context['utm_source'] ?? '',
+                    'utm_medium'        => $context['utm_medium'] ?? '',
+                    'utm_campaign'      => $context['utm_campaign'] ?? '',
+                    'gclid'             => $context['gclid'] ?? '',
+                    'fbclid'            => $context['fbclid'] ?? '',
+                    'msclkid'           => $context['msclkid'] ?? '',
+                    'ttclid'            => $context['ttclid'] ?? '',
+                    'value'             => $context['value'] ?? null,
+                    'currency'          => $context['currency'] ?? '',
+                ]
+            );
 
             $this->dispatchEvent(
                 'reservation_confirmed',
                 $email,
-                [
-                    'reservation' => [
-                        'id'     => $reservationId,
-                        'date'   => $context['date'] ?? '',
-                        'time'   => isset($context['time']) ? substr((string) $context['time'], 0, 5) : '',
-                        'party'  => $context['party'] ?? 0,
-                        'status' => $currentStatus,
-                    ],
-                ],
+                $eventProperties,
                 $reservationId
             );
         }
 
         if ($currentStatus === 'visited') {
-            $subscriptionContext = [
-                'forced_language' => $context['customer']['language'] ?? '',
-                'page_language'   => $context['customer_lang'] ?? '',
-                'phone'           => $context['phone'] ?? ($context['customer']['phone'] ?? ''),
-            ];
-
-            $this->subscribeContact($reservationId, $contact, $subscriptionContext);
+            $eventProperties = $this->buildEventProperties(
+                $contact,
+                $attributes,
+                [
+                    'id'        => $reservationId,
+                    'date'      => $context['date'] ?? '',
+                    'time'      => isset($context['time']) ? substr((string) $context['time'], 0, 5) : '',
+                    'party'     => isset($context['party']) ? (int) $context['party'] : 0,
+                    'status'    => $currentStatus,
+                    'location'  => $context['location_id'] ?? '',
+                    'manage_url'=> $context['manage_url'] ?? '',
+                ],
+                [
+                    'language'          => $context['customer_lang'] ?? ($context['customer']['language'] ?? ''),
+                    'notes'             => $context['notes'] ?? '',
+                    'marketing_consent' => $context['marketing_consent'] ?? ($context['customer']['marketing_consent'] ?? null),
+                    'utm_source'        => $context['utm_source'] ?? '',
+                    'utm_medium'        => $context['utm_medium'] ?? '',
+                    'utm_campaign'      => $context['utm_campaign'] ?? '',
+                    'gclid'             => $context['gclid'] ?? '',
+                    'fbclid'            => $context['fbclid'] ?? '',
+                    'msclkid'           => $context['msclkid'] ?? '',
+                    'ttclid'            => $context['ttclid'] ?? '',
+                    'value'             => $context['value'] ?? null,
+                    'currency'          => $context['currency'] ?? '',
+                ]
+            );
+            $eventProperties['reservation']['visited_at'] = $context['visited_at'] ?? current_time('mysql');
 
             $this->dispatchEvent(
                 'reservation_visited',
                 $email,
-                [
-                    'reservation' => [
-                        'id'       => $reservationId,
-                        'date'     => $context['date'] ?? '',
-                        'time'     => isset($context['time']) ? substr((string) $context['time'], 0, 5) : '',
-                        'party'    => $context['party'] ?? 0,
-                        'visited_at' => $context['visited_at'] ?? current_time('mysql'),
-                    ],
-                ],
+                $eventProperties,
                 $reservationId
             );
 
@@ -274,19 +361,66 @@ final class AutomationService
 
                 $surveyUrl = $this->generateSurveyUrl($reservationId, $email, $reservation);
 
+                $contact = $this->mapper->mapReservation([
+                    'email'              => $email,
+                    'first_name'         => $reservation['first_name'] ?? '',
+                    'last_name'          => $reservation['last_name'] ?? '',
+                    'phone'              => $reservation['phone'] ?? '',
+                    'language'           => $reservation['customer_lang'] ?? '',
+                    'date'               => $reservation['date'] ?? '',
+                    'time'               => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
+                    'party'              => $reservation['party'] ?? 0,
+                    'status'             => $reservation['status'] ?? '',
+                    'location'           => $reservation['location_id'] ?? '',
+                    'notes'              => $reservation['notes'] ?? '',
+                    'marketing_consent'  => $reservation['marketing_consent'] ?? null,
+                    'reservation_id'     => $reservationId,
+                    'value'              => $reservation['value'] ?? null,
+                    'currency'           => $reservation['currency'] ?? '',
+                    'utm_source'         => $reservation['utm_source'] ?? '',
+                    'utm_medium'         => $reservation['utm_medium'] ?? '',
+                    'utm_campaign'       => $reservation['utm_campaign'] ?? '',
+                    'gclid'              => $reservation['gclid'] ?? '',
+                    'fbclid'             => $reservation['fbclid'] ?? '',
+                    'msclkid'            => $reservation['msclkid'] ?? '',
+                    'ttclid'             => $reservation['ttclid'] ?? '',
+                ]);
+
+                $attributes = $contact['attributes'] ?? [];
+
+                $eventProperties = $this->buildEventProperties(
+                    $contact,
+                    $attributes,
+                    [
+                        'id'       => $reservationId,
+                        'date'     => $reservation['date'] ?? '',
+                        'time'     => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
+                        'party'    => isset($reservation['party']) ? (int) $reservation['party'] : 0,
+                        'status'   => $reservation['status'] ?? '',
+                        'location' => $reservation['location_id'] ?? '',
+                    ],
+                    [
+                        'language'          => $reservation['customer_lang'] ?? '',
+                        'notes'             => $reservation['notes'] ?? '',
+                        'marketing_consent' => $reservation['marketing_consent'] ?? null,
+                        'utm_source'        => $reservation['utm_source'] ?? '',
+                        'utm_medium'        => $reservation['utm_medium'] ?? '',
+                        'utm_campaign'      => $reservation['utm_campaign'] ?? '',
+                        'gclid'             => $reservation['gclid'] ?? '',
+                        'fbclid'            => $reservation['fbclid'] ?? '',
+                        'msclkid'           => $reservation['msclkid'] ?? '',
+                        'ttclid'            => $reservation['ttclid'] ?? '',
+                        'value'             => $reservation['value'] ?? null,
+                        'currency'          => $reservation['currency'] ?? '',
+                        'visited_at'        => $reservation['visited_at'] ?? '',
+                    ]
+                );
+                $eventProperties['reservation']['surveyUrl'] = $surveyUrl;
+
                 $this->dispatchEvent(
                     'post_visit_24h',
                     $email,
-                    [
-                        'reservation' => [
-                            'id'        => $reservationId,
-                            'date'      => $reservation['date'] ?? '',
-                            'time'      => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
-                            'party'     => $reservation['party'] ?? 0,
-                            'surveyUrl' => $surveyUrl,
-                            'language'  => $reservation['customer_lang'] ?? '',
-                        ],
-                    ],
+                    $eventProperties,
                     $reservationId
                 );
 
@@ -386,6 +520,52 @@ final class AutomationService
         ], $status, !empty($response['success']) ? null : ($response['message'] ?? null));
 
         return $response;
+    }
+
+    /**
+     * @param array<string, mixed> $properties
+     */
+    private function buildEventProperties(
+        array $contact,
+        array $attributes,
+        array $reservation,
+        array $meta = []
+    ): array {
+        $reservationPayload = array_filter(
+            $reservation,
+            static fn ($value): bool => $value !== null && $value !== ''
+        );
+
+        $metaPayload = array_filter(
+            $meta,
+            static fn ($value): bool => $value !== null && $value !== ''
+        );
+
+        $properties = [
+            'reservation' => $reservationPayload,
+            'contact'     => array_filter(
+                [
+                    'email'      => $contact['email'] ?? '',
+                    'first_name' => $attributes['FIRSTNAME'] ?? '',
+                    'last_name'  => $attributes['LASTNAME'] ?? '',
+                    'phone'      => $attributes['PHONE'] ?? '',
+                ],
+                static fn ($value): bool => $value !== null && $value !== ''
+            ),
+            'attributes'  => $attributes,
+        ];
+
+        if ($metaPayload !== []) {
+            $properties['meta'] = $metaPayload;
+        }
+
+        foreach ($attributes as $key => $value) {
+            if (!array_key_exists($key, $properties)) {
+                $properties[$key] = $value;
+            }
+        }
+
+        return $properties;
     }
 
     /**

@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Settings;
 
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\ServiceContainer;
+use FP\Resv\Domain\Settings\MealPlan;
 use function __;
 use function add_action;
 use function add_query_arg;
@@ -107,6 +108,7 @@ final class AdminPages
         if ($page === 'fp-resv-settings') {
             wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], Plugin::VERSION);
             wp_enqueue_script('fp-resv-service-hours', Plugin::$url . 'assets/js/admin/service-hours.js', [], Plugin::VERSION, true);
+            wp_enqueue_script('fp-resv-meal-plan', Plugin::$url . 'assets/js/admin/meal-plan.js', [], Plugin::VERSION, true);
         }
 
         if ($page !== 'fp-resv-style') {
@@ -354,6 +356,54 @@ final class AdminPages
                     . ' data-target="#' . esc_attr($inputId) . '"'
                     . ' data-value="' . esc_attr($stateJson) . '"'
                     . ' data-config="' . esc_attr($configJson) . '"'
+                    . '></div>';
+                break;
+            case 'meal_plan':
+                $inputId = $optionKey . '-' . $fieldKey . '-meal-plan';
+                $meals   = MealPlan::parse(is_string($value) ? $value : '');
+                $stateJson = wp_json_encode($meals);
+                if (!is_string($stateJson)) {
+                    $stateJson = '[]';
+                }
+
+                $strings = [
+                    'addMeal'        => __('Aggiungi pasto', 'fp-restaurant-reservations'),
+                    'defaultLabel'   => __('Predefinito', 'fp-restaurant-reservations'),
+                    'keyLabel'       => __('Chiave', 'fp-restaurant-reservations'),
+                    'labelLabel'     => __('Etichetta', 'fp-restaurant-reservations'),
+                    'hintLabel'      => __('Hint (opzionale)', 'fp-restaurant-reservations'),
+                    'noticeLabel'    => __('Messaggio (opzionale)', 'fp-restaurant-reservations'),
+                    'priceLabel'     => __('Costo a persona', 'fp-restaurant-reservations'),
+                    'badgeLabel'     => __('Badge (opzionale)', 'fp-restaurant-reservations'),
+                    'badgeIconLabel' => __('Icona badge (opzionale)', 'fp-restaurant-reservations'),
+                    'hoursLabel'     => __('Orari personalizzati', 'fp-restaurant-reservations'),
+                    'hoursHint'      => __('Usa il formato lun=12:30-15:00;ven=19:00-23:00', 'fp-restaurant-reservations'),
+                    'slotLabel'      => __('Intervallo slot (minuti)', 'fp-restaurant-reservations'),
+                    'turnLabel'      => __('Durata turno (minuti)', 'fp-restaurant-reservations'),
+                    'bufferLabel'    => __('Buffer (minuti)', 'fp-restaurant-reservations'),
+                    'parallelLabel'  => __('Prenotazioni parallele', 'fp-restaurant-reservations'),
+                    'capacityLabel'  => __('Capacità massima', 'fp-restaurant-reservations'),
+                    'removeMeal'     => __('Rimuovi pasto', 'fp-restaurant-reservations'),
+                    'emptyState'     => __('Nessun pasto configurato. Aggiungine uno per iniziare.', 'fp-restaurant-reservations'),
+                ];
+
+                $stringsJson = wp_json_encode($strings);
+                if (!is_string($stringsJson)) {
+                    $stringsJson = '{}';
+                }
+
+                echo '<textarea'
+                    . ' id="' . esc_attr($inputId) . '"'
+                    . ' name="' . esc_attr($inputName) . '"'
+                    . ' data-meal-plan-input'
+                    . ' hidden'
+                    . '>' . esc_textarea($stateJson) . '</textarea>';
+                echo '<div'
+                    . ' class="fp-resv-meal-plan"'
+                    . ' data-meal-plan'
+                    . ' data-target="#' . esc_attr($inputId) . '"'
+                    . ' data-value="' . esc_attr($stateJson) . '"'
+                    . ' data-strings="' . esc_attr($stringsJson) . '"'
                     . '></div>';
                 break;
             case 'textarea':
@@ -770,22 +820,8 @@ final class AdminPages
                         __('Il codice valuta deve contenere 3 lettere maiuscole.', 'fp-restaurant-reservations')
                     );
                 }
-                if (!empty($options['service_hours_definition'])) {
-                    $this->validateServiceHoursDefinition($pageKey, (string) $options['service_hours_definition']);
-                }
                 if (!empty($options['frontend_meals'])) {
                     $this->validateMealPlanDefinition((string) $options['frontend_meals']);
-                }
-                if (!empty($options['table_turnover_minutes']) && !empty($options['slot_interval_minutes'])) {
-                    $turnover = (int) $options['table_turnover_minutes'];
-                    $slot     = (int) $options['slot_interval_minutes'];
-                    if ($turnover < $slot) {
-                        $this->addError(
-                            $pageKey,
-                            'turnover_too_short',
-                            __('La durata del turno tavolo deve essere maggiore o uguale all\'intervallo slot.', 'fp-restaurant-reservations')
-                        );
-                    }
                 }
                 break;
             case 'notifications':
@@ -1315,22 +1351,6 @@ final class AdminPages
         return '';
     }
 
-    private function validateServiceHoursDefinition(string $pageKey, string $definition): void
-    {
-        $invalid = $this->collectInvalidServiceHoursEntries($definition);
-
-        if ($invalid !== []) {
-            $this->addError(
-                $pageKey,
-                'invalid_service_hours',
-                sprintf(
-                    __('Alcune righe non rispettano il formato richiesto per gli orari di servizio: %s', 'fp-restaurant-reservations'),
-                    implode(', ', array_map('wp_strip_all_tags', $invalid))
-                )
-            );
-        }
-    }
-
     /**
      * @return list<string>
      */
@@ -1578,58 +1598,15 @@ final class AdminPages
                             ],
                         ],
                     ],
-                    'general-meals' => [
-                        'title'       => __('Pasti & turni frontend', 'fp-restaurant-reservations'),
-                        'description' => __('Definisci i pulsanti di selezione pasto mostrati nel primo step del form.', 'fp-restaurant-reservations'),
+                    'general-service-hours' => [
+                        'title'       => __('Turni & disponibilità', 'fp-restaurant-reservations'),
+                        'description' => __('Definisci i pulsanti di selezione pasto mostrati nel primo step del form e la relativa disponibilità.', 'fp-restaurant-reservations'),
                         'fields'      => [
                             'frontend_meals' => [
                                 'label'       => __('Pasti disponibili', 'fp-restaurant-reservations'),
-                                'type'        => 'textarea',
-                                'rows'        => 5,
+                                'type'        => 'meal_plan',
                                 'default'     => '',
-                                'description' => __('Inserisci un pasto per riga nel formato `*chiave|Etichetta|Hint opzionale|Messaggio opzionale|Prezzo opzionale|Badge opzionale|Icona badge opzionale`. Aggiungi `*` prima della chiave per indicare il pasto predefinito. Puoi definire impostazioni specifiche aggiungendo coppie chiave=valore come `hours=mon:12:30-15:00;sat:19:00-23:00`, `slot=15`, `turn=120`, `buffer=15`, `parallel=6`, `capacity=40`.', 'fp-restaurant-reservations'),
-                            ],
-                        ],
-                    ],
-                    'general-service-hours' => [
-                        'title'       => __('Turni & disponibilità', 'fp-restaurant-reservations'),
-                        'description' => __('Definisci gli orari di servizio, la durata dei turni e i buffer usati dal motore disponibilità.', 'fp-restaurant-reservations'),
-                        'fields'      => [
-                            'service_hours_definition' => [
-                                'label'       => __('Orari di servizio', 'fp-restaurant-reservations'),
-                                'type'        => 'service_hours',
-                                'default'     => "mon=19:00-23:00\ntue=19:00-23:00\nwed=19:00-23:00\nthu=19:00-23:00\nfri=19:00-23:30\nsat=12:30-15:00|19:00-23:30\nsun=12:30-15:00",
-                                'description' => __('Configura fasce orarie per ciascun giorno senza ricordare la sintassi.', 'fp-restaurant-reservations'),
-                            ],
-                            'slot_interval_minutes' => [
-                                'label'       => __('Intervallo slot (minuti)', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '15',
-                                'min'         => 5,
-                                'max'         => 120,
-                            ],
-                            'table_turnover_minutes' => [
-                                'label'       => __('Durata turno tavolo (minuti)', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '120',
-                                'min'         => 30,
-                                'max'         => 300,
-                            ],
-                            'buffer_before_minutes' => [
-                                'label'       => __('Buffer cambio tavolo (minuti)', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '15',
-                                'min'         => 0,
-                                'max'         => 120,
-                                'description' => __('Tempo minimo tra una prenotazione e la successiva sullo stesso tavolo.', 'fp-restaurant-reservations'),
-                            ],
-                            'max_parallel_parties' => [
-                                'label'       => __('Prenotazioni parallele per slot', 'fp-restaurant-reservations'),
-                                'type'        => 'integer',
-                                'default'     => '8',
-                                'min'         => 1,
-                                'max'         => 40,
-                                'description' => __('Limite di richieste contemporanee quando i tavoli non sono assegnati.', 'fp-restaurant-reservations'),
+                                'description' => __('Configura i pasti mostrati nel form, selezionando orari, durata dei turni, buffer, capacità e costo a persona senza ricordare la sintassi testuale.', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],
