@@ -64,7 +64,8 @@ final class Plugin
      *
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
-    public const VERSION = '0.1.1';
+    // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
+    const VERSION = '0.1.1';
 
     /**
      * @var string|null
