@@ -84,7 +84,7 @@ endif;
     <form
         class="fp-resv-widget__form fp-section"
         data-fp-resv-form
-        action=""
+        action="<?php echo esc_url(rest_url('fp-resv/v1/reservations')); ?>"
         method="post"
         data-fp-resv-start="<?php echo esc_attr($events['start'] ?? 'reservation_start'); ?>"
         novalidate

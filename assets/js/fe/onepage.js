@@ -1557,14 +1557,84 @@ class FormApp {
         return resolveEndpoint(endpoints.availability, '/wp-json/fp-resv/v1/availability');
     }
 
+    loadExternalScript(url, globalGetter, markerAttr) {
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+            return Promise.resolve(null);
+        }
+
+        if (typeof globalGetter === 'function') {
+            const existing = globalGetter();
+            if (existing) {
+                return Promise.resolve(existing);
+            }
+        }
+
+        return new Promise((resolve) => {
+            const resolveWithGlobal = () => {
+                if (typeof globalGetter === 'function') {
+                    const value = globalGetter();
+                    resolve(value || null);
+                    return;
+                }
+
+                resolve(null);
+            };
+
+            let script = document.querySelector(`script[src="${url}"]`);
+            if (!script && markerAttr) {
+                script = document.querySelector(`script[${markerAttr}]`);
+            }
+
+            if (script) {
+                if (typeof globalGetter === 'function') {
+                    const immediate = globalGetter();
+                    if (immediate) {
+                        resolve(immediate);
+                        return;
+                    }
+                }
+
+                script.addEventListener('load', resolveWithGlobal, { once: true });
+                script.addEventListener('error', () => resolve(null), { once: true });
+                return;
+            }
+
+            script = document.createElement('script');
+            script.src = url;
+            script.async = true;
+            if (markerAttr) {
+                script.setAttribute(markerAttr, '1');
+            }
+
+            script.onload = resolveWithGlobal;
+            script.onerror = () => resolve(null);
+
+            const target = document.head || document.body || document.documentElement;
+            if (!target) {
+                resolve(null);
+                return;
+            }
+
+            target.appendChild(script);
+        });
+    }
+
     loadStripeIfNeeded() {
         const feature = this.integrations && (this.integrations.stripe || this.integrations.payments_stripe);
         if (!feature || (typeof feature === 'object' && feature.enabled === false)) {
             return Promise.resolve(null);
         }
 
+        if (typeof window !== 'undefined' && window.Stripe) {
+            return Promise.resolve(window.Stripe);
+        }
+
         if (!this.stripePromise) {
-            this.stripePromise = import(/* webpackIgnore: true */ 'https://js.stripe.com/v3/').catch(() => null);
+            this.stripePromise = this.loadExternalScript(
+                'https://js.stripe.com/v3/',
+                () => (typeof window !== 'undefined' ? window.Stripe : null),
+                'data-fp-resv-stripe'
+            );
         }
 
         return this.stripePromise;
@@ -1576,8 +1646,16 @@ class FormApp {
             return Promise.resolve(null);
         }
 
+        if (typeof window !== 'undefined' && window.gapi) {
+            return Promise.resolve(window.gapi);
+        }
+
         if (!this.googlePromise) {
-            this.googlePromise = import(/* webpackIgnore: true */ 'https://apis.google.com/js/api.js').catch(() => null);
+            this.googlePromise = this.loadExternalScript(
+                'https://apis.google.com/js/api.js',
+                () => (typeof window !== 'undefined' ? window.gapi : null),
+                'data-fp-resv-google-api'
+            );
         }
 
         return this.googlePromise;

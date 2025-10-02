@@ -2,6 +2,18 @@
  * FP Restaurant Reservations - Admin Agenda application.
  */
 
+var fpResvAgendaTranslate = (function () {
+  if (typeof window !== 'undefined' && window.wp && window.wp.i18n && typeof window.wp.i18n.__ === 'function') {
+    return function (text) {
+      return window.wp.i18n.__(text, 'fp-restaurant-reservations');
+    };
+  }
+
+  return function (text) {
+    return text;
+  };
+})();
+
 (function () {
   if (typeof window === 'undefined') {
     return;
@@ -851,17 +863,17 @@ function initCalendar(section, request, strings) {
       },
     })
       .then(function () {
-        announce(strings.agendaMoveSuccess || 'Prenotazione aggiornata.');
+        announce(strings.agendaMoveSuccess || fpResvAgendaTranslate('Reservation updated.'));
         loadAgenda();
       })
       .catch(function () {
-        window.alert(strings.agendaMoveError || 'Impossibile spostare la prenotazione.');
+        window.alert(strings.agendaMoveError || fpResvAgendaTranslate('Unable to move the reservation.'));
       });
   }
 
   function openQuickCreate(slot) {
-    var guestLabel = strings.agendaCreateGuest || 'Nome ospite';
-    var partyLabel = strings.agendaCreateParty || 'Numero di coperti';
+    var guestLabel = strings.agendaCreateGuest || fpResvAgendaTranslate('Guest name');
+    var partyLabel = strings.agendaCreateParty || fpResvAgendaTranslate('Party size');
 
     var guest = window.prompt(guestLabel + ':', slot && slot.guest ? slot.guest : '');
     if (guest === null) {
@@ -876,7 +888,7 @@ function initCalendar(section, request, strings) {
 
     var party = parseInt(partyInput, 10);
     if (!guest || !party || party <= 0 || Number.isNaN(party)) {
-      window.alert(strings.agendaCreateInvalid || 'Inserisci un nome e un numero valido.');
+      window.alert(strings.agendaCreateInvalid || fpResvAgendaTranslate('Enter a valid name and party size.'));
       return;
     }
 

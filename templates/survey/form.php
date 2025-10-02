@@ -22,6 +22,7 @@ $actions        = $strings['actions'] ?? [];
     <input type="hidden" name="reservation_id" value="<?php echo esc_attr((string) $reservationId); ?>">
     <input type="hidden" name="email" value="<?php echo esc_attr($email); ?>">
     <input type="hidden" name="token" value="<?php echo esc_attr($token); ?>">
+    <?php wp_nonce_field('fp_resv_submit_survey', 'fp_resv_survey_nonce'); ?>
 
     <fieldset class="fp-resv-survey__group">
         <legend><?php echo esc_html($labels['headline'] ?? __('Com\'è andata la tua esperienza?', 'fp-restaurant-reservations')); ?></legend>
