@@ -360,3 +360,24 @@ if (!function_exists('pll_current_language')) {
     }
 }
 
+if (!function_exists('wp_unslash')) {
+    function wp_unslash(string $value): string
+    {
+        return stripslashes($value);
+    }
+}
+
+if (!function_exists('is_admin')) {
+    function is_admin(): bool
+    {
+        return false;
+    }
+}
+
+if (!function_exists('is_ssl')) {
+    function is_ssl(): bool
+    {
+        return false;
+    }
+}
+
