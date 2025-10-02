@@ -1,5 +1,6 @@
 
 import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
+import { formatDebugMessage } from './debug.js';
 
 let availabilityModulePromise = null;
 const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
@@ -1189,13 +1190,15 @@ class FormApp {
     handleSubmitError(error, latency) {
         const status = error && typeof error.status === 'number' ? error.status : 'unknown';
         const message = (error && error.message) || this.copy.submitError;
+        const debugSource = error && typeof error === 'object' ? error.payload || null : null;
+        const finalMessage = formatDebugMessage(message, debugSource);
 
         if (this.errorAlert && this.errorMessage) {
-            this.errorMessage.textContent = message;
+            this.errorMessage.textContent = finalMessage;
             this.errorAlert.hidden = false;
         }
 
-        this.state.hintOverride = message;
+        this.state.hintOverride = finalMessage;
         this.updateSubmitState();
 
         const eventName = this.events.submit_error || 'submit_error';
