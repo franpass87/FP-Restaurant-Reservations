@@ -110,8 +110,8 @@ class Service
         }
 
         $attribution = DataLayer::attribution();
-        foreach (['utm_source', 'utm_medium', 'utm_campaign'] as $utmKey) {
-            if ($sanitized[$utmKey] === '' && isset($attribution[$utmKey])) {
+        foreach (['utm_source', 'utm_medium', 'utm_campaign', 'gclid', 'fbclid', 'msclkid', 'ttclid'] as $utmKey) {
+            if (($sanitized[$utmKey] === '' || $sanitized[$utmKey] === null) && isset($attribution[$utmKey])) {
                 $sanitized[$utmKey] = $attribution[$utmKey];
             }
         }
@@ -274,6 +274,10 @@ class Service
             'utm_source'  => '',
             'utm_medium'  => '',
             'utm_campaign'=> '',
+            'gclid'       => '',
+            'fbclid'      => '',
+            'msclkid'     => '',
+            'ttclid'      => '',
             'marketing_consent' => false,
             'profiling_consent' => false,
             'policy_version'    => '',
@@ -307,6 +311,10 @@ class Service
         $payload['utm_source'] = sanitize_text_field((string) $payload['utm_source']);
         $payload['utm_medium'] = sanitize_text_field((string) $payload['utm_medium']);
         $payload['utm_campaign'] = sanitize_text_field((string) $payload['utm_campaign']);
+        $payload['gclid'] = sanitize_text_field((string) $payload['gclid']);
+        $payload['fbclid'] = sanitize_text_field((string) $payload['fbclid']);
+        $payload['msclkid'] = sanitize_text_field((string) $payload['msclkid']);
+        $payload['ttclid'] = sanitize_text_field((string) $payload['ttclid']);
         $payload['status']     = $payload['status'] !== null ? sanitize_text_field((string) $payload['status']) : '';
         $payload['status']     = $payload['status'] !== '' ? strtolower($payload['status']) : null;
         $payload['marketing_consent'] = $this->toBool($payload['marketing_consent']);

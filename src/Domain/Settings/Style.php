@@ -489,6 +489,26 @@ final class Style
     color: var(--fp-resv-muted);
     letter-spacing: 0.01em;
 }
+%s .fp-resv-field--phone {
+    grid-column: 1 / -1;
+}
+%s .fp-resv-field--consent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+}
+%s .fp-resv-field--consent .fp-checkbox {
+    margin-top: 0.15rem;
+}
+%s .fp-resv-consent__text {
+    display: block;
+    line-height: 1.5;
+}
+%s .fp-resv-consent__text a {
+    color: inherit;
+    text-decoration: underline;
+}
 %s input[type="text"],
 %s input[type="email"],
 %s input[type="tel"],

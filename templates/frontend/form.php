@@ -376,7 +376,7 @@ endif;
                                 </label>
                                 <label class="fp-resv-field fp-resv-field--consent fp-field">
                                     <input class="fp-checkbox" type="checkbox" name="fp_resv_consent" data-fp-resv-field="consent" required>
-                                    <span>
+                                    <span class="fp-resv-consent__text">
                                         <?php echo esc_html($strings['fields']['consent'] ?? ''); ?>
                                         <?php if ($policyUrl !== '') : ?>
                                             <a href="<?php echo esc_url($policyUrl); ?>" target="_blank" rel="noopener">
@@ -388,13 +388,13 @@ endif;
                                 <?php if ($marketingEnabled) : ?>
                                     <label class="fp-resv-field fp-resv-field--consent fp-field">
                                         <input class="fp-checkbox" type="checkbox" name="fp_resv_marketing_consent" value="1" data-fp-resv-field="marketing_consent">
-                                        <span><?php echo esc_html($strings['consents']['marketing'] ?? ''); ?></span>
+                                        <span class="fp-resv-consent__text"><?php echo esc_html($strings['consents']['marketing'] ?? ''); ?></span>
                                     </label>
                                 <?php endif; ?>
                                 <?php if ($profilingEnabled) : ?>
                                     <label class="fp-resv-field fp-resv-field--consent fp-field">
                                         <input class="fp-checkbox" type="checkbox" name="fp_resv_profiling_consent" value="1" data-fp-resv-field="profiling_consent">
-                                        <span><?php echo esc_html($strings['consents']['profiling'] ?? ''); ?></span>
+                                        <span class="fp-resv-consent__text"><?php echo esc_html($strings['consents']['profiling'] ?? ''); ?></span>
                                     </label>
                                 <?php endif; ?>
                                 <?php break;

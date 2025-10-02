@@ -915,10 +915,16 @@ class FormApp {
             section.hidden = false;
             section.removeAttribute('hidden');
             section.removeAttribute('inert');
+            if (section.style && typeof section.style.removeProperty === 'function') {
+                section.style.removeProperty('display');
+            }
         } else {
             section.hidden = true;
             section.setAttribute('hidden', '');
             section.setAttribute('inert', '');
+            if (section.style && typeof section.style.setProperty === 'function') {
+                section.style.setProperty('display', 'none', 'important');
+            }
         }
 
         if (!silent) {
