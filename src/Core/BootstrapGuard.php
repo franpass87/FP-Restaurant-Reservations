@@ -324,12 +324,12 @@ final class BootstrapGuard
     private static function phpErrorLabel(int $type): string
     {
         return match ($type) {
-            E_ERROR       => 'E_ERROR',
-            E_PARSE       => 'E_PARSE',
-            E_CORE_ERROR  => 'E_CORE_ERROR',
-            E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-            E_USER_ERROR  => 'E_USER_ERROR',
-            default       => __('Errore PHP', 'fp-restaurant-reservations'),
+            E_ERROR         => __('Errore fatale (E_ERROR)', 'fp-restaurant-reservations'),
+            E_PARSE         => __('Errore di parsing (E_PARSE)', 'fp-restaurant-reservations'),
+            E_CORE_ERROR    => __('Errore core (E_CORE_ERROR)', 'fp-restaurant-reservations'),
+            E_COMPILE_ERROR => __('Errore di compilazione (E_COMPILE_ERROR)', 'fp-restaurant-reservations'),
+            E_USER_ERROR    => __('Errore utente (E_USER_ERROR)', 'fp-restaurant-reservations'),
+            default         => __('Errore PHP', 'fp-restaurant-reservations'),
         };
     }
 
