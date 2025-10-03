@@ -7,6 +7,8 @@ namespace Tests\Integration\Reservations;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Mailer;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
+use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
+use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\StripeService;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
@@ -40,6 +42,9 @@ final class ServiceTest extends TestCase
             'attach_ics'        => '0',
             'sender_name'       => 'FP Restaurant',
             'sender_email'      => 'booking@example.test',
+            'customer_template_logo_url' => 'https://example.test/logo.png',
+            'customer_template_header'   => '<div class="email-header">{{restaurant.logo_img}}</div>',
+            'customer_template_footer'   => '<p class="email-footer">© {{emails.year}} {{restaurant.name}}</p>',
         ]);
 
         update_option('fp_resv_language', [
@@ -78,10 +83,12 @@ final class ServiceTest extends TestCase
             }
         };
 
-        $reservations = new ReservationsRepository($this->wpdb);
-        $customers    = new CustomersRepository($this->wpdb);
-        $paymentsRepo = new PaymentsRepository($this->wpdb);
-        $stripe       = new StripeService($options, $paymentsRepo);
+        $reservations          = new ReservationsRepository($this->wpdb);
+        $customers             = new CustomersRepository($this->wpdb);
+        $paymentsRepo          = new PaymentsRepository($this->wpdb);
+        $stripe                = new StripeService($options, $paymentsRepo);
+        $notificationSettings  = new NotificationSettings($options);
+        $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
@@ -90,6 +97,8 @@ final class ServiceTest extends TestCase
             $mailer,
             $customers,
             $stripe,
+            $notificationSettings,
+            $notificationTemplates,
             null
         );
 
@@ -123,6 +132,7 @@ final class ServiceTest extends TestCase
         self::assertSame('20:15:00', $stored['time']);
         self::assertSame('newsletter', $stored['utm_source']);
         self::assertSame('EUR', $stored['currency']);
+        self::assertSame('it', $stored['lang']);
 
         $customersTable = $this->wpdb->get_table($customers->tableName());
         self::assertCount(1, $customersTable);
@@ -134,10 +144,102 @@ final class ServiceTest extends TestCase
         $customerMail = $mailer->sent[0];
         self::assertSame('ada@example.test', $customerMail['to']);
         self::assertStringContainsString('La tua prenotazione', $customerMail['subject']);
+        self::assertSame('text/html', $customerMail['context']['content_type']);
+        self::assertStringContainsString('<a href="', $customerMail['message']);
+        self::assertStringContainsString('Gestisci prenotazione', $customerMail['message']);
+        self::assertStringContainsString('class="email-header"', $customerMail['message']);
+        self::assertStringContainsString('src="https://example.test/logo.png"', $customerMail['message']);
+        self::assertStringContainsString('class="email-footer"', $customerMail['message']);
+        self::assertStringContainsString('<html lang="it"', $customerMail['message']);
+        self::assertStringContainsString('class="fp-resv-email"', $customerMail['message']);
+        self::assertStringContainsString('fp-resv-email__container', $customerMail['message']);
 
         $staffMail = $mailer->sent[1];
         self::assertSame('staff@example.test', $staffMail['to']);
         self::assertSame('restaurant_notification', $staffMail['context']['channel']);
+    }
+
+    public function testCreateReservationUsesEnglishForForeignPhonePrefix(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.42';
+
+        $options      = new Options();
+        Consent::init($options);
+
+        $language     = new Language($options);
+        $mailer       = new class extends Mailer {
+            /** @var array<int, array<string, mixed>> */
+            public array $sent = [];
+
+            public function send(
+                string $to,
+                string $subject,
+                string $message,
+                array $headers = [],
+                array $attachments = [],
+                array $context = []
+            ): bool {
+                $this->sent[] = compact('to', 'subject', 'message', 'headers', 'attachments', 'context');
+
+                return true;
+            }
+        };
+
+        $reservations          = new ReservationsRepository($this->wpdb);
+        $customers             = new CustomersRepository($this->wpdb);
+        $paymentsRepo          = new PaymentsRepository($this->wpdb);
+        $stripe                = new StripeService($options, $paymentsRepo);
+        $notificationSettings  = new NotificationSettings($options);
+        $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
+
+        $service = new Service(
+            $reservations,
+            $options,
+            $language,
+            $mailer,
+            $customers,
+            $stripe,
+            $notificationSettings,
+            $notificationTemplates,
+            null
+        );
+
+        $service->create([
+            'date'        => '2024-06-10',
+            'time'        => '19:45',
+            'party'       => 4,
+            'first_name'  => 'Grace',
+            'last_name'   => 'Hopper',
+            'email'       => 'grace@example.test',
+            'phone'       => '+44 20 7946 0018',
+            'notes'       => 'Vegetarian option',
+            'allergies'   => 'None',
+            'language'    => 'it',
+            'locale'      => 'it_IT',
+            'location'    => 'london',
+            'currency'    => 'EUR',
+            'utm_source'  => 'ads',
+            'utm_medium'  => 'google',
+            'utm_campaign'=> 'brand',
+        ]);
+
+        $reservationsTable = $this->wpdb->get_table($reservations->tableName());
+        self::assertCount(1, $reservationsTable);
+        $storedReservation = $reservationsTable[1];
+        self::assertSame('en', $storedReservation['lang']);
+
+        $customersTable = $this->wpdb->get_table($customers->tableName());
+        self::assertCount(1, $customersTable);
+        $storedCustomer = $customersTable[1];
+        self::assertSame('en', $storedCustomer['lang']);
+
+        self::assertNotEmpty($mailer->sent);
+        $customerMail = $mailer->sent[0];
+        self::assertSame('grace@example.test', $customerMail['to']);
+        self::assertStringContainsString('Your reservation', $customerMail['subject']);
+        self::assertSame('text/html', $customerMail['context']['content_type']);
+        self::assertStringContainsString('<html lang="en"', $customerMail['message']);
+        self::assertStringContainsString('Manage reservation', $customerMail['message']);
     }
 }
 

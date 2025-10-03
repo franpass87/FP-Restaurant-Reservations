@@ -198,6 +198,7 @@ class FormApp {
         this.submitLabel = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-label]') || this.submitButton : null;
         this.submitSpinner = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-spinner]') : null;
         this.submitHint = this.form ? this.form.querySelector('[data-fp-resv-submit-hint]') : null;
+        this.stickyCta = this.form ? this.form.querySelector('[data-fp-resv-sticky-cta]') : null;
         this.successAlert = this.form ? this.form.querySelector('[data-fp-resv-success]') : null;
         this.errorAlert = this.form ? this.form.querySelector('[data-fp-resv-error]') : null;
         this.errorMessage = this.form ? this.form.querySelector('[data-fp-resv-error-message]') : null;
@@ -508,6 +509,11 @@ class FormApp {
 
         this.updateSummary();
 
+        const fieldKey = target.getAttribute('data-fp-resv-field') || '';
+        const previousValue = fieldKey ? (target.dataset.fpResvLastValue || '') : '';
+        const currentValue = fieldKey && typeof target.value === 'string' ? target.value : '';
+        const valueChanged = !fieldKey || previousValue !== currentValue;
+
         const section = closestSection(target);
         if (!section) {
             if (this.isConsentField(target)) {
@@ -518,18 +524,24 @@ class FormApp {
         }
 
         this.ensureSectionActive(section);
-        if (this.isSectionValid(section)) {
+        if (this.isSectionValid(section) && !(fieldKey === 'date' && event.type === 'input' && !valueChanged)) {
             this.completeSection(section, true);
         } else {
             this.updateSectionAttributes(section, 'active');
         }
 
-        const fieldKey = target.getAttribute('data-fp-resv-field') || '';
+        if (fieldKey) {
+            target.dataset.fpResvLastValue = currentValue;
+        }
+
         if (fieldKey === 'date' || fieldKey === 'party' || fieldKey === 'slots' || fieldKey === 'time') {
-            if (fieldKey === 'date' || fieldKey === 'party') {
+            if ((fieldKey === 'date' || fieldKey === 'party') && valueChanged) {
                 this.clearSlotSelection({ schedule: false });
             }
-            this.scheduleAvailabilityUpdate();
+
+            if (fieldKey !== 'date' || valueChanged || event.type === 'change') {
+                this.scheduleAvailabilityUpdate();
+            }
         }
 
         if (this.isConsentField(target)) {
@@ -930,6 +942,8 @@ class FormApp {
         if (!silent) {
             this.updateProgressIndicators();
         }
+
+        this.updateStickyCtaVisibility();
     }
 
     updateProgressIndicators() {
@@ -1011,6 +1025,66 @@ class FormApp {
             const eventName = this.events.form_valid || 'form_valid';
             pushDataLayerEvent(eventName, { timestamp: Date.now() });
             this.state.formValidEmitted = true;
+        }
+    }
+
+    getActiveSectionKey() {
+        for (let index = 0; index < this.sections.length; index += 1) {
+            const section = this.sections[index];
+            const key = section.getAttribute('data-step') || '';
+            if (key !== '' && this.state.sectionStates[key] === 'active') {
+                return key;
+            }
+        }
+
+        return '';
+    }
+
+    getLastSectionKey() {
+        if (this.sections.length === 0) {
+            return '';
+        }
+
+        const lastSection = this.sections[this.sections.length - 1];
+        return lastSection.getAttribute('data-step') || '';
+    }
+
+    updateStickyCtaVisibility() {
+        if (!this.stickyCta) {
+            return;
+        }
+
+        const lastKey = this.getLastSectionKey();
+        if (lastKey === '') {
+            this.stickyCta.hidden = false;
+            this.stickyCta.removeAttribute('hidden');
+            this.stickyCta.removeAttribute('aria-hidden');
+            this.stickyCta.removeAttribute('inert');
+            if (this.stickyCta.style && typeof this.stickyCta.style.removeProperty === 'function') {
+                this.stickyCta.style.removeProperty('display');
+            }
+            return;
+        }
+
+        const activeKey = this.getActiveSectionKey();
+        const shouldShow = activeKey === lastKey;
+
+        if (shouldShow) {
+            this.stickyCta.hidden = false;
+            this.stickyCta.removeAttribute('hidden');
+            this.stickyCta.removeAttribute('aria-hidden');
+            this.stickyCta.removeAttribute('inert');
+            if (this.stickyCta.style && typeof this.stickyCta.style.removeProperty === 'function') {
+                this.stickyCta.style.removeProperty('display');
+            }
+        } else {
+            this.stickyCta.hidden = true;
+            this.stickyCta.setAttribute('hidden', '');
+            this.stickyCta.setAttribute('aria-hidden', 'true');
+            this.stickyCta.setAttribute('inert', '');
+            if (this.stickyCta.style && typeof this.stickyCta.style.setProperty === 'function') {
+                this.stickyCta.style.setProperty('display', 'none', 'important');
+            }
         }
     }
 
@@ -1342,6 +1416,7 @@ class FormApp {
             date: dateValue,
             party: partyValue,
             meal,
+            requiresMeal: this.mealButtons.length > 0,
         };
     }
 

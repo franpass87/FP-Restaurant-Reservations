@@ -26,6 +26,9 @@ use FP\Resv\Domain\Events\Service as EventsService;
 use FP\Resv\Domain\QA\CLI as QASeederCLI;
 use FP\Resv\Domain\QA\REST as QASeederREST;
 use FP\Resv\Domain\QA\Seeder as QASeeder;
+use FP\Resv\Domain\Notifications\Manager as NotificationsManager;
+use FP\Resv\Domain\Notifications\Settings as NotificationsSettings;
+use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationsTemplateRenderer;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\REST as PaymentsREST;
 use FP\Resv\Domain\Payments\StripeService;
@@ -126,6 +129,14 @@ final class Plugin
         $container->register(LanguageSettings::class, $languageSettings);
         $container->register('settings.language', $languageSettings);
 
+        $notificationsSettings = new NotificationsSettings($options);
+        $container->register(NotificationsSettings::class, $notificationsSettings);
+        $container->register('notifications.settings', $notificationsSettings);
+
+        $notificationsTemplates = new NotificationsTemplateRenderer($notificationsSettings, $languageSettings);
+        $container->register(NotificationsTemplateRenderer::class, $notificationsTemplates);
+        $container->register('notifications.templates', $notificationsTemplates);
+
         Consent::init($options);
         Security::boot();
 
@@ -188,6 +199,8 @@ final class Plugin
             $mailer,
             $customersRepository,
             $stripe,
+            $notificationsSettings,
+            $notificationsTemplates,
             $googleCalendar
         );
         $container->register(ReservationsService::class, $reservationsService);
@@ -234,6 +247,17 @@ final class Plugin
         $brevoAutomation->boot();
         $container->register(BrevoAutomation::class, $brevoAutomation);
         $container->register('brevo.automation', $brevoAutomation);
+
+        $notificationsManager = new NotificationsManager(
+            $options,
+            $notificationsSettings,
+            $notificationsTemplates,
+            $reservationsRepository,
+            $mailer
+        );
+        $notificationsManager->boot();
+        $container->register(NotificationsManager::class, $notificationsManager);
+        $container->register('notifications.manager', $notificationsManager);
 
         $eventsService = new EventsService($wpdb, $reservationsService, $reservationsRepository, $customersRepository, $stripe);
         $container->register(EventsService::class, $eventsService);

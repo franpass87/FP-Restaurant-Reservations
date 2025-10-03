@@ -154,11 +154,17 @@
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.fp-resv-meal-plan__field {
+.fp-resv-meal-plan__field { 
     display: flex;
     flex-direction: column;
     gap: 6px;
     font-size: 13px;
+}
+
+.fp-resv-meal-plan__hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
 }
 
 .fp-resv-meal-plan__field span {
@@ -192,6 +198,98 @@
     gap: 16px;
 }
 
+.fp-resv-meal-plan__hours {
+    display: block;
+}
+
+.fp-resv-meal-plan__hours-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.fp-resv-meal-plan__hours-day {
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    border-radius: 12px;
+    background: #fff;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fp-resv-meal-plan__hours-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fp-resv-meal-plan__hours-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fp-resv-admin-strong, #0f172a);
+}
+
+.fp-resv-meal-plan__hours-status {
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-meal-plan__hours-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fp-resv-meal-plan__hours-empty {
+    margin: 0;
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-meal-plan__hours-range {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    align-items: end;
+}
+
+.fp-resv-meal-plan__hours-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-meal-plan__hours-field span {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.fp-resv-meal-plan__hours-field input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: #fff;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.fp-resv-meal-plan__hours-remove {
+    justify-self: flex-start;
+    align-self: center;
+}
+
+.fp-resv-meal-plan__hours-add {
+    align-self: flex-start;
+}
+
 .fp-resv-meal-plan__numeric-grid {
     display: grid;
     gap: 16px;
@@ -211,4 +309,13 @@
     .fp-resv-meal-plan__default {
         margin-left: 0;
     }
+
+    .fp-resv-meal-plan__hours-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+body[class*="fp-resv-"] .wrap > h1,
+body[class*="fp-resv-"] .wrap > hr.wp-header-end {
+    display: none;
 }

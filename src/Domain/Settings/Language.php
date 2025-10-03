@@ -457,6 +457,26 @@ final class Language
                         'manage'  => 'Puoi gestire o annullare la prenotazione da qui: %s',
                         'outro'   => 'Se hai bisogno di assistenza rispondi a questa email.',
                     ],
+                    'confirmation' => [
+                        'subject' => 'La tua prenotazione per {{reservation.formatted_date}}',
+                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nGrazie per aver prenotato per {{reservation.party}} persone il {{reservation.formatted_date}} alle {{reservation.formatted_time}}.\nStato prenotazione: {{reservation.status_label}}.\n\nPuoi gestire o annullare la prenotazione da qui: {{reservation.manage_link}}.\n\nSe hai bisogno di assistenza rispondi a questa email.",
+                    ],
+                    'reminder' => [
+                        'subject' => 'Promemoria: prenotazione del {{reservation.formatted_date}} alle {{reservation.formatted_time}}',
+                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nTi aspettiamo il {{reservation.formatted_date}} alle {{reservation.formatted_time}} per {{reservation.party}} persone.\nSe hai bisogno di modificare la prenotazione puoi farlo qui: {{reservation.manage_link}}.",
+                    ],
+                    'review' => [
+                        'subject' => 'Com\'è andata la tua visita da {{restaurant.name}}?',
+                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nGrazie per averci fatto visita. Raccontaci com\'è andata lasciando una recensione: {{review.link}}.\nIl tuo feedback è prezioso per noi!",
+                    ],
+                    'placeholders' => [
+                        'manage_link' => 'Gestisci prenotazione',
+                        'review_link' => 'Lascia una recensione',
+                    ],
+                    'layout' => [
+                        'header' => '<div style="text-align:center;"><div style="margin-bottom:16px;">{{restaurant.logo_img}}</div><p style="margin:0;font-size:20px;font-weight:600;color:#111827;">{{restaurant.name}}</p></div>',
+                        'footer' => '<p style="margin:0;text-align:center;font-size:12px;color:#6b7280;">© {{emails.year}} {{restaurant.name}} · Tutti i diritti riservati.</p><p style="margin:8px 0 0;text-align:center;font-size:12px;color:#9ca3af;">Hai ricevuto questa email perché hai una prenotazione attiva presso il nostro ristorante.</p>',
+                    ],
                     'staff' => [
                         'restaurant_subject' => 'Nuova prenotazione #%1$d - %2$s',
                         'webmaster_subject'  => 'Copia webmaster prenotazione #%1$d - %2$s',
@@ -641,6 +661,26 @@ final class Language
                         'status'  => 'Reservation status: %s.',
                         'manage'  => 'You can manage or cancel your reservation here: %s',
                         'outro'   => 'Reply to this email if you need assistance.',
+                    ],
+                    'confirmation' => [
+                        'subject' => 'Your reservation for {{reservation.formatted_date}}',
+                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nThanks for booking a table for {{reservation.party}} guests on {{reservation.formatted_date}} at {{reservation.formatted_time}}.\nReservation status: {{reservation.status_label}}.\n\nYou can manage or cancel your reservation here: {{reservation.manage_link}}.\n\nReply to this email if you need assistance.",
+                    ],
+                    'reminder' => [
+                        'subject' => 'Reminder: reservation on {{reservation.formatted_date}} at {{reservation.formatted_time}}',
+                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nWe look forward to seeing you on {{reservation.formatted_date}} at {{reservation.formatted_time}} for {{reservation.party}} guests.\nNeed to change something? Use this link: {{reservation.manage_link}}.",
+                    ],
+                    'review' => [
+                        'subject' => 'How was your visit at {{restaurant.name}}?',
+                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nThanks for dining with us. Share your experience with a quick review: {{review.link}}.\nYour feedback means a lot to us!",
+                    ],
+                    'placeholders' => [
+                        'manage_link' => 'Manage reservation',
+                        'review_link' => 'Leave a review',
+                    ],
+                    'layout' => [
+                        'header' => '<div style="text-align:center;"><div style="margin-bottom:16px;">{{restaurant.logo_img}}</div><p style="margin:0;font-size:20px;font-weight:600;color:#111827;">{{restaurant.name}}</p></div>',
+                        'footer' => '<p style="margin:0;text-align:center;font-size:12px;color:#6b7280;">© {{emails.year}} {{restaurant.name}}. All rights reserved.</p><p style="margin:8px 0 0;text-align:center;font-size:12px;color:#9ca3af;">You received this email because you have an active reservation with us.</p>',
                     ],
                     'staff' => [
                         'restaurant_subject' => 'New reservation #%1$d - %2$s',
