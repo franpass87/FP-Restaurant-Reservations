@@ -283,7 +283,8 @@ export function createAvailabilityController(options) {
             }
 
             const effective = params || (typeof options.getParams === 'function' ? options.getParams() : null);
-            if (!effective || !effective.date || !effective.party) {
+            const requiresMeal = Boolean(effective && effective.requiresMeal);
+            if (!effective || !effective.date || !effective.party || (requiresMeal && !effective.meal)) {
                 lastParams = effective;
                 showEmpty(effective || {});
                 return;

@@ -187,6 +187,38 @@ function wp_strip_all_tags(string $text): string
     return strip_tags($text);
 }
 
+function wp_autop(string $text): string
+{
+    $trimmed = trim($text);
+    if ($trimmed === '') {
+        return '';
+    }
+
+    $paragraphs = preg_split("/\n\s*\n/", $trimmed) ?: [$trimmed];
+
+    return implode("\n\n", array_map(
+        static function (string $paragraph): string {
+            return '<p>' . str_replace("\n", "<br />\n", trim($paragraph)) . '</p>';
+        },
+        $paragraphs
+    ));
+}
+
+function wp_kses_allowed_html(string $context): array
+{
+    return [];
+}
+
+function wp_kses(string $text, array $allowedHtml = []): string
+{
+    return $text;
+}
+
+function wp_kses_post(string $text): string
+{
+    return $text;
+}
+
 function wp_mail(string $to, string $subject, string $message, array $headers = [], array $attachments = []): bool
 {
     $GLOBALS['__wp_tests_mail_log'][] = compact('to', 'subject', 'message', 'headers', 'attachments');

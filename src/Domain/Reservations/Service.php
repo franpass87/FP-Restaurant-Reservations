@@ -10,6 +10,8 @@ use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService as StripePayments;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
+use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
+use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\ICS;
@@ -45,9 +47,11 @@ use function sanitize_email;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
 use function preg_match;
+use function preg_replace;
 use function ob_get_clean;
 use function ob_start;
 use function str_replace;
+use function str_starts_with;
 use function strtolower;
 use function strtoupper;
 use function substr;
@@ -77,6 +81,8 @@ class Service
         private readonly Mailer $mailer,
         private readonly CustomersRepository $customers,
         private readonly StripePayments $stripe,
+        private readonly NotificationSettings $notificationSettings,
+        private readonly NotificationTemplateRenderer $notificationTemplates,
         private readonly ?GoogleCalendarService $calendar = null
     ) {
     }
@@ -298,6 +304,7 @@ class Service
         $payload['last_name']  = sanitize_text_field((string) $payload['last_name']);
         $payload['email']      = sanitize_email((string) $payload['email']);
         $payload['phone']      = sanitize_text_field((string) $payload['phone']);
+        $detectedLanguage      = $this->detectLanguageFromPhone($payload['phone']);
         $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
         $payload['allergies']  = sanitize_textarea_field((string) $payload['allergies']);
         $payload['meal']       = sanitize_text_field((string) $payload['meal']);
@@ -351,6 +358,9 @@ class Service
         }
 
         $payload['language'] = $this->language->ensureLanguage((string) $payload['language']);
+        if ($detectedLanguage !== null) {
+            $payload['language'] = $detectedLanguage;
+        }
         $locale = (string) $payload['locale'];
         if ($locale === '') {
             $locale = $this->language->getFallbackLocale();
@@ -358,6 +368,28 @@ class Service
         $payload['locale'] = $this->language->normalizeLocale($locale);
 
         return $payload;
+    }
+
+    private function detectLanguageFromPhone(string $phone): ?string
+    {
+        $normalized = preg_replace('/[^0-9+]/', '', $phone);
+        if (!is_string($normalized) || $normalized === '') {
+            return null;
+        }
+
+        if (str_starts_with($normalized, '00')) {
+            $normalized = '+' . substr($normalized, 2);
+        }
+
+        if (!str_starts_with($normalized, '+')) {
+            return null;
+        }
+
+        if (str_starts_with($normalized, '+39')) {
+            return 'it';
+        }
+
+        return 'en';
     }
 
     /**
@@ -573,57 +605,90 @@ class Service
     private function sendCustomerEmail(array $payload, int $reservationId, string $manageUrl, string $status): void
     {
         $notifications = $this->options->getGroup('fp_resv_notifications', [
-            'sender_name'  => get_bloginfo('name'),
-            'sender_email' => get_bloginfo('admin_email'),
+            'sender_name'    => get_bloginfo('name'),
+            'sender_email'   => get_bloginfo('admin_email'),
             'reply_to_email' => '',
         ]);
 
-        $headers = [];
-        $senderEmail = (string) ($notifications['sender_email'] ?? '');
-        $senderName  = (string) ($notifications['sender_name'] ?? '');
-        if ($senderEmail !== '') {
-            $from = $senderEmail;
-            if ($senderName !== '') {
-                $from = sprintf('%s <%s>', $senderName, $senderEmail);
-            }
-
-            $headers[] = 'From: ' . $from;
+        if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
+            return;
         }
 
-        $replyTo = (string) ($notifications['reply_to_email'] ?? '');
-        if ($replyTo !== '') {
-            $headers[] = 'Reply-To: ' . $replyTo;
+        $channel = $this->notificationSettings->channelValue(NotificationSettings::CHANNEL_CONFIRMATION);
+        if (!$this->notificationSettings->shouldUsePlugin(NotificationSettings::CHANNEL_CONFIRMATION)) {
+            return;
         }
+
+        if ($channel === 'brevo') {
+            Logging::log('mail', 'Brevo confirmation fallback to internal mailer', [
+                'reservation_id' => $reservationId,
+                'email'          => $payload['email'] ?? '',
+            ]);
+        }
+
+        $headers = $this->buildNotificationHeaders($notifications);
 
         $languageCode = $payload['language'] !== '' ? $payload['language'] : $this->language->getDefaultLanguage();
-        $strings       = $this->language->getStrings($languageCode);
-        $customerCopy  = is_array($strings['emails']['customer'] ?? null) ? $strings['emails']['customer'] : [];
+        $general      = $this->options->getGroup('fp_resv_general', [
+            'restaurant_name' => get_bloginfo('name'),
+        ]);
 
-        $subjectTemplate = (string) ($customerCopy['subject'] ?? __('La tua prenotazione per %s', 'fp-restaurant-reservations'));
-        $formattedDate   = $this->language->formatDate($payload['date'], $languageCode);
-        $formattedTime   = $this->language->formatTime($payload['time'], $languageCode);
-        $statusLabel     = $this->statusLabel($status, $languageCode);
+        $context = [
+            'id'         => $reservationId,
+            'status'     => $status,
+            'date'       => $payload['date'],
+            'time'       => $payload['time'],
+            'party'      => $payload['party'],
+            'language'   => $languageCode,
+            'manage_url' => $manageUrl,
+            'customer'   => [
+                'first_name' => $payload['first_name'],
+                'last_name'  => $payload['last_name'],
+            ],
+            'restaurant' => [
+                'name' => (string) ($general['restaurant_name'] ?? get_bloginfo('name')),
+            ],
+        ];
 
-        $subject = sprintf($subjectTemplate, $formattedDate);
+        $rendered = $this->notificationTemplates->render('confirmation', $context + [
+            'review_url' => '',
+        ]);
 
-        $lines = [];
-        $lines[] = sprintf((string) ($customerCopy['intro'] ?? 'Hi %1$s %2$s,'), $payload['first_name'], $payload['last_name']);
-        $lines[] = '';
-        $lines[] = sprintf(
-            (string) ($customerCopy['body'] ?? 'Thank you for booking for %1$d guests on %2$s at %3$s.'),
-            $payload['party'],
-            $formattedDate,
-            $formattedTime
-        );
-        $lines[] = sprintf((string) ($customerCopy['status'] ?? 'Reservation status: %s.'), $statusLabel);
-        $lines[] = '';
-        $lines[] = sprintf((string) ($customerCopy['manage'] ?? 'Manage your reservation here: %s'), $manageUrl);
-        if (!empty($customerCopy['outro'])) {
+        $subject     = trim($rendered['subject']);
+        $message     = trim($rendered['body']);
+        $contentType = 'text/html';
+
+        if ($subject === '' || wp_strip_all_tags($message) === '') {
+            $strings      = $this->language->getStrings($languageCode);
+            $customerCopy = is_array($strings['emails']['customer'] ?? null) ? $strings['emails']['customer'] : [];
+
+            $subjectTemplate = (string) ($customerCopy['subject'] ?? __('La tua prenotazione per %s', 'fp-restaurant-reservations'));
+            $formattedDate   = $this->language->formatDate($payload['date'], $languageCode);
+            $formattedTime   = $this->language->formatTime($payload['time'], $languageCode);
+            $statusLabel     = $this->statusLabel($status, $languageCode);
+
+            $subject = sprintf($subjectTemplate, $formattedDate);
+
+            $lines = [];
+            $lines[] = sprintf((string) ($customerCopy['intro'] ?? 'Hi %1$s %2$s,'), $payload['first_name'], $payload['last_name']);
             $lines[] = '';
-            $lines[] = (string) $customerCopy['outro'];
-        }
+            $lines[] = sprintf(
+                (string) ($customerCopy['body'] ?? 'Thank you for booking for %1$d guests on %2$s at %3$s.'),
+                $payload['party'],
+                $formattedDate,
+                $formattedTime
+            );
+            $lines[] = sprintf((string) ($customerCopy['status'] ?? 'Reservation status: %s.'), $statusLabel);
+            $lines[] = '';
+            $lines[] = sprintf((string) ($customerCopy['manage'] ?? 'Manage your reservation here: %s'), $manageUrl);
+            if (!empty($customerCopy['outro'])) {
+                $lines[] = '';
+                $lines[] = (string) $customerCopy['outro'];
+            }
 
-        $message = implode("\n", $lines);
+            $message     = implode("\n", $lines);
+            $contentType = 'text/plain';
+        }
 
         $message = apply_filters('fp_resv_customer_email_message', $message, $payload, $reservationId, $manageUrl, $status);
         $subject = apply_filters('fp_resv_customer_email_subject', $subject, $payload, $reservationId, $manageUrl, $status);
@@ -637,9 +702,10 @@ class Service
             [
                 'reservation_id' => $reservationId,
                 'channel'        => 'customer_confirmation',
-                'content_type'   => 'text/plain',
+                'content_type'   => $contentType,
             ]
         );
+
         if (!$sent) {
             Logging::log('mail', 'Failed to send reservation email', [
                 'reservation_id' => $reservationId,
@@ -767,6 +833,7 @@ class Service
                 'name'             => (string) ($general['restaurant_name'] ?? get_bloginfo('name')),
                 'timezone'         => $timezone,
                 'turnover_minutes' => $turnover,
+                'logo_url'         => $this->notificationSettings->logoUrl(),
             ],
         ];
 

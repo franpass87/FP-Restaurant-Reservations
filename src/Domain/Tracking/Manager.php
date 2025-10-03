@@ -257,18 +257,19 @@ final class Manager
     private function buildTrackingConfig(array $settings): array
     {
         return [
-            'debug'        => ($settings['tracking_enable_debug'] ?? '0') === '1',
-            'ga4Id'        => $this->ga4->measurementId(),
-            'googleAdsId'  => $this->ads->conversionId(),
-            'metaPixelId'  => $this->meta->pixelId(),
-            'clarityId'    => $this->clarity->projectId(),
-            'consent'      => Consent::all(),
-            'gtagConsent'  => Consent::gtagState(),
-            'cookieName'   => Consent::cookieName(),
-            'cookieTtl'    => Consent::cookieTtlDays(),
-            'consentVersion'=> Consent::version(),
-            'attribution'  => DataLayer::attribution(),
-            'homeUrl'      => esc_url_raw(home_url('/')),
+            'debug'            => ($settings['tracking_enable_debug'] ?? '0') === '1',
+            'ga4Id'            => $this->ga4->measurementId(),
+            'googleAdsId'      => $this->ads->gtagLoaderId(),
+            'googleAdsSendTo'  => $this->ads->conversionId(),
+            'metaPixelId'      => $this->meta->pixelId(),
+            'clarityId'        => $this->clarity->projectId(),
+            'consent'          => Consent::all(),
+            'gtagConsent'      => Consent::gtagState(),
+            'cookieName'       => Consent::cookieName(),
+            'cookieTtl'        => Consent::cookieTtlDays(),
+            'consentVersion'   => Consent::version(),
+            'attribution'      => DataLayer::attribution(),
+            'homeUrl'          => esc_url_raw(home_url('/')),
         ];
     }
 
@@ -373,7 +374,11 @@ final class Manager
             w.gtag('event', evt.ga4.name, evt.ga4.params || {});
         }
         if (evt.ads && evt.ads.name && typeof w.gtag === 'function' && evt.ads.params){
-            w.gtag('event', evt.ads.name, evt.ads.params);
+            var adsParams = evt.ads.params;
+            if (cfg.googleAdsSendTo && !adsParams.send_to){
+                adsParams = Object.assign({}, adsParams, { send_to: cfg.googleAdsSendTo });
+            }
+            w.gtag('event', evt.ads.name, adsParams);
         }
         if (evt.meta && evt.meta.name && typeof w.fbq === 'function'){
             w.fbq('track', evt.meta.name, evt.meta.params || {});

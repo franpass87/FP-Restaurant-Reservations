@@ -59,6 +59,7 @@ use function wp_add_inline_style;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_json_encode;
+use function wp_kses_post;
 use function wp_localize_script;
 use function wp_nonce_field;
 use function wp_safe_redirect;
@@ -366,6 +367,8 @@ final class AdminPages
                     $stateJson = '[]';
                 }
 
+                $hoursConfig = $this->getServiceHoursConfig();
+
                 $strings = [
                     'addMeal'        => __('Aggiungi pasto', 'fp-restaurant-reservations'),
                     'defaultLabel'   => __('Predefinito', 'fp-restaurant-reservations'),
@@ -377,7 +380,7 @@ final class AdminPages
                     'badgeLabel'     => __('Badge (opzionale)', 'fp-restaurant-reservations'),
                     'badgeIconLabel' => __('Icona badge (opzionale)', 'fp-restaurant-reservations'),
                     'hoursLabel'     => __('Orari personalizzati', 'fp-restaurant-reservations'),
-                    'hoursHint'      => __('Usa il formato lun=12:30-15:00;ven=19:00-23:00', 'fp-restaurant-reservations'),
+                    'hoursHint'      => __('Seleziona i giorni e configura le fasce orarie dedicate a questo pasto.', 'fp-restaurant-reservations'),
                     'slotLabel'      => __('Intervallo slot (minuti)', 'fp-restaurant-reservations'),
                     'turnLabel'      => __('Durata turno (minuti)', 'fp-restaurant-reservations'),
                     'bufferLabel'    => __('Buffer (minuti)', 'fp-restaurant-reservations'),
@@ -392,6 +395,11 @@ final class AdminPages
                     $stringsJson = '{}';
                 }
 
+                $hoursConfigJson = wp_json_encode($hoursConfig);
+                if (!is_string($hoursConfigJson)) {
+                    $hoursConfigJson = '{}';
+                }
+
                 echo '<textarea'
                     . ' id="' . esc_attr($inputId) . '"'
                     . ' name="' . esc_attr($inputName) . '"'
@@ -404,11 +412,18 @@ final class AdminPages
                     . ' data-target="#' . esc_attr($inputId) . '"'
                     . ' data-value="' . esc_attr($stateJson) . '"'
                     . ' data-strings="' . esc_attr($stringsJson) . '"'
+                    . ' data-hours-config="' . esc_attr($hoursConfigJson) . '"'
                     . '></div>';
                 break;
             case 'textarea':
                 $rows = (int) ($field['rows'] ?? 5);
                 echo '<textarea class="large-text" rows="' . esc_attr((string) $rows) . '" name="' . esc_attr($inputName) . '">';
+                echo esc_textarea((string) $value);
+                echo '</textarea>';
+                break;
+            case 'textarea_html':
+                $rows = (int) ($field['rows'] ?? 6);
+                echo '<textarea class="large-text code" rows="' . esc_attr((string) $rows) . '" name="' . esc_attr($inputName) . '">';
                 echo esc_textarea((string) $value);
                 echo '</textarea>';
                 break;
@@ -791,6 +806,10 @@ final class AdminPages
                 $raw = is_scalar($value) ? (string) $value : '';
 
                 return sanitize_textarea_field($raw);
+            case 'textarea_html':
+                $raw = is_scalar($value) ? (string) $value : '';
+
+                return wp_kses_post($raw);
             case 'password':
                 $raw = is_scalar($value) ? (string) $value : '';
 
@@ -1720,6 +1739,26 @@ final class AdminPages
                                 'type'    => 'email',
                                 'default' => '',
                             ],
+                            'customer_template_logo_url' => [
+                                'label'       => __('Logo email', 'fp-restaurant-reservations'),
+                                'type'        => 'url',
+                                'default'     => '',
+                                'description' => __('URL dell\'immagine da mostrare nell\'header delle email personalizzate.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_template_header' => [
+                                'label'       => __('Header email (HTML)', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea_html',
+                                'rows'        => 4,
+                                'default'     => '',
+                                'description' => __('Puoi usare HTML e segnaposto come {{restaurant.name}}, {{restaurant.logo_img}} o {{emails.year}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_template_footer' => [
+                                'label'       => __('Footer email (HTML)', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea_html',
+                                'rows'        => 4,
+                                'default'     => '',
+                                'description' => __('Contenuto mostrato dopo il messaggio principale. Usa i segnaposto per personalizzare firma e contatti.', 'fp-restaurant-reservations'),
+                            ],
                             'attach_ics' => [
                                 'label'          => __('Allega ICS', 'fp-restaurant-reservations'),
                                 'type'           => 'checkbox',
@@ -1731,6 +1770,124 @@ final class AdminPages
                                 'type'           => 'checkbox',
                                 'checkbox_label' => __('Invia un avviso immediato quando una prenotazione viene annullata.', 'fp-restaurant-reservations'),
                                 'default'        => '1',
+                            ],
+                        ],
+                    ],
+                    'notifications-customer' => [
+                        'title'       => __('Email cliente', 'fp-restaurant-reservations'),
+                        'description' => __('Configura conferme, promemoria e follow-up gestiti direttamente dal plugin.', 'fp-restaurant-reservations'),
+                        'fields'      => [
+                            'customer_confirmation_channel' => [
+                                'label'       => __('Canale conferma', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
+                                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => 'plugin',
+                                'description' => __('Scegli se inviare la conferma interna o delegarla a Brevo.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_confirmation_subject' => [
+                                'label'       => __('Oggetto conferma', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => __('La tua prenotazione per {{reservation.formatted_date}}', 'fp-restaurant-reservations'),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_confirmation_body' => [
+                                'label'       => __('Corpo conferma', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea_html',
+                                'rows'        => 8,
+                                'default'     => implode("\n\n", [
+                                    __('Ciao {{customer.first_name}} {{customer.last_name}},', 'fp-restaurant-reservations'),
+                                    __('ti confermiamo la prenotazione per {{reservation.party}} persone il {{reservation.formatted_date}} alle {{reservation.formatted_time}}.', 'fp-restaurant-reservations'),
+                                    __('Puoi gestire o annullare la prenotazione qui: {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                                    __('A presto!', 'fp-restaurant-reservations'),
+                                ]),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_reminder_channel' => [
+                                'label'       => __('Canale promemoria', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
+                                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => 'plugin',
+                            ],
+                            'customer_reminder_enabled' => [
+                                'label'          => __('Invia promemoria', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Invia un promemoria automatico prima dell\'arrivo.', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                            ],
+                            'customer_reminder_offset_hours' => [
+                                'label'       => __('Anticipo promemoria (ore)', 'fp-restaurant-reservations'),
+                                'type'        => 'integer',
+                                'default'     => '4',
+                                'min'         => 1,
+                                'max'         => 168,
+                            ],
+                            'customer_reminder_subject' => [
+                                'label'       => __('Oggetto promemoria', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => __('Promemoria: prenotazione del {{reservation.formatted_date}} alle {{reservation.formatted_time}}', 'fp-restaurant-reservations'),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_reminder_body' => [
+                                'label'       => __('Corpo promemoria', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea_html',
+                                'rows'        => 6,
+                                'default'     => implode("\n\n", [
+                                    __('Ciao {{customer.first_name}} {{customer.last_name}},', 'fp-restaurant-reservations'),
+                                    __('ti aspettiamo il {{reservation.formatted_date}} alle {{reservation.formatted_time}} per {{reservation.party}} persone.', 'fp-restaurant-reservations'),
+                                    __('Se hai bisogno di modificare la prenotazione puoi farlo qui: {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                                ]),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_review_channel' => [
+                                'label'       => __('Canale follow-up recensione', 'fp-restaurant-reservations'),
+                                'type'        => 'select',
+                                'options'     => [
+                                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
+                                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
+                                ],
+                                'default'     => 'plugin',
+                            ],
+                            'customer_review_enabled' => [
+                                'label'          => __('Chiedi una recensione', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Invia un follow-up dopo la visita per richiedere una recensione.', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                            ],
+                            'customer_review_delay_hours' => [
+                                'label'       => __('Invio follow-up (ore dopo la visita)', 'fp-restaurant-reservations'),
+                                'type'        => 'integer',
+                                'default'     => '24',
+                                'min'         => 1,
+                                'max'         => 168,
+                            ],
+                            'customer_review_subject' => [
+                                'label'       => __('Oggetto follow-up', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => __('Com\'è andata la tua visita da {{restaurant.name}}?', 'fp-restaurant-reservations'),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{restaurant.name}}, {{review.link}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_review_body' => [
+                                'label'       => __('Corpo follow-up', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea_html',
+                                'rows'        => 6,
+                                'default'     => implode("\n\n", [
+                                    __('Ciao {{customer.first_name}} {{customer.last_name}},', 'fp-restaurant-reservations'),
+                                    __('grazie per averci fatto visita. Raccontaci com\'è andata lasciando una recensione: {{review.link}}.', 'fp-restaurant-reservations'),
+                                    __('Il tuo feedback è prezioso per noi!', 'fp-restaurant-reservations'),
+                                ]),
+                                'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{restaurant.name}}, {{review.link}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
+                            ],
+                            'customer_review_url' => [
+                                'label'       => __('URL recensione', 'fp-restaurant-reservations'),
+                                'type'        => 'url',
+                                'default'     => '',
+                                'description' => __('Link alla pagina recensioni (es. Google, TripAdvisor).', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],

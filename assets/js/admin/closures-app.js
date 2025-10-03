@@ -71,7 +71,30 @@
             if (response.status === 204) {
                 return null;
             }
-            return response.json();
+            const contentLength = response.headers.get('content-length');
+            if (contentLength === '0') {
+                return null;
+            }
+            return response
+                .text()
+                .then((text) => {
+                    if (!text) {
+                        return null;
+                    }
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.includes('json')) {
+                        const error = new Error(text.trim() || 'Risposta non valida.');
+                        error.status = response.status;
+                        throw error;
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (error) {
+                        const parseError = error instanceof Error ? error : new Error('Risposta non valida.');
+                        parseError.status = response.status;
+                        throw parseError;
+                    }
+                });
         });
     };
 

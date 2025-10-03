@@ -65,12 +65,17 @@ function createRequester(settings) {
     }
 
     if (window.wp && window.wp.apiFetch) {
-      return window.wp.apiFetch({
-        path: path,
-        method: options.method || 'GET',
-        data: options.data,
-        headers: headers,
-      });
+      return window.wp
+        .apiFetch({
+          path: path,
+          method: options.method || 'GET',
+          data: options.data,
+          headers: headers,
+          parse: false,
+        })
+        .then(function (response) {
+          return parseAgendaResponse(response);
+        });
     }
 
     var base = (settings.restRoot || '').replace(/\/$/, '');
@@ -85,12 +90,64 @@ function createRequester(settings) {
       credentials: 'same-origin',
       body: body,
     }).then(function (response) {
-      if (!response.ok) {
-        throw new Error('Request failed: ' + response.status);
-      }
-      return response.json();
+      return parseAgendaResponse(response);
     });
   };
+}
+
+function parseAgendaResponse(response) {
+  if (!response.ok) {
+    return response
+      .text()
+      .then(function (text) {
+        var message = 'Richiesta non riuscita';
+        if (text) {
+          try {
+            var payload = JSON.parse(text);
+            if (payload && payload.message) {
+              message = payload.message;
+            } else {
+              message = text.trim() || message;
+            }
+          } catch (error) {
+            message = text.trim() || message;
+          }
+        }
+        var failure = new Error(message);
+        failure.status = response.status;
+        throw failure;
+      });
+  }
+
+  if (response.status === 204) {
+    return Promise.resolve(null);
+  }
+
+  var contentLength = response.headers.get('content-length');
+  if (contentLength === '0') {
+    return Promise.resolve(null);
+  }
+
+  return response.text().then(function (text) {
+    if (!text) {
+      return null;
+    }
+
+    var contentType = response.headers.get('content-type') || '';
+    if (contentType.indexOf('json') === -1) {
+      var invalid = new Error(text.trim() || 'Risposta non valida.');
+      invalid.status = response.status;
+      throw invalid;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      var parseError = error instanceof Error ? error : new Error('Risposta non valida.');
+      parseError.status = response.status;
+      throw parseError;
+    }
+  });
 }
 function initCalendar(section, request, strings) {
   section.hidden = false;
