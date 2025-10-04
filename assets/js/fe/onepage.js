@@ -524,11 +524,7 @@ class FormApp {
         }
 
         this.ensureSectionActive(section);
-        if (this.isSectionValid(section) && !(fieldKey === 'date' && event.type === 'input' && !valueChanged)) {
-            this.completeSection(section, true);
-        } else {
-            this.updateSectionAttributes(section, 'active');
-        }
+        this.updateSectionAttributes(section, 'active');
 
         if (fieldKey) {
             target.dataset.fpResvLastValue = currentValue;
@@ -963,6 +959,14 @@ class FormApp {
             const state = _this.state.sectionStates[key] || 'locked';
             item.setAttribute('data-state', state);
             item.setAttribute('data-progress-state', state === 'completed' ? 'done' : state);
+            const labelEl = item.querySelector('.fp-progress__label');
+            if (labelEl) {
+                if (state === 'active') {
+                    labelEl.removeAttribute('aria-hidden');
+                } else {
+                    labelEl.setAttribute('aria-hidden', 'true');
+                }
+            }
             const isLocked = state === 'locked';
             item.tabIndex = isLocked ? -1 : 0;
             if (isLocked) {
@@ -1454,10 +1458,9 @@ class FormApp {
 
         const slotsSection = this.sections.find((section) => (section.getAttribute('data-step') || '') === 'slots');
         if (slotsSection) {
+            const slotsKey = slotsSection.getAttribute('data-step') || '';
             this.ensureSectionActive(slotsSection);
-            if (slot && slot.start) {
-                this.completeSection(slotsSection, true);
-            } else {
+            if (this.state.sectionStates[slotsKey] !== 'active') {
                 this.updateSectionAttributes(slotsSection, 'active');
             }
         }

@@ -1,3 +1,9 @@
+body[class*="fp-resv"] .wrap > h1.wp-heading-inline,
+body[class*="fp-resv"] .wrap > .page-title-action,
+body[class*="fp-resv"] .wrap > hr.wp-header-end {
+    display: none;
+}
+
 :root {
     --fp-resv-admin-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --fp-resv-admin-bg: #f5f6f8;
