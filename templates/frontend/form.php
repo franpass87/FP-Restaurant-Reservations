@@ -152,16 +152,33 @@ endif;
                 <ul class="fp-progress" data-fp-resv-progress aria-label="<?php esc_attr_e('Avanzamento prenotazione', 'fp-restaurant-reservations'); ?>">
                     <?php foreach ($steps as $index => $step) : ?>
                         <?php
-                        $stepKey   = (string) ($step['key'] ?? '');
-                        $isCurrent = $index === 0;
+                        $stepKey       = (string) ($step['key'] ?? '');
+                        $isCurrent     = $index === 0;
+                        $progressLabel = $progressLabels[$stepKey] ?? ($step['title'] ?? '');
+                        $stepNumber    = $index + 1;
+                        $ariaLabel     = $progressLabel !== ''
+                            ? sprintf(
+                                /* translators: 1: step number, 2: step label. */
+                                __('Step %1$s: %2$s', 'fp-restaurant-reservations'),
+                                $stepNumber,
+                                $progressLabel
+                            )
+                            : sprintf(
+                                /* translators: %s: step number. */
+                                __('Step %s', 'fp-restaurant-reservations'),
+                                $stepNumber
+                            );
+                        $stepIndexLabel = str_pad((string) $stepNumber, 2, '0', STR_PAD_LEFT);
                         ?>
                         <li
                             class="fp-progress__item"
                             data-step="<?php echo esc_attr($stepKey); ?>"
+                            data-progress-index="<?php echo esc_attr((string) $stepNumber); ?>"
+                            aria-label="<?php echo esc_attr($ariaLabel); ?>"
                             <?php echo $isCurrent ? 'data-state="active" aria-current="step"' : 'data-state="locked"'; ?>
                         >
-                            <span class="fp-progress__index"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
-                            <span class="fp-progress__label"><?php echo esc_html($progressLabels[$stepKey] ?? ($step['title'] ?? '')); ?></span>
+                            <span class="fp-progress__index"><?php echo esc_html($stepIndexLabel); ?></span>
+                            <span class="fp-progress__label"<?php echo $isCurrent ? '' : ' aria-hidden="true"'; ?>><?php echo esc_html($progressLabel); ?></span>
                         </li>
                     <?php endforeach; ?>
                 </ul>

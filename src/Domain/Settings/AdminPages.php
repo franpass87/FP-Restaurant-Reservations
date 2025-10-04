@@ -2272,8 +2272,8 @@ final class AdminPages
             ],
             'closures' => [
                 'page_title'   => __('Chiusure & Orari speciali', 'fp-restaurant-reservations'),
-                'menu_title'   => __('Chiusure', 'fp-restaurant-reservations'),
-                'slug'         => 'fp-resv-closures',
+                'menu_title'   => __('Orari speciali', 'fp-restaurant-reservations'),
+                'slug'         => 'fp-resv-orari-speciali',
                 'option_group' => 'fp_resv_closures',
                 'option_name'  => 'fp_resv_closures',
                 'sections'     => [
