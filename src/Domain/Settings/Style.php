@@ -1176,8 +1176,8 @@ final class Style
     height: 1.75em;
     margin-top: 0.1em;
     border-radius: 999px;
-    background-color: currentColor;
-    color: var(--fp-resv-color-surface);
+    background-color: var(--fp-resv-color-primary);
+    color: var(--fp-resv-color-primary-contrast);
     font-style: normal;
     font-weight: 600;
     font-size: 0.75em;
