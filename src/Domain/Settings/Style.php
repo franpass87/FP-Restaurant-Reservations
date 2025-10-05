@@ -782,6 +782,9 @@ final class Style
     column-gap: 0.65rem;
     row-gap: 0.35rem;
 }
+%s .fp-resv-field--consent + .fp-resv-field--consent {
+    margin-top: var(--fp-resv-spacing-xs, 0.6rem);
+}
 %s .fp-resv-field--consent .fp-checkbox {
     align-self: flex-start;
     margin-top: 0.15rem;
