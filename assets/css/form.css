@@ -339,10 +339,10 @@
 .fp-progress__item[data-state="active"],
 .fp-progress__item[data-progress-state="active"],
 .fp-progress__item:focus-visible {
-    --fp-progress-item-padding-inline: clamp(0.65rem, 1.75vw, 1.1rem);
-    --fp-progress-item-min-width: clamp(6.25rem, 16vw, 9.75rem);
-    --fp-progress-label-gap: clamp(0.4rem, 1.1vw, 0.65rem);
-    --fp-progress-label-max-width: clamp(6.25rem, 20vw, 9.75rem);
+    --fp-progress-item-padding-inline: clamp(0.7rem, 1.9vw, 1.2rem);
+    --fp-progress-item-min-width: clamp(6.75rem, 18vw, 12rem);
+    --fp-progress-label-gap: clamp(0.45rem, 1.3vw, 0.75rem);
+    --fp-progress-label-max-width: clamp(7.1rem, 22vw, 12rem);
     --fp-progress-label-opacity: 1;
     --fp-progress-label-translate: 0;
     justify-content: flex-start;
@@ -417,7 +417,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
     padding: 0;
     list-style: none;
 }
@@ -461,6 +461,13 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
+}
+
+@media (max-width: 640px) {
+    .fp-meals__legend {
+        gap: 0.75rem;
+        margin-bottom: 1.6rem;
+    }
 }
 
 .fp-meal-pill {
@@ -651,20 +658,22 @@
     }
 }
 
+
 .fp-resv-field--consent {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.65rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+    column-gap: 0.65rem;
+    row-gap: 0.35rem;
 }
 
 .fp-resv-field--consent .fp-checkbox {
-    flex: 0 0 auto;
-    margin-top: 0;
+    align-self: flex-start;
+    margin-top: 0.15rem;
 }
 
 .fp-resv-consent__text {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.45rem;
@@ -723,7 +732,7 @@
 
 .fp-resv-field--phone .fp-resv-phone-input {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     align-items: stretch;
     gap: 0.65rem;
     flex-wrap: wrap;
@@ -736,6 +745,10 @@
     width: auto;
 }
 
+.fp-resv-phone-input input.fp-input {
+    order: 2;
+}
+
 .fp-resv-phone-input .fp-input--prefix {
     flex: 0 0 auto;
     width: 8rem;
@@ -743,6 +756,7 @@
     max-width: 100%;
     text-align: left;
     padding-inline: 0.65rem;
+    order: 1;
 }
 
 .fp-resv-phone-input__static {
@@ -757,6 +771,7 @@
     color: var(--fp-resv-color-muted);
     font-weight: 600;
     flex: 0 0 auto;
+    order: 1;
 }
 
 .fp-hint {

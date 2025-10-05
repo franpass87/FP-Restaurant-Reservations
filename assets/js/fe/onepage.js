@@ -231,6 +231,7 @@ class FormApp {
             ctaEnabled: false,
             sending: false,
             pendingAvailability: false,
+            pendingAvailabilityOptions: null,
             lastAvailabilityParams: null,
             mealAvailability: {},
         };
@@ -466,13 +467,18 @@ class FormApp {
             this.handleSlotSelected(slot);
         });
 
-        const schedule = () => {
+        const schedule = (options = {}) => {
+            const normalizedOptions = options && typeof options === 'object'
+                ? { ...options }
+                : {};
+
             if (!this.availabilityController) {
                 this.state.pendingAvailability = true;
+                this.state.pendingAvailabilityOptions = normalizedOptions;
                 return;
             }
 
-            this.scheduleAvailabilityUpdate();
+            this.scheduleAvailabilityUpdate(normalizedOptions);
         };
 
         idleCallback(() => {
@@ -495,7 +501,9 @@ class FormApp {
 
                     if (this.state.pendingAvailability) {
                         this.state.pendingAvailability = false;
-                        this.scheduleAvailabilityUpdate();
+                        const pendingOptions = this.state.pendingAvailabilityOptions || {};
+                        this.state.pendingAvailabilityOptions = null;
+                        this.scheduleAvailabilityUpdate(pendingOptions);
                     }
                 })
                 .catch(() => {
@@ -765,7 +773,7 @@ class FormApp {
             return;
         }
 
-        this.scheduleAvailabilityUpdate();
+        this.scheduleAvailabilityUpdate({ immediate: true });
     }
 
     updateMealNoticeFromButton(button, overrideText) {
@@ -859,6 +867,10 @@ class FormApp {
         if (timeField) {
             timeField.value = '';
             timeField.removeAttribute('data-slot-start');
+        }
+
+        if (this.availabilityController && typeof this.availabilityController.clearSelection === 'function') {
+            this.availabilityController.clearSelection();
         }
 
         if (this.availabilityRoot) {
@@ -1508,17 +1520,21 @@ class FormApp {
         };
     }
 
-    scheduleAvailabilityUpdate() {
-        if (!this.availabilityController) {
+    scheduleAvailabilityUpdate(options = {}) {
+        const normalizedOptions = options && typeof options === 'object'
+            ? { ...options }
+            : {};
+
+        if (!this.availabilityController || typeof this.availabilityController.schedule !== 'function') {
             this.state.pendingAvailability = true;
+            this.state.pendingAvailabilityOptions = normalizedOptions;
             return;
         }
 
         const params = this.collectAvailabilityParams();
         this.state.lastAvailabilityParams = params;
-        if (this.availabilityController && typeof this.availabilityController.schedule === 'function') {
-            this.availabilityController.schedule(params);
-        }
+        this.state.pendingAvailabilityOptions = null;
+        this.availabilityController.schedule(params, normalizedOptions);
     }
 
     applyMealAvailabilityIndicator(meal, state) {

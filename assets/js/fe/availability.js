@@ -43,6 +43,7 @@ export function createAvailabilityController(options) {
     let debounceId = null;
     let lastParams = null;
     let currentSelection = null;
+    let activeRequestToken = 0;
 
     function normalizeSlotStatus(status) {
         if (typeof status !== 'string') {
@@ -54,28 +55,35 @@ export function createAvailabilityController(options) {
             return '';
         }
 
-        if (normalized.startsWith('available')) {
+        const stripDiacritics = (value) => {
+            if (typeof value.normalize === 'function') {
+                return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            return value;
+        };
+
+        const ascii = stripDiacritics(normalized);
+        const matchesStart = (candidates) => candidates.some((candidate) => ascii.startsWith(candidate));
+        const matchesAnywhere = (candidates) => candidates.some((candidate) => ascii.includes(candidate));
+
+        if (matchesStart(['available', 'open', 'disponibil', 'disponible', 'liber', 'libre', 'apert', 'abiert'])) {
             return 'available';
         }
 
-        if (normalized.startsWith('limited')) {
+        if (normalized === 'waitlist' || normalized === 'busy') {
             return 'limited';
         }
 
-        if (normalized.startsWith('full')) {
+        if (
+            matchesStart(['limited', 'limit', 'limitat', 'limite', 'cupos limit', 'attesa'])
+            || matchesAnywhere(['pochi posti', 'quasi pien', 'lista attesa', 'few spots', 'casi llen'])
+        ) {
+            return 'limited';
+        }
+
+        if (matchesStart(['full', 'complet', 'esaurit', 'soldout', 'sold out', 'agotad', 'chius', 'plen'])) {
             return 'full';
-        }
-
-        if (normalized === 'waitlist') {
-            return 'limited';
-        }
-
-        if (normalized === 'open') {
-            return 'available';
-        }
-
-        if (normalized === 'busy') {
-            return 'limited';
         }
 
         return normalized;
@@ -245,7 +253,27 @@ export function createAvailabilityController(options) {
         }
     }
 
-    function renderSlots(payload, params) {
+    function clearSelectionState() {
+        currentSelection = null;
+        if (!listEl) {
+            return;
+        }
+
+        const buttons = listEl.querySelectorAll('button[data-slot]');
+        Array.prototype.forEach.call(buttons, (button) => {
+            button.setAttribute('aria-pressed', 'false');
+        });
+    }
+
+    function renderSlots(payload, params, requestToken) {
+        if (requestToken && requestToken !== activeRequestToken) {
+            return;
+        }
+
+        if (params && lastParams && params !== lastParams) {
+            return;
+        }
+
         hideBoundary();
         hideEmpty();
         if (!listEl) {
@@ -290,10 +318,11 @@ export function createAvailabilityController(options) {
             return;
         }
 
+        const requestToken = ++activeRequestToken;
         const cacheKey = JSON.stringify([params.date, params.meal, params.party]);
         const cached = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS && attempt === 0) {
-            renderSlots(cached.payload, params);
+            renderSlots(cached.payload, params, requestToken);
             return;
         }
 
@@ -326,14 +355,22 @@ export function createAvailabilityController(options) {
                     return payload;
                 }))
             .then((payload) => {
+                if (requestToken !== activeRequestToken) {
+                    return;
+                }
+
                 const latency = performance.now() - start;
                 if (typeof options.onLatency === 'function') {
                     options.onLatency(latency);
                 }
                 cache.set(cacheKey, { payload, timestamp: Date.now() });
-                renderSlots(payload, params);
+                renderSlots(payload, params, requestToken);
             })
             .catch((error) => {
+                if (requestToken !== activeRequestToken) {
+                    return;
+                }
+
                 const latency = performance.now() - start;
                 if (typeof options.onLatency === 'function') {
                     options.onLatency(latency);
@@ -392,16 +429,24 @@ export function createAvailabilityController(options) {
     }
 
     return {
-        schedule(params) {
+        schedule(params, scheduleOptions = {}) {
             if (debounceId) {
                 window.clearTimeout(debounceId);
             }
 
+            const normalizedOptions = scheduleOptions && typeof scheduleOptions === 'object'
+                ? scheduleOptions
+                : {};
             const effective = params || (typeof options.getParams === 'function' ? options.getParams() : null);
             const requiresMeal = Boolean(effective && effective.requiresMeal);
             if (!effective || !effective.date || !effective.party || (requiresMeal && !effective.meal)) {
                 lastParams = effective;
                 showEmpty(effective || {});
+                return;
+            }
+
+            if (normalizedOptions.immediate) {
+                request(effective, 0);
                 return;
             }
 
@@ -420,6 +465,9 @@ export function createAvailabilityController(options) {
         },
         getSelection() {
             return currentSelection;
+        },
+        clearSelection() {
+            clearSelectionState();
         },
     };
 }
