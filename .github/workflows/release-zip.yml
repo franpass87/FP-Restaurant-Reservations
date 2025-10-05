@@ -1,12 +1,16 @@
-name: (deprecated) Build WP Plugin ZIP
+name: Release ZIP
 
 on:
-  workflow_dispatch: {}
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  build-zip:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,6 +20,7 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
+          tools: composer:v2
 
       - name: Install composer deps (no dev)
         run: |
@@ -27,7 +32,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rsync zip
 
-      # Se hai build.sh nel repo, lo usiamo; altrimenti pack "inline".
       - name: Make build.sh executable (if present)
         run: |
           if [ -f build.sh ]; then
@@ -37,26 +41,35 @@ jobs:
       - name: Run build.sh (if present)
         run: |
           if [ -f build.sh ]; then
-            ./build.sh --bump=patch || bash build.sh --bump=patch
+            ./build.sh --set-version=${GITHUB_REF_NAME#v}
           fi
 
       - name: Package plugin (fallback inline)
         if: ${{ !hashFiles('build.sh') }}
         run: |
           set -e
-          SLUG="$(basename "$GITHUB_WORKSPACE")"
-          mkdir -p build/${SLUG}
-          rsync -a ./ build/${SLUG} \
-            --exclude ".git" --exclude ".github" --exclude ".gitignore" \
-            --exclude "build" --exclude "tests" --exclude "docs" \
-            --exclude "node_modules" --exclude ".idea" --exclude ".vscode" \
-            --exclude "*.md" --exclude ".gitattributes"
-          cd build
-          zip -r "${SLUG}.zip" "${SLUG}"
-          echo "ZIP creato in build/${SLUG}.zip"
+          SLUG=fp-restaurant-reservations
+          OUTDIR=build/${SLUG}
+          rm -rf build && mkdir -p "$OUTDIR"
+          rsync -a ./ "$OUTDIR" \
+            --exclude ".git/" --exclude ".github/" --exclude "node_modules/" \
+            --exclude "tests/" --exclude "docs/" --exclude "build/" \
+            --exclude "scripts/" --exclude ".gitignore" --exclude "*.zip" \
+            --exclude "*.log" --exclude "AUDIT/" --exclude "AUDIT.md"
+          (cd build && zip -r "${SLUG}.zip" "${SLUG}")
+          echo "ZIP creato: build/${SLUG}.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: plugin-zip
           path: build/*.zip
+
+      - name: Publish GitHub Release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

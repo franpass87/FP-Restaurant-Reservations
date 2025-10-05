@@ -1,3 +1,6 @@
+[![CI](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml/badge.svg)](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml)
+[![Playwright Report](https://img.shields.io/badge/report-playwright-blue)](https://franpass87.github.io/FP-Restaurant-Reservations/)
+
 # FP Restaurant Reservations
 
 FP Restaurant Reservations è un plugin WordPress completo per la gestione delle prenotazioni di un ristorante moderno: form single-page accessibile, agenda drag & drop, pagamenti facoltativi, analisi marketing e strumenti di diagnostica per l'assistenza.
