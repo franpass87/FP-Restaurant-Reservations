@@ -332,7 +332,12 @@
         setLoading(true);
         request('/closures?include_inactive=1')
             .then((payload) => {
-                state.items = Array.isArray(payload.items) ? payload.items : [];
+                const items = Array.isArray(payload && payload.items)
+                    ? payload.items
+                    : Array.isArray(payload)
+                        ? payload
+                        : [];
+                state.items = items;
                 state.error = '';
                 render();
             })

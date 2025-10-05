@@ -17,9 +17,13 @@
         hoursLabel: 'Custom hours',
         hoursHint: 'Use the format mon=12:30-15:00;sat=19:00-23:00',
         slotLabel: 'Slot interval (minutes)',
+        slotTooltip: 'Minutes between each reservation start time that guests can book.',
         turnLabel: 'Turn duration (minutes)',
+        turnTooltip: 'Total dining time you expect to keep a table before it becomes available again.',
         bufferLabel: 'Buffer (minutes)',
+        bufferTooltip: 'Additional minutes kept between turns before offering the table again.',
         parallelLabel: 'Parallel reservations',
+        parallelTooltip: 'How many reservations can start at the same time slot.',
         capacityLabel: 'Maximum capacity',
         removeMeal: 'Remove meal',
         emptyState: 'No meals configured yet. Add one to get started.',
@@ -153,6 +157,66 @@
         return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
     };
 
+    const MAX_MINUTES = (23 * 60) + 59;
+
+    const timeToMinutes = (value) => {
+        const normalized = normalizeTime(value);
+        if (!normalized) {
+            return null;
+        }
+        const parts = normalized.split(':');
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+            return null;
+        }
+        return Math.min(MAX_MINUTES, Math.max(0, hours * 60 + minutes));
+    };
+
+    const minutesToTime = (minutes) => {
+        if (!Number.isFinite(minutes)) {
+            return '';
+        }
+        const safe = Math.min(MAX_MINUTES, Math.max(0, Math.round(minutes)));
+        const hours = Math.floor(safe / 60);
+        const mins = safe % 60;
+        return String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
+    };
+
+    const parseDurationMinutes = (value) => {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            return Math.max(0, Math.round(value));
+        }
+        if (typeof value === 'string') {
+            const parsed = parseInt(value.trim(), 10);
+            if (Number.isFinite(parsed)) {
+                return Math.max(0, parsed);
+            }
+        }
+        return null;
+    };
+
+    const computeMealDuration = (meal) => {
+        if (!meal || typeof meal !== 'object') {
+            return 120;
+        }
+        const turn = parseDurationMinutes(meal.turn);
+        const slot = parseDurationMinutes(meal.slot);
+        const buffer = parseDurationMinutes(meal.buffer);
+        const base = turn && turn > 0 ? turn : slot && slot > 0 ? slot : 120;
+        const bufferMinutes = buffer && buffer > 0 ? buffer : 0;
+        return Math.max(5, base + bufferMinutes);
+    };
+
+    const computeRangeEndForMeal = (meal, start) => {
+        const startMinutes = timeToMinutes(start);
+        if (startMinutes === null) {
+            return '';
+        }
+        const duration = computeMealDuration(meal);
+        return minutesToTime(startMinutes + duration);
+    };
+
     const splitHoursEntries = (line) => {
         const normalized = typeof line === 'string' ? line.trim().replace(/\u00a0/g, ' ') : '';
         if (normalized === '') {
@@ -257,7 +321,27 @@
         return ensured;
     };
 
+    const recalculateMealRangeEnds = (meal, config) => {
+        const state = ensureMealHoursDefinition(meal, config);
+        config.days.forEach((day) => {
+            const ranges = Array.isArray(state[day.key]) ? state[day.key] : [];
+            ranges.forEach((range) => {
+                if (!range || typeof range !== 'object') {
+                    return;
+                }
+                const start = normalizeTime(range.start);
+                if (!start) {
+                    range.end = '';
+                    return;
+                }
+                range.start = start;
+                range.end = computeRangeEndForMeal(meal, start);
+            });
+        });
+    };
+
     const syncMealHoursDefinition = (meal, config) => {
+        recalculateMealRangeEnds(meal, config);
         const state = ensureMealHoursDefinition(meal, config);
         meal.hours = formatHoursDefinition(state, config);
     };
@@ -594,11 +678,23 @@
             sync();
         };
 
-        const createField = (label, control) => {
+        const createField = (label, control, options = {}) => {
             const wrapper = document.createElement('label');
             wrapper.className = 'fp-resv-meal-plan__field';
             const caption = document.createElement('span');
-            caption.textContent = label;
+            caption.className = 'fp-resv-meal-plan__field-label';
+            const captionText = document.createElement('span');
+            captionText.textContent = label;
+            caption.appendChild(captionText);
+            if (options.tooltip) {
+                const tooltip = document.createElement('span');
+                tooltip.className = 'fp-resv-meal-plan__tooltip';
+                tooltip.setAttribute('role', 'img');
+                tooltip.setAttribute('aria-label', options.tooltip);
+                tooltip.title = options.tooltip;
+                tooltip.textContent = 'i';
+                caption.appendChild(tooltip);
+            }
             wrapper.appendChild(caption);
             wrapper.appendChild(control);
             return wrapper;
@@ -620,26 +716,23 @@
 
         const computeTitle = (meal) => meal.label.trim() || meal.key.trim() || strings.keyLabel;
 
-        const createDefaultRange = (ranges) => {
-            if (ranges.length) {
-                const last = ranges[ranges.length - 1];
-                const lastEnd = normalizeTime(last.end);
-                if (lastEnd) {
-                    const parts = lastEnd.split(':').map((part) => parseInt(part, 10));
-                    const baseHours = Number.isFinite(parts[0]) ? parts[0] : 19;
-                    const baseMinutes = Number.isFinite(parts[1]) ? parts[1] : 0;
-                    const start = clampTime(baseHours + 2, baseMinutes);
-                    let end = clampTime(baseHours + 4, baseMinutes);
-                    if (end <= start) {
-                        end = clampTime(baseHours + 3, baseMinutes);
-                    }
-                    if (end <= start) {
-                        end = clampTime(baseHours + 2, baseMinutes + 30);
-                    }
-                    return { start, end: end > start ? end : clampTime(baseHours + 2, baseMinutes + 45) };
+        const createDefaultRange = (ranges, meal) => {
+            let start = '19:00';
+            for (let index = ranges.length - 1; index >= 0; index -= 1) {
+                const candidate = ranges[index];
+                const candidateStart = candidate && candidate.start ? normalizeTime(candidate.start) : '';
+                if (!candidateStart) {
+                    continue;
                 }
+                const nextMinutes = timeToMinutes(candidateStart);
+                if (nextMinutes === null) {
+                    continue;
+                }
+                start = minutesToTime(nextMinutes + computeMealDuration(meal));
+                break;
             }
-            return { start: '19:00', end: '21:00' };
+            const end = computeRangeEndForMeal(meal, start);
+            return { start, end: end || minutesToTime((timeToMinutes(start) || 0) + 120) };
         };
 
         const createHoursField = (meal, index) => {
@@ -690,7 +783,7 @@
                             if (checkbox.checked) {
                                 const existing = Array.isArray(targetState[dayKey]) ? targetState[dayKey] : [];
                                 if (!existing.length) {
-                                    targetState[dayKey] = [createDefaultRange(existing)];
+                                    targetState[dayKey] = [createDefaultRange(existing, target)];
                                 }
                             } else {
                                 targetState[dayKey] = [];
@@ -730,9 +823,26 @@
                             const fromLabel = document.createElement('label');
                             fromLabel.className = 'fp-resv-meal-plan__hours-field';
                             fromLabel.innerHTML = '<span>' + hoursConfig.strings.from + '</span>';
+                            const startValue = normalizeTime(range.start) || '';
+                            if (startValue) {
+                                range.start = startValue;
+                            }
+                            if (startValue && !normalizeTime(range.end)) {
+                                range.end = computeRangeEndForMeal(meal, startValue);
+                            }
+                            const endSummary = document.createElement('p');
+                            endSummary.className = 'fp-resv-meal-plan__hours-end';
+                            const updateEndSummary = () => {
+                                const normalizedEnd = normalizeTime(range.end);
+                                endSummary.textContent = normalizedEnd
+                                    ? hoursConfig.strings.to + ' ' + normalizedEnd
+                                    : hoursConfig.strings.to;
+                            };
+                            updateEndSummary();
+
                             const fromInput = document.createElement('input');
                             fromInput.type = 'time';
-                            fromInput.value = normalizeTime(range.start) || '';
+                            fromInput.value = startValue;
                             fromInput.addEventListener('change', (event) => {
                                 const target = event.target;
                                 if (!(target instanceof HTMLInputElement)) {
@@ -745,37 +855,17 @@
                                     if (!targetRanges[rangeIndex]) {
                                         targetRanges[rangeIndex] = { start: '', end: '' };
                                     }
+                                    const nextEnd = computeRangeEndForMeal(mealTarget, value);
                                     targetRanges[rangeIndex].start = value;
+                                    targetRanges[rangeIndex].end = nextEnd;
                                     syncMealHoursDefinition(mealTarget, hoursConfig);
+                                    range.start = value;
+                                    range.end = nextEnd;
                                 });
                                 target.value = value;
+                                updateEndSummary();
                             });
                             fromLabel.appendChild(fromInput);
-
-                            const toLabel = document.createElement('label');
-                            toLabel.className = 'fp-resv-meal-plan__hours-field';
-                            toLabel.innerHTML = '<span>' + hoursConfig.strings.to + '</span>';
-                            const toInput = document.createElement('input');
-                            toInput.type = 'time';
-                            toInput.value = normalizeTime(range.end) || '';
-                            toInput.addEventListener('change', (event) => {
-                                const target = event.target;
-                                if (!(target instanceof HTMLInputElement)) {
-                                    return;
-                                }
-                                const value = normalizeTime(target.value);
-                                updateMeal(index, (mealTarget) => {
-                                    const targetState = ensureMealHoursDefinition(mealTarget, hoursConfig);
-                                    const targetRanges = Array.isArray(targetState[dayKey]) ? targetState[dayKey] : [];
-                                    if (!targetRanges[rangeIndex]) {
-                                        targetRanges[rangeIndex] = { start: '', end: '' };
-                                    }
-                                    targetRanges[rangeIndex].end = value;
-                                    syncMealHoursDefinition(mealTarget, hoursConfig);
-                                });
-                                target.value = value;
-                            });
-                            toLabel.appendChild(toInput);
 
                             const removeButton = document.createElement('button');
                             removeButton.type = 'button';
@@ -792,7 +882,7 @@
                             });
 
                             row.appendChild(fromLabel);
-                            row.appendChild(toLabel);
+                            row.appendChild(endSummary);
                             row.appendChild(removeButton);
                             rangeList.appendChild(row);
                         });
@@ -807,7 +897,7 @@
                         updateMeal(index, (mealTarget) => {
                             const targetState = ensureMealHoursDefinition(mealTarget, hoursConfig);
                             const targetRanges = Array.isArray(targetState[dayKey]) ? targetState[dayKey] : [];
-                            const nextRange = createDefaultRange(targetRanges);
+                            const nextRange = createDefaultRange(targetRanges, mealTarget);
                             targetRanges.push(nextRange);
                             targetState[dayKey] = targetRanges;
                             syncMealHoursDefinition(mealTarget, hoursConfig);
@@ -821,6 +911,7 @@
             };
 
             renderEditor();
+            field.renderEditor = renderEditor;
 
             return field;
         };
@@ -924,30 +1015,46 @@
             const advanced = document.createElement('div');
             advanced.className = 'fp-resv-meal-plan__advanced';
 
+            const hoursField = createHoursField(meal, index);
+            const refreshHours = () => {
+                if (typeof hoursField.renderEditor === 'function') {
+                    hoursField.renderEditor();
+                }
+            };
+
             const slotInput = createInput(meal.slot, (value) => {
                 updateMeal(index, (target) => {
                     target.slot = value;
+                    recalculateMealRangeEnds(target, hoursConfig);
+                    syncMealHoursDefinition(target, hoursConfig);
                 });
+                refreshHours();
             }, 'number');
             slotInput.min = '5';
-            const slotField = createField(strings.slotLabel, slotInput);
+            const slotField = createField(strings.slotLabel, slotInput, { tooltip: strings.slotTooltip });
 
             const turnInput = createInput(meal.turn, (value) => {
                 updateMeal(index, (target) => {
                     target.turn = value;
+                    recalculateMealRangeEnds(target, hoursConfig);
+                    syncMealHoursDefinition(target, hoursConfig);
                 });
+                refreshHours();
             }, 'number');
             turnInput.min = '15';
             turnInput.step = '5';
-            const turnField = createField(strings.turnLabel, turnInput);
+            const turnField = createField(strings.turnLabel, turnInput, { tooltip: strings.turnTooltip });
 
             const bufferInput = createInput(meal.buffer, (value) => {
                 updateMeal(index, (target) => {
                     target.buffer = value;
+                    recalculateMealRangeEnds(target, hoursConfig);
+                    syncMealHoursDefinition(target, hoursConfig);
                 });
+                refreshHours();
             }, 'number');
             bufferInput.min = '0';
-            const bufferField = createField(strings.bufferLabel, bufferInput);
+            const bufferField = createField(strings.bufferLabel, bufferInput, { tooltip: strings.bufferTooltip });
 
             const parallelInput = createInput(meal.parallel, (value) => {
                 updateMeal(index, (target) => {
@@ -955,7 +1062,7 @@
                 });
             }, 'number');
             parallelInput.min = '1';
-            const parallelField = createField(strings.parallelLabel, parallelInput);
+            const parallelField = createField(strings.parallelLabel, parallelInput, { tooltip: strings.parallelTooltip });
 
             const capacityInput = createInput(meal.capacity, (value) => {
                 updateMeal(index, (target) => {
@@ -965,7 +1072,7 @@
             capacityInput.min = '1';
             const capacityField = createField(strings.capacityLabel, capacityInput);
 
-            advanced.appendChild(createHoursField(meal, index));
+            advanced.appendChild(hoursField);
             const numericGrid = document.createElement('div');
             numericGrid.className = 'fp-resv-meal-plan__numeric-grid';
             numericGrid.appendChild(slotField);

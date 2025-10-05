@@ -601,10 +601,10 @@ final class Style
 %s .fp-progress__item[data-state="active"],
 %s .fp-progress__item[data-progress-state="active"],
 %s .fp-progress__item:focus-visible {
-    --fp-progress-item-padding-inline: clamp(0.65rem, 1.75vw, 1.1rem);
-    --fp-progress-item-min-width: clamp(6.25rem, 16vw, 9.75rem);
-    --fp-progress-label-gap: clamp(0.4rem, 1.1vw, 0.65rem);
-    --fp-progress-label-max-width: clamp(6.25rem, 20vw, 9.75rem);
+    --fp-progress-item-padding-inline: clamp(0.7rem, 1.9vw, 1.2rem);
+    --fp-progress-item-min-width: clamp(6.75rem, 18vw, 12rem);
+    --fp-progress-label-gap: clamp(0.45rem, 1.3vw, 0.75rem);
+    --fp-progress-label-max-width: clamp(7.1rem, 22vw, 12rem);
     --fp-progress-label-opacity: 1;
     --fp-progress-label-translate: 0;
     justify-content: flex-start;
@@ -739,7 +739,7 @@ final class Style
 }
 %s .fp-resv-field--phone .fp-resv-phone-input {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     align-items: stretch;
     gap: 0.65rem;
     flex-wrap: wrap;
@@ -750,12 +750,16 @@ final class Style
     min-width: 0;
     width: auto;
 }
+%s .fp-resv-phone-input input.fp-input {
+    order: 2;
+}
 %s .fp-resv-phone-input .fp-input--prefix {
     flex: 0 0 auto;
     width: clamp(5.5rem, 32vw, 8rem);
     max-width: 100%;
     text-align: left;
     padding-inline: 0.65rem;
+    order: 1;
 }
 %s .fp-resv-phone-input__static {
     display: inline-flex;
@@ -769,19 +773,21 @@ final class Style
     color: var(--fp-resv-muted);
     font-weight: 600;
     flex: 0 0 auto;
+    order: 1;
 }
 %s .fp-resv-field--consent {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.65rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+    column-gap: 0.65rem;
+    row-gap: 0.35rem;
 }
 %s .fp-resv-field--consent .fp-checkbox {
-    flex: 0 0 auto;
-    margin-top: 0;
+    align-self: flex-start;
+    margin-top: 0.15rem;
 }
 %s .fp-resv-consent__text {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
     flex-wrap: wrap;
@@ -1037,7 +1043,7 @@ final class Style
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
     padding: 0;
     list-style: none;
 }
@@ -1434,6 +1440,10 @@ final class Style
     %s .fp-progress__item[data-progress-state="active"] .fp-progress__label,
     %s .fp-progress__item:focus-visible .fp-progress__label {
         white-space: normal;
+    }
+    %s .fp-meals__legend {
+        gap: 0.75rem;
+        margin-bottom: 1.6rem;
     }
     %s .fp-meals__list {
         flex-wrap: nowrap;
