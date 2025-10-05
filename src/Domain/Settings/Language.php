@@ -423,7 +423,14 @@ final class Language
                             'name'    => 'Cliente',
                             'contact' => 'Contatti',
                             'notes'   => 'Note',
+                            'extras'  => 'Richieste aggiuntive',
                         ],
+                    ],
+                    'extras' => [
+                        'title'            => 'Richieste aggiuntive',
+                        'high_chair'       => 'Quanti seggioloni servono?',
+                        'wheelchair_table' => 'Serve un tavolo accessibile per sedia a rotelle',
+                        'pets'             => 'Vengo con un animale domestico',
                     ],
                     'messages' => [
                         'slots_loading' => 'Caricamento disponibilità...',
@@ -633,7 +640,14 @@ final class Language
                             'name'    => 'Customer',
                             'contact' => 'Contact',
                             'notes'   => 'Notes',
+                            'extras'  => 'Additional requests',
                         ],
+                    ],
+                    'extras' => [
+                        'title'            => 'Additional requests',
+                        'high_chair'       => 'How many high chairs are needed?',
+                        'wheelchair_table' => 'Need a wheelchair-accessible table',
+                        'pets'             => 'I will bring a pet',
                     ],
                     'messages' => [
                         'slots_loading' => 'Loading availability...',

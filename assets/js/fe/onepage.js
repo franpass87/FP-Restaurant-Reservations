@@ -1288,14 +1288,17 @@ class FormApp {
             return;
         }
 
-        const date = this.form.querySelector('[data-fp-resv-field=\"date\"]');
-        const time = this.form.querySelector('[data-fp-resv-field=\"time\"]');
-        const party = this.form.querySelector('[data-fp-resv-field=\"party\"]');
-        const firstName = this.form.querySelector('[data-fp-resv-field=\"first_name\"]');
-        const lastName = this.form.querySelector('[data-fp-resv-field=\"last_name\"]');
-        const email = this.form.querySelector('[data-fp-resv-field=\"email\"]');
-        const phone = this.form.querySelector('[data-fp-resv-field=\"phone\"]');
-        const notes = this.form.querySelector('[data-fp-resv-field=\"notes\"]');
+        const date = this.form.querySelector('[data-fp-resv-field="date"]');
+        const time = this.form.querySelector('[data-fp-resv-field="time"]');
+        const party = this.form.querySelector('[data-fp-resv-field="party"]');
+        const firstName = this.form.querySelector('[data-fp-resv-field="first_name"]');
+        const lastName = this.form.querySelector('[data-fp-resv-field="last_name"]');
+        const email = this.form.querySelector('[data-fp-resv-field="email"]');
+        const phone = this.form.querySelector('[data-fp-resv-field="phone"]');
+        const notes = this.form.querySelector('[data-fp-resv-field="notes"]');
+        const extraHighChairs = this.form.querySelector('[data-fp-resv-field="high_chair_count"]');
+        const extraWheelchair = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]');
+        const extraPets = this.form.querySelector('[data-fp-resv-field="pets"]');
 
         let nameValue = '';
         if (firstName && firstName.value) {
@@ -1315,6 +1318,18 @@ class FormApp {
             const phoneDisplay = prefixDisplay + phone.value.trim();
             contactValue = contactValue !== '' ? contactValue + ' / ' + phoneDisplay : phoneDisplay;
         }
+
+        const extras = [];
+        if (extraHighChairs && typeof extraHighChairs.value === 'string' && parseInt(extraHighChairs.value, 10) > 0) {
+            extras.push('Seggioloni: ' + parseInt(extraHighChairs.value, 10));
+        }
+        if (extraWheelchair && 'checked' in extraWheelchair && extraWheelchair.checked) {
+            extras.push('Tavolo accessibile per sedia a rotelle');
+        }
+        if (extraPets && 'checked' in extraPets && extraPets.checked) {
+            extras.push('Animali domestici');
+        }
+        const extrasText = extras.join('; ');
 
         this.summaryTargets.forEach(function (target) {
             const key = target.getAttribute('data-fp-resv-summary');
@@ -1336,6 +1351,9 @@ class FormApp {
                     break;
                 case 'notes':
                     target.textContent = notes && notes.value ? notes.value : '';
+                    break;
+                case 'extras':
+                    target.textContent = extrasText;
                     break;
             }
         });

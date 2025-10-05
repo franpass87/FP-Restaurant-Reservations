@@ -1588,6 +1588,26 @@ final class AdminPages
                                 'default'     => '',
                                 'description' => __('Comparirà nelle email e nel form di prenotazione.', 'fp-restaurant-reservations'),
                             ],
+                            'enable_manage_page' => [
+                                'label'          => __('Pagina gestione prenotazione', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Abilita la pagina self-service (link dalle email)', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                                'description'    => __('Se disabilitata, i link “Gestisci prenotazione” non mostreranno la pagina.', 'fp-restaurant-reservations'),
+                            ],
+                            'enable_manage_requests' => [
+                                'label'          => __('Richieste dal cliente (annullo/modifica)', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Permetti invio richieste allo staff dalla pagina gestione', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                            ],
+                            'manage_requests_notice' => [
+                                'label'       => __('Testo informativo pagina gestione', 'fp-restaurant-reservations'),
+                                'type'        => 'textarea',
+                                'rows'        => 3,
+                                'default'     => '',
+                                'description' => __('Mostrato sotto il form (es. privacy, tempi di risposta).', 'fp-restaurant-reservations'),
+                            ],
                             'restaurant_timezone' => [
                                 'label'       => __('Timezone predefinita', 'fp-restaurant-reservations'),
                                 'type'        => 'text',

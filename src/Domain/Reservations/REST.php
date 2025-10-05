@@ -275,6 +275,10 @@ final class REST
             'policy_version'    => $this->param($request, ['policy_version', 'fp_resv_policy_version']) ?? '',
             'consent_timestamp' => $this->param($request, ['consent_ts', 'fp_resv_consent_ts']) ?? '',
             'value'       => $this->param($request, ['value', 'fp_resv_value']),
+            // extras
+            'high_chair_count'  => $this->param($request, ['high_chair_count', 'fp_resv_high_chair_count']) ?? '0',
+            'wheelchair_table'  => $this->param($request, ['wheelchair_table', 'fp_resv_wheelchair_table']) ?? '',
+            'pets'              => $this->param($request, ['pets', 'fp_resv_pets']) ?? '',
         ];
 
         try {

@@ -133,6 +133,71 @@ $tabs = [
                         <ul class="fp-resv-arrivals__list" data-role="arrivals-list"></ul>
                     </div>
                 </section>
+				<!-- Modal: Nuova prenotazione -->
+				<div class="fp-resv-modal" data-modal="create" hidden aria-hidden="true" role="dialog" aria-labelledby="fp-resv-create-title">
+					<div class="fp-resv-modal__backdrop" data-action="modal-close" aria-hidden="true"></div>
+					<div class="fp-resv-modal__dialog">
+						<header class="fp-resv-modal__header">
+							<h2 id="fp-resv-create-title" class="fp-resv-admin__title"><?php esc_html_e('Nuova prenotazione', 'fp-restaurant-reservations'); ?></h2>
+							<button type="button" class="button-link" data-action="modal-close" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">×</button>
+						</header>
+						<div class="fp-resv-modal__body">
+							<div class="fp-resv-form__row">
+								<label>
+									<span><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?></span>
+									<input type="date" data-field="date" required>
+								</label>
+								<label>
+									<span><?php esc_html_e('Ora', 'fp-restaurant-reservations'); ?></span>
+									<input type="time" data-field="time" step="900" required>
+								</label>
+							</div>
+							<div class="fp-resv-form__row">
+								<label>
+									<span><?php esc_html_e('Persone', 'fp-restaurant-reservations'); ?></span>
+									<input type="number" min="1" step="1" data-field="party" required>
+								</label>
+								<div class="fp-resv-quickparty">
+									<button type="button" class="button" data-quickparty="2">2</button>
+									<button type="button" class="button" data-quickparty="4">4</button>
+									<button type="button" class="button" data-quickparty="6">6</button>
+									<button type="button" class="button" data-quickparty="8">8</button>
+								</div>
+							</div>
+							<div class="fp-resv-form__row">
+								<label>
+									<span><?php esc_html_e('Nome', 'fp-restaurant-reservations'); ?></span>
+									<input type="text" data-field="first_name" required>
+								</label>
+								<label>
+									<span><?php esc_html_e('Cognome', 'fp-restaurant-reservations'); ?></span>
+									<input type="text" data-field="last_name">
+								</label>
+							</div>
+							<div class="fp-resv-form__row">
+								<label>
+									<span><?php esc_html_e('Sala (opzionale)', 'fp-restaurant-reservations'); ?></span>
+									<input type="number" min="1" step="1" data-field="room_id">
+								</label>
+								<label>
+									<span><?php esc_html_e('Tavolo (opzionale)', 'fp-restaurant-reservations'); ?></span>
+									<input type="number" min="1" step="1" data-field="table_id">
+								</label>
+							</div>
+							<div class="fp-resv-form__row">
+								<label class="fp-resv-form__full">
+									<span><?php esc_html_e('Note', 'fp-restaurant-reservations'); ?></span>
+									<textarea rows="2" data-field="notes"></textarea>
+								</label>
+							</div>
+							<p class="fp-resv-form__error" data-role="create-error" hidden></p>
+						</div>
+						<footer class="fp-resv-modal__footer">
+							<button type="button" class="button" data-action="modal-close"><?php esc_html_e('Annulla', 'fp-restaurant-reservations'); ?></button>
+							<button type="button" class="button button-primary" data-action="create-submit"><?php esc_html_e('Crea prenotazione', 'fp-restaurant-reservations'); ?></button>
+						</footer>
+					</div>
+				</div>
             </div>
         </section>
     </main>

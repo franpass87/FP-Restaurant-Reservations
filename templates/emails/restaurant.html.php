@@ -100,6 +100,31 @@ if ($createdAt instanceof \DateTimeImmutable) {
                 </td>
             </tr>
         <?php endif; ?>
+        <?php if (!empty($reservation['extras']) && is_array($reservation['extras'])) : ?>
+            <?php
+            $extras = $reservation['extras'];
+            $extrasLines = [];
+            if (!empty($extras['high_chair_count'])) {
+                $extrasLines[] = sprintf(__('Seggioloni: %d', 'fp-restaurant-reservations'), (int) $extras['high_chair_count']);
+            }
+            if (!empty($extras['wheelchair_table'])) {
+                $extrasLines[] = __('Tavolo accessibile per sedia a rotelle', 'fp-restaurant-reservations');
+            }
+            if (!empty($extras['pets'])) {
+                $extrasLines[] = __('Animali domestici', 'fp-restaurant-reservations');
+            }
+            ?>
+            <?php if ($extrasLines !== []) : ?>
+                <tr>
+                    <th align="left" style="padding:4px 8px;font-weight:bold;vertical-align:top;">
+                        <?php echo esc_html($label($labels, 'extras', __('Richieste aggiuntive', 'fp-restaurant-reservations'))); ?>
+                    </th>
+                    <td style="padding:4px 8px;">
+                        <?php echo esc_html(implode(' • ', $extrasLines)); ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
+        <?php endif; ?>
         <?php if (!empty($reservation['allergies'])) : ?>
             <tr>
                 <th align="left" style="padding:4px 8px;font-weight:bold;vertical-align:top;">

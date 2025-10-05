@@ -190,14 +190,27 @@
 
 .fp-resv-admin--agenda .fp-resv-calendar__reservation.status-confirmed {
     border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.12);
 }
 
 .fp-resv-admin--agenda .fp-resv-calendar__reservation.status-visited {
     border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 6px 12px rgba(34, 197, 94, 0.12);
 }
 
 .fp-resv-admin--agenda .fp-resv-calendar__reservation.status-no-show {
     border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.12);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation.status-pending {
+    border-color: rgba(234, 179, 8, 0.4);
+    box-shadow: 0 6px 12px rgba(234, 179, 8, 0.12);
+}
+
+.fp-resv-admin--agenda .fp-resv-calendar__reservation-actions {
+    display: flex;
+    gap: 8px;
 }
 
 .fp-resv-admin--agenda .fp-resv-calendar__grid--week {

@@ -56,6 +56,7 @@ use FP\Resv\Domain\Tables\LayoutService as TablesLayoutService;
 use FP\Resv\Domain\Tables\Repository as TablesRepository;
 use FP\Resv\Domain\Tables\REST as TablesREST;
 use FP\Resv\Frontend\WidgetController;
+use FP\Resv\Frontend\ManageController;
 use Throwable;
 use function sprintf;
 use function is_admin;
@@ -364,6 +365,11 @@ final class Plugin
 
         $container->register(WidgetController::class, $widgets);
         $container->register('frontend.widgets', $widgets);
+
+        $manage = new ManageController();
+        $manage->boot();
+        $container->register(ManageController::class, $manage);
+        $container->register('frontend.manage', $manage);
 
         $eventsCpt = new EventsCPT();
         $eventsCpt->register();

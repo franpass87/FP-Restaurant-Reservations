@@ -153,6 +153,22 @@ class Service
             'consent_version'   => $sanitized['policy_version'],
         ]);
 
+        // Append extras into notes for staff visibility
+        $extrasNoteParts = [];
+        if ($sanitized['high_chair_count'] > 0) {
+            $extrasNoteParts[] = sprintf(__('Seggioloni: %d', 'fp-restaurant-reservations'), (int) $sanitized['high_chair_count']);
+        }
+        if ($sanitized['wheelchair_table']) {
+            $extrasNoteParts[] = __('Tavolo accessibile per sedia a rotelle', 'fp-restaurant-reservations');
+        }
+        if ($sanitized['pets']) {
+            $extrasNoteParts[] = __('Animali domestici', 'fp-restaurant-reservations');
+        }
+        if ($extrasNoteParts !== []) {
+            $suffix = ' [' . implode('; ', $extrasNoteParts) . ']';
+            $sanitized['notes'] = trim(($sanitized['notes'] ?? '') . $suffix);
+        }
+
         $reservationData = [
             'status'    => $status,
             'date'      => $sanitized['date'],
@@ -299,6 +315,10 @@ class Service
             'table_id'    => null,
             'value'       => null,
             'price_per_person' => null,
+            // extras
+            'high_chair_count' => 0,
+            'wheelchair_table' => false,
+            'pets'             => false,
         ];
 
         $payload = array_merge($defaults, $payload);
@@ -341,6 +361,13 @@ class Service
         $payload['profiling_consent'] = $this->toBool($payload['profiling_consent']);
         $payload['policy_version']    = sanitize_text_field((string) $payload['policy_version']);
         $payload['consent_timestamp'] = sanitize_text_field((string) $payload['consent_timestamp']);
+        // extras normalization
+        $payload['high_chair_count'] = max(0, absint($payload['high_chair_count']));
+        if ($payload['high_chair_count'] > 5) {
+            $payload['high_chair_count'] = 5;
+        }
+        $payload['wheelchair_table'] = $this->toBool($payload['wheelchair_table']);
+        $payload['pets']             = $this->toBool($payload['pets']);
         $payload['room_id']    = absint((int) $payload['room_id']);
         if ($payload['room_id'] === 0) {
             $payload['room_id'] = null;
@@ -946,6 +973,11 @@ class Service
             'manage_url'    => $manageUrl,
             'notes'         => $payload['notes'],
             'allergies'     => $payload['allergies'],
+            'extras'        => [
+                'high_chair_count' => (int) ($payload['high_chair_count'] ?? 0),
+                'wheelchair_table' => (bool) ($payload['wheelchair_table'] ?? false),
+                'pets'             => (bool) ($payload['pets'] ?? false),
+            ],
             'language'      => $payload['language'],
             'locale'        => $payload['locale'],
             'location'      => $payload['location'],

@@ -163,6 +163,10 @@ function initCalendar(section, request, strings) {
   var nextBtn = section.querySelector('[data-action="agenda-next"]');
   var todayBtn = section.querySelector('[data-action="agenda-today"]');
   var createBtn = section.querySelector('[data-action="agenda-create"]');
+  var createModal = container.querySelector('[data-modal="create"]');
+  var createModalCloseBtns = createModal ? createModal.querySelectorAll('[data-action="modal-close"]') : null;
+  var createSubmitBtn = createModal ? createModal.querySelector('[data-action="create-submit"]') : null;
+  var createErrorBox = createModal ? createModal.querySelector('[data-role="create-error"]') : null;
 
   if (!grid || !empty || !dateInput || !roomSelect || !viewSelect || !prevBtn || !nextBtn || !todayBtn || !createBtn) {
     return;
@@ -264,6 +268,141 @@ function initCalendar(section, request, strings) {
   updateNavLabels();
   loadAgenda();
 
+  var createState = { slot: null };
+
+  function setCreateError(message) {
+    if (!createErrorBox) return;
+    if (!message) {
+      createErrorBox.hidden = true;
+      createErrorBox.textContent = '';
+      return;
+    }
+    createErrorBox.hidden = false;
+    createErrorBox.textContent = message;
+  }
+
+  function getCreateField(name) {
+    return createModal ? createModal.querySelector('[data-field="' + name + '"]') : null;
+  }
+
+  function openCreateModal(slot) {
+    if (!createModal) {
+      return;
+    }
+    createState.slot = slot || {};
+    setCreateError('');
+
+    var fDate = getCreateField('date');
+    var fTime = getCreateField('time');
+    var fParty = getCreateField('party');
+    var fFirst = getCreateField('first_name');
+    var fLast = getCreateField('last_name');
+    var fRoom = getCreateField('room_id');
+    var fTable = getCreateField('table_id');
+    var fNotes = getCreateField('notes');
+
+    if (fDate) fDate.value = slot && slot.date ? slot.date : formatDate(state.date);
+    if (fTime) fTime.value = slot && slot.time ? slot.time : (lastSlots.length ? lastSlots[0] : '19:00');
+    if (fParty) fParty.value = slot && slot.party ? String(slot.party) : '2';
+    if (fFirst) fFirst.value = slot && slot.guest ? String(slot.guest).split(' ')[0] : '';
+    if (fLast) fLast.value = slot && slot.guest ? String(slot.guest).split(' ').slice(1).join(' ') : '';
+    if (fRoom) fRoom.value = slot && slot.roomId ? String(slot.roomId) : (state.room !== 'all' ? String(state.room) : '');
+    if (fTable) fTable.value = slot && slot.tableId ? String(slot.tableId) : '';
+    if (fNotes) fNotes.value = '';
+
+    createModal.hidden = false;
+    createModal.setAttribute('aria-hidden', 'false');
+
+    var firstFocusable = fFirst || fDate || createSubmitBtn;
+    if (firstFocusable && typeof firstFocusable.focus === 'function') {
+      setTimeout(function () { firstFocusable.focus(); }, 0);
+    }
+  }
+
+  function closeCreateModal() {
+    if (!createModal) return;
+    createModal.hidden = true;
+    createModal.setAttribute('aria-hidden', 'true');
+  }
+
+  if (createModal) {
+    if (createModalCloseBtns) {
+      for (var i = 0; i < createModalCloseBtns.length; i++) {
+        createModalCloseBtns[i].addEventListener('click', function () { closeCreateModal(); });
+      }
+    }
+    createModal.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeCreateModal();
+      }
+    });
+
+    var quickPartyBtns = createModal.querySelectorAll('[data-quickparty]');
+    if (quickPartyBtns && quickPartyBtns.length) {
+      for (var q = 0; q < quickPartyBtns.length; q++) {
+        quickPartyBtns[q].addEventListener('click', function () {
+          var value = this.getAttribute('data-quickparty');
+          var fParty = getCreateField('party');
+          if (fParty) fParty.value = value;
+        });
+      }
+    }
+
+    if (createSubmitBtn) {
+      createSubmitBtn.addEventListener('click', function () {
+        var fDate = getCreateField('date');
+        var fTime = getCreateField('time');
+        var fParty = getCreateField('party');
+        var fFirst = getCreateField('first_name');
+        var fLast = getCreateField('last_name');
+        var fRoom = getCreateField('room_id');
+        var fTable = getCreateField('table_id');
+        var fNotes = getCreateField('notes');
+
+        var dateVal = fDate ? fDate.value : '';
+        var timeVal = fTime ? fTime.value : '';
+        var partyVal = fParty ? parseInt(fParty.value, 10) : 0;
+        var firstVal = fFirst ? fFirst.value.trim() : '';
+        var lastVal = fLast ? fLast.value.trim() : '';
+        var roomVal = fRoom && fRoom.value !== '' ? parseInt(fRoom.value, 10) : null;
+        var tableVal = fTable && fTable.value !== '' ? parseInt(fTable.value, 10) : null;
+        var notesVal = fNotes ? fNotes.value : '';
+
+        if (!dateVal || !timeVal || !partyVal || partyVal <= 0 || !firstVal) {
+          setCreateError(strings.agendaCreateInvalid || fpResvAgendaTranslate('Enter a valid name and party size.'));
+          return;
+        }
+
+        var payload = {
+          date: dateVal,
+          time: timeVal,
+          party: partyVal,
+          first_name: firstVal,
+          last_name: lastVal,
+          status: 'pending',
+        };
+        if (roomVal) payload.room_id = roomVal;
+        if (tableVal) payload.table_id = tableVal;
+        if (notesVal) payload.notes = notesVal;
+
+        createSubmitBtn.disabled = true;
+        setCreateError('');
+        request('/fp-resv/v1/agenda/reservations', { method: 'POST', data: payload })
+          .then(function () {
+            announce(strings.agendaCreateSuccess || 'Prenotazione creata.');
+            closeCreateModal();
+            createSubmitBtn.disabled = false;
+            loadAgenda();
+          })
+          .catch(function (err) {
+            createSubmitBtn.disabled = false;
+            setCreateError((err && err.message) || strings.agendaCreateError || 'Impossibile creare la prenotazione.');
+          });
+      });
+    }
+  }
+
   function updateNavLabels() {
     if (state.mode === 'week') {
       if (strings.agendaPrevWeek) {
@@ -325,9 +464,6 @@ function initCalendar(section, request, strings) {
       var formatted = state.mode === 'week' ? formatWeekRange(state.date) : formatHumanDate(state.date);
       title.textContent = (heading || '') + (formatted ? ' · ' + formatted : '');
     }
-    if (hint) {
-      hint.textContent = strings.agendaDragHelp || '';
-    }
 
     buildRoomOptions();
 
@@ -341,6 +477,14 @@ function initCalendar(section, request, strings) {
     grid.classList.remove('fp-resv-calendar__grid--week');
 
     var days = state.mode === 'week' ? expandWeekDays(state.days, state.date) : [findDay(state.date)];
+    if (hint) {
+      var totals = countTotals(days);
+      var baseHint = strings.agendaDragHelp || '';
+      var countsLabel = (totals.reservations > 0 || totals.party > 0)
+        ? (' · ' + totals.reservations + ' prenotazioni · ' + totals.party + ' coperti')
+        : '';
+      hint.textContent = baseHint + countsLabel;
+    }
     lastSlots = [];
     lastColumns = [];
 
@@ -678,6 +822,21 @@ function initCalendar(section, request, strings) {
     return slots;
   }
 
+  function countTotals(days) {
+    var totalReservations = 0;
+    var totalParty = 0;
+    for (var i = 0; i < days.length; i++) {
+      var reservations = Array.isArray(days[i] && days[i].reservations) ? days[i].reservations : [];
+      for (var r = 0; r < reservations.length; r++) {
+        if (!shouldDisplayReservation(reservations[r])) continue;
+        totalReservations += 1;
+        var p = Number(reservations[r].party || 0);
+        if (Number.isFinite(p)) totalParty += p;
+      }
+    }
+    return { reservations: totalReservations, party: totalParty };
+  }
+
   function hasUnassignedReservations(day) {
     var reservations = Array.isArray(day.reservations) ? day.reservations : [];
     for (var i = 0; i < reservations.length; i++) {
@@ -770,6 +929,33 @@ function initCalendar(section, request, strings) {
       notes.textContent = reservation.notes;
       card.appendChild(notes);
     }
+
+    var actions = document.createElement('div');
+    actions.className = 'fp-resv-calendar__reservation-actions';
+
+    function addAction(label, payload) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'button button-small';
+      btn.textContent = label;
+      btn.addEventListener('click', function () {
+        request('/fp-resv/v1/agenda/reservations/' + reservation.id, { method: 'POST', data: payload })
+          .then(function () {
+            announce(fpResvAgendaTranslate('Reservation updated.'));
+            loadAgenda();
+          })
+          .catch(function () {
+            window.alert(fpResvAgendaTranslate('Update failed.'));
+          });
+      });
+      actions.appendChild(btn);
+    }
+
+    addAction(strings.actionConfirm || fpResvAgendaTranslate('Conferma'), { status: 'confirmed' });
+    addAction(strings.actionVisited || fpResvAgendaTranslate('Check-in'), { status: 'visited', visited: true });
+    addAction(strings.actionNoShow || fpResvAgendaTranslate('No-show'), { status: 'no-show' });
+
+    card.appendChild(actions);
 
     card.addEventListener('dragstart', function (event) {
       dragState.current = {
@@ -929,54 +1115,7 @@ function initCalendar(section, request, strings) {
   }
 
   function openQuickCreate(slot) {
-    var guestLabel = strings.agendaCreateGuest || fpResvAgendaTranslate('Guest name');
-    var partyLabel = strings.agendaCreateParty || fpResvAgendaTranslate('Party size');
-
-    var guest = window.prompt(guestLabel + ':', slot && slot.guest ? slot.guest : '');
-    if (guest === null) {
-      return;
-    }
-    guest = guest.trim();
-
-    var partyInput = window.prompt(partyLabel + ':', String(slot && slot.party ? slot.party : 2));
-    if (partyInput === null) {
-      return;
-    }
-
-    var party = parseInt(partyInput, 10);
-    if (!guest || !party || party <= 0 || Number.isNaN(party)) {
-      window.alert(strings.agendaCreateInvalid || fpResvAgendaTranslate('Enter a valid name and party size.'));
-      return;
-    }
-
-    var split = splitName(guest);
-    var payload = {
-      date: slot.date,
-      time: slot.time,
-      party: party,
-      first_name: split.first,
-      last_name: split.last,
-      status: 'pending',
-    };
-
-    if (slot.tableId) {
-      payload.table_id = slot.tableId;
-    }
-    if (slot.roomId) {
-      payload.room_id = slot.roomId;
-    }
-
-    request('/fp-resv/v1/agenda/reservations', {
-      method: 'POST',
-      data: payload,
-    })
-      .then(function () {
-        announce(strings.agendaCreateSuccess || 'Prenotazione creata.');
-        loadAgenda();
-      })
-      .catch(function () {
-        window.alert(strings.agendaCreateError || 'Impossibile creare la prenotazione.');
-      });
+    openCreateModal(slot);
   }
 
   function setMessage(message, isError) {

@@ -420,6 +420,32 @@ endif;
                                         <small class="fp-hint"><?php echo esc_html($hints['notes']); ?></small>
                                     <?php endif; ?>
                                 </label>
+                                <fieldset class="fp-resv-extra fp-fieldset">
+                                    <legend class="fp-resv-extra__title"><?php echo esc_html($strings['extras']['title'] ?? __('Richieste aggiuntive', 'fp-restaurant-reservations')); ?></legend>
+                                    <div class="fp-resv-fields fp-resv-fields--grid">
+                                        <label class="fp-resv-field fp-field">
+                                            <span><?php echo esc_html($strings['extras']['high_chair'] ?? __('Quanti seggioloni servono?', 'fp-restaurant-reservations')); ?></span>
+                                            <input
+                                                class="fp-input"
+                                                type="number"
+                                                min="0"
+                                                max="5"
+                                                name="fp_resv_high_chair_count"
+                                                data-fp-resv-field="high_chair_count"
+                                                value="0"
+                                                inputmode="numeric"
+                                            >
+                                        </label>
+                                        <label class="fp-resv-field fp-field fp-resv-field--checkbox">
+                                            <input class="fp-checkbox" type="checkbox" name="fp_resv_wheelchair_table" value="1" data-fp-resv-field="wheelchair_table">
+                                            <span><?php echo esc_html($strings['extras']['wheelchair_table'] ?? __('Serve un tavolo accessibile per sedia a rotelle', 'fp-restaurant-reservations')); ?></span>
+                                        </label>
+                                        <label class="fp-resv-field fp-field fp-resv-field--checkbox">
+                                            <input class="fp-checkbox" type="checkbox" name="fp_resv_pets" value="1" data-fp-resv-field="pets">
+                                            <span><?php echo esc_html($strings['extras']['pets'] ?? __('Vengo con un animale domestico', 'fp-restaurant-reservations')); ?></span>
+                                        </label>
+                                    </div>
+                                </fieldset>
                                 <label class="fp-resv-field fp-field">
                                     <span><?php echo esc_html($strings['fields']['allergies'] ?? ''); ?></span>
                                     <textarea class="fp-textarea" name="fp_resv_allergies" data-fp-resv-field="allergies" rows="3"></textarea>
@@ -489,6 +515,10 @@ endif;
                                         <div>
                                             <dt><?php echo esc_html($strings['summary']['labels']['notes'] ?? ''); ?></dt>
                                             <dd data-fp-resv-summary="notes"></dd>
+                                        </div>
+                                        <div>
+                                            <dt><?php echo esc_html($strings['summary']['labels']['extras'] ?? __('Richieste aggiuntive', 'fp-restaurant-reservations')); ?></dt>
+                                            <dd data-fp-resv-summary="extras"></dd>
                                         </div>
                                     </dl>
                                     <p class="fp-resv-summary__disclaimer"><?php echo esc_html($strings['summary']['disclaimer'] ?? ''); ?></p>
