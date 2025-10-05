@@ -306,6 +306,12 @@ class Service
         $payload['date']       = sanitize_text_field((string) $payload['date']);
         $payload['time']       = substr(sanitize_text_field((string) $payload['time']), 0, 5);
         $payload['party']      = max(1, absint($payload['party']));
+        // Clamp party size to a reasonable upper bound based on settings (default room capacity)
+        // This prevents excessively large values from slipping through client-side validation.
+        $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
+        if ($maxCapacity > 0) {
+            $payload['party'] = min($payload['party'], $maxCapacity);
+        }
         $payload['first_name'] = sanitize_text_field((string) $payload['first_name']);
         $payload['last_name']  = sanitize_text_field((string) $payload['last_name']);
         $payload['email']      = sanitize_email((string) $payload['email']);
