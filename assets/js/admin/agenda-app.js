@@ -43,7 +43,7 @@ var fpResvAgendaTranslate = (function () {
   }
 
   if (calendarSection) {
-    initCalendar(calendarSection, request, strings);
+    initCalendar(calendarSection, container, request, strings);
   }
 })();
 
@@ -149,7 +149,7 @@ function parseAgendaResponse(response) {
     }
   });
 }
-function initCalendar(section, request, strings) {
+function initCalendar(section, container, request, strings) {
   section.hidden = false;
 
   var grid = section.querySelector('[data-role="agenda-grid"]');
@@ -1137,7 +1137,7 @@ function initCalendar(section, request, strings) {
     }
   }
 }
-function splitName(value) {
+function _splitName(value) {
   var parts = (value || '').split(/\s+/).filter(Boolean);
   if (!parts.length) {
     return { first: value, last: '' };
