@@ -44,7 +44,8 @@ final class LayoutService
                 'capacity' => 0,
                 'active'   => true,
             ]);
-            $existingRooms = [$this->repository->findRoom($defaultRoomId)];
+            // Ricarica l'elenco completo per evitare inconsistenze
+            $existingRooms = $this->repository->getRooms();
         }
 
         foreach ($existingRooms as $roomRow) {

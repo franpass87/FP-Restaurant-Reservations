@@ -238,19 +238,19 @@ class FormApp {
         };
 
         this.copy = {
-            ctaDisabled: this.messages.cta_complete_fields || 'Complete required fields',
-            ctaEnabled: (this.messages.cta_book_now || (this.strings.actions && this.strings.actions.submit) || 'Book now'),
-            ctaSending: this.messages.cta_sending || 'Sending…',
-            updatingSlots: this.messages.msg_updating_slots || 'Updating availability…',
-            slotsUpdated: this.messages.msg_slots_updated || 'Availability updated.',
+            ctaDisabled: this.messages.cta_complete_fields || 'Completa i campi richiesti',
+            ctaEnabled: (this.messages.cta_book_now || (this.strings.actions && this.strings.actions.submit) || 'Prenota ora'),
+            ctaSending: this.messages.cta_sending || 'Invio…',
+            updatingSlots: this.messages.msg_updating_slots || 'Aggiornamento disponibilità…',
+            slotsUpdated: this.messages.msg_slots_updated || 'Disponibilità aggiornata.',
             slotsEmpty: this.messages.slots_empty || '',
-            selectMeal: this.messages.msg_select_meal || 'Select a meal to view available times.',
-            slotsError: this.messages.msg_slots_error || 'We could not update available times. Please try again.',
-            invalidPhone: this.messages.msg_invalid_phone || 'Enter a valid phone number (minimum 6 digits).',
-            invalidEmail: this.messages.msg_invalid_email || 'Enter a valid email address.',
-            submitError: this.messages.msg_submit_error || 'We could not complete your reservation. Please try again.',
-            submitSuccess: this.messages.msg_submit_success || 'Reservation sent successfully.',
-            mealFullNotice: this.messages.meal_full_notice || 'No availability for this service. Please choose another date.',
+            selectMeal: this.messages.msg_select_meal || 'Seleziona un servizio per visualizzare gli orari disponibili.',
+            slotsError: this.messages.msg_slots_error || 'Impossibile aggiornare la disponibilità. Riprova.',
+            invalidPhone: this.messages.msg_invalid_phone || 'Inserisci un numero di telefono valido (minimo 6 cifre).',
+            invalidEmail: this.messages.msg_invalid_email || 'Inserisci un indirizzo email valido.',
+            submitError: this.messages.msg_submit_error || 'Non è stato possibile completare la prenotazione. Riprova.',
+            submitSuccess: this.messages.msg_submit_success || 'Prenotazione inviata con successo.',
+            mealFullNotice: this.messages.meal_full_notice || 'Nessuna disponibilità per questo servizio. Scegli un altro giorno.',
         };
 
         this.phoneCountryCode = this.getPhoneCountryCode();

@@ -227,7 +227,7 @@ export function createAvailabilityController(options) {
     function showBoundary(message) {
         const fallback = (options.strings && options.strings.slotsError)
             || (options.strings && options.strings.submitError)
-            || 'We could not update available times. Please try again.';
+            || 'Impossibile aggiornare la disponibilità. Riprova.';
 
         if (boundaryEl) {
             const text = boundaryEl.querySelector('[data-fp-resv-slots-boundary-message]');
@@ -328,7 +328,7 @@ export function createAvailabilityController(options) {
 
         hideBoundary();
         showSkeleton();
-        setStatus((options.strings && options.strings.updatingSlots) || 'Updating availability…', 'loading');
+        setStatus((options.strings && options.strings.updatingSlots) || 'Aggiornamento disponibilità…', 'loading');
         notifyAvailability(params, { state: 'loading', slots: 0 });
 
         const url = buildUrl(options.endpoint, params);
@@ -421,7 +421,7 @@ export function createAvailabilityController(options) {
                     || (payloadData && payloadData.message)
                     || (options.strings && options.strings.slotsError)
                     || (options.strings && options.strings.submitError)
-                    || 'We could not update available times. Please try again.';
+                    || 'Impossibile aggiornare la disponibilità. Riprova.';
                 const debugSource = (error && error.payload) || payloadData || null;
                 const message = formatDebugMessage(rawMessage, debugSource);
                 showBoundary(message);

@@ -235,7 +235,7 @@
                     <label>Prefisso <input name="prefix" value="T" maxlength="8"></label>
                     <label>Quantità <input name="count" type="number" min="1" max="200" value="10"></label>
                     <label>Posti standard <input name="seats" type="number" min="1" value="2"></label>
-                    <label>Duplicati <select name="dup"><option value="error">Errore</option><option value="skip">Salta</option></select></label>
+                    <label>Duplicati <select name="dup"><option value="skip" selected>Salta</option><option value="error">Errore</option></select></label>
                     <div class="fp-resv-grid-preview" data-role="preview" aria-label="Anteprima"></div>
                     <footer>
                         <button type="button" data-action="cancel" class="button">Annulla</button>

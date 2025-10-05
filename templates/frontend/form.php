@@ -16,7 +16,7 @@ $pdfUrl     = isset($context['pdf_url']) ? (string) $context['pdf_url'] : '';
 $pdfLabel   = isset($strings['pdf_label']) ? (string) $strings['pdf_label'] : '';
 $pdfTooltip = isset($strings['pdf_tooltip']) ? (string) $strings['pdf_tooltip'] : '';
 if ($pdfUrl !== '' && $pdfLabel === '') {
-    $pdfLabel = __('Download menu (PDF)', 'fp-restaurant-reservations');
+    $pdfLabel = __('Scarica menu (PDF)', 'fp-restaurant-reservations');
 }
 $dataLayer  = $context['data_layer'] ?? [];
 $events     = $dataLayer['events'] ?? [];
@@ -425,8 +425,8 @@ endif;
                                     <textarea class="fp-textarea" name="fp_resv_allergies" data-fp-resv-field="allergies" rows="3"></textarea>
                                 </label>
                                 <?php
-                                $requiredConsentLabel = $strings['consents_meta']['required'] ?? __('Required', 'fp-restaurant-reservations');
-                                $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Optional', 'fp-restaurant-reservations');
+                                $requiredConsentLabel = $strings['consents_meta']['required'] ?? __('Obbligatorio', 'fp-restaurant-reservations');
+                                $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Opzionale', 'fp-restaurant-reservations');
                                 ?>
                                 <label class="fp-resv-field fp-resv-field--consent fp-field">
                                     <input class="fp-checkbox" type="checkbox" name="fp_resv_consent" data-fp-resv-field="consent" required>
@@ -516,10 +516,10 @@ endif;
         </ol>
         <div class="fp-resv-widget__actions fp-resv-sticky-cta" data-fp-resv-sticky-cta>
             <?php
-            $submitLabel = $strings['actions']['submit'] ?? __('Book now', 'fp-restaurant-reservations');
-            $ctaDisabled = $strings['messages']['cta_complete_fields'] ?? __('Complete required fields', 'fp-restaurant-reservations');
-            $submitHint  = $strings['messages']['submit_hint'] ?? __('Complete all steps to book.', 'fp-restaurant-reservations');
-            $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Complete required fields to enable booking.', 'fp-restaurant-reservations');
+            $submitLabel = $strings['actions']['submit'] ?? __('Prenota ora', 'fp-restaurant-reservations');
+            $ctaDisabled = $strings['messages']['cta_complete_fields'] ?? __('Completa i campi richiesti', 'fp-restaurant-reservations');
+            $submitHint  = $strings['messages']['submit_hint'] ?? __('Completa tutti i passaggi per prenotare.', 'fp-restaurant-reservations');
+            $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Completa i campi obbligatori per abilitare la prenotazione.', 'fp-restaurant-reservations');
             $submitHintId = $formId . '-submit-hint';
             ?>
             <button
