@@ -150,7 +150,12 @@ final class REST
     public function handleCreateRoom(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         return $this->wrapOperation(function () use ($request): array {
-            $data = $this->preparePayload($request->get_json_params());
+            $data = $request->get_json_params();
+            if (!is_array($data) || $data === []) {
+                // Fallback: accetta anche form-data / query params quando il body JSON viene rimosso dall'hosting
+                $data = $request->get_params();
+            }
+            $data = $this->preparePayload($data);
             return $this->layout->saveRoom($data);
         });
     }
@@ -160,7 +165,11 @@ final class REST
         $roomId = (int) $request->get_param('id');
 
         return $this->wrapOperation(function () use ($request, $roomId): array {
-            $data = $this->preparePayload($request->get_json_params());
+            $data = $request->get_json_params();
+            if (!is_array($data) || $data === []) {
+                $data = $request->get_params();
+            }
+            $data = $this->preparePayload($data);
             return $this->layout->saveRoom($data, $roomId);
         });
     }
@@ -179,7 +188,11 @@ final class REST
     public function handleCreateTable(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         return $this->wrapOperation(function () use ($request): array {
-            $data = $this->preparePayload($request->get_json_params());
+            $data = $request->get_json_params();
+            if (!is_array($data) || $data === []) {
+                $data = $request->get_params();
+            }
+            $data = $this->preparePayload($data);
             return $this->layout->saveTable($data);
         });
     }
@@ -189,7 +202,11 @@ final class REST
         $tableId = (int) $request->get_param('id');
 
         return $this->wrapOperation(function () use ($request, $tableId): array {
-            $data = $this->preparePayload($request->get_json_params());
+            $data = $request->get_json_params();
+            if (!is_array($data) || $data === []) {
+                $data = $request->get_params();
+            }
+            $data = $this->preparePayload($data);
             return $this->layout->saveTable($data, $tableId);
         });
     }
