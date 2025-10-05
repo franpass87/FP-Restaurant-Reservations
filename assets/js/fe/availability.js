@@ -44,6 +44,43 @@ export function createAvailabilityController(options) {
     let lastParams = null;
     let currentSelection = null;
 
+    function normalizeSlotStatus(status) {
+        if (typeof status !== 'string') {
+            return '';
+        }
+
+        const normalized = status.trim().toLowerCase();
+        if (normalized === '') {
+            return '';
+        }
+
+        if (normalized.startsWith('available')) {
+            return 'available';
+        }
+
+        if (normalized.startsWith('limited')) {
+            return 'limited';
+        }
+
+        if (normalized.startsWith('full')) {
+            return 'full';
+        }
+
+        if (normalized === 'waitlist') {
+            return 'limited';
+        }
+
+        if (normalized === 'open') {
+            return 'available';
+        }
+
+        if (normalized === 'busy') {
+            return 'limited';
+        }
+
+        return normalized;
+    }
+
     function summarizeSlots(slots) {
         const safeSlots = Array.isArray(slots) ? slots : [];
         const slotCount = safeSlots.length;
@@ -52,7 +89,7 @@ export function createAvailabilityController(options) {
         }
 
         const statuses = safeSlots
-            .map((slot) => String(slot.status || '').toLowerCase())
+            .map((slot) => normalizeSlotStatus(slot && slot.status))
             .filter((status) => status !== '');
 
         if (statuses.length === 0) {
@@ -129,16 +166,37 @@ export function createAvailabilityController(options) {
             emptyEl.hidden = false;
         }
 
-        const message = !params || !params.meal
-            ? ((options.strings && options.strings.selectMeal) || '')
-            : ((options.strings && options.strings.slotsEmpty) || '');
+        const hasParams = params && typeof params === 'object';
+        const mealValue = hasParams && typeof params.meal === 'string' ? params.meal.trim() : '';
+        const dateValue = hasParams && typeof params.date === 'string' ? params.date.trim() : '';
+        const partyValue = hasParams && typeof params.party !== 'undefined'
+            ? String(params.party).trim()
+            : '';
+
+        const hasMeal = mealValue !== '';
+        const hasDate = dateValue !== '';
+        const hasParty = partyValue !== '' && partyValue !== '0';
+        const readyForAvailability = hasMeal && hasDate && hasParty;
+
+        const message = (() => {
+            if (!hasMeal) {
+                return (options.strings && options.strings.selectMeal) || '';
+            }
+
+            if (!readyForAvailability) {
+                return '';
+            }
+
+            return (options.strings && options.strings.slotsEmpty) || '';
+        })();
+
         setStatus(message, 'idle');
 
         if (listEl) {
             clearChildren(listEl);
         }
 
-        const state = !params || !params.meal ? 'unknown' : 'full';
+        const state = readyForAvailability ? 'full' : 'unknown';
         notifyAvailability(params, { state, slots: 0 });
     }
 

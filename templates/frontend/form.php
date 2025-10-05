@@ -242,6 +242,29 @@ endif;
                                                 <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
                                             <?php endif; ?>
                                         </header>
+                                        <ul
+                                            class="fp-meals__legend"
+                                            aria-label="<?php echo esc_attr__('Legenda disponibilità', 'fp-restaurant-reservations'); ?>"
+                                        >
+                                            <li class="fp-meals__legend-item fp-meals__legend-item--available">
+                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                                <span class="fp-meals__legend-text">
+                                                    <?php echo esc_html__('Disponibile', 'fp-restaurant-reservations'); ?>
+                                                </span>
+                                            </li>
+                                            <li class="fp-meals__legend-item fp-meals__legend-item--limited">
+                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                                <span class="fp-meals__legend-text">
+                                                    <?php echo esc_html__('Disponibilità limitata', 'fp-restaurant-reservations'); ?>
+                                                </span>
+                                            </li>
+                                            <li class="fp-meals__legend-item fp-meals__legend-item--full">
+                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                                <span class="fp-meals__legend-text">
+                                                    <?php echo esc_html__('Completamente prenotato', 'fp-restaurant-reservations'); ?>
+                                                </span>
+                                            </li>
+                                        </ul>
                                         <div class="fp-meals__list" role="group">
                                             <?php foreach ($meals as $meal) : ?>
                                                 <?php
@@ -338,7 +361,7 @@ endif;
                                             <small class="fp-hint"><?php echo esc_html($hints['last_name']); ?></small>
                                         <?php endif; ?>
                                     </label>
-                                    <label class="fp-resv-field fp-field">
+                                    <label class="fp-resv-field fp-field fp-resv-field--email">
                                         <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
                                         <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required>
                                     </label>
@@ -391,27 +414,40 @@ endif;
                                     <span><?php echo esc_html($strings['fields']['allergies'] ?? ''); ?></span>
                                     <textarea class="fp-textarea" name="fp_resv_allergies" data-fp-resv-field="allergies" rows="3"></textarea>
                                 </label>
+                                <?php
+                                $requiredConsentLabel = $strings['consents_meta']['required'] ?? __('Required', 'fp-restaurant-reservations');
+                                $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Optional', 'fp-restaurant-reservations');
+                                ?>
                                 <label class="fp-resv-field fp-resv-field--consent fp-field">
                                     <input class="fp-checkbox" type="checkbox" name="fp_resv_consent" data-fp-resv-field="consent" required>
                                     <span class="fp-resv-consent__text">
-                                        <?php echo esc_html($strings['fields']['consent'] ?? ''); ?>
-                                        <?php if ($policyUrl !== '') : ?>
-                                            <a href="<?php echo esc_url($policyUrl); ?>" target="_blank" rel="noopener">
-                                                <?php echo esc_html($strings['consents']['policy_link'] ?? ''); ?>
-                                            </a>
-                                        <?php endif; ?>
+                                        <span class="fp-resv-consent__copy">
+                                            <?php echo esc_html($strings['fields']['consent'] ?? ''); ?>
+                                            <?php if ($policyUrl !== '') : ?>
+                                                <a href="<?php echo esc_url($policyUrl); ?>" target="_blank" rel="noopener">
+                                                    <?php echo esc_html($strings['consents']['policy_link'] ?? ''); ?>
+                                                </a>
+                                            <?php endif; ?>
+                                        </span>
+                                        <span class="fp-resv-consent__meta fp-resv-consent__meta--required"><?php echo esc_html($requiredConsentLabel); ?></span>
                                     </span>
                                 </label>
                                 <?php if ($marketingEnabled) : ?>
                                     <label class="fp-resv-field fp-resv-field--consent fp-field">
                                         <input class="fp-checkbox" type="checkbox" name="fp_resv_marketing_consent" value="1" data-fp-resv-field="marketing_consent">
-                                        <span class="fp-resv-consent__text"><?php echo esc_html($strings['consents']['marketing'] ?? ''); ?></span>
+                                        <span class="fp-resv-consent__text">
+                                            <span class="fp-resv-consent__copy"><?php echo esc_html($strings['consents']['marketing'] ?? ''); ?></span>
+                                            <span class="fp-resv-consent__meta"><?php echo esc_html($optionalConsentLabel); ?></span>
+                                        </span>
                                     </label>
                                 <?php endif; ?>
                                 <?php if ($profilingEnabled) : ?>
                                     <label class="fp-resv-field fp-resv-field--consent fp-field">
                                         <input class="fp-checkbox" type="checkbox" name="fp_resv_profiling_consent" value="1" data-fp-resv-field="profiling_consent">
-                                        <span class="fp-resv-consent__text"><?php echo esc_html($strings['consents']['profiling'] ?? ''); ?></span>
+                                        <span class="fp-resv-consent__text">
+                                            <span class="fp-resv-consent__copy"><?php echo esc_html($strings['consents']['profiling'] ?? ''); ?></span>
+                                            <span class="fp-resv-consent__meta"><?php echo esc_html($optionalConsentLabel); ?></span>
+                                        </span>
                                     </label>
                                 <?php endif; ?>
                                 <?php break;

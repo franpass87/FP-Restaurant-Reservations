@@ -542,6 +542,14 @@ final class Style
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
 }
+@media (min-width: 960px) {
+    %s .fp-resv-fields--grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    %s .fp-resv-fields--grid .fp-resv-field--email {
+        grid-column: 1 / -1;
+    }
+}
 %s .fp-btn,
 %s .fp-resv-button {
     display: inline-flex;

@@ -11,6 +11,13 @@ License: GPLv2 or later
 == Description ==
 FP Restaurant Reservations fornisce un flusso completo di prenotazioni ristorante con pagamenti Stripe opzionali, calendario drag & drop, gestione sale/tavoli, eventi con biglietti e QR testuale, integrazione Google Calendar, tracking GA4/Ads/Meta/Clarity e automazioni Brevo con survey post-visita.
 
+== Features ==
+* Form single-page con progress bar responsiva che rimane su una sola riga su desktop e scrolla su mobile.
+* Pill dei turni con legenda a colori (verde/ambra/rosso) e stato "sconosciuto" neutro finché non arriva la disponibilità.
+* Campi contatto ottimizzati: email full-width su desktop, prefissi telefonici deduplicati e validazione live.
+* Sezione consensi con badge "Obbligatorio"/"Opzionale" allineati sotto il testo per chiarezza legale.
+* Hint contestuali e messaggi aria-live per accessibilità durante la selezione dei turni e l'invio della prenotazione.
+
 == Installation ==
 1. Copia la cartella del plugin in `wp-content/plugins/fp-restaurant-reservations`.
 2. Attiva il plugin dalla schermata **Plugin** di WordPress.
