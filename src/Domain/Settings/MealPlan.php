@@ -352,10 +352,62 @@ final class MealPlan
 
     private static function normalizeHours(mixed $value): string
     {
+        $mapDay = static function (string $dayKey): string {
+            $k = sanitize_key($dayKey);
+            if ($k === '') {
+                return '';
+            }
+
+            // Map common non-English/localized day names to canonical short keys
+            // Expected canonical keys: mon, tue, wed, thu, fri, sat, sun
+            // Handle Italian (lun, mar, mer, gio, ven, sab, dom) and fallbacks by prefix
+            $startsWith = static function (string $needle) use ($k): bool {
+                return str_starts_with($k, $needle);
+            };
+
+            if ($startsWith('mon')) return 'mon';
+            if ($startsWith('tue')) return 'tue';
+            if ($startsWith('wed')) return 'wed';
+            if ($startsWith('thu')) return 'thu';
+            if ($startsWith('fri')) return 'fri';
+            if ($startsWith('sat')) return 'sat';
+            if ($startsWith('sun')) return 'sun';
+
+            // Italian
+            if ($startsWith('lun')) return 'mon';
+            if ($startsWith('mar')) return 'tue';
+            if ($startsWith('mer')) return 'wed';
+            if ($startsWith('gio')) return 'thu';
+            if ($startsWith('ven')) return 'fri';
+            if ($startsWith('sab')) return 'sat';
+            if ($startsWith('dom')) return 'sun';
+
+            // Spanish
+            if ($startsWith('lun')) return 'mon';
+            if ($startsWith('mar')) return 'tue';
+            if ($startsWith('mi'))  return 'wed'; // miercoles -> mi, mie
+            if ($startsWith('mie')) return 'wed';
+            if ($startsWith('jue')) return 'thu';
+            if ($startsWith('vie')) return 'fri';
+            if ($startsWith('sab')) return 'sat';
+            if ($startsWith('dom')) return 'sun';
+
+            // French
+            if ($startsWith('lun')) return 'mon';
+            if ($startsWith('mar')) return 'tue';
+            if ($startsWith('mer')) return 'wed';
+            if ($startsWith('jeu')) return 'thu';
+            if ($startsWith('ven')) return 'fri';
+            if ($startsWith('sam')) return 'sat';
+            if ($startsWith('dim')) return 'sun';
+
+            return $k; // fallback: keep as-is
+        };
+
         if (is_array($value)) {
             $lines = [];
             foreach ($value as $day => $ranges) {
-                $dayKey = sanitize_key((string) $day);
+                $dayKey = $mapDay((string) $day);
                 if ($dayKey === '') {
                     continue;
                 }
@@ -412,7 +464,7 @@ final class MealPlan
                 continue;
             }
 
-            $dayKey = sanitize_key($day);
+            $dayKey = $mapDay($day);
             if ($dayKey === '') {
                 continue;
             }
