@@ -68,8 +68,8 @@
     template.innerHTML = `
         <div class="fp-resv-tables-toolbar">
             <div class="fp-resv-tables-toolbar__left">
-                <button type="button" class="button button-primary" data-action="add-room">
-                    ${(settings.strings && settings.strings.createRoomCta) || 'Aggiungi sala'}
+                <button type="button" class="button" data-action="bulk-tables">
+                    Crea tavoli rapidi
                 </button>
                 <button type="button" class="button" data-action="refresh">
                     Aggiorna
@@ -86,32 +86,6 @@
             <aside class="fp-resv-tables-sidebar" data-region="rooms"></aside>
             <section class="fp-resv-tables-canvas" data-region="canvas"></section>
         </div>
-        <div class="fp-resv-tables-modal" data-modal hidden>
-            <div class="fp-resv-tables-modal__backdrop" data-modal-close></div>
-            <div class="fp-resv-tables-modal__dialog" role="dialog" aria-modal="true">
-                <header class="fp-resv-tables-modal__header">
-                    <h2>${(settings.strings && settings.strings.newRoomTitle) || 'Nuova sala'}</h2>
-                </header>
-                <form class="fp-resv-tables-modal__form" data-modal-form>
-                    <label class="fp-resv-tables-modal__field">
-                        <span>${(settings.strings && settings.strings.newRoomName) || 'Nome sala'}</span>
-                        <input type="text" data-field="name" required>
-                    </label>
-                    <label class="fp-resv-tables-modal__field">
-                        <span>${(settings.strings && settings.strings.newRoomCapacity) || 'Capienza stimata'}</span>
-                        <input type="number" min="0" step="1" data-field="capacity" placeholder="40">
-                    </label>
-                    <label class="fp-resv-tables-modal__field">
-                        <span>${(settings.strings && settings.strings.newRoomColor) || 'Colore identificativo'}</span>
-                        <input type="color" data-field="color" value="#4338ca">
-                    </label>
-                    <footer class="fp-resv-tables-modal__actions">
-                        <button type="button" class="button" data-modal-cancel>${(settings.strings && settings.strings.modalCancel) || 'Annulla'}</button>
-                        <button type="submit" class="button button-primary" data-modal-submit>${(settings.strings && settings.strings.modalCreate) || 'Crea sala'}</button>
-                    </footer>
-                </form>
-            </div>
-        </div>
     `;
 
     root.classList.add('fp-resv-tables-ready');
@@ -120,68 +94,8 @@
 
     const sidebar = root.querySelector('[data-region="rooms"]');
     const canvas = root.querySelector('[data-region="canvas"]');
-    const modal = root.querySelector('[data-modal]');
-    const modalForm = modal ? modal.querySelector('[data-modal-form]') : null;
-    const modalName = modal ? modal.querySelector('[data-field="name"]') : null;
-    const modalCapacity = modal ? modal.querySelector('[data-field="capacity"]') : null;
-    const modalColor = modal ? modal.querySelector('[data-field="color"]') : null;
-    const modalSubmit = modal ? modal.querySelector('[data-modal-submit]') : null;
-
-    const resetModalForm = () => {
-        if (modalForm) {
-            modalForm.reset();
-        }
-        if (modalColor) {
-            modalColor.value = '#4338ca';
-        }
-    };
-
-    const closeModal = () => {
-        if (!modal) {
-            return;
-        }
-        modal.hidden = true;
-        modal.removeAttribute('data-open');
-        modalOpen = false;
-        if (modalSubmit) {
-            modalSubmit.disabled = false;
-        }
-        resetModalForm();
-    };
-
-    const openModal = () => {
-        if (!modal) {
-            return;
-        }
-        modal.hidden = false;
-        modal.setAttribute('data-open', 'true');
-        modalOpen = true;
-        resetModalForm();
-        if (modalName) {
-            modalName.focus();
-            modalName.select();
-        }
-    };
-
-    if (modal) {
-        modal.addEventListener('click', (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLElement)) {
-                return;
-            }
-            if (target.hasAttribute('data-modal-close') || target.hasAttribute('data-modal-cancel')) {
-                event.preventDefault();
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && modalOpen) {
-                event.preventDefault();
-                closeModal();
-            }
-        });
-    }
+    const toolbar = root.querySelector('.fp-resv-tables-toolbar');
+    // Modal UI rimosso: la creazione sala via UI non è più supportata
 
     const renderRooms = () => {
         if (!sidebar) {
@@ -300,6 +214,83 @@
         });
     };
 
+    const bulkCreateTables = async () => {
+        if (!state.rooms.length) {
+            await refresh();
+        }
+        const room = state.rooms[0];
+        if (!room) {
+            window.alert('Nessuna sala trovata.');
+            return;
+        }
+
+        // Modale inline leggero per anteprima
+        const container = document.createElement('div');
+        container.className = 'fp-resv-inline-modal';
+        container.innerHTML = `
+            <div class="fp-resv-inline-modal__backdrop"></div>
+            <div class="fp-resv-inline-modal__dialog" role="dialog" aria-modal="true">
+                <header><h3>Crea tavoli rapidi</h3></header>
+                <form data-role="form">
+                    <label>Prefisso <input name="prefix" value="T" maxlength="8"></label>
+                    <label>Quantità <input name="count" type="number" min="1" max="200" value="10"></label>
+                    <label>Posti standard <input name="seats" type="number" min="1" value="2"></label>
+                    <label>Duplicati <select name="dup"><option value="error">Errore</option><option value="skip">Salta</option></select></label>
+                    <div class="fp-resv-grid-preview" data-role="preview" aria-label="Anteprima"></div>
+                    <footer>
+                        <button type="button" data-action="cancel" class="button">Annulla</button>
+                        <button type="submit" class="button button-primary">Crea</button>
+                    </footer>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(container);
+
+        const form = container.querySelector('[data-role="form"]');
+        const preview = container.querySelector('[data-role="preview"]');
+        const updatePreview = () => {
+            if (!preview || !form) return;
+            const fd = new FormData(form);
+            const count = Math.max(1, Math.min(200, parseInt(fd.get('count'), 10) || 1));
+            const prefix = String(fd.get('prefix') || 'T');
+            const items = [];
+            for (let i = 1; i <= count; i++) items.push(`${prefix}${i}`);
+            preview.innerHTML = items.map((c) => `<span class="chip">${c}</span>`).join('');
+        };
+        updatePreview();
+        form.addEventListener('input', updatePreview);
+
+        const close = () => {
+            container.remove();
+        };
+
+        container.addEventListener('click', (e) => {
+            const target = e.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (target.matches('[data-action="cancel"], .fp-resv-inline-modal__backdrop')) {
+                e.preventDefault();
+                close();
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            const payload = {
+                room_id: room.id,
+                prefix: String(fd.get('prefix') || 'T'),
+                count: Math.max(1, Math.min(200, parseInt(fd.get('count'), 10) || 1)),
+                seats_std: Math.max(1, parseInt(fd.get('seats'), 10) || 2),
+                on_duplicate: String(fd.get('dup') || 'error'),
+            };
+            request('/tables/bulk', { method: 'POST', data: payload })
+                .then(() => { close(); return refresh(); })
+                .catch((error) => {
+                    window.alert((error && error.message) ? error.message : 'Impossibile creare i tavoli.');
+                });
+        });
+    };
+
     const showSuggestion = (roomId) => {
         request(`/tables/suggest?room_id=${roomId}&party=2`).then((result) => {
             const best = result && result.best ? result.best : null;
@@ -325,54 +316,20 @@
         });
     };
 
-    if (modalForm) {
-        modalForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            if (!modalName) {
+    // Nessuna submit modal: creazione sala disabilitata
+
+    if (toolbar) {
+        toolbar.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
                 return;
             }
-
-            const name = modalName.value.trim();
-            if (name === '') {
-                modalName.focus();
-                return;
+            if (target.matches('[data-action="refresh"]')) {
+                refresh();
             }
-
-            const capacityValue = modalCapacity && modalCapacity.value !== ''
-                ? Number.parseInt(modalCapacity.value, 10)
-                : 0;
-            let colorValue = modalColor && typeof modalColor.value === 'string'
-                ? modalColor.value.trim()
-                : '';
-            if (colorValue !== '') {
-                colorValue = `#${colorValue.replace(/^#+/, '')}`.slice(0, 7);
+            if (target.matches('[data-action="bulk-tables"]')) {
+                bulkCreateTables();
             }
-
-            if (modalSubmit) {
-                modalSubmit.disabled = true;
-            }
-
-            request('/tables/rooms', {
-                method: 'POST',
-                data: {
-                    name,
-                    capacity: Number.isFinite(capacityValue) ? capacityValue : 0,
-                    color: colorValue,
-                    active: true,
-                },
-            })
-                .then(() => {
-                    closeModal();
-                    refresh();
-                })
-                .catch((error) => {
-                    window.alert((error && error.message) ? error.message : 'Impossibile creare la sala.');
-                })
-                .finally(() => {
-                    if (modalSubmit) {
-                        modalSubmit.disabled = false;
-                    }
-                });
         });
     }
 

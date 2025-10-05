@@ -9,7 +9,7 @@ use wpdb;
 final class Migrations
 {
     private const OPTION_KEY = 'fp_resv_db_version';
-    private const DB_VERSION = '2024.06.20';
+    private const DB_VERSION = '2025.10.05';
 
     public static function run(): void
     {
@@ -131,7 +131,8 @@ CREATE TABLE {$tablesTable} (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY  (id),
     KEY room_id (room_id),
-    KEY join_group (join_group)
+    KEY join_group (join_group),
+    UNIQUE KEY room_code (room_id, code)
 ) {$charsetCollate};
 SQL;
 

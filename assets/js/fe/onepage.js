@@ -220,6 +220,7 @@ class FormApp {
         this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_cc\"]') : null;
         this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_local\"]') : null;
         this.availabilityRoot = this.form ? this.form.querySelector('[data-fp-resv-slots]') : null;
+        this.availabilityIndicator = this.form ? this.form.querySelector('[data-fp-resv-availability-indicator]') : null;
 
         this.state = {
             started: false,
@@ -273,6 +274,7 @@ class FormApp {
         this.initializeAvailability();
         this.syncConsentState();
         this.updateSubmitState();
+        this.updateInlineErrors();
         this.updateSummary();
 
         idleCallback(() => {
@@ -566,6 +568,7 @@ class FormApp {
         }
 
         this.updateSubmitState();
+        this.updateInlineErrors();
     }
 
     handleFieldBlur(event) {
@@ -586,6 +589,8 @@ class FormApp {
         if (fieldKey === 'email' && target instanceof HTMLInputElement) {
             this.validateEmailField(target);
         }
+
+        this.updateInlineErrors();
     }
 
     handleKeydown(event) {
@@ -1128,6 +1133,66 @@ class FormApp {
         }
     }
 
+    updateInlineErrors() {
+        if (!this.form) {
+            return;
+        }
+
+        const map = {
+            first_name: this.form.querySelector('[data-fp-resv-field="first_name"]'),
+            last_name: this.form.querySelector('[data-fp-resv-field="last_name"]'),
+            email: this.form.querySelector('[data-fp-resv-field="email"]'),
+            phone: this.form.querySelector('[data-fp-resv-field="phone"]'),
+            consent: this.form.querySelector('[data-fp-resv-field="consent"]'),
+        };
+
+        const messages = {
+            first_name: this.strings?.messages?.required_first_name || 'Inserisci il nome',
+            last_name: this.strings?.messages?.required_last_name || 'Inserisci il cognome',
+            email: this.copy.invalidEmail,
+            phone: this.copy.invalidPhone,
+            consent: this.strings?.messages?.required_consent || 'Accetta la privacy per procedere',
+        };
+
+        Object.keys(map).forEach((key) => {
+            const field = map[key];
+            const errorEl = this.form.querySelector(`[data-fp-resv-error="${key}"]`);
+            if (!errorEl) {
+                return;
+            }
+
+            let visible = false;
+            let text = '';
+            if (field && typeof field.checkValidity === 'function' && !field.checkValidity()) {
+                visible = true;
+                text = messages[key] || '';
+            }
+
+            if (key === 'email' && field && field.value && field.value.trim() !== '' && field.checkValidity()) {
+                visible = false;
+                text = '';
+            }
+
+            if (key === 'phone' && this.phoneField) {
+                const payload = buildPayload(this.phoneField, this.getPhoneCountryCode());
+                if (payload.local && !isValidLocal(payload.local)) {
+                    visible = true;
+                    text = this.copy.invalidPhone;
+                }
+            }
+
+            if (visible) {
+                errorEl.textContent = text;
+                errorEl.hidden = false;
+                field && field.setAttribute && field.setAttribute('aria-invalid', 'true');
+            } else {
+                errorEl.textContent = '';
+                errorEl.hidden = true;
+                field && field.removeAttribute && field.removeAttribute('aria-invalid');
+            }
+        });
+    }
+
     getActiveSectionKey() {
         for (let index = 0; index < this.sections.length; index += 1) {
             const section = this.sections[index];
@@ -1358,6 +1423,19 @@ class FormApp {
             }
         }
 
+        // Disabilita il form dopo successo
+        if (this.form) {
+            this.form.setAttribute('data-state', 'submitted');
+            const inputs = this.form.querySelectorAll('input, select, textarea, button');
+            Array.prototype.forEach.call(inputs, (el) => {
+                try {
+                    el.setAttribute('disabled', 'disabled');
+                } catch (e) {
+                    // noop
+                }
+            });
+        }
+
         if (data && Array.isArray(data.tracking)) {
             data.tracking.forEach((entry) => {
                 if (entry && entry.event) {
@@ -1581,6 +1659,23 @@ class FormApp {
         this.state.mealAvailability[mealKey] = normalized;
         this.applyMealAvailabilityIndicator(mealKey, normalized);
         this.applyMealAvailabilityNotice(mealKey, normalized);
+
+        if (this.availabilityIndicator) {
+            let label = '';
+            if (summary && typeof summary === 'object') {
+                const slots = typeof summary.slots === 'number' ? summary.slots : 0;
+                if (normalized === 'available') {
+                    label = `Disponibile (${slots})`;
+                } else if (normalized === 'limited') {
+                    label = `Disponibilità limitata (${slots})`;
+                } else if (normalized === 'full') {
+                    label = 'Completamente prenotato';
+                }
+            }
+            this.availabilityIndicator.textContent = label;
+            this.availabilityIndicator.hidden = label === '';
+            this.availabilityIndicator.setAttribute('data-state', normalized || '');
+        }
     }
 
     handleSlotSelected(slot) {

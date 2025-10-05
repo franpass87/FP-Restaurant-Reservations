@@ -35,7 +35,19 @@ final class LayoutService
         $rooms = [];
         $groups = [];
 
-        foreach ($this->repository->getRooms() as $roomRow) {
+        $existingRooms = $this->repository->getRooms();
+        if ($existingRooms === []) {
+            // Auto-bootstrap: crea una sala di default se non ne esistono
+            $defaultRoomId = $this->repository->insertRoom([
+                'name'     => 'Sala principale',
+                'color'    => '#4338ca',
+                'capacity' => 0,
+                'active'   => true,
+            ]);
+            $existingRooms = [$this->repository->findRoom($defaultRoomId)];
+        }
+
+        foreach ($existingRooms as $roomRow) {
             $room = $this->hydrateRoom($roomRow);
             $tableRows = $this->repository->getTables($room->id);
             $roomTables = [];
@@ -121,6 +133,116 @@ final class LayoutService
     {
         $this->assertTableExists($tableId);
         $this->repository->deleteTable($tableId);
+    }
+
+    /**
+     * Crea rapidamente più tavoli in una sala.
+     * Accetta sia una lista di tavoli sia parametri generativi (prefisso, quantità, seats_std).
+     *
+     * @param array<string, mixed> $data
+     * @return array<int, array<string, mixed>> Tavoli creati
+     */
+    public function createTablesBulk(array $data): array
+    {
+        $roomId = (int) ($data['room_id'] ?? 0);
+        $this->assertRoomExists($roomId);
+
+        $created = [];
+        $skipped = [];
+        $onDuplicate = isset($data['on_duplicate']) ? strtolower((string) $data['on_duplicate']) : 'error'; // error|skip
+
+        // Caso 1: lista esplicita di tavoli
+        if (isset($data['tables']) && is_array($data['tables'])) {
+            $existingCodes = $this->repository->getExistingCodesByRoom($roomId);
+            $this->repository->beginTransaction();
+            foreach ($data['tables'] as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+                $payload = $this->normalizeTableData(array_merge($entry, ['room_id' => $roomId]));
+                $code = (string) $payload['code'];
+                if (isset($existingCodes[$code])) {
+                    if ($onDuplicate === 'skip') {
+                        $skipped[] = $code;
+                        continue;
+                    }
+                    $this->repository->rollback();
+                    throw new InvalidArgumentException(sprintf('Esiste già un tavolo con codice "%s" in questa sala.', $code));
+                }
+                try {
+                    $tableId = $this->repository->insertTable($payload);
+                    $existingCodes[$code] = true;
+                    $row = $this->repository->findTable($tableId);
+                    if ($row !== null) {
+                        $created[] = $this->tableToArray($this->hydrateTable($row));
+                    }
+                } catch (\Throwable $e) {
+                    $this->repository->rollback();
+                    throw $e;
+                }
+            }
+            $this->repository->commit();
+            return $created;
+        }
+
+        // Caso 2: generazione automatica
+        $prefix = isset($data['prefix']) ? trim((string) $data['prefix']) : 'T';
+        if ($prefix !== '' && preg_match('/^[A-Za-z0-9_-]{1,8}$/', $prefix) !== 1) {
+            throw new InvalidArgumentException('Prefisso non valido. Usa lettere, numeri, trattini o underscore (max 8).');
+        }
+        $count  = (int) ($data['count'] ?? 0);
+        $count  = max(1, min(200, $count));
+        $seats  = isset($data['seats_std']) ? (int) $data['seats_std'] : 2;
+        if ($seats < 1) {
+            $seats = 1;
+        }
+
+        // Calcola order_index di partenza
+        $existing = $this->repository->getTables($roomId);
+        $maxOrder = 0;
+        foreach ($existing as $t) {
+            $maxOrder = max($maxOrder, (int) ($t['order_index'] ?? 0));
+        }
+
+        $existingCodes = $this->repository->getExistingCodesByRoom($roomId);
+        $this->repository->beginTransaction();
+        for ($i = 1; $i <= $count; $i++) {
+            $code = sprintf('%s%d', $prefix, $i);
+            if (isset($existingCodes[$code])) {
+                if ($onDuplicate === 'skip') {
+                    $skipped[] = $code;
+                    continue;
+                }
+                $this->repository->rollback();
+                throw new InvalidArgumentException(sprintf('Esiste già un tavolo con codice "%s" in questa sala.', $code));
+            }
+            $payload = $this->normalizeTableData([
+                'room_id'   => $roomId,
+                'code'      => $code,
+                'seats_std' => $seats,
+                'status'    => 'available',
+                'pos_x'     => 40 + (($i - 1) % 10) * 60,
+                'pos_y'     => 40 + (int) (floor(($i - 1) / 10)) * 60,
+                'order_index' => $maxOrder + $i,
+                'active'    => true,
+            ]);
+            try {
+                $tableId = $this->repository->insertTable($payload);
+                $existingCodes[$code] = true;
+                $row = $this->repository->findTable($tableId);
+                if ($row !== null) {
+                    $created[] = $this->tableToArray($this->hydrateTable($row));
+                }
+            } catch (\Throwable $e) {
+                $this->repository->rollback();
+                throw $e;
+            }
+        }
+        $this->repository->commit();
+        return [
+            'created' => $created,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

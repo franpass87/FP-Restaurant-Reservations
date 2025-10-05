@@ -333,6 +333,7 @@ endif;
                                     <p class="fp-resv-slots__status" data-fp-resv-slots-status aria-live="polite">
                                         <?php echo esc_html($strings['messages']['slots_loading'] ?? ''); ?>
                                     </p>
+                                    <p class="fp-resv-slots__indicator" data-fp-resv-availability-indicator aria-live="polite" hidden></p>
                                     <ul class="fp-resv-slots__list" data-fp-resv-slots-list aria-live="polite" aria-busy="false"></ul>
                                     <p class="fp-resv-slots__empty" data-fp-resv-slots-empty hidden><?php echo esc_html($strings['messages']['slots_empty'] ?? ''); ?></p>
                                     <div class="fp-resv-slots__boundary fp-alert fp-alert--error" data-fp-resv-slots-boundary hidden role="alert">
@@ -355,6 +356,7 @@ endif;
                                     <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['first_name'] ?? ''); ?></span>
                                         <input class="fp-input" type="text" name="fp_resv_first_name" data-fp-resv-field="first_name" required>
+                                        <small class="fp-error" data-fp-resv-error="first_name" aria-live="polite" hidden></small>
                                         <?php if (!empty($hints['first_name'] ?? '')) : ?>
                                             <small class="fp-hint"><?php echo esc_html($hints['first_name']); ?></small>
                                         <?php endif; ?>
@@ -362,6 +364,7 @@ endif;
                                     <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['last_name'] ?? ''); ?></span>
                                         <input class="fp-input" type="text" name="fp_resv_last_name" data-fp-resv-field="last_name" required>
+                                        <small class="fp-error" data-fp-resv-error="last_name" aria-live="polite" hidden></small>
                                         <?php if (!empty($hints['last_name'] ?? '')) : ?>
                                             <small class="fp-hint"><?php echo esc_html($hints['last_name']); ?></small>
                                         <?php endif; ?>
@@ -369,6 +372,7 @@ endif;
                                     <label class="fp-resv-field fp-field fp-resv-field--email">
                                         <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
                                         <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required>
+                                        <small class="fp-error" data-fp-resv-error="email" aria-live="polite" hidden></small>
                                     </label>
                                     <label class="fp-resv-field fp-field fp-resv-field--phone">
                                         <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
@@ -403,6 +407,7 @@ endif;
                                                 <span class="fp-resv-phone-input__static" aria-hidden="true">+<?php echo esc_html($defaultPhoneCode); ?></span>
                                             <?php endif; ?>
                                         </div>
+                                        <small class="fp-error" data-fp-resv-error="phone" aria-live="polite" hidden></small>
                                         <?php if (!empty($hints['phone'] ?? '')) : ?>
                                             <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
                                         <?php endif; ?>
@@ -436,6 +441,7 @@ endif;
                                         </span>
                                         <span class="fp-resv-consent__meta fp-resv-consent__meta--required"><?php echo esc_html($requiredConsentLabel); ?></span>
                                     </span>
+                                    <small class="fp-error" data-fp-resv-error="consent" aria-live="polite" hidden></small>
                                 </label>
                                 <?php if ($marketingEnabled) : ?>
                                     <label class="fp-resv-field fp-resv-field--consent fp-field">

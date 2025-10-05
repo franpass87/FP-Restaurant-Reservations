@@ -140,6 +140,16 @@ final class REST
                 'permission_callback' => [$this, 'canManage'],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/tables/bulk',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handleBulkCreateTables'],
+                'permission_callback' => [$this, 'canManage'],
+            ]
+        );
     }
 
     public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -296,6 +306,25 @@ final class REST
             ];
 
             return $this->layout->suggest($criteria);
+        });
+    }
+
+    public function handleBulkCreateTables(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        return $this->wrapOperation(function () use ($request): array {
+            $data = $request->get_json_params();
+            if (!is_array($data) || $data === []) {
+                $data = $request->get_params();
+            }
+            $data = $this->preparePayload($data);
+            $result = $this->layout->createTablesBulk($data);
+            $created = isset($result['created']) && is_array($result['created']) ? $result['created'] : $result;
+            $skipped = isset($result['skipped']) && is_array($result['skipped']) ? $result['skipped'] : [];
+            return [
+                'created' => $created,
+                'count'   => count($created),
+                'skipped' => array_values($skipped),
+            ];
         });
     }
 

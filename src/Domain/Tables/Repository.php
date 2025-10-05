@@ -24,6 +24,21 @@ final class Repository
     {
     }
 
+    public function beginTransaction(): void
+    {
+        $this->wpdb->query('START TRANSACTION');
+    }
+
+    public function commit(): void
+    {
+        $this->wpdb->query('COMMIT');
+    }
+
+    public function rollback(): void
+    {
+        $this->wpdb->query('ROLLBACK');
+    }
+
     public function roomsTable(): string
     {
         return $this->wpdb->prefix . 'fp_rooms';
@@ -172,6 +187,23 @@ final class Repository
         }
 
         return array_map([$this, 'mapTableRow'], $rows);
+    }
+
+    /**
+     * @return array<string, true> Set di codici tavolo esistenti per una sala
+     */
+    public function getExistingCodesByRoom(int $roomId): array
+    {
+        $sql = 'SELECT code FROM ' . $this->tablesTable() . ' WHERE room_id = %d';
+        $rows = $this->wpdb->get_col($this->wpdb->prepare($sql, $roomId));
+        $set = [];
+        if (is_array($rows)) {
+            foreach ($rows as $code) {
+                $set[(string) $code] = true;
+            }
+        }
+
+        return $set;
     }
 
     public function findTable(int $tableId): ?array
