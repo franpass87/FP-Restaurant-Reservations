@@ -81,7 +81,7 @@ export function createAvailabilityController(options) {
         return normalized;
     }
 
-    function summarizeSlots(slots) {
+    function summarizeSlots(slots, hasAvailabilityFlag) {
         const safeSlots = Array.isArray(slots) ? slots : [];
         const slotCount = safeSlots.length;
         if (slotCount === 0) {
@@ -92,10 +92,6 @@ export function createAvailabilityController(options) {
             .map((slot) => normalizeSlotStatus(slot && slot.status))
             .filter((status) => status !== '');
 
-        if (statuses.length === 0) {
-            return { state: 'available', slots: slotCount };
-        }
-
         const hasLimited = statuses.some((status) => status === 'limited');
         if (hasLimited) {
             return { state: 'limited', slots: slotCount };
@@ -103,6 +99,14 @@ export function createAvailabilityController(options) {
 
         const hasAvailable = statuses.some((status) => status === 'available');
         if (hasAvailable) {
+            return { state: 'available', slots: slotCount };
+        }
+
+        if (hasAvailabilityFlag) {
+            return { state: 'available', slots: slotCount };
+        }
+
+        if (statuses.length === 0) {
             return { state: 'available', slots: slotCount };
         }
 
@@ -269,7 +273,14 @@ export function createAvailabilityController(options) {
         });
 
         setStatus((options.strings && options.strings.slotsUpdated) || '', false);
-        notifyAvailability(params, summarizeSlots(slots));
+        const hasAvailabilityFlag = Boolean(
+            payload
+            && (
+                (typeof payload.has_availability !== 'undefined' && payload.has_availability)
+                || (payload.meta && payload.meta.has_availability)
+            )
+        );
+        notifyAvailability(params, summarizeSlots(slots, hasAvailabilityFlag));
     }
 
     function request(params, attempt) {

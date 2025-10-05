@@ -205,6 +205,9 @@ class FormApp {
         this.errorRetry = this.form ? this.form.querySelector('[data-fp-resv-error-retry]') : null;
         this.mealButtons = Array.prototype.slice.call(root.querySelectorAll('[data-fp-resv-meal]'));
         this.mealNotice = root.querySelector('[data-fp-resv-meal-notice]');
+        this.mealNoticeText = this.mealNotice
+            ? this.mealNotice.querySelector('[data-fp-resv-meal-notice-text]') || this.mealNotice
+            : null;
         this.hiddenMeal = this.form ? this.form.querySelector('input[name=\"fp_resv_meal\"]') : null;
         this.hiddenPrice = this.form ? this.form.querySelector('input[name=\"fp_resv_price_per_person\"]') : null;
         this.hiddenSlot = this.form ? this.form.querySelector('input[name=\"fp_resv_slot_start\"]') : null;
@@ -245,6 +248,7 @@ class FormApp {
             invalidEmail: this.messages.msg_invalid_email || 'Enter a valid email address.',
             submitError: this.messages.msg_submit_error || 'We could not complete your reservation. Please try again.',
             submitSuccess: this.messages.msg_submit_success || 'Reservation sent successfully.',
+            mealFullNotice: this.messages.meal_full_notice || 'No availability for this service. Please choose another date.',
         };
 
         this.phoneCountryCode = this.getPhoneCountryCode();
@@ -329,6 +333,13 @@ class FormApp {
         }
 
         this.mealButtons.forEach(function (button) {
+            if (!button.hasAttribute('data-meal-default-notice')) {
+                const initialNotice = button.getAttribute('data-meal-notice') || '';
+                if (initialNotice !== '') {
+                    button.setAttribute('data-meal-default-notice', initialNotice);
+                }
+            }
+
             button.addEventListener('click', function (event) {
                 event.preventDefault();
                 _this.handleFirstInteraction();
@@ -733,7 +744,16 @@ class FormApp {
         const mealKey = button.getAttribute('data-fp-resv-meal') || '';
         const storedState = this.state.mealAvailability ? this.state.mealAvailability[mealKey] : '';
         this.applyMealAvailabilityIndicator(mealKey, storedState);
+        if (storedState === 'full') {
+            const defaultNotice = button.getAttribute('data-meal-default-notice') || '';
+            const notice = this.copy.mealFullNotice || defaultNotice;
+            if (notice !== '') {
+                button.setAttribute('data-meal-notice', notice);
+            }
+        }
+
         this.applyMealSelection(button);
+        this.applyMealAvailabilityNotice(mealKey, storedState, { skipSlotReset: true });
 
         const mealEvent = this.events.meal_selected || 'meal_selected';
         pushDataLayerEvent(mealEvent, {
@@ -741,7 +761,76 @@ class FormApp {
             meal_label: button.getAttribute('data-meal-label') || '',
         });
 
+        if (storedState === 'full') {
+            return;
+        }
+
         this.scheduleAvailabilityUpdate();
+    }
+
+    updateMealNoticeFromButton(button, overrideText) {
+        if (!this.mealNotice) {
+            return;
+        }
+
+        const source = typeof overrideText === 'string'
+            ? overrideText
+            : (button ? button.getAttribute('data-meal-notice') || '' : '');
+        const text = source ? source.trim() : '';
+
+        const target = this.mealNoticeText || this.mealNotice;
+
+        if (text !== '' && target) {
+            target.textContent = text;
+            this.mealNotice.hidden = false;
+        } else if (target) {
+            target.textContent = '';
+            this.mealNotice.hidden = true;
+        }
+    }
+
+    applyMealAvailabilityNotice(mealKey, state, options = {}) {
+        const button = this.mealButtons.find((item) => (item.getAttribute('data-fp-resv-meal') || '') === mealKey);
+        if (!button) {
+            return;
+        }
+
+        const defaultNotice = button.getAttribute('data-meal-default-notice') || '';
+        const normalizedState = typeof state === 'string' ? state : '';
+
+        if (normalizedState === 'full') {
+            const notice = this.copy.mealFullNotice || defaultNotice;
+            if (notice !== '') {
+                button.setAttribute('data-meal-notice', notice);
+            } else if (defaultNotice === '') {
+                button.removeAttribute('data-meal-notice');
+            }
+
+            button.setAttribute('aria-disabled', 'true');
+            button.setAttribute('data-meal-unavailable', 'true');
+
+            if (button.hasAttribute('data-active')) {
+                if (options.skipSlotReset !== true) {
+                    this.clearSlotSelection({ schedule: false });
+                }
+                this.updateMealNoticeFromButton(button);
+            }
+
+            return;
+        }
+
+        button.removeAttribute('aria-disabled');
+        button.removeAttribute('data-meal-unavailable');
+
+        if (defaultNotice !== '') {
+            button.setAttribute('data-meal-notice', defaultNotice);
+        } else if (button.hasAttribute('data-meal-notice')) {
+            button.removeAttribute('data-meal-notice');
+        }
+
+        if (button.hasAttribute('data-active')) {
+            this.updateMealNoticeFromButton(button);
+        }
     }
 
     applyMealSelection(button) {
@@ -756,17 +845,7 @@ class FormApp {
         }
 
         this.clearSlotSelection({ schedule: false });
-
-        const notice = button.getAttribute('data-meal-notice');
-        if (this.mealNotice) {
-            if (notice && notice.trim() !== '') {
-                this.mealNotice.textContent = notice;
-                this.mealNotice.hidden = false;
-            } else {
-                this.mealNotice.textContent = '';
-                this.mealNotice.hidden = true;
-            }
-        }
+        this.updateMealNoticeFromButton(button);
 
         this.updateSubmitState();
     }
@@ -1470,19 +1549,22 @@ class FormApp {
 
         const normalized = summary && summary.state ? String(summary.state).toLowerCase() : '';
         const validStates = ['available', 'limited', 'full'];
+        const mealKey = params.meal;
 
         if (!this.state.mealAvailability) {
             this.state.mealAvailability = {};
         }
 
         if (validStates.indexOf(normalized) === -1) {
-            delete this.state.mealAvailability[params.meal];
-            this.applyMealAvailabilityIndicator(params.meal, '');
+            delete this.state.mealAvailability[mealKey];
+            this.applyMealAvailabilityIndicator(mealKey, '');
+            this.applyMealAvailabilityNotice(mealKey, '', { skipSlotReset: true });
             return;
         }
 
-        this.state.mealAvailability[params.meal] = normalized;
-        this.applyMealAvailabilityIndicator(params.meal, normalized);
+        this.state.mealAvailability[mealKey] = normalized;
+        this.applyMealAvailabilityIndicator(mealKey, normalized);
+        this.applyMealAvailabilityNotice(mealKey, normalized);
     }
 
     handleSlotSelected(slot) {

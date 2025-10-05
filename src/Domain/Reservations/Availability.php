@@ -183,18 +183,25 @@ class Availability
                 }
 
                 $baseCapacity = $this->resolveCapacityForScope($roomCapacities, $roomId, $hasPhysicalTables);
-                $capacity     = $this->applyCapacityReductions(
-                $baseCapacity,
-                $availableTables,
-                $unassignedCapacity,
-                $closureEffect['capacity_percent']
-            );
+                $allowedCapacity = $this->applyCapacityReductions(
+                    $baseCapacity,
+                    $availableTables,
+                    0,
+                    $closureEffect['capacity_percent']
+                );
+                $capacity = $this->applyCapacityReductions(
+                    $baseCapacity,
+                    $availableTables,
+                    $unassignedCapacity,
+                    $closureEffect['capacity_percent']
+                );
 
                 if ($mealSettings['capacity_limit'] !== null) {
-                    $capacity = min($capacity, $mealSettings['capacity_limit']);
+                    $allowedCapacity = min($allowedCapacity, $mealSettings['capacity_limit']);
+                    $capacity        = min($capacity, $mealSettings['capacity_limit']);
                 }
 
-                $status  = $this->determineStatus($capacity, $party, $closureEffect['capacity_percent']);
+                $status  = $this->determineStatus($capacity, $allowedCapacity, $party);
                 $reasons = $closureEffect['reasons'];
 
                 if ($status === 'full' && $waitlistEnabled) {
@@ -705,13 +712,19 @@ class Availability
         return max(0, $capacity);
     }
 
-    private function determineStatus(int $capacity, int $party, int $capacityPercent): string
+    private function determineStatus(int $capacity, int $allowedCapacity, int $party): string
     {
         if ($capacity <= 0 || $capacity < $party) {
             return 'full';
         }
 
-        if ($capacityPercent < 100 || $capacity <= ($party * 2)) {
+        $normalizedAllowed = max($allowedCapacity, 0);
+        if ($normalizedAllowed === 0) {
+            return 'available';
+        }
+
+        $ratio = max(0, min(1, $capacity / $normalizedAllowed));
+        if ($ratio <= 0.25) {
             return 'limited';
         }
 

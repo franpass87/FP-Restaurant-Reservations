@@ -1997,16 +1997,20 @@ final class FormContext
     private function condensePhonePrefixes(array $prefixes): array
     {
         $groups = [];
-        $order  = [];
 
         foreach ($prefixes as $entry) {
             if (!is_array($entry)) {
                 continue;
             }
 
-            $prefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
-            $value  = isset($entry['value']) ? (string) $entry['value'] : '';
-            if ($prefix === '' || $value === '') {
+            $rawPrefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
+            $prefix    = $this->normalizePhonePrefix($rawPrefix);
+            if ($prefix === '') {
+                continue;
+            }
+
+            $digits = preg_replace('/[^0-9]/', '', substr($prefix, 1));
+            if (!is_string($digits) || $digits === '') {
                 continue;
             }
 
@@ -2020,18 +2024,17 @@ final class FormContext
                 $name = trim(str_replace("\u{00A0}", ' ', $parts[1]));
             }
 
-            if (!isset($groups[$value])) {
-                $groups[$value] = [
+            if (!isset($groups[$digits])) {
+                $groups[$digits] = [
                     'prefix'    => $prefix,
-                    'value'     => $value,
+                    'value'     => $digits,
                     'language'  => $language,
                     'countries' => [],
                 ];
-                $order[] = $value;
             }
 
             if ($name !== '') {
-                $groups[$value]['countries'][$name] = true;
+                $groups[$digits]['countries'][$name] = true;
             }
         }
 
@@ -2041,12 +2044,7 @@ final class FormContext
 
         $options = [];
 
-        foreach ($order as $value) {
-            if (!isset($groups[$value])) {
-                continue;
-            }
-
-            $group     = $groups[$value];
+        foreach ($groups as $group) {
             $countries = array_keys($group['countries']);
             sort($countries, SORT_NATURAL | SORT_FLAG_CASE);
 
@@ -2062,6 +2060,16 @@ final class FormContext
                 'label'    => $label,
             ];
         }
+
+        usort(
+            $options,
+            static function (array $first, array $second): int {
+                $firstLabel  = isset($first['label']) ? (string) $first['label'] : '';
+                $secondLabel = isset($second['label']) ? (string) $second['label'] : '';
+
+                return strnatcasecmp($firstLabel, $secondLabel);
+            }
+        );
 
         return $options;
     }
