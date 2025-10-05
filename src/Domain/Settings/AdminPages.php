@@ -218,6 +218,12 @@ final class AdminPages
         );
 
         foreach ($this->pages as $pageKey => $page) {
+            // Evita di aggiungere un sottomenu per la prima pagina (stessa dello slug principale)
+            // per non duplicare il rendering del contenuto.
+            if ($pageKey === $firstKey) {
+                continue;
+            }
+
             add_submenu_page(
                 $firstPage['slug'],
                 (string) $page['page_title'],

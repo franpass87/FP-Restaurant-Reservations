@@ -38,7 +38,18 @@
                 return null;
             }
 
-            return response.json();
+            // Gestione resiliente: alcuni hosting possono restituire 200 con body vuoto.
+            // In tal caso consideriamo l'operazione riuscita e ritorniamo un oggetto vuoto.
+            return response.text().then((text) => {
+                if (!text) {
+                    return {};
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return {};
+                }
+            });
         });
     };
 
