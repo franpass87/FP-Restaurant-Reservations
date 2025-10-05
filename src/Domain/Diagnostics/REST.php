@@ -103,6 +103,22 @@ final class REST
                 ],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/diagnostics/email-preview/(?P<id>\d+)',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleEmailPreview'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'id' => [
+                        'type'     => 'integer',
+                        'required' => true,
+                    ],
+                ],
+            ]
+        );
     }
 
     public function handleLogs(WP_REST_Request $request): WP_REST_Response
@@ -141,6 +157,29 @@ final class REST
             'encoding'  => 'base64',
             'content'   => base64_encode($export['content']),
         ]);
+    }
+
+    public function handleEmailPreview(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = (int) $request->get_param('id');
+        if ($id <= 0) {
+            return new WP_Error(
+                'fp_resv_invalid_preview_id',
+                __('Anteprima non valida.', 'fp-restaurant-reservations'),
+                ['status' => 400]
+            );
+        }
+
+        $preview = $this->service->getEmailPreview($id);
+        if ($preview === null) {
+            return new WP_Error(
+                'fp_resv_preview_not_found',
+                __('Nessuna email trovata per questa anteprima.', 'fp-restaurant-reservations'),
+                ['status' => 404]
+            );
+        }
+
+        return rest_ensure_response($preview);
     }
 
     public function checkPermissions(): bool|WP_Error

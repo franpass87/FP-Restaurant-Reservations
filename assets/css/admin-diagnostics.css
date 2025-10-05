@@ -139,3 +139,154 @@
     color: #0f7b0f;
     font-weight: 600;
 }
+
+.fp-resv-diagnostics__preview[hidden] {
+    display: none;
+}
+
+.fp-resv-diagnostics__preview {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 18, 23, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    z-index: 100000;
+}
+
+.fp-resv-diagnostics__preview-dialog {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(12, 12, 16, 0.25);
+    width: min(960px, 100%);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.fp-resv-diagnostics__preview-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(18, 18, 23, 0.08);
+}
+
+.fp-resv-diagnostics__preview-heading h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.fp-resv-diagnostics__preview-subject {
+    margin: 0.35rem 0 0;
+    color: #4f4f4f;
+    font-size: 0.95rem;
+}
+
+.fp-resv-diagnostics__preview-close {
+    border: none;
+    background: transparent;
+    color: #121217;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.fp-resv-diagnostics__preview-close:hover,
+.fp-resv-diagnostics__preview-close:focus-visible {
+    background: rgba(18, 18, 23, 0.08);
+    outline: none;
+}
+
+.fp-resv-diagnostics__preview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0 1.5rem 1.25rem;
+    font-size: 0.85rem;
+    color: #4f4f4f;
+}
+
+.fp-resv-diagnostics__preview-status[data-status="sent"] {
+    color: #0f7b0f;
+    font-weight: 600;
+}
+
+.fp-resv-diagnostics__preview-status[data-status="failed"] {
+    color: #c3002f;
+    font-weight: 600;
+}
+
+.fp-resv-diagnostics__preview-body {
+    position: relative;
+    flex: 1;
+    min-height: 300px;
+    background: #f6f7f9;
+}
+
+.fp-resv-diagnostics__preview-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+}
+
+.fp-resv-diagnostics__preview-body pre {
+    margin: 0;
+    padding: 1.5rem;
+    background: #fff;
+    height: 100%;
+    overflow: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.fp-resv-diagnostics__preview-loading,
+.fp-resv-diagnostics__preview-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #121217;
+    background: rgba(246, 247, 249, 0.85);
+}
+
+.fp-resv-diagnostics__preview-error {
+    color: #c3002f;
+    background: rgba(246, 220, 224, 0.8);
+}
+
+@media (max-width: 782px) {
+    .fp-resv-diagnostics__preview {
+        padding: 1rem;
+    }
+
+    .fp-resv-diagnostics__preview-dialog {
+        width: 100%;
+        max-height: 95vh;
+        border-radius: 14px;
+    }
+
+    .fp-resv-diagnostics__preview-header {
+        padding: 1.25rem;
+    }
+
+    .fp-resv-diagnostics__preview-meta {
+        padding: 0 1.25rem 1rem;
+    }
+
+    .fp-resv-diagnostics__preview-body pre {
+        padding: 1rem;
+    }
+}

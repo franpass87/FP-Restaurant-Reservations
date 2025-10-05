@@ -229,6 +229,7 @@ class FormApp {
             sending: false,
             pendingAvailability: false,
             lastAvailabilityParams: null,
+            mealAvailability: {},
         };
 
         this.copy = {
@@ -478,6 +479,7 @@ class FormApp {
                         onSlotSelected: (slot) => this.handleSlotSelected(slot),
                         onLatency: (ms) => this.handleAvailabilityLatency(ms),
                         onRetry: (attempt) => this.handleAvailabilityRetry(attempt),
+                        onAvailabilitySummary: (summary, params) => this.handleMealAvailabilitySummary(summary, params),
                     });
 
                     if (this.state.pendingAvailability) {
@@ -728,6 +730,9 @@ class FormApp {
 
         button.setAttribute('data-active', 'true');
         button.setAttribute('aria-pressed', 'true');
+        const mealKey = button.getAttribute('data-fp-resv-meal') || '';
+        const storedState = this.state.mealAvailability ? this.state.mealAvailability[mealKey] : '';
+        this.applyMealAvailabilityIndicator(mealKey, storedState);
         this.applyMealSelection(button);
 
         const mealEvent = this.events.meal_selected || 'meal_selected';
@@ -1435,6 +1440,49 @@ class FormApp {
         if (this.availabilityController && typeof this.availabilityController.schedule === 'function') {
             this.availabilityController.schedule(params);
         }
+    }
+
+    applyMealAvailabilityIndicator(meal, state) {
+        if (!meal) {
+            return;
+        }
+
+        const button = this.mealButtons.find((item) => (item.getAttribute('data-fp-resv-meal') || '') === meal);
+        if (!button) {
+            return;
+        }
+
+        const validStates = ['available', 'limited', 'full'];
+        const normalized = state ? String(state).toLowerCase() : '';
+
+        if (validStates.indexOf(normalized) === -1) {
+            button.removeAttribute('data-availability-state');
+            return;
+        }
+
+        button.setAttribute('data-availability-state', normalized);
+    }
+
+    handleMealAvailabilitySummary(summary, params) {
+        if (!params || !params.meal) {
+            return;
+        }
+
+        const normalized = summary && summary.state ? String(summary.state).toLowerCase() : '';
+        const validStates = ['available', 'limited', 'full'];
+
+        if (!this.state.mealAvailability) {
+            this.state.mealAvailability = {};
+        }
+
+        if (validStates.indexOf(normalized) === -1) {
+            delete this.state.mealAvailability[params.meal];
+            this.applyMealAvailabilityIndicator(params.meal, '');
+            return;
+        }
+
+        this.state.mealAvailability[params.meal] = normalized;
+        this.applyMealAvailabilityIndicator(params.meal, normalized);
     }
 
     handleSlotSelected(slot) {

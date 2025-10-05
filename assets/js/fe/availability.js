@@ -44,6 +44,46 @@ export function createAvailabilityController(options) {
     let lastParams = null;
     let currentSelection = null;
 
+    function summarizeSlots(slots) {
+        const safeSlots = Array.isArray(slots) ? slots : [];
+        const slotCount = safeSlots.length;
+        if (slotCount === 0) {
+            return { state: 'full', slots: 0 };
+        }
+
+        const statuses = safeSlots
+            .map((slot) => String(slot.status || '').toLowerCase())
+            .filter((status) => status !== '');
+
+        if (statuses.length === 0) {
+            return { state: 'available', slots: slotCount };
+        }
+
+        const hasLimited = statuses.some((status) => status === 'limited');
+        if (hasLimited) {
+            return { state: 'limited', slots: slotCount };
+        }
+
+        const hasAvailable = statuses.some((status) => status === 'available');
+        if (hasAvailable) {
+            return { state: 'available', slots: slotCount };
+        }
+
+        return { state: 'full', slots: slotCount };
+    }
+
+    function notifyAvailability(params, summary) {
+        if (typeof options.onAvailabilitySummary !== 'function') {
+            return;
+        }
+
+        try {
+            options.onAvailabilitySummary(summary, params || lastParams || {});
+        } catch (error) {
+            // noop
+        }
+    }
+
     if (retryButton) {
         retryButton.addEventListener('click', () => {
             if (lastParams) {
@@ -97,6 +137,9 @@ export function createAvailabilityController(options) {
         if (listEl) {
             clearChildren(listEl);
         }
+
+        const state = !params || !params.meal ? 'unknown' : 'full';
+        notifyAvailability(params, { state, slots: 0 });
     }
 
     function hideEmpty() {
@@ -125,6 +168,7 @@ export function createAvailabilityController(options) {
         }
 
         setStatus(message || fallback, 'error');
+        notifyAvailability(lastParams, { state: 'error', slots: 0 });
     }
 
     function selectSlot(slot, button) {
@@ -167,6 +211,7 @@ export function createAvailabilityController(options) {
         });
 
         setStatus((options.strings && options.strings.slotsUpdated) || '', false);
+        notifyAvailability(params, summarizeSlots(slots));
     }
 
     function request(params, attempt) {
@@ -186,6 +231,7 @@ export function createAvailabilityController(options) {
         hideBoundary();
         showSkeleton();
         setStatus((options.strings && options.strings.updatingSlots) || 'Updating availability…', 'loading');
+        notifyAvailability(params, { state: 'loading', slots: 0 });
 
         const url = buildUrl(options.endpoint, params);
         const start = performance.now();

@@ -35,6 +35,7 @@ use function esc_html;
 use function file_exists;
 use function get_bloginfo;
 use function implode;
+use function json_decode;
 use function filter_var;
 use function gmdate;
 use function hash_hmac;
@@ -50,6 +51,9 @@ use function preg_match;
 use function preg_replace;
 use function ob_get_clean;
 use function ob_start;
+use function strcmp;
+use function strlen;
+use function ltrim;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
@@ -58,6 +62,7 @@ use function substr;
 use function sprintf;
 use function trailingslashit;
 use function trim;
+use function uksort;
 use function wp_parse_args;
 use function wp_json_encode;
 use function wp_salt;
@@ -270,6 +275,7 @@ class Service
             'last_name'   => '',
             'email'       => '',
             'phone'       => '',
+            'phone_country' => '',
             'notes'       => '',
             'allergies'   => '',
             'meal'        => '',
@@ -303,8 +309,9 @@ class Service
         $payload['first_name'] = sanitize_text_field((string) $payload['first_name']);
         $payload['last_name']  = sanitize_text_field((string) $payload['last_name']);
         $payload['email']      = sanitize_email((string) $payload['email']);
-        $payload['phone']      = sanitize_text_field((string) $payload['phone']);
-        $detectedLanguage      = $this->detectLanguageFromPhone($payload['phone']);
+        $payload['phone']         = sanitize_text_field((string) $payload['phone']);
+        $payload['phone_country'] = sanitize_text_field((string) $payload['phone_country']);
+        $detectedLanguage         = $this->detectLanguageFromPhone($payload['phone'], $payload['phone_country']);
         $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
         $payload['allergies']  = sanitize_textarea_field((string) $payload['allergies']);
         $payload['meal']       = sanitize_text_field((string) $payload['meal']);
@@ -367,25 +374,147 @@ class Service
         }
         $payload['locale'] = $this->language->normalizeLocale($locale);
 
+        unset($payload['phone_country']);
+
         return $payload;
     }
 
-    private function detectLanguageFromPhone(string $phone): ?string
+    private function detectLanguageFromPhone(string $phone, string $phoneCountry): ?string
     {
-        $normalized = preg_replace('/[^0-9+]/', '', $phone);
-        if (!is_string($normalized) || $normalized === '') {
+        $map = $this->phonePrefixLanguageMap();
+        if ($map === []) {
             return null;
+        }
+
+        $normalizedCountry = $this->normalizePhonePrefix($phoneCountry);
+        $checkedInputs     = false;
+
+        if ($normalizedCountry !== '') {
+            $checkedInputs = true;
+            if (isset($map[$normalizedCountry])) {
+                return $map[$normalizedCountry];
+            }
+
+            foreach ($map as $prefix => $language) {
+                if (str_starts_with($normalizedCountry, $prefix)) {
+                    return $language;
+                }
+            }
+        }
+
+        $normalizedPhone = $this->normalizePhoneNumber($phone);
+        if ($normalizedPhone === '') {
+            return $checkedInputs ? 'en' : null;
+        }
+
+        $checkedInputs = true;
+
+        foreach ($map as $prefix => $language) {
+            if (str_starts_with($normalizedPhone, $prefix)) {
+                return $language;
+            }
+        }
+
+        return $checkedInputs ? 'en' : null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function phonePrefixLanguageMap(): array
+    {
+        $settings = $this->options->getGroup('fp_resv_brevo', []);
+        $raw      = $settings['brevo_phone_prefix_map'] ?? '';
+        $map      = [];
+
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $prefix => $language) {
+                    if (!is_string($prefix)) {
+                        continue;
+                    }
+
+                    $normalizedPrefix = $this->normalizePhonePrefix($prefix);
+                    if ($normalizedPrefix === '') {
+                        continue;
+                    }
+
+                    $normalizedLanguage = $this->normalizePhoneLanguage(is_string($language) ? $language : '');
+                    if ($normalizedLanguage === '') {
+                        $normalizedLanguage = 'en';
+                    }
+
+                    $map[$normalizedPrefix] = $normalizedLanguage;
+                }
+            }
+        }
+
+        if ($map === []) {
+            $map['+39'] = 'it';
+        }
+
+        uksort($map, static function (string $a, string $b): int {
+            $lengthComparison = strlen($b) <=> strlen($a);
+
+            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
+        });
+
+        return $map;
+    }
+
+    private function normalizePhonePrefix(string $prefix): string
+    {
+        $normalized = str_replace(' ', '', trim($prefix));
+        if ($normalized === '') {
+            return '';
         }
 
         if (str_starts_with($normalized, '00')) {
             $normalized = '+' . substr($normalized, 2);
+        } elseif (!str_starts_with($normalized, '+')) {
+            $normalized = '+' . ltrim($normalized, '+');
         }
 
-        if (!str_starts_with($normalized, '+')) {
-            return null;
+        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
+        if (!is_string($digits) || $digits === '') {
+            return '';
         }
 
-        if (str_starts_with($normalized, '+39')) {
+        return '+' . $digits;
+    }
+
+    private function normalizePhoneNumber(string $phone): string
+    {
+        $normalized = preg_replace('/[^0-9+]/', '', trim($phone));
+        if (!is_string($normalized) || $normalized === '') {
+            return '';
+        }
+
+        if ($normalized[0] !== '+') {
+            if (str_starts_with($normalized, '00')) {
+                $normalized = '+' . substr($normalized, 2);
+            } else {
+                $normalized = '+' . ltrim($normalized, '+');
+            }
+        }
+
+        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
+        if (!is_string($digits) || $digits === '') {
+            return '';
+        }
+
+        return '+' . $digits;
+    }
+
+    private function normalizePhoneLanguage(string $value): string
+    {
+        $upper = strtoupper(trim($value));
+        if ($upper === '') {
+            return '';
+        }
+
+        if (str_starts_with($upper, 'IT')) {
             return 'it';
         }
 

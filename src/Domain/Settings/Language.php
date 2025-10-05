@@ -427,7 +427,7 @@ final class Language
                     ],
                     'messages' => [
                         'slots_loading' => 'Caricamento disponibilità...',
-                        'slots_empty'   => 'Nessun orario disponibile per questa combinazione. Modifica data o numero di persone.',
+                        'slots_empty'   => 'Nessun servizio disponibile, scegli un altro giorno.',
                         'cta_complete_fields' => 'Completa i campi richiesti',
                         'cta_book_now'        => 'Prenota ora',
                         'cta_sending'         => 'Invio…',
@@ -632,7 +632,7 @@ final class Language
                     ],
                     'messages' => [
                         'slots_loading' => 'Loading availability...',
-                        'slots_empty'   => 'No times available for this selection. Try a different day or party size.',
+                        'slots_empty'   => 'No service available, choose another day.',
                         'cta_complete_fields' => 'Complete required fields',
                         'cta_book_now'        => 'Book now',
                         'cta_sending'         => 'Sending…',

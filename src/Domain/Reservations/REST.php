@@ -260,6 +260,7 @@ final class REST
             'last_name'   => $this->param($request, ['last_name', 'fp_resv_last_name']) ?? '',
             'email'       => $this->param($request, ['email', 'fp_resv_email']) ?? '',
             'phone'       => $this->param($request, ['phone', 'fp_resv_phone']) ?? '',
+            'phone_country' => $this->param($request, ['phone_country', 'phone_cc', 'fp_resv_phone_cc']) ?? '',
             'notes'       => $this->param($request, ['notes', 'fp_resv_notes']) ?? '',
             'allergies'   => $this->param($request, ['allergies', 'fp_resv_allergies']) ?? '',
             'language'    => $this->param($request, ['language', 'fp_resv_language']) ?? '',

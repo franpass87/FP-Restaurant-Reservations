@@ -71,4 +71,29 @@ $headingId   = 'fp-resv-diagnostics-title';
             </div>
         </section>
     </main>
+    <div class="fp-resv-diagnostics__preview" data-role="preview" hidden>
+        <div class="fp-resv-diagnostics__preview-dialog" data-role="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="fp-resv-email-preview-title" tabindex="-1">
+            <div class="fp-resv-diagnostics__preview-header">
+                <div class="fp-resv-diagnostics__preview-heading">
+                    <h2 id="fp-resv-email-preview-title" data-role="preview-title"><?php esc_html_e('Anteprima email', 'fp-restaurant-reservations'); ?></h2>
+                    <p class="fp-resv-diagnostics__preview-subject" data-role="preview-subject"></p>
+                </div>
+                <button type="button" class="fp-resv-diagnostics__preview-close" data-action="close-preview">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="screen-reader-text"><?php esc_html_e('Chiudi anteprima', 'fp-restaurant-reservations'); ?></span>
+                </button>
+            </div>
+            <div class="fp-resv-diagnostics__preview-meta">
+                <span data-role="preview-recipient"></span>
+                <span data-role="preview-timestamp"></span>
+                <span class="fp-resv-diagnostics__preview-status" data-role="preview-status"></span>
+            </div>
+            <div class="fp-resv-diagnostics__preview-body">
+                <div class="fp-resv-diagnostics__preview-loading" data-role="preview-loading"><?php esc_html_e('Caricamento anteprima…', 'fp-restaurant-reservations'); ?></div>
+                <div class="fp-resv-diagnostics__preview-error" data-role="preview-error" hidden><?php esc_html_e('Impossibile caricare l\'anteprima.', 'fp-restaurant-reservations'); ?></div>
+                <iframe title="<?php esc_attr_e('Contenuto email', 'fp-restaurant-reservations'); ?>" data-role="preview-frame" hidden></iframe>
+                <pre data-role="preview-text" hidden></pre>
+            </div>
+        </div>
+    </div>
 </div>
