@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core;
 
+use FP\Resv\Core\Adapters;
+use FP\Resv\Core\AsyncMailer;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Privacy;
 use FP\Resv\Core\Scheduler;
@@ -122,6 +124,11 @@ final class Plugin
         $container->register('plugin.dir', self::$dir);
         $container->register('plugin.url', self::$url);
 
+        // Core adapters (for testing)
+        $container->singleton('wp.adapter', static function (): Adapters\WordPressAdapter {
+            return new Adapters\WPFunctionsAdapter();
+        });
+
         $options = new Options();
         $container->register(Options::class, $options);
         $container->register('settings.options', $options);
@@ -145,6 +152,13 @@ final class Plugin
         $mailer->registerHooks();
         $container->register(Mailer::class, $mailer);
         $container->register('core.mailer', $mailer);
+
+        // Async mailer (lazy)
+        $container->singleton('async.mailer', static function ($c) {
+            $asyncMailer = new AsyncMailer($c->get(Mailer::class));
+            $asyncMailer->boot();
+            return $asyncMailer;
+        });
 
         $styleSettings = new StyleSettings($options);
         $container->register(StyleSettings::class, $styleSettings);

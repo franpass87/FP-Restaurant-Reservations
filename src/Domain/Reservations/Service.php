@@ -6,6 +6,9 @@ namespace FP\Resv\Domain\Reservations;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use FP\Resv\Core\Exceptions\ConflictException;
+use FP\Resv\Core\Metrics;
+use FP\Resv\Core\ReservationValidator;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService as StripePayments;
@@ -99,6 +102,10 @@ class Service
      */
     public function create(array $payload): array
     {
+        $stopTimer = Metrics::timer('reservation.create', [
+            'party' => $payload['party'] ?? 0,
+        ]);
+
         $sanitized = $this->sanitizePayload($payload);
         $this->assertPayload($sanitized);
 
@@ -258,6 +265,13 @@ class Service
             $result['payment'] = $paymentPayload;
         }
 
+        Metrics::increment('reservation.created', 1, [
+            'status' => $status,
+            'requires_payment' => $requiresPayment ? 'yes' : 'no',
+        ]);
+
+        $stopTimer();
+
         return $result;
     }
 
@@ -272,8 +286,9 @@ class Service
         }
 
         if ($this->calendar->isWindowBusy($date, $time)) {
-            throw new RuntimeException(
-                __('Lo slot selezionato risulta occupato su Google Calendar. Scegli un altro orario.', 'fp-restaurant-reservations')
+            throw new ConflictException(
+                __('Lo slot selezionato risulta occupato su Google Calendar. Scegli un altro orario.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time, 'status' => $status]
             );
         }
     }
@@ -556,28 +571,20 @@ class Service
 
     /**
      * @param array<string, mixed> $payload
+     * 
+     * @throws \FP\Resv\Core\Exceptions\ValidationException
      */
     private function assertPayload(array $payload): void
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $payload['date'])) {
-            throw new RuntimeException('Invalid reservation date.');
-        }
-
-        if (!preg_match('/^\d{2}:\d{2}$/', $payload['time'])) {
-            throw new RuntimeException('Invalid reservation time.');
-        }
-
-        if ($payload['party'] < 1) {
-            throw new RuntimeException('Invalid party size.');
-        }
-
-        if ($payload['first_name'] === '' || $payload['last_name'] === '') {
-            throw new RuntimeException('Customer name is required.');
-        }
-
-        if ($payload['email'] === '' || filter_var($payload['email'], FILTER_VALIDATE_EMAIL) === false) {
-            throw new RuntimeException('A valid email is required.');
-        }
+        $validator = new ReservationValidator();
+        
+        $validator->assertValidDate($payload['date']);
+        $validator->assertValidTime($payload['time']);
+        
+        $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
+        $validator->assertValidParty($payload['party'], $maxCapacity);
+        
+        $validator->assertValidContact($payload);
     }
 
     private function resolveDefaultStatus(): string
