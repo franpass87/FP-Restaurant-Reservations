@@ -15,11 +15,14 @@ use function is_array;
 use function preg_split;
 use function rename;
 use function sanitize_file_name;
+use function sanitize_textarea_field;
+use function str_contains;
 use function sys_get_temp_dir;
 use function tempnam;
 use function time;
 use function uniqid;
 use function trim;
+use function wp_kses_post;
 use function wp_mail;
 use function wp_strip_all_tags;
 
@@ -172,6 +175,8 @@ class Mailer
         $firstLine = $this->extractFirstLine($message);
         $status    = $success ? 'sent' : 'failed';
         $error     = $success ? null : ($context['error'] ?? 'wp_mail returned false');
+        $contentType = $this->detectContentType($context);
+        $body        = $this->prepareBodyForStorage($message, $contentType);
 
         $data = [
             'reservation_id' => isset($context['reservation_id']) ? (int) $context['reservation_id'] : null,
@@ -180,6 +185,8 @@ class Mailer
             'first_line'     => $firstLine,
             'status'         => $status,
             'error'          => $error,
+            'content_type'   => $contentType,
+            'body'           => $body,
             'created_at'     => current_time('mysql'),
         ];
 
@@ -192,6 +199,37 @@ class Mailer
         $line     = preg_split('/\r?\n/', $stripped, 2)[0] ?? '';
 
         return Helpers::substr($line, 0, 191);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function detectContentType(array $context): string
+    {
+        $raw = strtolower(trim((string) ($context['content_type'] ?? 'text/html')));
+
+        if ($raw === '') {
+            return 'text/html';
+        }
+
+        if (str_contains($raw, 'plain')) {
+            return 'text/plain';
+        }
+
+        if (str_contains($raw, 'html')) {
+            return 'text/html';
+        }
+
+        return 'text/html';
+    }
+
+    private function prepareBodyForStorage(string $message, string $contentType): string
+    {
+        if ($contentType === 'text/plain') {
+            return sanitize_textarea_field($message);
+        }
+
+        return wp_kses_post($message);
     }
 
     /**

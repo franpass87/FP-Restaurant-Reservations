@@ -159,6 +159,8 @@ final class Seeder
                         'first_line'     => 'Grazie per la tua prenotazione da QA Seed.',
                         'status'         => 'sent',
                         'error'          => null,
+                        'content_type'   => 'text/html',
+                        'body'           => '<p><strong>Grazie</strong> per aver prenotato con noi!</p>',
                         'created_at'     => $createdAt->format('Y-m-d H:i:s'),
                     ]
                 );

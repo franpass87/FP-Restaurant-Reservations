@@ -125,6 +125,18 @@ final class AdminController
                 ],
                 'downloadReady'  => __('Esportazione pronta.', 'fp-restaurant-reservations'),
                 'downloadFailed' => __('Esportazione non riuscita. Riprova.', 'fp-restaurant-reservations'),
+                'preview' => [
+                    'title'       => __('Anteprima email', 'fp-restaurant-reservations'),
+                    'open'        => __('Apri anteprima', 'fp-restaurant-reservations'),
+                    'loading'     => __('Caricamento anteprima…', 'fp-restaurant-reservations'),
+                    'error'       => __('Impossibile caricare l\'anteprima.', 'fp-restaurant-reservations'),
+                    'empty'       => __('Nessun contenuto disponibile per questa email.', 'fp-restaurant-reservations'),
+                    'close'       => __('Chiudi anteprima', 'fp-restaurant-reservations'),
+                    'recipient'   => __('Destinatari: %s', 'fp-restaurant-reservations'),
+                    'sentAt'      => __('Registrata il %s', 'fp-restaurant-reservations'),
+                    'status'      => __('Stato: %s', 'fp-restaurant-reservations'),
+                    'unavailable' => __('Nessuna anteprima disponibile', 'fp-restaurant-reservations'),
+                ],
             ],
         ]);
     }
@@ -229,7 +241,8 @@ final class AdminController
             'recipient'     => __('Destinatari', 'fp-restaurant-reservations'),
             'subject'       => __('Oggetto', 'fp-restaurant-reservations'),
             'status'        => __('Stato', 'fp-restaurant-reservations'),
-            'excerpt'       => __('Anteprima', 'fp-restaurant-reservations'),
+            'excerpt'       => __('Estratto', 'fp-restaurant-reservations'),
+            'preview'       => __('Anteprima', 'fp-restaurant-reservations'),
             'error'         => __('Errore', 'fp-restaurant-reservations'),
             'source'        => __('Sorgente', 'fp-restaurant-reservations'),
             'action'        => __('Evento', 'fp-restaurant-reservations'),

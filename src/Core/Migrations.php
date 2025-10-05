@@ -9,7 +9,7 @@ use wpdb;
 final class Migrations
 {
     private const OPTION_KEY = 'fp_resv_db_version';
-    private const DB_VERSION = '2024.05.01';
+    private const DB_VERSION = '2024.06.20';
 
     public static function run(): void
     {
@@ -268,6 +268,8 @@ CREATE TABLE {$mailLogTable} (
     first_line VARCHAR(191) DEFAULT NULL,
     status VARCHAR(20) NOT NULL,
     error TEXT,
+    content_type VARCHAR(50) NOT NULL DEFAULT 'text/html',
+    body LONGTEXT DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY  (id),
     KEY reservation_id (reservation_id),

@@ -41,6 +41,18 @@
         search: filtersEl ? filtersEl.querySelector('[data-role="search"]') : null,
         prev: null,
         next: null,
+        preview: root.querySelector('[data-role="preview"]'),
+        previewDialog: root.querySelector('[data-role="preview-dialog"]'),
+        previewFrame: root.querySelector('[data-role="preview-frame"]'),
+        previewText: root.querySelector('[data-role="preview-text"]'),
+        previewLoading: root.querySelector('[data-role="preview-loading"]'),
+        previewError: root.querySelector('[data-role="preview-error"]'),
+        previewSubject: root.querySelector('[data-role="preview-subject"]'),
+        previewTitle: root.querySelector('[data-role="preview-title"]'),
+        previewRecipient: root.querySelector('[data-role="preview-recipient"]'),
+        previewTimestamp: root.querySelector('[data-role="preview-timestamp"]'),
+        previewStatus: root.querySelector('[data-role="preview-status"]'),
+        previewCloseButtons: root.querySelectorAll('[data-action="close-preview"]'),
     };
 
     if (elements.pagination) {
@@ -55,7 +67,13 @@
         perPage: 25,
         totalPages: 0,
         loading: false,
+        previewId: null,
+        previewTrigger: null,
     };
+
+    const previewStrings = settings.i18n && settings.i18n.preview ? settings.i18n.preview : {};
+    const previewLoadingDefault = elements.previewLoading ? elements.previewLoading.textContent : '';
+    const previewErrorDefault = elements.previewError ? elements.previewError.textContent : '';
 
     function setLoading(isLoading) {
         state.loading = isLoading;
@@ -192,10 +210,36 @@
                 const key = column.key;
                 const value = entry && Object.prototype.hasOwnProperty.call(entry, key) ? entry[key] : '';
                 const stringValue = value === null || typeof value === 'undefined' ? '' : String(value);
+
                 if (key === 'status') {
                     td.dataset.status = stringValue.toLowerCase();
+                    td.textContent = stringValue;
+                } else if (key === 'preview') {
+                    const previewId = entry && Object.prototype.hasOwnProperty.call(entry, 'preview_id')
+                        ? entry.preview_id
+                        : null;
+                    const hasPreview = Boolean(entry && Object.prototype.hasOwnProperty.call(entry, 'preview_available')
+                        ? entry.preview_available
+                        : (previewId !== null && previewId !== undefined));
+
+                    if (hasPreview && previewId) {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'button button-secondary';
+                        button.textContent = previewStrings.open || 'Anteprima';
+                        button.dataset.previewId = String(previewId);
+                        button.setAttribute('aria-haspopup', 'dialog');
+                        button.addEventListener('click', function () {
+                            openPreview(previewId, button);
+                        });
+                        td.appendChild(button);
+                    } else {
+                        td.textContent = previewStrings.unavailable || stringValue || '';
+                    }
+                } else {
+                    td.textContent = stringValue;
                 }
-                td.textContent = stringValue;
+
                 row.appendChild(td);
             });
             elements.tableBody.appendChild(row);
@@ -238,6 +282,174 @@
         });
 
         return query.toString();
+    }
+
+    function resetPreviewContent() {
+        if (elements.previewSubject) {
+            elements.previewSubject.textContent = '';
+        }
+        if (elements.previewRecipient) {
+            elements.previewRecipient.textContent = '';
+        }
+        if (elements.previewTimestamp) {
+            elements.previewTimestamp.textContent = '';
+        }
+        if (elements.previewStatus) {
+            elements.previewStatus.textContent = '';
+            delete elements.previewStatus.dataset.status;
+        }
+        if (elements.previewFrame) {
+            elements.previewFrame.hidden = true;
+            elements.previewFrame.removeAttribute('srcdoc');
+        }
+        if (elements.previewText) {
+            elements.previewText.hidden = true;
+            elements.previewText.textContent = '';
+        }
+        if (elements.previewError) {
+            elements.previewError.hidden = true;
+            elements.previewError.textContent = previewStrings.error || previewErrorDefault;
+        }
+        if (elements.previewLoading) {
+            elements.previewLoading.hidden = false;
+            elements.previewLoading.textContent = previewStrings.loading || previewLoadingDefault;
+        }
+    }
+
+    function setPreviewVisible(visible) {
+        if (!elements.preview) {
+            return;
+        }
+
+        if (visible) {
+            elements.preview.hidden = false;
+            let focusTarget = null;
+            if (elements.previewCloseButtons && elements.previewCloseButtons.length) {
+                focusTarget = elements.previewCloseButtons[0];
+            } else if (elements.previewDialog) {
+                focusTarget = elements.previewDialog;
+            }
+            if (focusTarget && typeof focusTarget.focus === 'function') {
+                focusTarget.focus();
+            }
+            document.addEventListener('keydown', handlePreviewKeydown);
+        } else {
+            elements.preview.hidden = true;
+            document.removeEventListener('keydown', handlePreviewKeydown);
+        }
+    }
+
+    function closePreview() {
+        setPreviewVisible(false);
+        state.previewId = null;
+        resetPreviewContent();
+
+        if (state.previewTrigger && typeof state.previewTrigger.focus === 'function') {
+            state.previewTrigger.focus();
+        }
+        state.previewTrigger = null;
+    }
+
+    function handlePreviewKeydown(event) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closePreview();
+        }
+    }
+
+    function showPreviewError(message) {
+        if (elements.previewLoading) {
+            elements.previewLoading.hidden = true;
+        }
+        if (elements.previewError) {
+            elements.previewError.textContent = message || previewStrings.error || previewErrorDefault;
+            elements.previewError.hidden = false;
+        }
+    }
+
+    function populatePreview(response) {
+        if (!response) {
+            showPreviewError(previewStrings.error || '');
+
+            return;
+        }
+
+        if (elements.previewLoading) {
+            elements.previewLoading.hidden = true;
+        }
+
+        if (elements.previewTitle) {
+            elements.previewTitle.textContent = previewStrings.title || elements.previewTitle.textContent;
+        }
+
+        if (elements.previewSubject) {
+            elements.previewSubject.textContent = response.subject || '';
+        }
+
+        if (elements.previewRecipient) {
+            const template = previewStrings.recipient || '';
+            elements.previewRecipient.textContent = response.recipient
+                ? (template ? template.replace('%s', response.recipient) : response.recipient)
+                : '';
+        }
+
+        if (elements.previewTimestamp) {
+            const template = previewStrings.sentAt || '';
+            const value = response.created_at_formatted || response.created_at || '';
+            elements.previewTimestamp.textContent = value && template
+                ? template.replace('%s', value)
+                : value;
+        }
+
+        if (elements.previewStatus) {
+            const template = previewStrings.status || '';
+            const statusLabel = response.status_label || response.status || '';
+            elements.previewStatus.textContent = statusLabel && template
+                ? template.replace('%s', statusLabel)
+                : statusLabel;
+            if (response.status) {
+                elements.previewStatus.dataset.status = String(response.status);
+            }
+        }
+
+        const body = response.body || '';
+        if (!body) {
+            showPreviewError(previewStrings.empty || '');
+
+            return;
+        }
+
+        if (response.content_type && response.content_type.indexOf('text/plain') === 0) {
+            if (elements.previewText) {
+                elements.previewText.textContent = body;
+                elements.previewText.hidden = false;
+            }
+        } else if (elements.previewFrame) {
+            elements.previewFrame.srcdoc = body;
+            elements.previewFrame.hidden = false;
+        }
+    }
+
+    function openPreview(id, trigger) {
+        if (!elements.preview || !apiFetch || state.loading) {
+            return;
+        }
+
+        state.previewId = id;
+        state.previewTrigger = trigger || document.activeElement;
+        resetPreviewContent();
+        setPreviewVisible(true);
+
+        apiFetch({
+            path: '/fp-resv/v1/diagnostics/email-preview/' + encodeURIComponent(String(id)),
+            method: 'GET',
+        })
+            .then(function (response) {
+                populatePreview(response);
+            })
+            .catch(function () {
+                showPreviewError(previewStrings.error || '');
+            });
     }
 
     function fetchLogs() {
@@ -378,6 +590,23 @@
             }
             state.page += 1;
             fetchLogs();
+        });
+    }
+
+    if (elements.preview) {
+        elements.preview.addEventListener('click', function (event) {
+            if (event.target === elements.preview) {
+                closePreview();
+            }
+        });
+    }
+
+    if (elements.previewCloseButtons && elements.previewCloseButtons.length) {
+        elements.previewCloseButtons.forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                closePreview();
+            });
         });
     }
 

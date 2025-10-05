@@ -9,14 +9,16 @@ use FP\Resv\Core\Helpers;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
+use function __;
 use function array_map;
 use function array_merge;
 use function array_slice;
 use function array_values;
 use function ceil;
-use function gmdate;
 use function fputcsv;
 use function fopen;
+use function gmdate;
+use function get_option;
 use function in_array;
 use function is_array;
 use function is_numeric;
@@ -26,13 +28,18 @@ use function json_encode;
 use function ksort;
 use function number_format;
 use function rewind;
+use function sanitize_textarea_field;
 use function sprintf;
 use function stream_get_contents;
 use function str_contains;
-use function strtoupper;
 use function strtolower;
+use function strtoupper;
+use function strtotime;
 use function trim;
+use function ucfirst;
 use function usort;
+use function wp_date;
+use function wp_kses_post;
 
 final class Service
 {
@@ -54,7 +61,8 @@ final class Service
                 ['key' => 'recipient', 'label' => 'Destinatari'],
                 ['key' => 'subject', 'label' => 'Oggetto'],
                 ['key' => 'status', 'label' => 'Stato'],
-                ['key' => 'excerpt', 'label' => 'Anteprima'],
+                ['key' => 'excerpt', 'label' => 'Estratto'],
+                ['key' => 'preview', 'label' => 'Anteprima'],
                 ['key' => 'error', 'label' => 'Errore'],
             ],
         ],
@@ -289,7 +297,7 @@ final class Service
         if ($search !== null) {
             $like      = '%' . $this->wpdb->esc_like($search) . '%';
             $searchSql = [];
-            foreach (['to_emails', 'subject', 'first_line', 'error'] as $column) {
+            foreach (['to_emails', 'subject', 'first_line', 'error', 'body'] as $column) {
                 $searchSql[] = $column . ' LIKE %s';
                 $params[]    = $like;
             }
@@ -304,7 +312,7 @@ final class Service
             ? $this->wpdb->get_var($this->wpdb->prepare($countSql, $params))
             : $this->wpdb->get_var($countSql));
 
-        $query = 'SELECT id, reservation_id, to_emails, subject, first_line, status, error, created_at'
+        $query = 'SELECT id, reservation_id, to_emails, subject, first_line, status, error, content_type, body, created_at'
             . ' FROM ' . $table . $whereSql
             . ' ORDER BY created_at DESC';
 
@@ -331,15 +339,23 @@ final class Service
         $entries = [];
         if (is_array($rows)) {
             foreach ($rows as $row) {
+                $body       = (string) ($row['body'] ?? '');
+                $hasPreview = trim($body) !== '';
+
                 $entries[] = [
-                    'id'            => isset($row['id']) ? (int) $row['id'] : null,
-                    'created_at'    => (string) ($row['created_at'] ?? ''),
-                    'status'        => strtolower((string) ($row['status'] ?? '')),
-                    'recipient'     => (string) ($row['to_emails'] ?? ''),
-                    'subject'       => (string) ($row['subject'] ?? ''),
-                    'excerpt'       => (string) ($row['first_line'] ?? ''),
-                    'error'         => (string) ($row['error'] ?? ''),
-                    'reservation_id'=> isset($row['reservation_id']) ? (int) $row['reservation_id'] : null,
+                    'id'                 => isset($row['id']) ? (int) $row['id'] : null,
+                    'created_at'         => (string) ($row['created_at'] ?? ''),
+                    'status'             => strtolower((string) ($row['status'] ?? '')),
+                    'recipient'          => (string) ($row['to_emails'] ?? ''),
+                    'subject'            => (string) ($row['subject'] ?? ''),
+                    'excerpt'            => (string) ($row['first_line'] ?? ''),
+                    'preview'            => $hasPreview
+                        ? __('Disponibile', 'fp-restaurant-reservations')
+                        : __('Non disponibile', 'fp-restaurant-reservations'),
+                    'preview_id'         => $hasPreview && isset($row['id']) ? (int) $row['id'] : null,
+                    'preview_available'  => $hasPreview,
+                    'error'              => (string) ($row['error'] ?? ''),
+                    'reservation_id'     => isset($row['reservation_id']) ? (int) $row['reservation_id'] : null,
                 ];
             }
         }
@@ -349,6 +365,52 @@ final class Service
             'columns'    => self::CHANNELS['email']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($total, $page, $perPage),
+        ];
+    }
+
+    public function getEmailPreview(int $id): ?array
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return null;
+        }
+
+        $table = $this->wpdb->prefix . 'fp_mail_log';
+        $row   = $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT id, reservation_id, to_emails, subject, status, content_type, body, created_at'
+                . ' FROM ' . $table . ' WHERE id = %d LIMIT 1',
+                $id
+            ),
+            ARRAY_A
+        );
+
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $contentType = $this->normalizeContentType((string) ($row['content_type'] ?? 'text/html'));
+        $body        = (string) ($row['body'] ?? '');
+
+        if ($contentType === 'text/html') {
+            $body = wp_kses_post($body);
+        } else {
+            $body = sanitize_textarea_field($body);
+        }
+
+        $status = strtolower((string) ($row['status'] ?? ''));
+
+        return [
+            'id'                    => (int) ($row['id'] ?? 0),
+            'reservation_id'        => isset($row['reservation_id']) ? (int) $row['reservation_id'] : null,
+            'recipient'             => (string) ($row['to_emails'] ?? ''),
+            'subject'               => (string) ($row['subject'] ?? ''),
+            'status'                => $status,
+            'status_label'          => $this->emailStatusLabel($status),
+            'content_type'          => $contentType,
+            'body'                  => $body,
+            'created_at'            => (string) ($row['created_at'] ?? ''),
+            'created_at_formatted'  => $this->formatTimestamp((string) ($row['created_at'] ?? '')),
         ];
     }
 
@@ -927,6 +989,52 @@ final class Service
         }
 
         return $entries;
+    }
+
+    private function normalizeContentType(string $contentType): string
+    {
+        $normalized = strtolower(trim($contentType));
+
+        if ($normalized === '') {
+            return 'text/html';
+        }
+
+        if (str_contains($normalized, 'plain')) {
+            return 'text/plain';
+        }
+
+        if (str_contains($normalized, 'html')) {
+            return 'text/html';
+        }
+
+        return 'text/html';
+    }
+
+    private function emailStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'sent'   => __('Inviata', 'fp-restaurant-reservations'),
+            'failed' => __('Errore', 'fp-restaurant-reservations'),
+            default  => ucfirst($status),
+        };
+    }
+
+    private function formatTimestamp(string $timestamp): string
+    {
+        $timestamp = trim($timestamp);
+        if ($timestamp === '') {
+            return '';
+        }
+
+        $time = strtotime($timestamp);
+        if ($time === false) {
+            return $timestamp;
+        }
+
+        $dateFormat = (string) get_option('date_format', 'Y-m-d');
+        $timeFormat = (string) get_option('time_format', 'H:i');
+
+        return wp_date(trim($dateFormat . ' ' . $timeFormat), $time);
     }
 
     private function normalizeChannel(string $channel): ?string

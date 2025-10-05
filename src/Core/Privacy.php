@@ -186,7 +186,7 @@ final class Privacy
 
         $placeholders = implode(', ', array_fill(0, count($reservationIds), '%d'));
         $sql = sprintf(
-            'SELECT reservation_id, to_emails, subject, status, created_at FROM %s WHERE reservation_id IN (%s) ORDER BY created_at ASC',
+            'SELECT reservation_id, to_emails, subject, status, content_type, body, created_at FROM %s WHERE reservation_id IN (%s) ORDER BY created_at ASC',
             $this->wpdb->prefix . 'fp_mail_log',
             $placeholders
         );
