@@ -390,7 +390,7 @@ function initCalendar(section, container, request, strings) {
         setCreateError('');
         request('/fp-resv/v1/agenda/reservations', { method: 'POST', data: payload })
           .then(function () {
-            announce(strings.agendaCreateSuccess || 'Prenotazione creata.');
+            announce(strings.agendaCreateSuccess || fpResvAgendaTranslate('Reservation created.'));
             closeCreateModal();
             createSubmitBtn.disabled = false;
             loadAgenda();
@@ -1394,7 +1394,7 @@ function initArrivals(section, range, request, strings) {
     }
 
     if (action === 'move') {
-      window.alert(strings.drawerPlaceholder || 'Funzionalità in sviluppo.');
+      window.alert(strings.drawerPlaceholder || fpResvAgendaTranslate('Feature in development.'));
       return;
     }
 
@@ -1415,7 +1415,7 @@ function initArrivals(section, range, request, strings) {
       data: payload,
     })
       .then(function () {
-        announce(strings.agendaMoveSuccess || 'Prenotazione aggiornata.');
+        announce(strings.agendaMoveSuccess || fpResvAgendaTranslate('Reservation updated.'));
         loadArrivals();
       })
       .catch(function () {
