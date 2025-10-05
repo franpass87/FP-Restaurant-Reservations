@@ -33,7 +33,7 @@
     display: flex;
     flex-direction: column;
     gap: clamp(1.25rem, 3vw, 2rem);
-    padding: var(--fp-resv-spacing-lg);
+    padding: clamp(1.15rem, 3.5vw, 1.85rem) clamp(1rem, 3vw, 1.6rem);
     background: var(--fp-resv-color-surface);
     color: var(--fp-resv-color-text);
     border-radius: var(--fp-resv-radius-lg);
@@ -154,15 +154,34 @@
 .fp-progress {
     --fp-progress-height: 6px;
     --fp-progress-fill: 0%;
+    --fp-progress-gap: clamp(0.55rem, 1.4vw, 0.95rem);
     list-style: none;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: clamp(0.7rem, 1.8vw, 1.2rem);
-    padding: clamp(0.1rem, 0.5vw, 0.3rem) clamp(0.3rem, 1.8vw, 0.7rem);
+    flex-wrap: nowrap;
+    gap: var(--fp-progress-gap);
+    padding: clamp(0.1rem, 0.45vw, 0.25rem) clamp(0.35rem, 1.6vw, 0.65rem);
     margin: 0;
     position: relative;
     counter-reset: fp-progress;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+.fp-progress::-webkit-scrollbar {
+    height: 0.35rem;
+}
+
+.fp-progress::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+}
+
+.fp-progress::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .fp-progress::before {
@@ -172,7 +191,13 @@
     top: 50%;
     height: var(--fp-progress-height);
     transform: translateY(-50%);
-    background: linear-gradient(90deg, rgba(148, 163, 184, 0.35), rgba(148, 163, 184, 0.08));
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(148, 163, 184, 0.38) 16%,
+        rgba(148, 163, 184, 0.38) 84%,
+        transparent
+    );
     border-radius: 999px;
     pointer-events: none;
 }
@@ -185,7 +210,13 @@
     height: var(--fp-progress-height);
     transform: translateY(-50%);
     width: var(--fp-progress-fill);
-    background: linear-gradient(90deg, var(--fp-resv-color-primary), var(--fp-resv-color-primary-strong));
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--fp-resv-color-primary) 12%,
+        var(--fp-resv-color-primary-strong) 88%,
+        transparent
+    );
     border-radius: 999px;
     transition: width 220ms ease;
     pointer-events: none;
@@ -193,9 +224,9 @@
 }
 
 .fp-progress__item {
-    --fp-progress-item-padding-inline: clamp(0.5rem, 1.8vw, 0.95rem);
+    --fp-progress-item-padding-inline: clamp(0.45rem, 1.35vw, 0.85rem);
     --fp-progress-item-padding-block: clamp(0.4rem, 1.2vw, 0.7rem);
-    --fp-progress-item-min-width: clamp(2.65rem, 3.2vw, 3.1rem);
+    --fp-progress-item-min-width: clamp(2.45rem, 2.95vw, 2.9rem);
     --fp-progress-label-gap: 0;
     --fp-progress-label-max-width: 0;
     --fp-progress-label-opacity: 0;
@@ -217,6 +248,8 @@
     line-height: 1.3;
     text-transform: none;
     min-width: var(--fp-progress-item-min-width);
+    flex: 0 0 auto;
+    scroll-snap-align: center;
     transition: background 220ms ease, color 220ms ease, border-color 220ms ease, transform 200ms ease, box-shadow 220ms ease,
         padding-inline 220ms ease, min-width 220ms ease;
     isolation: isolate;
@@ -300,10 +333,10 @@
 .fp-progress__item[data-state="active"],
 .fp-progress__item[data-progress-state="active"],
 .fp-progress__item:focus-visible {
-    --fp-progress-item-padding-inline: clamp(0.75rem, 2vw, 1.35rem);
-    --fp-progress-item-min-width: clamp(7.5rem, 19vw, 11.5rem);
-    --fp-progress-label-gap: clamp(0.45rem, 1.35vw, 0.75rem);
-    --fp-progress-label-max-width: clamp(7.25rem, 24vw, 11.5rem);
+    --fp-progress-item-padding-inline: clamp(0.65rem, 1.75vw, 1.1rem);
+    --fp-progress-item-min-width: clamp(6.25rem, 16vw, 9.75rem);
+    --fp-progress-label-gap: clamp(0.4rem, 1.1vw, 0.65rem);
+    --fp-progress-label-max-width: clamp(6.25rem, 20vw, 9.75rem);
     --fp-progress-label-opacity: 1;
     --fp-progress-label-translate: 0;
     justify-content: flex-start;
@@ -372,6 +405,50 @@
 
 .fp-meals__subtitle {
     margin: 0;
+}
+
+.fp-meals__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.fp-meals__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--fp-resv-color-muted, rgba(15, 23, 42, 0.75));
+}
+
+.fp-meals__legend-indicator {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    background: currentColor;
+    opacity: 0.7;
+}
+
+.fp-meals__legend-item--available {
+    color: #16a34a;
+}
+
+.fp-meals__legend-item--limited {
+    color: #ca8a04;
+}
+
+.fp-meals__legend-item--full {
+    color: #dc2626;
+}
+
+.fp-meals__legend-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .fp-meals__list {
@@ -562,25 +639,62 @@
     grid-column: 1 / -1;
 }
 
+@media (min-width: 960px) {
+    .fp-resv-fields--grid .fp-resv-field--email {
+        grid-column: 1 / -1;
+    }
+}
+
 .fp-resv-field--consent {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 0.65rem;
+    gap: 0.75rem;
 }
 
 .fp-resv-field--consent .fp-checkbox {
-    margin-top: 0.15rem;
+    flex: 0 0 auto;
+    margin-top: 0.35rem;
 }
 
 .fp-resv-consent__text {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.fp-resv-consent__copy {
     line-height: 1.5;
+}
+
+.fp-resv-consent__meta {
+    align-self: flex-start;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    padding: 0.2rem 0.65rem 0.25rem;
+    text-transform: uppercase;
+    background: rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.12);
+    color: var(--fp-resv-color-muted);
+}
+
+.fp-resv-consent__meta--required {
+    background: rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.15);
+    color: var(--fp-resv-color-primary);
 }
 
 .fp-resv-consent__text a {
     color: inherit;
     text-decoration: underline;
+}
+
+@media (min-width: 960px) {
+    .fp-resv-fields--grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 .fp-field > label {
@@ -948,7 +1062,7 @@
 }
 
 .fp-meals__notice {
-    margin: 0;
+    margin: clamp(2rem, 5vw, 2.75rem) 0 0;
     font-size: 0.92em;
     color: var(--fp-resv-color-primary);
 }
@@ -1114,10 +1228,10 @@
     .fp-progress__item[data-state="active"],
     .fp-progress__item[data-progress-state="active"],
     .fp-progress__item:focus-visible {
-        --fp-progress-item-padding-inline: 0.75rem;
-        --fp-progress-item-min-width: 8.25rem;
-        --fp-progress-label-gap: 0.55rem;
-        --fp-progress-label-max-width: clamp(6.5rem, 34vw, 10.25rem);
+        --fp-progress-item-padding-inline: 0.68rem;
+        --fp-progress-item-min-width: 7.35rem;
+        --fp-progress-label-gap: 0.5rem;
+        --fp-progress-label-max-width: clamp(6.1rem, 34vw, 9.65rem);
     }
 
     .fp-progress__index {
@@ -1137,15 +1251,29 @@
     }
 }
 
+@media (min-width: 961px) {
+    .fp-progress {
+        justify-content: center;
+    }
+
+    .fp-progress__item {
+        flex: 1 1 clamp(2.6rem, 6.8vw, 9.25rem);
+        min-width: 0;
+    }
+}
+
 @media (max-width: 640px) {
     .fp-resv {
         padding: 1.35rem;
     }
 
     .fp-progress {
-        gap: 0.4rem;
-        overflow: visible;
-        padding: 0.3rem 0.25rem;
+        gap: 0.45rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0.25rem 0.2rem 0.35rem;
+        scroll-snap-type: x proximity;
+        scroll-padding-inline: 0.2rem;
     }
 
     .fp-progress::before,

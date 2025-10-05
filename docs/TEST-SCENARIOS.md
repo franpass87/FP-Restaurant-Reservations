@@ -21,13 +21,15 @@ Questa guida descrive i percorsi manuali suggeriti per validare le funzionalità
 1. Aggiungi la shortcode `[fp_reservations layout="onepage"]` a una pagina pubblica.
 2. Apri la pagina in modalità anonima.
 3. Seleziona il pasto "Pranzo" e verifica la comparsa della notice configurata.
-4. Scegli una data con disponibilità (es. tra due giorni) e seleziona lo slot 12:30.
-5. Imposta persone = 2 e compila i campi anagrafici con l'email `anna.rossi@example.com`.
-6. Compila note/allergie, accetta la privacy e, facoltativamente, i consensi marketing/profilazione.
-7. Premi "Prenota ora" e verifica:
+4. Controlla che la legenda colori mostri le etichette per Disponibile/Quasi pieno/Completo/Sconosciuto e che le pill cambino colore al variare degli slot.
+5. Scegli una data con disponibilità (es. tra due giorni) e seleziona lo slot 12:30.
+6. Imposta persone = 2 e compila i campi anagrafici con l'email `anna.rossi@example.com` (il campo deve occupare tutta la riga su desktop).
+7. Verifica che la select del prefisso telefonico non contenga duplicati per lo stesso codice.
+8. Compila note/allergie, accetta la privacy e, facoltativamente, i consensi marketing/profilazione (i badge Obbligatorio/Opzionale devono comparire sotto il testo senza disallineare la checkbox).
+9. Premi "Prenota ora" e verifica:
    - banner di conferma,
    - evento `reservation_submit` + `reservation_confirmed` nel `dataLayer`.
-8. Ripeti il percorso con dati mancanti per controllare le validazioni inline (email errata, consenso privacy non spuntato, slot pieno).
+10. Ripeti il percorso con dati mancanti per controllare le validazioni inline (email errata, consenso privacy non spuntato, slot pieno).
 
 ## 3. Agenda – Drag & Drop
 

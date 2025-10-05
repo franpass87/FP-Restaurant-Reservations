@@ -19,7 +19,7 @@ FP Restaurant Reservations è un plugin WordPress completo per la gestione delle
 
 ## Come integrare il form
 
-Il form pubblico è una single-page application con progress bar, CTA sticky e validazioni live. È disponibile in tre modalità:
+Il form pubblico è una single-page application con progress bar, CTA sticky e validazioni live. Evidenzia in modo chiaro lo stato degli slot con pill colorate (verde, ambra, rosso) e legenda contestuale, mostra badge "Obbligatorio"/"Opzionale" sotto alle informative privacy e dispone di prefissi telefonici deduplicati. È disponibile in tre modalità:
 
 - Shortcode `[fp_reservations]`
 - Blocco Gutenberg **FP Reservations → Form**
@@ -31,7 +31,7 @@ Gli asset frontend vengono caricati solo quando shortcode/blocco/widget sono pre
 | --- | --- |
 | `reservation_start` | L'utente apre il form e seleziona una data valida |
 | `section_unlocked` | Passaggio a uno step successivo (party, slot, dettagli, conferma) |
-| `meal_selected` | Scelta del turno/pasto |
+| `meal_selected` | Scelta del turno/pasto con aggiornamento legenda colori |
 | `form_valid` | Tutti i campi obbligatori risultano validi |
 | `reservation_submit` | Invio della prenotazione |
 | `reservation_confirmed` | Prenotazione confermata lato server |
@@ -66,6 +66,13 @@ Tutte le schermate dell'area di amministrazione condividono un layout coerente (
 - `composer dump-autoload` aggiorna il classmap PSR-4.
 - I file distribuiti sono generati nella cartella `assets/dist/`; gli asset sorgente restano in `assets/js` e `assets/css`.
 - Il workflow GitHub `Build Plugin Zip` crea automaticamente lo ZIP pronto per l'upload ad ogni tag `v*`.
+
+### Checklist QA rapida del form
+
+- Verifica che la progress bar rimanga su una singola riga su desktop/tablet e consenta lo scroll orizzontale su mobile.
+- Controlla che i pulsanti pasto riflettano correttamente gli stati `Disponibile`, `Quasi pieno`, `Completo` e `Sconosciuto` con la legenda attiva.
+- Assicurati che il campo email occupi la piena larghezza nelle view desktop e che i prefissi telefonici non presentino duplicati.
+- Conferma che le informative privacy mostrino il badge richiesto/opzionale sotto il testo senza spezzare l'allineamento con la checkbox.
 
 ## Release process
 

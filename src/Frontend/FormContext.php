@@ -21,6 +21,7 @@ use function is_numeric;
 use function is_string;
 use function preg_split;
 use function preg_replace;
+use function implode;
 use function sanitize_html_class;
 use function sanitize_key;
 use function sanitize_text_field;
@@ -29,6 +30,7 @@ use function str_replace;
 use function str_starts_with;
 use function strtolower;
 use function substr;
+use function sort;
 use function trim;
 use function strtoupper;
 use function ucwords;
@@ -1680,6 +1682,8 @@ final class FormContext
             $phonePrefixes = $this->defaultPhonePrefixes();
         }
 
+        $phonePrefixes = $this->condensePhonePrefixes($phonePrefixes);
+
         if ($phonePrefixes !== []) {
             $config['phone_prefixes'] = $phonePrefixes;
             $defaultPhoneCode = (string) ($phonePrefixes[0]['value'] ?? '39');
@@ -1982,7 +1986,84 @@ final class FormContext
      */
     private function defaultPhonePrefixes(): array
     {
-        return self::DEFAULT_PHONE_PREFIXES;
+        return $this->condensePhonePrefixes(self::DEFAULT_PHONE_PREFIXES);
+    }
+
+    /**
+     * @param array<int, array<string, string>> $prefixes
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function condensePhonePrefixes(array $prefixes): array
+    {
+        $groups = [];
+        $order  = [];
+
+        foreach ($prefixes as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $prefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
+            $value  = isset($entry['value']) ? (string) $entry['value'] : '';
+            if ($prefix === '' || $value === '') {
+                continue;
+            }
+
+            $language = isset($entry['language']) ? (string) $entry['language'] : 'INT';
+            $label    = isset($entry['label']) ? (string) $entry['label'] : $prefix;
+
+            $normalizedLabel = str_replace("\u{00A0}", ' ', $label);
+            $name            = trim($normalizedLabel);
+            $parts           = preg_split('/\s*·\s*/u', $normalizedLabel, 2);
+            if (is_array($parts) && count($parts) === 2) {
+                $name = trim(str_replace("\u{00A0}", ' ', $parts[1]));
+            }
+
+            if (!isset($groups[$value])) {
+                $groups[$value] = [
+                    'prefix'    => $prefix,
+                    'value'     => $value,
+                    'language'  => $language,
+                    'countries' => [],
+                ];
+                $order[] = $value;
+            }
+
+            if ($name !== '') {
+                $groups[$value]['countries'][$name] = true;
+            }
+        }
+
+        if ($groups === []) {
+            return [];
+        }
+
+        $options = [];
+
+        foreach ($order as $value) {
+            if (!isset($groups[$value])) {
+                continue;
+            }
+
+            $group     = $groups[$value];
+            $countries = array_keys($group['countries']);
+            sort($countries, SORT_NATURAL | SORT_FLAG_CASE);
+
+            $label = $group['prefix'];
+            if ($countries !== []) {
+                $label .= ' · ' . implode(', ', $countries);
+            }
+
+            $options[] = [
+                'prefix'   => $group['prefix'],
+                'value'    => $group['value'],
+                'language' => $group['language'],
+                'label'    => $label,
+            ];
+        }
+
+        return $options;
     }
 
     private function normalizePhonePrefix(string $prefix): string

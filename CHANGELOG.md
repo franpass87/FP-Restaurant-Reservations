@@ -1,3 +1,12 @@
+## PATCH-FORM-UX-REFINEMENTS
+- Migliorata la logica di disponibilità frontend normalizzando gli stati (`available`, `waitlist`, `busy`, `full`) così le pill pasto assumono il colore corretto.
+- Aggiunta legenda cromatica e stato neutro "Sconosciuto" per i turni quando i dati non sono ancora disponibili.
+- Sistemata la progress bar del percorso di prenotazione mantenendola su una singola riga su desktop/tablet e rendendola scrollabile su mobile.
+- Ridotti margini e padding e riallineato il campo email a tutta larghezza su desktop per uniformare la griglia dei contatti.
+- Deduplicati i prefissi telefonici condivisi fra più nazioni e aggiornato il form per usarli.
+- Allineati checkbox consenso e badge "Obbligatorio"/"Opzionale" in verticale per migliorare la leggibilità.
+- Incrementato il margine degli hint `fp-meals__notice fp-hint` in modo da distanziarli dai pulsanti.
+
 ## 1.0.0 - UI Refresh Release
 
 ### Added
