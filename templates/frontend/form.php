@@ -283,6 +283,7 @@ endif;
                                                     data-fp-resv-meal="<?php echo esc_attr($mealKey); ?>"
                                                     data-meal-label="<?php echo esc_attr($mealLabel); ?>"
                                                     data-meal-notice="<?php echo esc_attr($mealNotice); ?>"
+                                                    data-meal-default-notice="<?php echo esc_attr($mealNotice); ?>"
                                                     data-meal-price="<?php echo esc_attr($mealPrice); ?>"
                                                     <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
                                                 >
@@ -301,7 +302,11 @@ endif;
                                             data-fp-resv-meal-notice
                                             <?php echo $defaultMealNotice === '' ? 'hidden' : ''; ?>
                                         >
-                                            <?php echo esc_html($defaultMealNotice); ?>
+                                            <span class="fp-meals__notice-icon" aria-hidden="true">i</span>
+                                            <em
+                                                class="fp-meals__notice-text"
+                                                data-fp-resv-meal-notice-text
+                                            ><?php echo esc_html($defaultMealNotice); ?></em>
                                         </p>
                                     </section>
                                 <?php endif; ?>

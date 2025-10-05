@@ -149,6 +149,8 @@
     border-radius: calc(var(--fp-resv-radius-lg) * 0.9);
     border: 1px solid rgba(148, 163, 184, 0.22);
     box-shadow: 0 22px 45px -32px rgba(15, 23, 42, 0.45);
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .fp-progress {
@@ -163,6 +165,7 @@
     padding: clamp(0.1rem, 0.45vw, 0.25rem) clamp(0.35rem, 1.6vw, 0.65rem);
     margin: 0;
     position: relative;
+    isolation: isolate;
     counter-reset: fp-progress;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -200,6 +203,7 @@
     );
     border-radius: 999px;
     pointer-events: none;
+    z-index: 0;
 }
 
 .fp-progress::after {
@@ -221,6 +225,7 @@
     transition: width 220ms ease;
     pointer-events: none;
     box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.04);
+    z-index: 0;
 }
 
 .fp-progress__item {
@@ -253,6 +258,7 @@
     transition: background 220ms ease, color 220ms ease, border-color 220ms ease, transform 200ms ease, box-shadow 220ms ease,
         padding-inline 220ms ease, min-width 220ms ease;
     isolation: isolate;
+    z-index: 1;
 }
 
 .fp-progress__item::before {
@@ -648,42 +654,48 @@
 .fp-resv-field--consent {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.65rem;
 }
 
 .fp-resv-field--consent .fp-checkbox {
     flex: 0 0 auto;
-    margin-top: 0.35rem;
+    margin-top: 0;
 }
 
 .fp-resv-consent__text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
     min-width: 0;
 }
 
 .fp-resv-consent__copy {
     line-height: 1.5;
+    flex: 1 1 auto;
 }
 
 .fp-resv-consent__meta {
-    align-self: flex-start;
+    flex: 0 0 auto;
     border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    line-height: 1;
-    padding: 0.2rem 0.65rem 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    padding: 0.18rem 0.55rem 0.22rem;
     text-transform: uppercase;
-    background: rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.12);
+    background: rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.08);
     color: var(--fp-resv-color-muted);
+    border: 1px solid rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.18);
 }
 
 .fp-resv-consent__meta--required {
-    background: rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.15);
+    background: rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.12);
+    border-color: rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.2);
     color: var(--fp-resv-color-primary);
+    font-weight: 600;
 }
 
 .fp-resv-consent__text a {
@@ -693,7 +705,7 @@
 
 @media (min-width: 960px) {
     .fp-resv-fields--grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -714,17 +726,23 @@
     flex-direction: row-reverse;
     align-items: stretch;
     gap: 0.65rem;
+    flex-wrap: wrap;
 }
 
 .fp-resv-phone-input .fp-input {
     min-height: 48px;
+    flex: 1 1 12rem;
+    min-width: 0;
+    width: auto;
 }
 
 .fp-resv-phone-input .fp-input--prefix {
-    max-width: 8rem;
-    text-align: center;
-    padding-inline: 0.65rem;
     flex: 0 0 auto;
+    width: 8rem;
+    width: clamp(5.5rem, 32vw, 8rem);
+    max-width: 100%;
+    text-align: left;
+    padding-inline: 0.65rem;
 }
 
 .fp-resv-phone-input__static {
@@ -1062,9 +1080,33 @@
 }
 
 .fp-meals__notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
     margin: clamp(2rem, 5vw, 2.75rem) 0 0;
     font-size: 0.92em;
     color: var(--fp-resv-color-primary);
+}
+
+.fp-meals__notice-text {
+    font-style: italic;
+}
+
+.fp-meals__notice-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75em;
+    height: 1.75em;
+    margin-top: 0.1em;
+    border-radius: 999px;
+    background-color: currentColor;
+    color: var(--fp-resv-color-surface);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.75em;
+    line-height: 1;
 }
 
 .fp-resv-step__header {
@@ -1271,9 +1313,9 @@
         gap: 0.45rem;
         overflow-x: auto;
         overflow-y: hidden;
-        padding: 0.25rem 0.2rem 0.35rem;
+        padding: 0.25rem 0.35rem 0.35rem;
         scroll-snap-type: x proximity;
-        scroll-padding-inline: 0.2rem;
+        scroll-padding-inline: 0.35rem;
     }
 
     .fp-progress::before,

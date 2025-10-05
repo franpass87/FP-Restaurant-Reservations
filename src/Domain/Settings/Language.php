@@ -441,6 +441,7 @@ final class Language
                         'msg_invalid_email'   => 'Inserisci un indirizzo email valido.',
                         'msg_submit_error'    => 'Non è stato possibile completare la prenotazione. Riprova.',
                         'msg_submit_success'  => 'Prenotazione inviata con successo.',
+                        'meal_full_notice'    => 'Nessuna disponibilità per questo servizio. Scegli un altro giorno.',
                     ],
                     'consents_meta' => [
                         'required' => 'Obbligatorio',
@@ -650,6 +651,7 @@ final class Language
                         'msg_invalid_email'   => 'Enter a valid email address.',
                         'msg_submit_error'    => 'We could not complete your reservation. Please try again.',
                         'msg_submit_success'  => 'Reservation sent successfully.',
+                        'meal_full_notice'    => 'No availability for this service. Please choose another day.',
                     ],
                     'consents_meta' => [
                         'required' => 'Required',
