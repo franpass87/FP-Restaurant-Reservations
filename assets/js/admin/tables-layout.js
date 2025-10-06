@@ -20,17 +20,16 @@
             },
             credentials: 'same-origin',
         };
-        
+
+        // Invia sempre JSON per coerenza; il backend ha già un fallback su get_params
         if (options.data) {
-            const usp = new URLSearchParams();
-            Object.entries(options.data).forEach(([k, v]) => {
-                if (v === undefined || v === null) return;
-                usp.append(String(k), String(v));
-            });
-            config.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
-            config.body = usp.toString();
+            config.headers['Content-Type'] = 'application/json;charset=UTF-8';
+            config.body = JSON.stringify(options.data);
+            if (!config.method || config.method === 'GET') {
+                config.method = 'POST';
+            }
         }
-        
+
         return fetch(url, config).then((response) => {
             if (!response.ok) {
                 return response.json().catch(() => ({})).then((payload) => {
@@ -129,7 +128,22 @@
                 formData.forEach((value, key) => {
                     data[key] = value;
                 });
-                onSubmit(data, closeModal);
+                const showError = (message) => {
+                    let err = modal.querySelector('.fp-resv-tables-modal__error');
+                    if (!err) {
+                        err = document.createElement('p');
+                        err.className = 'fp-resv-tables-modal__error';
+                        err.style.color = '#dc2626';
+                        err.style.margin = '8px 0 0';
+                        modal.querySelector('.fp-resv-tables-modal__body').appendChild(err);
+                    }
+                    err.textContent = message || 'Operazione non riuscita.';
+                };
+                Promise.resolve()
+                    .then(() => onSubmit(data, closeModal))
+                    .catch((e) => {
+                        showError(e && e.message ? e.message : 'Operazione non riuscita.');
+                    });
             } else {
                 form.reportValidity();
             }

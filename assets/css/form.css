@@ -713,6 +713,11 @@
     min-width: 0;
 }
 
+/* Aumenta lo spazio sopra il blocco consenso */
+.fp-resv-field.fp-resv-field--consent.fp-field {
+    margin-top: var(--fp-resv-spacing-sm, 1rem);
+}
+
 .fp-resv-field--consent + .fp-resv-field--consent {
     margin-top: var(--fp-resv-spacing-xs, 0.6rem);
 }
@@ -730,6 +735,7 @@
     flex-wrap: wrap;
     min-width: 0;
     line-height: 1.5;
+    margin-bottom: var(--fp-resv-spacing-sm, 1rem);
 }
 
 .fp-resv-consent__copy {
@@ -1146,7 +1152,7 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
 }
 
 .fp-resv-step__footer [data-fp-resv-nav="prev"] {
@@ -1170,6 +1176,7 @@
     border: 1px solid rgba(148, 163, 184, 0.2);
     box-shadow: 0 -14px 34px rgba(15, 23, 42, 0.12);
     z-index: 11;
+    margin-top: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -1278,6 +1285,14 @@
     background: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.35);
     color: var(--fp-resv-color-text);
+}
+
+/* Evita che il bottone dentro l'alert si estenda a tutta larghezza */
+.fp-alert .fp-btn,
+.fp-alert .fp-resv-button {
+    justify-self: start;
+    align-self: center;
+    max-width: max-content;
 }
 
 .fp-skeleton {
