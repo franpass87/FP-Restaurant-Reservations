@@ -1094,6 +1094,15 @@
     scroll-margin-top: clamp(6rem, 12vw, 7.5rem);
 }
 
+/* Nascondi tutti gli step per default, mostra solo quello attivo */
+.fp-resv-step {
+    display: none !important;
+}
+
+.fp-resv-step[data-state="active"] {
+    display: grid !important;
+}
+
 .fp-resv-step[aria-hidden="true"],
 .fp-resv-step[hidden] {
     display: none !important;
