@@ -44,7 +44,7 @@ final class WidgetController
             return;
         }
 
-        $version = Plugin::VERSION . '.' . filemtime(Plugin::$dir . 'assets/css/form.css');
+        $version = Plugin::assetVersion();
 
         wp_register_style(
             'fp-resv-form',
@@ -71,21 +71,21 @@ final class WidgetController
                 self::HANDLE_LEGACY,
                 $legacyUrl,
                 [],
-                Plugin::VERSION . '.' . filemtime($legacyPath),
+                $version, // Use same version as CSS for consistent cache busting
                 false // Load in header, not footer
             );
 
             wp_enqueue_script(self::HANDLE_LEGACY);
             
             // Add aggressive inline initialization with multiple fallbacks
-            add_action('wp_footer', function() use ($legacyUrl, $legacyPath) {
+            add_action('wp_footer', function() use ($legacyUrl, $version) {
                 echo '<script>
                 console.log("[FP-RESV] AGGRESSIVE initialization starting...");
                 
                 // Strategy 1: Direct script injection if wp_enqueue fails
                 function injectScriptDirectly() {
                     const script = document.createElement("script");
-                    script.src = "' . esc_js($legacyUrl) . '?v=' . Plugin::VERSION . '&t=' . filemtime($legacyPath) . '";
+                    script.src = "' . esc_js($legacyUrl) . '?v=' . esc_js($version) . '";
                     script.onload = function() {
                         console.log("[FP-RESV] Script loaded directly, initializing...");
                         initializeFPResv();
@@ -94,7 +94,7 @@ final class WidgetController
                         console.error("[FP-RESV] Direct script injection failed");
                         // Fallback to development version
                         const devScript = document.createElement("script");
-                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/onepage.js') . '?v=' . Plugin::VERSION . '";
+                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/onepage.js') . '?v=' . esc_js($version) . '";
                         devScript.onload = function() {
                             console.log("[FP-RESV] Development script loaded");
                             initializeFPResv();

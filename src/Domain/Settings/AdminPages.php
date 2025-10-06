@@ -101,15 +101,16 @@ final class AdminPages
         }
 
         $baseHandle = 'fp-resv-admin-shell';
+        $version    = Plugin::assetVersion();
 
         if (strpos($page, 'fp-resv-') === 0) {
-            wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+            wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
         }
 
         if ($page === 'fp-resv-settings') {
-            wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], Plugin::VERSION);
-            wp_enqueue_script('fp-resv-service-hours', Plugin::$url . 'assets/js/admin/service-hours.js', [], Plugin::VERSION, true);
-            wp_enqueue_script('fp-resv-meal-plan', Plugin::$url . 'assets/js/admin/meal-plan.js', [], Plugin::VERSION, true);
+            wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], $version);
+            wp_enqueue_script('fp-resv-service-hours', Plugin::$url . 'assets/js/admin/service-hours.js', [], $version, true);
+            wp_enqueue_script('fp-resv-meal-plan', Plugin::$url . 'assets/js/admin/meal-plan.js', [], $version, true);
         }
 
         if ($page !== 'fp-resv-style') {
@@ -131,8 +132,8 @@ final class AdminPages
         $preview = $style->getPreviewData('fp-resv-style-preview-widget');
 
         $handle = 'fp-resv-style-preview';
-        wp_enqueue_style($handle, Plugin::$url . 'assets/css/admin-style.css', [$baseHandle], Plugin::VERSION);
-        wp_enqueue_script($handle, Plugin::$url . 'assets/js/admin/style-preview.js', [], Plugin::VERSION, true);
+        wp_enqueue_style($handle, Plugin::$url . 'assets/css/admin-style.css', [$baseHandle], $version);
+        wp_enqueue_script($handle, Plugin::$url . 'assets/js/admin/style-preview.js', [], $version, true);
         wp_add_inline_style($handle, (string) ($preview['css'] ?? ''));
 
         wp_localize_script($handle, 'fpResvStylePreview', [

@@ -62,22 +62,23 @@ final class AdminController
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/reports-dashboard.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-reports.css';
+        $version   = Plugin::assetVersion();
 
-        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
 
         if (file_exists(Plugin::$dir . 'assets/css/admin-reports.css')) {
-            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], Plugin::VERSION);
+            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], $version);
         }
 
         wp_enqueue_script(
             $chartHandle,
             Plugin::$url . 'assets/vendor/chart.umd.min.js',
             [],
-            Plugin::VERSION,
+            $version,
             true
         );
 
-        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch', $chartHandle], Plugin::VERSION, true);
+        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch', $chartHandle], $version, true);
 
         $end   = wp_date('Y-m-d');
         $start = wp_date('Y-m-d', strtotime('-29 days'));

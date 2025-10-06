@@ -1,27 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Force Refresh Test</title>
+    <title>Force Refresh Test - FP Restaurant Reservations</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1 { color: #2c3e50; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        ol { line-height: 1.8; }
+    </style>
 </head>
 <body>
-    <h1>Test Cache Busting</h1>
-    <p>Se vedi questo file, il server sta caricando correttamente i file aggiornati.</p>
-    <p>Timestamp: <script>document.write(new Date().toISOString());</script></p>
-    <p>Versione Plugin: 0.1.2</p>
+    <h1>✅ Cache Busting Attivo</h1>
     
-    <h2>Istruzioni per il Refresh Completo:</h2>
+    <div class="success">
+        <p><strong>Il sistema di cache busting è ora attivo!</strong></p>
+        <p>Quando carichi un nuovo ZIP del plugin, WordPress automaticamente:</p>
+        <ul>
+            <li>Pulisce tutte le cache del plugin</li>
+            <li>Forza il browser a ricaricare CSS e JavaScript</li>
+            <li>Aggiorna il timestamp della versione</li>
+        </ul>
+    </div>
+    
+    <div class="info">
+        <p>Timestamp corrente: <strong><script>document.write(new Date().toISOString());</script></strong></p>
+        <p>Versione Plugin: <strong>0.1.6</strong></p>
+    </div>
+    
+    <h2>📋 Dopo l'aggiornamento del plugin:</h2>
     <ol>
-        <li><strong>Chrome/Edge:</strong> Ctrl + Shift + R</li>
-        <li><strong>Firefox:</strong> Ctrl + F5</li>
-        <li><strong>Safari:</strong> Cmd + Option + R</li>
+        <li>Carica il nuovo file ZIP tramite WordPress Admin → Plugin → Aggiungi nuovo → Carica plugin</li>
+        <li>WordPress automaticamente pulirà le cache</li>
+        <li>Se le modifiche non appaiono, fai un refresh completo del browser:</li>
     </ol>
     
-    <h2>Verifica CSS:</h2>
-    <p>Controlla che il CSS caricato abbia questo commento: <code>/* Cache bust: 2025-01-06 10:30 */</code></p>
+    <h3>Refresh Completo del Browser:</h3>
+    <ul>
+        <li><strong>Chrome/Edge:</strong> Ctrl + Shift + R (Windows/Linux) o Cmd + Shift + R (Mac)</li>
+        <li><strong>Firefox:</strong> Ctrl + F5 (Windows/Linux) o Cmd + Shift + R (Mac)</li>
+        <li><strong>Safari:</strong> Cmd + Option + R</li>
+    </ul>
     
-    <h2>Verifica JavaScript:</h2>
-    <p>Controlla che il JS non contenga messaggi <code>console.log('[DEBUG]</code></p>
+    <h2>🔍 Verifica che le modifiche siano caricate:</h2>
+    <ol>
+        <li>Apri la console del browser (F12)</li>
+        <li>Vai alla tab "Network" / "Rete"</li>
+        <li>Ricarica la pagina</li>
+        <li>Controlla che i file CSS e JS abbiano un parametro <code>?ver=0.1.6.TIMESTAMP</code></li>
+        <li>Il TIMESTAMP deve cambiare ad ogni aggiornamento del plugin</li>
+    </ol>
+    
+    <h2>⚠️ Se i problemi persistono:</h2>
+    <ol>
+        <li>Svuota la cache del browser completamente</li>
+        <li>Disattiva e riattiva il plugin</li>
+        <li>Controlla che non ci sia una cache a livello server (Cloudflare, Varnish, ecc.)</li>
+        <li>Verifica nei log di WordPress per errori durante l'aggiornamento</li>
+    </ol>
 </body>
 </html>
