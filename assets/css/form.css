@@ -1403,12 +1403,11 @@
 
 @media (max-width: 640px) {
     .fp-resv {
-        padding: 0.5rem; /* default */
-        padding-inline: 0.4rem; /* riduce padding orizzontale per massimizzare lo spazio utile */
+        padding: 0.65rem 0.5rem; /* riduce padding orizzontale per massimizzare lo spazio utile su mobile */
     }
 
     #fp-resv-default.fp-resv-widget {
-        padding: 0.5rem !important;
+        padding: 0.65rem 0.5rem !important;
     }
 
     .fp-progress {
