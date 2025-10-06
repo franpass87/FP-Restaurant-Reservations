@@ -35,6 +35,8 @@
                 return response.json().catch(() => ({})).then((payload) => {
                     const error = new Error(payload && payload.message ? payload.message : 'Request failed');
                     error.status = response.status;
+                    // Log tecnico per debug
+                    try { console.error('[FP-Resv] API error', { url, status: response.status, payload }); } catch (_) {}
                     throw error;
                 });
             }
@@ -46,6 +48,45 @@
                 try { return JSON.parse(text); } catch (e) { return {}; }
             });
         });
+    };
+
+    // Badge ultimo aggiornamento
+    const setLastUpdate = (date) => {
+        const title = document.getElementById('fp-resv-tables-title');
+        if (!title) return;
+        let badge = title.parentElement && title.parentElement.querySelector('.fp-resv-last-update');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'fp-resv-last-update';
+            badge.style.marginLeft = '12px';
+            badge.style.fontSize = '12px';
+            badge.style.padding = '2px 8px';
+            badge.style.borderRadius = '9999px';
+            badge.style.background = '#eef2ff';
+            badge.style.color = '#3730a3';
+            badge.style.verticalAlign = 'middle';
+            title.insertAdjacentElement('afterend', badge);
+        }
+        const d = (date instanceof Date) ? date : new Date();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        badge.textContent = `Ultimo aggiornamento: ${hh}:${mm}:${ss}`;
+    };
+
+    // Utility: avviso non bloccante
+    const notify = (message, level = 'error') => {
+        if (!root) return;
+        const note = document.createElement('div');
+        note.className = `fp-resv-notice fp-resv-notice--${level}`;
+        note.style.margin = '8px 0 16px';
+        note.style.padding = '8px 12px';
+        note.style.borderRadius = '6px';
+        note.style.background = level === 'warning' ? '#fef3c7' : '#fee2e2';
+        note.style.color = '#111827';
+        note.textContent = message;
+        root.insertBefore(note, root.firstChild);
+        setTimeout(() => { try { note.remove(); } catch (_) {} }, 5000);
     };
 
     // Modal management
@@ -238,13 +279,23 @@
         root.dataset.state = 'loading';
         return request('/tables/overview')
             .then((payload) => {
-                rooms = Array.isArray(payload.rooms) ? payload.rooms : [];
+                // Mantieni lo stato corrente se la risposta non è nel formato atteso
+                const valid = payload && Array.isArray(payload.rooms);
+                if (!valid) {
+                    notify('Risposta inattesa dal server. Visualizzo dati correnti.', 'warning');
+                    try { console.warn('[FP-Resv] Unexpected overview payload', payload); } catch (_) {}
+                }
+                rooms = valid ? payload.rooms : rooms;
                 render();
             })
             .catch((error) => {
                 alert((error && error.message) ? error.message : 'Impossibile aggiornare le sale.');
+                notify('Impossibile aggiornare le sale. Dati correnti mantenuti.', 'warning');
             })
-            .finally(() => { root.dataset.state = ''; });
+            .finally(() => { 
+                root.dataset.state = ''; 
+                setLastUpdate(new Date());
+            });
     };
 
     const createRoom = (form) => {
@@ -425,6 +476,20 @@
         }
     });
 
+    // Supporto al pulsante refresh nella topbar esterna al container
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.matches('[data-action="refresh"]')) {
+            // Evita doppio handling se l'evento è già stato gestito dentro root
+            if (!root.contains(target)) {
+                refresh();
+            }
+        }
+    });
+
     // Initial render
     render();
+    // Imposta badge al primo caricamento
+    setLastUpdate(new Date());
 })();

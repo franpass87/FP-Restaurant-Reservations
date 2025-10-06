@@ -316,8 +316,76 @@
 }
 
 /* Modal dettagli prenotazione */
+.fp-resv-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000; /* sopra WP adminbar e overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.fp-resv-modal[hidden] {
+    display: none !important;
+}
+
+.fp-resv-modal__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    animation: fadeIn 0.2s ease;
+}
+
+.fp-resv-modal__dialog {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 560px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
 .fp-resv-modal__dialog--wide {
     max-width: 700px;
+}
+
+/* Armonizzazione overlay con tema/plugin */
+.fp-resv-admin--agenda .fp-resv-modal {
+    z-index: 100010;
+}
+
+.fp-resv-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fp-resv-modal__body {
+    padding: 16px 20px;
+}
+
+.fp-resv-modal__footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 20px;
+    border-top: 1px solid #e5e7eb;
 }
 
 .fp-resv-reservation-details {

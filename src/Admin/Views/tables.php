@@ -27,6 +27,9 @@ $headingId   = 'fp-resv-tables-title';
             <a class="button button-primary" href="#fp-resv-tables-app">
                 <?php esc_html_e('Apri gestione sale', 'fp-restaurant-reservations'); ?>
             </a>
+            <button type="button" class="button" data-action="refresh">
+                <?php esc_html_e('Aggiorna', 'fp-restaurant-reservations'); ?>
+            </button>
         </div>
     </header>
 
