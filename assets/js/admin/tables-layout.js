@@ -13,13 +13,25 @@
         const config = {
             method: options.method || 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 'X-WP-Nonce': settings.nonce || '',
             },
             credentials: 'same-origin',
         };
+        // Per massima compatibilità con hosting che bloccano JSON, inviamo
+        // di default form-url-encoded. Se serve JSON, passare options.json === true.
         if (options.data) {
-            config.body = JSON.stringify(options.data);
+            if (options.json === true) {
+                config.headers['Content-Type'] = 'application/json';
+                config.body = JSON.stringify(options.data);
+            } else {
+                const usp = new URLSearchParams();
+                Object.entries(options.data).forEach(([k, v]) => {
+                    if (v === undefined || v === null) return;
+                    usp.append(String(k), String(v));
+                });
+                config.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+                config.body = usp.toString();
+            }
         }
         return fetch(url, config).then((response) => {
             if (!response.ok) {

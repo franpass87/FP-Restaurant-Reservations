@@ -1099,6 +1099,15 @@ class FormApp {
             return true;
         }
 
+        // Se siamo nello step "slots" richiediamo esplicitamente che sia selezionato un orario
+        const stepKey = section.getAttribute('data-step') || '';
+        if (stepKey === 'slots') {
+            const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
+            if (!timeField || timeField.value.trim() === '') {
+                return false;
+            }
+        }
+
         let valid = true;
         Array.prototype.forEach.call(fields, function (field) {
             if (typeof field.checkValidity === 'function' && !field.checkValidity()) {
@@ -1567,11 +1576,23 @@ class FormApp {
     }
 
     validateEmailField(field) {
+        // Normalizza e pulisci eventuale stato di errore precedente
+        if (typeof field.value === 'string') {
+            const trimmed = field.value.trim();
+            if (trimmed !== field.value) {
+                field.value = trimmed;
+            }
+        }
+
         if (field.value.trim() === '') {
             field.setCustomValidity('');
             field.removeAttribute('aria-invalid');
             return;
         }
+
+        // Rimuove eventuali errori custom prima del controllo nativo,
+        // altrimenti checkValidity() fallisce sempre
+        field.setCustomValidity('');
 
         if (!field.checkValidity()) {
             field.setCustomValidity(this.copy.invalidEmail);
