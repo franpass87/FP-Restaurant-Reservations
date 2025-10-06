@@ -1365,7 +1365,8 @@
 
 @media (max-width: 640px) {
     .fp-resv {
-        padding: 0.75rem;
+        padding: 0.5rem; /* default */
+        padding-inline: 0.4rem; /* riduce padding orizzontale per massimizzare lo spazio utile */
     }
 
     #fp-resv-default.fp-resv-widget {
@@ -1423,4 +1424,63 @@
     .fp-meal-pill {
         flex: 0 0 auto;
     }
+
+    /* Riduci padding orizzontale interno agli step per guadagnare spazio utile */
+    .fp-resv-step {
+        padding-inline: 0.9rem;
+    }
+
+    /* CTA sticky meno margine ai lati su mobile */
+    .fp-resv-sticky-cta {
+        padding-inline: 0.6rem;
+    }
+}
+
+/* === Overrides UI: consensi, overflow testo, CTA sticky === */
+/* Migliora robustezza layout consensi e testo lungo su schermi stretti */
+.fp-resv .fp-resv-field--consent {
+    grid-template-columns: auto 1fr;
+}
+
+@media (max-width: 768px) {
+    .fp-resv .fp-resv-field--consent {
+        grid-template-columns: 1fr;
+        row-gap: 0.4rem;
+    }
+
+    .fp-resv .fp-resv-field--consent .fp-checkbox {
+        margin-top: 0;
+    }
+}
+
+.fp-resv .fp-resv-consent__text,
+.fp-resv .fp-resv-consent__copy {
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.fp-resv .fp-resv-consent__meta {
+    align-self: flex-start;
+    margin-top: 0.1rem;
+}
+
+.fp-resv .fp-resv-field--consent + .fp-resv-field--consent {
+    margin-top: 0.5rem;
+}
+
+/* Evita che la CTA sticky copra contenuti nella sezione attiva */
+.fp-resv .fp-resv-step__body {
+    padding-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .fp-resv [data-fp-resv-sticky-cta] {
+        padding-bottom: 0.9rem;
+    }
+}
+
+/* Micro-tweak checkbox per allineamento coerente */
+.fp-resv .fp-checkbox {
+    transform: none;
 }
