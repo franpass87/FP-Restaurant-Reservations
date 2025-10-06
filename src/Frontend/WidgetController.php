@@ -64,30 +64,56 @@ final class WidgetController
         $moduleExists = file_exists($modulePath);
         $legacyExists = file_exists($legacyPath);
 
-        // Always use IIFE version for maximum compatibility
+        // Force immediate script loading with inline initialization
         if ($legacyExists) {
             wp_register_script(
                 self::HANDLE_LEGACY,
                 $legacyUrl,
                 [],
                 Plugin::VERSION . '.' . filemtime($legacyPath),
-                true
+                false // Load in header, not footer
             );
 
             wp_enqueue_script(self::HANDLE_LEGACY);
-        } elseif ($moduleExists) {
-            // Use ESM version if IIFE not available
-            wp_register_script(
-                self::HANDLE_MODULE,
-                $moduleUrl,
-                [],
-                Plugin::VERSION . '.' . filemtime($modulePath),
-                true
-            );
-
-            wp_enqueue_script(self::HANDLE_MODULE);
+            
+            // Add inline script to force initialization
+            add_action('wp_footer', function() use ($legacyUrl) {
+                echo '<script>
+                // Force FP-RESV initialization
+                (function() {
+                    console.log("[FP-RESV] Force initialization script loaded");
+                    
+                    function initFPResv() {
+                        if (window.FPResv && window.FPResv.FormApp) {
+                            console.log("[FP-RESV] FPResv found, initializing widgets");
+                            const widgets = document.querySelectorAll("[data-fp-resv]");
+                            console.log("[FP-RESV] Found widgets:", widgets.length);
+                            
+                            widgets.forEach(function(widget) {
+                                try {
+                                    new window.FPResv.FormApp(widget);
+                                    console.log("[FP-RESV] Widget initialized:", widget.id || "unnamed");
+                                } catch (error) {
+                                    console.error("[FP-RESV] Error initializing widget:", error);
+                                }
+                            });
+                        } else {
+                            console.log("[FP-RESV] FPResv not found, retrying in 100ms");
+                            setTimeout(initFPResv, 100);
+                        }
+                    }
+                    
+                    // Start initialization
+                    if (document.readyState === "loading") {
+                        document.addEventListener("DOMContentLoaded", initFPResv);
+                    } else {
+                        initFPResv();
+                    }
+                })();
+                </script>';
+            });
         } else {
-            // Fall back to the development module
+            // Fall back to development module
             $moduleUrl = Plugin::$url . 'assets/js/fe/onepage.js';
             
             wp_register_script(
@@ -95,7 +121,7 @@ final class WidgetController
                 $moduleUrl,
                 [],
                 $version,
-                true
+                false // Load in header, not footer
             );
 
             wp_enqueue_script(self::HANDLE_MODULE);
