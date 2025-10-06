@@ -51,6 +51,9 @@ else
     php "${SCRIPT_DIR}/tools/bump-version.php" --"${BUMP_TYPE}"
 fi
 
+npm install --silent
+npm run build
+
 composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 composer dump-autoload -o --classmap-authoritative
 
@@ -77,9 +80,11 @@ RSYNC_EXCLUDES=(
     "--exclude=.codex-state.json"
     "--exclude=.rebuild-state.json"
     "--exclude=.eslintrc.cjs"
+    "--exclude=eslint.config.js"
     "--exclude=.prettierrc.json"
     "--exclude=build.sh"
     "--exclude=scripts"
+    "--exclude=assets/js/fe"
 )
 
 rsync -a --delete "${RSYNC_EXCLUDES[@]}" "${SCRIPT_DIR}/" "${TARGET_DIR}/"
