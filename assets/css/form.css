@@ -665,9 +665,10 @@
 .fp-resv-extra {
     border: 1px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.35));
     border-radius: calc(var(--fp-resv-radius-lg) * 0.8);
-    padding: clamp(0.85rem, 2.5vw, 1.25rem);
+    padding: clamp(1rem, 2.5vw, 1.5rem);
     background: var(--fp-resv-color-surface-alt);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+    margin-top: 0.5rem;
 }
 
 .fp-resv-extra__title {
@@ -719,10 +720,11 @@
 .fp-resv-consent__text {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.45rem;
     flex-wrap: wrap;
     min-width: 0;
+    line-height: 1.5;
 }
 
 .fp-resv-consent__copy {
@@ -736,12 +738,15 @@
     font-size: 0.65rem;
     font-weight: 500;
     letter-spacing: 0.05em;
-    line-height: 1.1;
-    padding: 0.18rem 0.55rem 0.22rem;
+    line-height: 1.2;
+    padding: 0.15rem 0.5rem 0.18rem;
     text-transform: uppercase;
     background: rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.08);
     color: var(--fp-resv-color-muted);
     border: 1px solid rgba(var(--fp-resv-color-muted-rgb, 100, 116, 139), 0.18);
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 0.05rem;
 }
 
 .fp-resv-consent__meta--required {
@@ -756,9 +761,23 @@
     text-decoration: underline;
 }
 
+.fp-resv-fields--grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .fp-resv-fields--grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+    }
+}
+
 @media (min-width: 960px) {
     .fp-resv-fields--grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
     }
 }
 
@@ -1440,16 +1459,20 @@
 /* Migliora robustezza layout consensi e testo lungo su schermi stretti */
 .fp-resv .fp-resv-field--consent {
     grid-template-columns: auto 1fr;
+    align-items: flex-start;
+    gap: 0.75rem;
 }
 
 @media (max-width: 768px) {
     .fp-resv .fp-resv-field--consent {
-        grid-template-columns: 1fr;
-        row-gap: 0.4rem;
+        grid-template-columns: auto 1fr;
+        gap: 0.65rem;
+        align-items: flex-start;
     }
 
     .fp-resv .fp-resv-field--consent .fp-checkbox {
-        margin-top: 0;
+        margin-top: 0.1rem;
+        flex-shrink: 0;
     }
 }
 
