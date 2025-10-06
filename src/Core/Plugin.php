@@ -105,14 +105,21 @@ final class Plugin
         }
         
         // In production, use upgrade timestamp for stable caching
-        $upgradeTime = get_option('fp_resv_last_upgrade', 0);
-        if ($upgradeTime === 0) {
-            // If never set, use current time as fallback
-            $upgradeTime = time();
-            update_option('fp_resv_last_upgrade', $upgradeTime);
+        if (!function_exists('get_option')) {
+            // Fallback if WordPress not fully loaded yet (shouldn't happen in normal flow)
+            return self::VERSION . '.' . time();
         }
         
-        return self::VERSION . '.' . $upgradeTime;
+        $upgradeTime = get_option('fp_resv_last_upgrade', false);
+        if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
+            // If never set, use current time as fallback
+            $upgradeTime = time();
+            if (function_exists('update_option')) {
+                update_option('fp_resv_last_upgrade', $upgradeTime, false);
+            }
+        }
+        
+        return self::VERSION . '.' . (int) $upgradeTime;
     }
 
     /**
@@ -154,7 +161,7 @@ final class Plugin
         });
 
         // Clear all caches when plugin is upgraded
-        add_action('upgrader_process_complete', static function ($upgrader_object, $options): void {
+        add_action('upgrader_process_complete', static function ($upgrader_object, $options) use ($file): void {
             if ($options['action'] === 'update' && $options['type'] === 'plugin') {
                 if (isset($options['plugins'])) {
                     foreach ($options['plugins'] as $plugin) {
