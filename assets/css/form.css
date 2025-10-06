@@ -672,7 +672,7 @@
 }
 
 .fp-resv-extra__title {
-    margin: 0 0 1rem;
+    margin: 0;
     font-size: 1.02em;
     display: flex;
     align-items: center;
@@ -789,7 +789,7 @@
 
 @media (min-width: 768px) {
     .fp-resv-fields--grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 1.25rem;
     }
     
@@ -802,7 +802,7 @@
 
 @media (min-width: 960px) {
     .fp-resv-fields--grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 1.5rem;
     }
     
@@ -1073,6 +1073,18 @@
 .fp-resv-button--ghost:hover,
 .fp-resv-button--ghost:focus-visible {
     background: rgba(239, 68, 68, 0.08);
+}
+
+/* Spazio extra sopra i pulsanti primari nel widget default */
+#fp-resv-default .fp-btn--primary,
+#fp-resv-default .fp-resv-button--primary {
+    margin-top: 20px;
+}
+
+/* Spazio extra sopra tutti i pulsanti nel widget default */
+#fp-resv-default .fp-btn,
+#fp-resv-default .fp-resv-button {
+    margin-top: 20px;
 }
 
 .fp-sticky {
