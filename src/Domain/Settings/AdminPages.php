@@ -1671,6 +1671,13 @@ final class AdminPages
                         'title'       => __('Sale & tavoli', 'fp-restaurant-reservations'),
                         'description' => __('Configura le preferenze del planner sale, delle combinazioni tavoli e dei suggerimenti automatici.', 'fp-restaurant-reservations'),
                         'fields'      => [
+                            'tables_enabled' => [
+                                'label'          => __('Abilita Sale & Tavoli', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Attiva il planner sale e la gestione tavoli. Se disattivato, il sistema usa solo la capienza.', 'fp-restaurant-reservations'),
+                                'default'        => '0',
+                                'legacy_option'  => 'fp_resv_rooms',
+                            ],
                             'layout_unit' => [
                                 'label'          => __('Unità di misura layout', 'fp-restaurant-reservations'),
                                 'type'           => 'select',

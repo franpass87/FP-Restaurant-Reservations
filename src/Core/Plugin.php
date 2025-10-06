@@ -423,10 +423,14 @@ final class Plugin
             $container->register(ReservationsAdminController::class, $reservationsAdmin);
             $container->register('reservations.admin_controller', $reservationsAdmin);
 
-            $tablesAdmin = new TablesAdminController($tablesLayout);
-            $tablesAdmin->register();
-            $container->register(TablesAdminController::class, $tablesAdmin);
-            $container->register('tables.admin_controller', $tablesAdmin);
+            // Feature flag: Sale & Tavoli
+            $tablesEnabled = (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+            if ($tablesEnabled) {
+                $tablesAdmin = new TablesAdminController($tablesLayout);
+                $tablesAdmin->register();
+                $container->register(TablesAdminController::class, $tablesAdmin);
+                $container->register('tables.admin_controller', $tablesAdmin);
+            }
 
             $closuresAdmin = new ClosuresAdminController($closuresService);
             $closuresAdmin->register();
@@ -468,10 +472,14 @@ final class Plugin
         $container->register(ReservationsAdminREST::class, $adminRest);
         $container->register('reservations.admin_rest', $adminRest);
 
-        $tablesRest = new TablesREST($tablesLayout);
-        $tablesRest->register();
-        $container->register(TablesREST::class, $tablesRest);
-        $container->register('tables.rest', $tablesRest);
+        // Registra le API Sale & Tavoli solo se abilitate
+        $tablesEnabled = (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+        if ($tablesEnabled) {
+            $tablesRest = new TablesREST($tablesLayout);
+            $tablesRest->register();
+            $container->register(TablesREST::class, $tablesRest);
+            $container->register('tables.rest', $tablesRest);
+        }
 
         $closuresRest = new ClosuresREST($closuresService);
         $closuresRest->register();

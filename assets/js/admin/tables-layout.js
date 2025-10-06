@@ -383,7 +383,22 @@
                 } 
             })
             .then((result) => {
-                if (result && result.id) {
+                // Accetta diversi formati di risposta possibili:
+                // - { id, ... }
+                // - { created: { id, ... } } oppure { created: [ { id, ... } ] }
+                // - { data: { id, ... } }
+                let created = null;
+                if (result && typeof result === 'object') {
+                    if (result.id) {
+                        created = result;
+                    } else if (result.created) {
+                        created = Array.isArray(result.created) ? (result.created[0] || null) : result.created;
+                    } else if (result.data && typeof result.data === 'object' && result.data.id) {
+                        created = result.data;
+                    }
+                }
+
+                if (created && created.id) {
                     closeModal();
                     refresh();
                     notify('Tavolo creato con successo', 'success');
