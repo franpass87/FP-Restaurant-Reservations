@@ -1325,11 +1325,11 @@
 
 @media (max-width: 640px) {
     .fp-resv {
-        padding: 1.35rem;
+        padding: 0.75rem;
     }
 
     #fp-resv-default.fp-resv-widget {
-        padding: 1rem !important;
+        padding: 0.5rem !important;
     }
 
     .fp-progress {
