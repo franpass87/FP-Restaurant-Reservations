@@ -2080,13 +2080,29 @@ if (typeof window !== 'undefined') {
     window.fpResvApp = window.FPResv; // Alias per compatibilità
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('[FP-RESV] Plugin v0.1.2 loaded - Slot validation active');
+// Initialize immediately if DOM is already ready
+function initializeFPResv() {
+    console.log('[FP-RESV] Plugin v0.1.3 loaded - Slot validation active');
     const widgets = document.querySelectorAll('[data-fp-resv]');
+    console.log('[FP-RESV] Found widgets:', widgets.length);
+    
     Array.prototype.forEach.call(widgets, function (widget) {
-        new FormApp(widget);
+        try {
+            new FormApp(widget);
+            console.log('[FP-RESV] Widget initialized:', widget.id || 'unnamed');
+        } catch (error) {
+            console.error('[FP-RESV] Error initializing widget:', error);
+        }
     });
-});
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFPResv);
+} else {
+    // DOM is already ready, initialize immediately
+    initializeFPResv();
+}
 
 document.addEventListener('fp-resv:tracking:push', function (event) {
     if (!event || !event.detail) {

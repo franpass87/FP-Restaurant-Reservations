@@ -64,7 +64,7 @@ final class WidgetController
         $moduleExists = file_exists($modulePath);
         $legacyExists = file_exists($legacyPath);
 
-        // Force use of IIFE version for better compatibility
+        // Always use IIFE version for maximum compatibility
         if ($legacyExists) {
             wp_register_script(
                 self::HANDLE_LEGACY,
@@ -75,8 +75,19 @@ final class WidgetController
             );
 
             wp_enqueue_script(self::HANDLE_LEGACY);
+        } elseif ($moduleExists) {
+            // Use ESM version if IIFE not available
+            wp_register_script(
+                self::HANDLE_MODULE,
+                $moduleUrl,
+                [],
+                Plugin::VERSION . '.' . filemtime($modulePath),
+                true
+            );
+
+            wp_enqueue_script(self::HANDLE_MODULE);
         } else {
-            // Fall back to the development module if the build artefact is missing.
+            // Fall back to the development module
             $moduleUrl = Plugin::$url . 'assets/js/fe/onepage.js';
             
             wp_register_script(
