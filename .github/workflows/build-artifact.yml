@@ -1,0 +1,92 @@
+name: Build plugin ZIP and upload artifact
+
+on:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip rsync
+
+      - name: Install Composer dependencies
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+          composer dump-autoload -o --classmap-authoritative
+
+      - name: Install NPM deps and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare build directory
+        run: |
+          SLUG="fp-restaurant-reservations"
+          BUILD_ROOT="$(pwd)/build"
+          TARGET_DIR="$BUILD_ROOT/$SLUG"
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
+          rsync -a --delete \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=tests \
+            --exclude=docs \
+            --exclude=node_modules \
+            --exclude=*.md \
+            --exclude=.idea \
+            --exclude=.vscode \
+            --exclude=build \
+            --exclude=.gitattributes \
+            --exclude=.gitignore \
+            --exclude=package.json \
+            --exclude=package-lock.json \
+            --exclude=phpcs.xml \
+            --exclude=phpstan.neon \
+            --exclude=vite.config.js \
+            --exclude=.codex-state.json \
+            --exclude=.rebuild-state.json \
+            --exclude=.eslintrc.cjs \
+            --exclude=.prettierrc.json \
+            --exclude=build.sh \
+            --exclude=scripts \
+            "$(pwd)/" "$TARGET_DIR/"
+
+      - name: Create ZIP
+        run: |
+          SLUG="fp-restaurant-reservations"
+          BUILD_ROOT="$(pwd)/build"
+          TIMESTAMP="$(date +%Y%m%d%H%M)"
+          ZIP_NAME="$SLUG-$TIMESTAMP.zip"
+          cd "$BUILD_ROOT"
+          zip -r "$ZIP_NAME" "$SLUG" > /dev/null
+          echo "ZIP_PATH=$BUILD_ROOT/$ZIP_NAME" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: ${{ env.ZIP_PATH }}
+          if-no-files-found: error
+
+
