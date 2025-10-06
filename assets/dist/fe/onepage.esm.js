@@ -6,19 +6,19 @@ function k(a) {
   const t = J(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function N(a) {
+function R(a) {
   return J(a);
 }
 function rt(a, t) {
-  const e = k(a), i = N(t);
+  const e = k(a), i = R(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
-  const t = N(a);
+  const t = R(a);
   return t.length >= 6 && t.length <= 15;
 }
 function nt(a) {
-  const t = N(a);
+  const t = R(a);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
@@ -36,10 +36,10 @@ function D(a, t) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", N(a.value)), a.setAttribute("data-phone-cc", k(t));
+  a.setAttribute("data-phone-local", R(a.value)), a.setAttribute("data-phone-cc", k(t));
 }
 function z(a, t) {
-  const e = N(a.value), i = k(t);
+  const e = R(a.value), i = k(t);
   return {
     e164: rt(i, e),
     local: e,
@@ -660,8 +660,8 @@ class Y {
     s && s.value && (_ = s.value.trim()), r && r.value && (_ = (_ + " " + r.value.trim()).trim());
     let A = "";
     if (n && n.value && (A = n.value.trim()), l && l.value) {
-      const C = this.getPhoneCountryCode(), R = (C ? "+" + C + " " : "") + l.value.trim();
-      A = A !== "" ? A + " / " + R : R;
+      const C = this.getPhoneCountryCode(), N = (C ? "+" + C + " " : "") + l.value.trim();
+      A = A !== "" ? A + " / " + N : N;
     }
     const E = [];
     h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && E.push("Seggioloni: " + parseInt(h.value, 10)), f && "checked" in f && f.checked && E.push("Tavolo accessibile per sedia a rotelle"), v && "checked" in v && v.checked && E.push("Animali domestici");
@@ -1021,7 +1021,7 @@ class Y {
     )), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Y);
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Y, window.fpResvApp = window.FPResv);
 document.addEventListener("DOMContentLoaded", function() {
   console.log("[FP-RESV] Plugin v0.1.2 loaded - Slot validation active");
   const a = document.querySelectorAll("[data-fp-resv]");
@@ -1103,7 +1103,7 @@ function At(a) {
     const d = o && typeof o == "object", m = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", w = m !== "", P = w && u !== "" && (y !== "" && y !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
     q(g, "idle"), i && T(i), E(o, { state: P ? "full" : "unknown", slots: 0 });
   }
-  function R() {
+  function N() {
     s && (s.hidden = !0);
   }
   function B() {
@@ -1132,7 +1132,7 @@ function At(a) {
     });
   }
   function j(o, d, m) {
-    if (m && m !== v || d && h && d !== h || (B(), R(), !i))
+    if (m && m !== v || d && h && d !== h || (B(), N(), !i))
       return;
     T(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];

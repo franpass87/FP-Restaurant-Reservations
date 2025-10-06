@@ -2077,6 +2077,7 @@ class FormApp {
 if (typeof window !== 'undefined') {
     window.FPResv = window.FPResv || {};
     window.FPResv.FormApp = FormApp;
+    window.fpResvApp = window.FPResv; // Alias per compatibilità
 }
 
 document.addEventListener('DOMContentLoaded', function () {
