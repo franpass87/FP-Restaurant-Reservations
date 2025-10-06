@@ -73,7 +73,7 @@ final class WidgetController
             self::HANDLE_MODULE,
             $moduleUrl,
             [],
-            $version,
+            $moduleExists ? Plugin::VERSION . '.' . filemtime($modulePath) : $version,
             true
         );
 
@@ -84,7 +84,7 @@ final class WidgetController
                 self::HANDLE_LEGACY,
                 $legacyUrl,
                 [],
-                $version,
+                Plugin::VERSION . '.' . filemtime($legacyPath),
                 true
             );
 
