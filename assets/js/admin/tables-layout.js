@@ -282,7 +282,8 @@
                 // Mantieni lo stato corrente se la risposta non è nel formato atteso
                 const valid = payload && Array.isArray(payload.rooms);
                 if (!valid) {
-                    notify('Risposta inattesa dal server. Visualizzo dati correnti.', 'warning');
+                    const errorMsg = payload && payload.message ? payload.message : 'Risposta inattesa dal server. Visualizzo dati correnti.';
+                    notify(errorMsg, 'warning');
                     try { console.warn('[FP-Resv] Unexpected overview payload', payload); } catch (_) {}
                 }
                 rooms = valid ? payload.rooms : rooms;

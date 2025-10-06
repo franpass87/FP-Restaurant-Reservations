@@ -908,12 +908,12 @@ final class Style
 }
 %s .fp-resv-fields--grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 @media (min-width: 960px) {
     %s .fp-resv-fields--grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
     }
     %s .fp-resv-fields--grid .fp-resv-field--email {
         grid-column: 1 / -1;

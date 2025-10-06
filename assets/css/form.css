@@ -681,6 +681,9 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     min-width: 0;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
 }
 
 .fp-resv-extra__title::before {
@@ -1610,4 +1613,14 @@
 /* Micro-tweak checkbox per allineamento coerente */
 .fp-resv .fp-checkbox {
     transform: none;
+}
+
+/* Margine inferiore per il campo party */
+.fp-resv [data-fp-resv-field="party"] {
+    margin-bottom: 20px;
+}
+
+/* Margine inferiore per la sezione fp-meals */
+.fp-resv .fp-meals {
+    margin-bottom: 20px;
 }

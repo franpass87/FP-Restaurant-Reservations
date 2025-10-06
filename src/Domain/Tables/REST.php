@@ -154,7 +154,9 @@ final class REST
 
     public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        return rest_ensure_response($this->layout->getOverview());
+        return $this->wrapOperation(function (): array {
+            return $this->layout->getOverview();
+        });
     }
 
     public function handleCreateRoom(WP_REST_Request $request): WP_REST_Response|WP_Error
