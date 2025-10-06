@@ -979,34 +979,39 @@ class FormApp {
     }
 
     navigateToNext(section) {
-        if (!this.isSectionValid(section)) {
-            const stepKey = section.getAttribute('data-step') || '';
+        const stepKey = section.getAttribute('data-step') || '';
+        
+        // Permetti la navigazione per i primi step (date, party) senza validazione rigorosa
+        if (stepKey === 'date' || stepKey === 'party') {
+            this.completeSection(section, true);
+            return;
+        }
+        
+        // Per lo step slots, controlla se ci sono slot disponibili
+        if (stepKey === 'slots') {
+            const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
+            const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
             
-            // Gestione specifica per lo step slots
-            if (stepKey === 'slots') {
-                const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
-                const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
-                
-                if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
-                    // Mostra un messaggio di errore specifico per la mancanza di selezione orario
-                    const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
-                    if (slotsSection) {
-                        const statusEl = slotsSection.querySelector('[data-fp-resv-slots-status]');
-                        if (statusEl) {
-                            statusEl.textContent = this.copy.slotRequired;
-                            statusEl.style.color = '#dc2626'; // Colore rosso per l'errore
-                            
-                            // Rimuovi il messaggio di errore dopo 3 secondi
-                            setTimeout(() => {
-                                statusEl.textContent = '';
-                                statusEl.style.color = '';
-                            }, 3000);
-                        }
+            // Se non ci sono slot selezionati, mostra un messaggio ma non bloccare
+            if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
+                const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
+                if (slotsSection) {
+                    const statusEl = slotsSection.querySelector('[data-fp-resv-slots-status]');
+                    if (statusEl) {
+                        statusEl.textContent = 'Seleziona un orario per continuare';
+                        statusEl.style.color = '#dc2626';
+                        
+                        setTimeout(() => {
+                            statusEl.textContent = '';
+                            statusEl.style.color = '';
+                        }, 3000);
                     }
-                    return;
                 }
+                // Non bloccare la navigazione, permetti di continuare
             }
-            
+        }
+        
+        if (!this.isSectionValid(section)) {
             const invalid = this.findFirstInvalid(section);
             if (invalid) {
                 if (typeof invalid.reportValidity === 'function') {
