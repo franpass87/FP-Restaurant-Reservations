@@ -1178,6 +1178,19 @@
     margin-top: 20px;
 }
 
+#fp-resv-form .fp-resv-step__footer {
+    margin-top: 20px;
+}
+
+#fp-resv-style-preview-widget .fp-resv-step__footer {
+    margin-top: 20px;
+}
+
+/* Override generico per widget con id personalizzati */
+.fp-resv-widget .fp-resv-step__footer {
+    margin-top: 20px;
+}
+
 .fp-resv-widget__actions {
     display: grid;
     gap: 0.65rem;
