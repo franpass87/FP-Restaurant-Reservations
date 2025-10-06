@@ -1474,8 +1474,28 @@
     }
 }
 
+/* === Step Visibility Control === */
+/* Hide all sections by default, show only active ones */
+.fp-resv [data-fp-resv-section] {
+    display: none !important;
+}
+
+.fp-resv [data-fp-resv-section][data-state="active"] {
+    display: block !important;
+}
+
+/* === Date Picker Improvements === */
+/* Make date input more clickable and intuitive */
+.fp-resv [data-fp-resv-field="date"] {
+    cursor: pointer;
+}
+
+.fp-resv [data-fp-resv-field="date"]:hover {
+    border-color: var(--fp-color-primary);
+}
+
 /* === Overrides UI: consensi, overflow testo, CTA sticky === */
-/* Cache bust: 2025-01-06 10:30 */
+/* Cache bust: 2025-01-06 12:30 */
 /* Migliora robustezza layout consensi e testo lungo su schermi stretti */
 .fp-resv .fp-resv-field--consent {
     grid-template-columns: auto 1fr;

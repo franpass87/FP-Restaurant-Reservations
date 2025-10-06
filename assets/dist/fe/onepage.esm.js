@@ -2,7 +2,7 @@ const rt = /\D+/g;
 function $(a) {
   return a ? String(a).replace(rt, "") : "";
 }
-function P(a) {
+function k(a) {
   const t = $(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
@@ -10,7 +10,7 @@ function R(a) {
   return $(a);
 }
 function nt(a, t) {
-  const e = P(a), i = R(t);
+  const e = k(a), i = R(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
@@ -36,23 +36,23 @@ function D(a, t) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", R(a.value)), a.setAttribute("data-phone-cc", P(t));
+  a.setAttribute("data-phone-local", R(a.value)), a.setAttribute("data-phone-cc", k(t));
 }
 function z(a, t) {
-  const e = R(a.value), i = P(t);
+  const e = R(a.value), i = k(t);
   return {
     e164: nt(i, e),
     local: e,
     country: i
   };
 }
-function V(a) {
+function T(a) {
   if (a == null)
     return "";
   if (typeof a == "string")
     return a.trim();
   if (Array.isArray(a))
-    return a.map((e) => V(e)).filter((e) => e !== "").join("; ");
+    return a.map((e) => T(e)).filter((e) => e !== "").join("; ");
   if (typeof a == "object") {
     if (typeof a.message == "string" && a.message.trim() !== "")
       return a.message.trim();
@@ -74,7 +74,7 @@ function lt(a) {
       continue;
     }
     if (typeof e != "object") {
-      const s = V(e);
+      const s = T(e);
       if (s !== "")
         return s;
       continue;
@@ -83,7 +83,7 @@ function lt(a) {
     for (let s = 0; s < i.length; s += 1) {
       const r = i[s];
       if (Object.prototype.hasOwnProperty.call(e, r)) {
-        const n = V(e[r]);
+        const n = T(e[r]);
         if (n !== "")
           return n;
       }
@@ -261,20 +261,20 @@ class G {
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
       return;
-    const t = P(this.phonePrefixField.value);
+    const t = k(this.phonePrefixField.value);
     let e = t;
     if (e === "" && this.phoneCountryCode) {
-      const i = P(this.phoneCountryCode);
+      const i = k(this.phoneCountryCode);
       i && (e = i);
     }
     if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const i = P(this.hiddenPhoneCc.value);
+      const i = k(this.hiddenPhoneCc.value);
       i && (e = i);
     }
     if (e === "") {
       const i = this.config && this.config.defaults || {};
       if (i.phone_country_code) {
-        const s = P(i.phone_country_code);
+        const s = k(i.phone_country_code);
         s && (e = s);
       }
     }
@@ -290,7 +290,12 @@ class G {
         } catch {
         }
     };
-    this.dateField.addEventListener("focus", t), this.dateField.addEventListener("click", t);
+    this.dateField.addEventListener("focus", t), this.dateField.addEventListener("click", t), this.dateField.addEventListener("mousedown", t);
+    const e = this.dateField.closest(".fp-resv-field");
+    if (e) {
+      const i = e.querySelector(".fp-icon--calendar");
+      i && i.addEventListener("click", t);
+    }
   }
   initializeAvailability() {
     if (!this.availabilityRoot)
@@ -371,9 +376,9 @@ class G {
     const i = e.closest("[data-fp-resv-section]");
     if (!i)
       return;
-    t.preventDefault(), this.handleFirstInteraction();
+    t.preventDefault(), t.stopPropagation(), this.handleFirstInteraction();
     const s = e.getAttribute("data-fp-resv-nav");
-    s === "prev" ? this.navigateToPrevious(i) : s === "next" && this.navigateToNext(i);
+    console.log("[FP-RESV] Navigation click:", s, "section:", i.getAttribute("data-step")), s === "prev" ? this.navigateToPrevious(i) : s === "next" && this.navigateToNext(i);
   }
   handleProgressClick(t) {
     if (!this.progress)
@@ -550,7 +555,7 @@ class G {
     const s = t.getAttribute("data-step") || "", r = i && i.silent === !0;
     this.state.sectionStates[s] = e, t.setAttribute("data-state", e), e === "completed" ? t.setAttribute("data-complete-hidden", "true") : t.removeAttribute("data-complete-hidden");
     const n = e === "active";
-    t.setAttribute("aria-hidden", n ? "false" : "true"), t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style && typeof t.style.removeProperty == "function" && t.style.removeProperty("display")) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style && typeof t.style.setProperty == "function" && t.style.setProperty("display", "none", "important")), r || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
+    t.setAttribute("aria-hidden", n ? "false" : "true"), t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style.display = "block", t.style.visibility = "visible", t.style.opacity = "1") : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style.display = "none", t.style.visibility = "hidden", t.style.opacity = "0"), r || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
   }
   updateProgressIndicators() {
     if (!this.progress)
@@ -617,12 +622,12 @@ class G {
       const f = t[h], v = this.form.querySelector(`[data-fp-resv-error="${h}"]`);
       if (!v)
         return;
-      let _ = !1, A = "";
-      if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (_ = !0, A = e[h] || ""), h === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (_ = !1, A = ""), h === "phone" && this.phoneField) {
-        const E = z(this.phoneField, this.getPhoneCountryCode());
-        E.local && !K(E.local) && (_ = !0, A = this.copy.invalidPhone);
+      let E = !1, A = "";
+      if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (E = !0, A = e[h] || ""), h === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (E = !1, A = ""), h === "phone" && this.phoneField) {
+        const _ = z(this.phoneField, this.getPhoneCountryCode());
+        _.local && !K(_.local) && (E = !0, A = this.copy.invalidPhone);
       }
-      h === "consent" && f && f.checked && (_ = !1, A = ""), _ ? (v.textContent = A, v.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (v.textContent = "", v.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
+      h === "consent" && f && f.checked && (E = !1, A = ""), E ? (v.textContent = A, v.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (v.textContent = "", v.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
     });
   }
   getActiveSectionKey() {
@@ -656,16 +661,16 @@ class G {
     if (this.summaryTargets.length === 0)
       return;
     const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), p = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), f = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), v = this.form.querySelector('[data-fp-resv-field="pets"]');
-    let _ = "";
-    s && s.value && (_ = s.value.trim()), r && r.value && (_ = (_ + " " + r.value.trim()).trim());
+    let E = "";
+    s && s.value && (E = s.value.trim()), r && r.value && (E = (E + " " + r.value.trim()).trim());
     let A = "";
     if (n && n.value && (A = n.value.trim()), l && l.value) {
       const C = this.getPhoneCountryCode(), N = (C ? "+" + C + " " : "") + l.value.trim();
       A = A !== "" ? A + " / " + N : N;
     }
-    const E = [];
-    h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && E.push("Seggioloni: " + parseInt(h.value, 10)), f && "checked" in f && f.checked && E.push("Tavolo accessibile per sedia a rotelle"), v && "checked" in v && v.checked && E.push("Animali domestici");
-    const q = E.join("; ");
+    const _ = [];
+    h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && _.push("Seggioloni: " + parseInt(h.value, 10)), f && "checked" in f && f.checked && _.push("Tavolo accessibile per sedia a rotelle"), v && "checked" in v && v.checked && _.push("Animali domestici");
+    const q = _.join("; ");
     this.summaryTargets.forEach(function(C) {
       switch (C.getAttribute("data-fp-resv-summary")) {
         case "date":
@@ -678,7 +683,7 @@ class G {
           C.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          C.textContent = _;
+          C.textContent = E;
           break;
         case "contact":
           C.textContent = A;
@@ -767,7 +772,7 @@ class G {
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
-      const i = P(this.phonePrefixField.value);
+      const i = k(this.phonePrefixField.value);
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
@@ -936,23 +941,23 @@ class G {
   }
   getPhoneCountryCode() {
     if (this.phonePrefixField && this.phonePrefixField.value) {
-      const e = P(this.phonePrefixField.value);
+      const e = k(this.phonePrefixField.value);
       if (e)
         return e;
     }
     if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const e = P(this.hiddenPhoneCc.value);
+      const e = k(this.hiddenPhoneCc.value);
       if (e)
         return e;
     }
     if (this.phoneCountryCode) {
-      const e = P(this.phoneCountryCode);
+      const e = k(this.phoneCountryCode);
       if (e)
         return e;
     }
     const t = this.config && this.config.defaults || {};
     if (t.phone_country_code) {
-      const e = P(t.phone_country_code);
+      const e = k(t.phone_country_code);
       if (e)
         return e;
     }
@@ -1054,14 +1059,14 @@ function At(a, t) {
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function T(a) {
+function V(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
 function Ct(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
   let p = null, h = null, f = null, v = 0;
-  function _(o) {
+  function E(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
@@ -1074,10 +1079,10 @@ function Ct(a) {
     const m = Array.isArray(o) ? o : [], u = m.length;
     if (u === 0)
       return { state: "full", slots: 0 };
-    const y = m.map((c) => _(c && c.status)).filter((c) => c !== "");
+    const y = m.map((c) => E(c && c.status)).filter((c) => c !== "");
     return y.some((c) => c === "limited") ? { state: "limited", slots: u } : y.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : y.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
-  function E(o, d) {
+  function _(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
         a.onAvailabilitySummary(d, o || h || {});
@@ -1096,7 +1101,7 @@ function Ct(a) {
   function C() {
     if (!i)
       return;
-    T(i);
+    V(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
       const m = document.createElement("li"), u = document.createElement("span");
@@ -1105,8 +1110,8 @@ function Ct(a) {
   }
   function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", m = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", w = m !== "", k = w && u !== "" && (y !== "" && y !== "0"), g = w ? k && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
-    q(g, "idle"), i && T(i), E(o, { state: k ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", m = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", w = m !== "", P = w && u !== "" && (y !== "" && y !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
+    q(g, "idle"), i && V(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1120,7 +1125,7 @@ function Ct(a) {
       const m = r.querySelector("[data-fp-resv-slots-boundary-message]");
       m && (m.textContent = o || d), r.hidden = !1;
     }
-    q(o || d, "error"), E(h, { state: "error", slots: 0 });
+    q(o || d, "error"), _(h, { state: "error", slots: 0 });
   }
   function Z(o, d) {
     const m = i ? i.querySelectorAll("button[data-slot]") : [];
@@ -1139,7 +1144,7 @@ function Ct(a) {
   function j(o, d, m) {
     if (m && m !== v || d && h && d !== h || (B(), N(), !i))
       return;
-    T(i);
+    V(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
     if (u.length === 0) {
       I(d);
@@ -1150,7 +1155,7 @@ function Ct(a) {
       c.type = "button", c.textContent = w.label || "", c.dataset.slot = w.start || "", c.dataset.slotStatus = w.status || "", c.setAttribute("aria-pressed", f && f.start === w.start ? "true" : "false"), c.addEventListener("click", () => Z(w, c)), S.appendChild(c), i.appendChild(S);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const y = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    E(d, A(u, y));
+    _(d, A(u, y));
   }
   function L(o, d) {
     if (h = o, !o || !o.date || !o.party) {
@@ -1162,12 +1167,12 @@ function Ct(a) {
       j(y.payload, o, m);
       return;
     }
-    B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
+    B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), _(o, { state: "loading", slots: 0 });
     const w = At(a.endpoint, o), S = performance.now();
-    fetch(w, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((k) => {
+    fetch(w, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((P) => {
       if (!c.ok) {
         const g = new Error("availability_error");
-        g.status = c.status, g.payload = k;
+        g.status = c.status, g.payload = P;
         const F = c.headers.get("Retry-After");
         if (F) {
           const x = Number.parseInt(F, 10);
@@ -1175,17 +1180,17 @@ function Ct(a) {
         }
         throw g;
       }
-      return k;
+      return P;
     })).then((c) => {
       if (m !== v)
         return;
-      const k = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(k), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, m);
+      const P = performance.now() - S;
+      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, m);
     }).catch((c) => {
       if (m !== v)
         return;
-      const k = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(k);
+      const P = performance.now() - S;
+      typeof a.onLatency == "function" && a.onLatency(P);
       const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, F = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
       let x = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))

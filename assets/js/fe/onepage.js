@@ -320,10 +320,12 @@ class FormApp {
         const _this = this;
         this.sections.forEach(function (section, index) {
             const key = section.getAttribute('data-step') || String(index);
+            // Only first section is active, all others are locked and hidden
             _this.state.sectionStates[key] = index === 0 ? 'active' : 'locked';
             if (index === 0) {
                 _this.dispatchSectionUnlocked(key);
             }
+            // Force visibility update for all sections
             _this.updateSectionAttributes(section, _this.state.sectionStates[key], { silent: true });
         });
 
@@ -432,8 +434,19 @@ class FormApp {
             }
         };
 
+        // Make the entire input area clickable
         this.dateField.addEventListener('focus', openPicker);
         this.dateField.addEventListener('click', openPicker);
+        this.dateField.addEventListener('mousedown', openPicker);
+        
+        // Also make the calendar icon clickable
+        const dateContainer = this.dateField.closest('.fp-resv-field');
+        if (dateContainer) {
+            const calendarIcon = dateContainer.querySelector('.fp-icon--calendar');
+            if (calendarIcon) {
+                calendarIcon.addEventListener('click', openPicker);
+            }
+        }
     }
 
     initializeAvailability() {
@@ -635,9 +648,12 @@ class FormApp {
         }
 
         event.preventDefault();
+        event.stopPropagation();
         this.handleFirstInteraction();
 
         const direction = trigger.getAttribute('data-fp-resv-nav');
+        console.log('[FP-RESV] Navigation click:', direction, 'section:', section.getAttribute('data-step'));
+        
         if (direction === 'prev') {
             this.navigateToPrevious(section);
         } else if (direction === 'next') {
@@ -1053,20 +1069,21 @@ class FormApp {
         section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         section.setAttribute('aria-expanded', isActive ? 'true' : 'false');
 
+        // Force visibility control for step navigation
         if (isActive) {
             section.hidden = false;
             section.removeAttribute('hidden');
             section.removeAttribute('inert');
-            if (section.style && typeof section.style.removeProperty === 'function') {
-                section.style.removeProperty('display');
-            }
+            section.style.display = 'block';
+            section.style.visibility = 'visible';
+            section.style.opacity = '1';
         } else {
             section.hidden = true;
             section.setAttribute('hidden', '');
             section.setAttribute('inert', '');
-            if (section.style && typeof section.style.setProperty === 'function') {
-                section.style.setProperty('display', 'none', 'important');
-            }
+            section.style.display = 'none';
+            section.style.visibility = 'hidden';
+            section.style.opacity = '0';
         }
 
         if (!silent) {
