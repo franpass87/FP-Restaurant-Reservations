@@ -92,12 +92,50 @@ final class Plugin
      * Get the asset version string with cache busting timestamp.
      * This ensures browser caches are invalidated when the plugin is updated.
      * 
+     * In development mode (WP_DEBUG), uses current timestamp to force cache invalidation.
+     * In production, uses last upgrade timestamp for stable caching.
+     * 
      * @return string Version string like "0.1.6.1234567890"
      */
     public static function assetVersion(): string
     {
+        // In debug mode, always use current timestamp to bust cache
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            return self::VERSION . '.' . time();
+        }
+        
+        // In production, use upgrade timestamp for stable caching
         $upgradeTime = get_option('fp_resv_last_upgrade', 0);
+        if ($upgradeTime === 0) {
+            // If never set, use current time as fallback
+            $upgradeTime = time();
+            update_option('fp_resv_last_upgrade', $upgradeTime);
+        }
+        
         return self::VERSION . '.' . $upgradeTime;
+    }
+
+    /**
+     * Force refresh the asset cache by updating the upgrade timestamp.
+     * This is useful when deploying updates in production without going through the WP upgrader.
+     * 
+     * @return void
+     */
+    public static function forceRefreshAssets(): void
+    {
+        update_option('fp_resv_last_upgrade', time());
+        
+        // Also clear all caches
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
+        
+        CacheManager::invalidateAll();
+        
+        Logging::log('plugin', 'Asset cache manually refreshed', [
+            'version' => self::VERSION,
+            'timestamp' => time(),
+        ]);
     }
 
     public static function boot(string $file): void

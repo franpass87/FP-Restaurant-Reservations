@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Diagnostics;
 
+use FP\Resv\Core\Plugin;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -119,6 +120,16 @@ final class REST
                 ],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/diagnostics/refresh-cache',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handleRefreshCache'],
+                'permission_callback' => [$this, 'checkPermissions'],
+            ]
+        );
     }
 
     public function handleLogs(WP_REST_Request $request): WP_REST_Response
@@ -180,6 +191,17 @@ final class REST
         }
 
         return rest_ensure_response($preview);
+    }
+
+    public function handleRefreshCache(WP_REST_Request $request): WP_REST_Response
+    {
+        Plugin::forceRefreshAssets();
+        
+        return rest_ensure_response([
+            'success' => true,
+            'message' => __('Cache aggiornata con successo. Gli asset verranno ricaricati al prossimo refresh della pagina.', 'fp-restaurant-reservations'),
+            'version' => Plugin::assetVersion(),
+        ]);
     }
 
     public function checkPermissions(): bool|WP_Error
