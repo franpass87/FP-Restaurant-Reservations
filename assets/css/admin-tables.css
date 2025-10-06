@@ -1,13 +1,9 @@
+/* Layout principale */
 .fp-resv-admin--tables .fp-resv-tables-app {
     margin-top: 12px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: calc(var(--fp-resv-admin-radius) + 2px);
-    min-height: 480px;
-    background: var(--fp-resv-admin-surface);
-    box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.45);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    gap: 20px;
 }
 
 .fp-resv-admin--tables .fp-resv-tables-app[data-state="loading"]::after {
@@ -19,175 +15,286 @@
     font-size: 15px;
 }
 
+/* Toolbar */
 .fp-resv-admin--tables .fp-resv-tables-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 18px 22px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
     background: linear-gradient(135deg, rgba(67, 56, 202, 0.08) 0%, rgba(67, 56, 202, 0.02) 100%);
+    border: 1px solid rgba(67, 56, 202, 0.15);
     gap: 12px;
+    flex-wrap: wrap;
 }
 
-.fp-resv-admin--tables .fp-resv-tables-toolbar__left,
-.fp-resv-admin--tables .fp-resv-tables-toolbar__right {
+.fp-resv-admin--tables .fp-resv-tables-toolbar__left {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
     align-items: center;
+    flex: 1;
 }
 
-.fp-resv-admin--tables .fp-resv-tables-toolbar .button {
-    border-radius: 8px;
-    padding: 6px 14px;
-}
-
-.fp-resv-admin--tables .fp-resv-tables-layout {
-    display: grid;
-    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-    min-height: 360px;
-    flex: 1 1 auto;
-}
-
-.fp-resv-admin--tables .fp-resv-tables-sidebar {
-    border-right: 1px solid rgba(15, 23, 42, 0.08);
-    padding: 22px;
-    background: var(--fp-resv-admin-surface-alt);
-    overflow-y: auto;
+.fp-resv-admin--tables .fp-resv-inline-form {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
 }
 
+.fp-resv-admin--tables .fp-resv-inline-form input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.fp-resv-admin--tables .fp-resv-inline-form input:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-admin--tables .fp-resv-inline-form .button {
+    border-radius: 8px;
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
+/* Lista sale vuota */
+.fp-resv-admin--tables .fp-resv-tables-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--fp-resv-admin-muted);
+    font-size: 15px;
+    background: var(--fp-resv-admin-surface-alt);
+    border-radius: 12px;
+    border: 2px dashed rgba(148, 163, 184, 0.3);
+}
+
+/* Lista sale */
+.fp-resv-admin--tables .fp-resv-tables-list {
+    display: grid;
+    gap: 20px;
+}
+
+/* Card sala */
 .fp-resv-admin--tables .fp-resv-room-card {
     background: #fff;
-    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
-    box-shadow: 0 18px 32px -24px rgba(15, 23, 42, 0.45);
-    padding: 16px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.15);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.fp-resv-admin--tables .fp-resv-room-card:hover {
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
 }
 
 .fp-resv-admin--tables .fp-resv-room-card header {
-    border-left: 6px solid var(--room-color, var(--fp-resv-admin-accent));
-    padding-left: 12px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, var(--room-color, #4338ca) 0%, color-mix(in srgb, var(--room-color, #4338ca) 80%, black) 100%);
+    border-bottom: 3px solid var(--room-color, #4338ca);
+}
+
+.fp-resv-admin--tables .fp-resv-room-card header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.fp-resv-admin--tables .fp-resv-room-card header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .fp-resv-admin--tables .fp-resv-room-card__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    padding: 16px 24px;
+    background: #f9fafb;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.fp-resv-admin--tables .fp-resv-tables-canvas {
-    position: relative;
-    padding: 24px;
-    overflow: auto;
-    background: var(--fp-resv-admin-surface);
+.fp-resv-admin--tables .fp-resv-room-card__actions .button {
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
 }
 
-.fp-resv-admin--tables .fp-resv-canvas-room {
-    margin-bottom: 32px;
+/* Lista tavoli */
+.fp-resv-admin--tables .fp-resv-table-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fp-resv-admin--tables .fp-resv-table-item {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    transition: background 0.15s ease;
 }
 
-.fp-resv-admin--tables .fp-resv-canvas-room header {
+.fp-resv-admin--tables .fp-resv-table-item:last-child {
+    border-bottom: none;
+}
+
+.fp-resv-admin--tables .fp-resv-table-item:hover {
+    background: #f9fafb;
+}
+
+.fp-resv-admin--tables .fp-resv-table-code {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+    min-width: 80px;
+}
+
+.fp-resv-admin--tables .fp-resv-table-meta {
+    flex: 1;
+    font-size: 13px;
+    color: #6b7280;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: 12px;
 }
 
-.fp-resv-admin--tables .fp-resv-canvas-board {
-    position: relative;
-    min-height: 280px;
-    border-radius: 18px;
-    border: 2px dashed var(--room-color, rgba(67, 56, 202, 0.65));
-    background-image: linear-gradient(to right, rgba(99, 102, 241, 0.08) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
-    background-size: 40px 40px;
-    overflow: hidden;
-    transform-origin: top left;
-    transform: scale(var(--scale, 1));
+.fp-resv-admin--tables .fp-resv-table-actions {
+    display: flex;
+    gap: 8px;
 }
 
-.fp-resv-admin--tables .fp-resv-table-node {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translate(36px, 36px);
-    min-width: 60px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: none;
-    background: var(--room-color, #4338ca);
-    color: #fff;
-    cursor: grab;
-    transition: box-shadow 160ms ease, transform 160ms ease;
+.fp-resv-admin--tables .fp-resv-table-actions .button-link {
+    font-size: 13px;
+    padding: 4px 10px;
+    text-decoration: none;
+    color: #4338ca;
+    border-radius: 4px;
+    transition: background 0.15s ease;
 }
 
-.fp-resv-admin--tables .fp-resv-table-node:active {
-    cursor: grabbing;
-    box-shadow: 0 18px 36px -16px rgba(67, 56, 202, 0.55);
+.fp-resv-admin--tables .fp-resv-table-actions .button-link:hover {
+    background: rgba(67, 56, 202, 0.1);
+    color: #3730a3;
 }
 
-.fp-resv-admin--tables .fp-resv-table-node.status-blocked {
-    background: #f97316;
-}
-
-.fp-resv-admin--tables .fp-resv-table-node.status-maintenance {
-    background: #ea580c;
-}
-
-.fp-resv-admin--tables .fp-resv-table-node.status-hidden {
-    background: #94a3b8;
-}
-
-.fp-resv-tables-modal[hidden] {
-    display: none;
-}
-
+/* Modali */
 .fp-resv-tables-modal {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    padding: 20px;
+}
+
+.fp-resv-tables-modal[hidden] {
+    display: none !important;
 }
 
 .fp-resv-tables-modal__backdrop {
     position: absolute;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(2px);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    animation: fadeIn 0.2s ease;
 }
 
 .fp-resv-tables-modal__dialog {
     position: relative;
-    background: #ffffff;
-    border-radius: 18px;
-    box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.6);
-    padding: 24px;
-    width: min(420px, calc(100% - 32px));
+    z-index: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 500px;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fp-resv-tables-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .fp-resv-tables-modal__header h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.fp-resv-tables-modal__header .button-link {
+    font-size: 28px;
+    line-height: 1;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-tables-modal__header .button-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.fp-resv-tables-modal__body {
+    padding: 24px;
 }
 
 .fp-resv-tables-modal__form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
 .fp-resv-tables-modal__field {
@@ -196,45 +303,75 @@
     gap: 6px;
 }
 
-.fp-resv-tables-modal__field span {
-    font-size: 13px;
-    font-weight: 600;
-    color: #475569;
+.fp-resv-tables-modal__field label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
 }
 
-.fp-resv-tables-modal__field input[type="text"],
-.fp-resv-tables-modal__field input[type="number"],
-.fp-resv-tables-modal__field input[type="color"] {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.45);
-    box-sizing: border-box;
-}
-
-.fp-resv-tables-modal__field input[type="color"] {
-    height: 44px;
-    padding: 4px;
-}
-
-.fp-resv-tables-modal__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.fp-resv-tables-modal__actions .button {
+.fp-resv-tables-modal__field input,
+.fp-resv-tables-modal__field select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
-    padding: 6px 16px;
+    font-size: 14px;
+    transition: all 0.15s ease;
 }
 
-@media (max-width: 960px) {
-    .fp-resv-admin--tables .fp-resv-tables-layout {
-        grid-template-columns: 1fr;
+.fp-resv-tables-modal__field input[type="color"] {
+    height: 48px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.fp-resv-tables-modal__field input:focus,
+.fp-resv-tables-modal__field select:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-tables-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.fp-resv-tables-modal__footer .button {
+    border-radius: 8px;
+    padding: 8px 18px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .fp-resv-admin--tables .fp-resv-tables-toolbar {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .fp-resv-admin--tables .fp-resv-tables-sidebar {
-        border-right: none;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    .fp-resv-admin--tables .fp-resv-inline-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fp-resv-admin--tables .fp-resv-inline-form input,
+    .fp-resv-admin--tables .fp-resv-inline-form .button {
+        width: 100%;
+    }
+
+    .fp-resv-admin--tables .fp-resv-table-item {
+        flex-wrap: wrap;
+    }
+
+    .fp-resv-admin--tables .fp-resv-table-meta {
+        flex-basis: 100%;
+    }
+
+    .fp-resv-tables-modal__dialog {
+        max-width: 100%;
     }
 }
