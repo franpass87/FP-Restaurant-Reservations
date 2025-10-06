@@ -30,7 +30,7 @@ function nt(a) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function z(a, t) {
+function D(a, t) {
   const e = a.value, { masked: i } = nt(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
@@ -38,7 +38,7 @@ function z(a, t) {
   }
   a.setAttribute("data-phone-local", N(a.value)), a.setAttribute("data-phone-cc", k(t));
 }
-function D(a, t) {
+function z(a, t) {
   const e = N(a.value), i = k(t);
   return {
     e164: rt(i, e),
@@ -46,13 +46,13 @@ function D(a, t) {
     country: i
   };
 }
-function B(a) {
+function V(a) {
   if (a == null)
     return "";
   if (typeof a == "string")
     return a.trim();
   if (Array.isArray(a))
-    return a.map((e) => B(e)).filter((e) => e !== "").join("; ");
+    return a.map((e) => V(e)).filter((e) => e !== "").join("; ");
   if (typeof a == "object") {
     if (typeof a.message == "string" && a.message.trim() !== "")
       return a.message.trim();
@@ -74,7 +74,7 @@ function ot(a) {
       continue;
     }
     if (typeof e != "object") {
-      const s = B(e);
+      const s = V(e);
       if (s !== "")
         return s;
       continue;
@@ -83,7 +83,7 @@ function ot(a) {
     for (let s = 0; s < i.length; s += 1) {
       const r = i[s];
       if (Object.prototype.hasOwnProperty.call(e, r)) {
-        const n = B(e[r]);
+        const n = V(e[r]);
         if (n !== "")
           return n;
       }
@@ -97,7 +97,7 @@ function $(a, t) {
   return e === "" ? a : a ? a.includes(e) ? a : a + " (" + e + ")" : e;
 }
 let O = null;
-const U = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
+const H = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function lt() {
   return O || (O = Promise.resolve().then(() => Ct)), O;
 }
@@ -118,7 +118,7 @@ function b(a, t) {
   const e = Object.assign({ event: a }, t || {});
   return window.dataLayer = window.dataLayer || [], window.dataLayer.push(e), window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(e), e;
 }
-function G(a, t) {
+function X(a, t) {
   if (!a)
     return null;
   if (typeof a.closest == "function")
@@ -132,7 +132,7 @@ function G(a, t) {
   return null;
 }
 function dt(a) {
-  return G(a, "data-fp-resv-section");
+  return X(a, "data-fp-resv-section");
 }
 function ut(a, t) {
   if (!a)
@@ -160,7 +160,7 @@ function ft(a) {
   const t = String(a).replace(",", "."), e = parseFloat(t);
   return Number.isNaN(e) ? null : e;
 }
-function H(a, t) {
+function U(a, t) {
   if (a && typeof a == "string")
     try {
       return new URL(a, window.location.origin).toString();
@@ -184,7 +184,7 @@ function yt(a) {
     }
   });
 }
-class X {
+class Y {
   constructor(t) {
     this.root = t, this.dataset = ct(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(mt);
@@ -220,7 +220,7 @@ class X {
       submitError: this.messages.msg_submit_error || "Non è stato possibile completare la prenotazione. Riprova.",
       submitSuccess: this.messages.msg_submit_success || "Prenotazione inviata con successo.",
       mealFullNotice: this.messages.meal_full_notice || "Nessuna disponibilità per questo servizio. Scegli un altro giorno."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), U(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), H(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -256,7 +256,7 @@ class X {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && D(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
@@ -278,7 +278,7 @@ class X {
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && D(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -319,7 +319,7 @@ class X {
       }
       this.scheduleAvailabilityUpdate(i);
     };
-    U(() => {
+    H(() => {
       lt().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
@@ -343,7 +343,7 @@ class X {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    this.handleFirstInteraction(), e === this.phoneField ? D(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
     const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, o = dt(e);
     if (!o) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
@@ -515,12 +515,10 @@ class X {
     s && this.activateSectionByKey(s);
   }
   navigateToNext(t) {
-    if (console.log("[DEBUG] navigateToNext chiamato per step:", t.getAttribute("data-step")), !this.isSectionValid(t)) {
-      const e = t.getAttribute("data-step") || "";
-      if (console.log("[DEBUG] Sezione non valida, stepKey:", e), e === "slots") {
+    if (!this.isSectionValid(t)) {
+      if ((t.getAttribute("data-step") || "") === "slots") {
         const s = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null, r = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
-        if (console.log("[DEBUG] timeField:", s, "value:", s ? s.value : "null"), console.log("[DEBUG] slotStartField:", r, "value:", r ? r.value : "null"), !s || s.value.trim() === "" || !r || r.value.trim() === "") {
-          console.log("[DEBUG] Bloccando navigazione - slot non selezionato");
+        if (!s || s.value.trim() === "" || !r || r.value.trim() === "") {
           const n = this.sections.find((o) => (o.getAttribute("data-step") || "") === "slots");
           if (n) {
             const o = n.querySelector("[data-fp-resv-slots-status]");
@@ -535,7 +533,7 @@ class X {
       i && (typeof i.reportValidity == "function" && i.reportValidity(), typeof i.focus == "function" && i.focus({ preventScroll: !1 }));
       return;
     }
-    console.log("[DEBUG] Sezione valida, procedendo al prossimo step"), this.completeSection(t, !0);
+    this.completeSection(t, !0);
   }
   dispatchSectionUnlocked(t) {
     if (this.state.unlocked[t])
@@ -617,7 +615,7 @@ class X {
         return;
       let _ = !1, A = "";
       if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (_ = !0, A = e[h] || ""), h === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (_ = !1, A = ""), h === "phone" && this.phoneField) {
-        const E = D(this.phoneField, this.getPhoneCountryCode());
+        const E = z(this.phoneField, this.getPhoneCountryCode());
         E.local && !K(E.local) && (_ = !0, A = this.copy.invalidPhone);
       }
       h === "consent" && f && f.checked && (_ = !1, A = ""), _ ? (v.textContent = A, v.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (v.textContent = "", v.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
@@ -761,7 +759,7 @@ class X {
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
     }), this.phoneField) {
-      const i = D(this.phoneField, this.getPhoneCountryCode());
+      const i = z(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
@@ -773,13 +771,13 @@ class X {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = z(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = z(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
@@ -889,7 +887,7 @@ class X {
     const e = t.target instanceof HTMLElement ? t.target : null;
     if (!e)
       return;
-    const i = G(e, "data-fp-resv-event");
+    const i = X(e, "data-fp-resv-event");
     if (!i)
       return;
     const s = i.getAttribute("data-fp-resv-event");
@@ -958,11 +956,11 @@ class X {
   }
   getReservationEndpoint() {
     const t = this.config.endpoints || {};
-    return H(t.reservations, "/wp-json/fp-resv/v1/reservations");
+    return U(t.reservations, "/wp-json/fp-resv/v1/reservations");
   }
   getAvailabilityEndpoint() {
     const t = this.config.endpoints || {};
-    return H(t.availability, "/wp-json/fp-resv/v1/availability");
+    return U(t.availability, "/wp-json/fp-resv/v1/availability");
   }
   loadExternalScript(t, e, i) {
     if (typeof window > "u" || typeof document > "u")
@@ -1019,11 +1017,11 @@ class X {
     )), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = X);
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Y);
 document.addEventListener("DOMContentLoaded", function() {
   const a = document.querySelectorAll("[data-fp-resv]");
   Array.prototype.forEach.call(a, function(t) {
-    new X(t);
+    new Y(t);
   });
 });
 document.addEventListener("fp-resv:tracking:push", function(a) {
@@ -1103,10 +1101,10 @@ function At(a) {
   function R() {
     s && (s.hidden = !0);
   }
-  function V() {
+  function B() {
     r && (r.hidden = !0);
   }
-  function Y(l) {
+  function G(l) {
     const d = a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
     if (r) {
       const m = r.querySelector("[data-fp-resv-slots-boundary-message]");
@@ -1129,7 +1127,7 @@ function At(a) {
     });
   }
   function j(l, d, m) {
-    if (m && m !== v || d && h && d !== h || (V(), R(), !i))
+    if (m && m !== v || d && h && d !== h || (B(), R(), !i))
       return;
     T(i);
     const u = l && Array.isArray(l.slots) ? l.slots : [];
@@ -1154,7 +1152,7 @@ function At(a) {
       j(y.payload, l, m);
       return;
     }
-    V(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(l, { state: "loading", slots: 0 });
+    B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(l, { state: "loading", slots: 0 });
     const w = St(a.endpoint, l), S = performance.now();
     fetch(w, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((P) => {
       if (!c.ok) {
@@ -1194,7 +1192,7 @@ function At(a) {
         return;
       }
       const tt = c && c.payload && (c.payload.message || c.payload.code) || g && g.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", et = c && c.payload || g || null, it = $(tt, et);
-      Y(it);
+      G(it);
     });
   }
   return {
