@@ -1,1468 +1,493 @@
 /**
- * FP Restaurant Reservations - Admin Agenda application.
+ * FP Reservations - Agenda semplificata stile TheFork
  */
 
-var fpResvAgendaTranslate = (function () {
-  if (typeof window !== 'undefined' && window.wp && window.wp.i18n && typeof window.wp.i18n.__ === 'function') {
-    return function (text) {
-      return window.wp.i18n.__(text, 'fp-restaurant-reservations');
-    };
-  }
+(function() {
+    'use strict';
 
-  return function (text) {
-    return text;
-  };
-})();
+    // Settings
+    const settings = window.fpResvAgendaSettings || {};
+    const restRoot = (settings.restRoot || '/wp-json/fp-resv/v1').replace(/\/$/, '');
+    const nonce = settings.nonce || '';
 
-(function () {
-  if (typeof window === 'undefined') {
-    return;
-  }
+    // DOM Elements
+    const datePicker = document.querySelector('[data-role="date-picker"]');
+    const serviceFilter = document.querySelector('[data-role="service-filter"]');
+    const summaryEl = document.querySelector('[data-role="summary"]');
+    const loadingEl = document.querySelector('[data-role="loading"]');
+    const emptyEl = document.querySelector('[data-role="empty"]');
+    const timelineEl = document.querySelector('[data-role="timeline"]');
 
-  var rootId = 'fp-resv-agenda-app';
-  var container = document.getElementById(rootId);
-  if (!container) {
-    return;
-  }
+    // State
+    let currentDate = new Date();
+    let currentService = '';
+    let reservations = [];
+    let currentModal = null;
 
-  var settings = window.fpResvAgendaSettings || {};
-  var strings = settings.strings || {};
-  var activeTab = settings.activeTab || 'agenda';
+    // Initialize
+    init();
 
-  var request = createRequester(settings);
+    function init() {
+        if (!datePicker) return;
 
-  var calendarSection = container.querySelector('[data-role="calendar"]');
-  var arrivalsSection = container.querySelector('[data-role="arrivals"]');
+        // Set default date
+        datePicker.value = formatDate(currentDate);
 
-  if ((activeTab === 'arrivi-oggi' || activeTab === 'settimana') && arrivalsSection) {
-    initArrivals(arrivalsSection, activeTab === 'settimana' ? 'week' : 'today', request, strings);
-    if (calendarSection) {
-      calendarSection.hidden = true;
-    }
-    return;
-  }
+        // Event listeners
+        document.addEventListener('click', handleClick);
+        datePicker.addEventListener('change', handleDateChange);
+        serviceFilter?.addEventListener('change', handleServiceChange);
 
-  if (calendarSection) {
-    initCalendar(calendarSection, container, request, strings);
-  }
-})();
-
-function createRequester(settings) {
-  return function (path, options) {
-    options = options || {};
-    var headers = options.headers || {};
-    if (settings.nonce) {
-      headers['X-WP-Nonce'] = settings.nonce;
+        // Load initial data
+        loadReservations();
     }
 
-    var body = null;
-    if (options.data) {
-      body = JSON.stringify(options.data);
-      headers['Content-Type'] = 'application/json';
-      if (!options.method) {
-        options.method = 'POST';
-      }
-    }
+    // Event Handlers
+    function handleClick(e) {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
 
-    if (window.wp && window.wp.apiFetch) {
-      return window.wp
-        .apiFetch({
-          path: path,
-          method: options.method || 'GET',
-          data: options.data,
-          headers: headers,
-          parse: false,
-        })
-        .then(function (response) {
-          return parseAgendaResponse(response);
-        });
-    }
+        const action = target.getAttribute('data-action');
 
-    var base = (settings.restRoot || '').replace(/\/$/, '');
-    var url = path;
-    if (path.indexOf('http') !== 0) {
-      url = base + '/' + path.replace(/^\//, '');
-    }
-
-    return fetch(url, {
-      method: options.method || 'GET',
-      headers: headers,
-      credentials: 'same-origin',
-      body: body,
-    }).then(function (response) {
-      return parseAgendaResponse(response);
-    });
-  };
-}
-
-function parseAgendaResponse(response) {
-  if (!response.ok) {
-    return response
-      .text()
-      .then(function (text) {
-        var message = 'Richiesta non riuscita';
-        if (text) {
-          try {
-            var payload = JSON.parse(text);
-            if (payload && payload.message) {
-              message = payload.message;
-            } else {
-              message = text.trim() || message;
-            }
-          } catch (error) {
-            message = text.trim() || message;
-          }
+        switch (action) {
+            case 'prev-day':
+                navigateDay(-1);
+                break;
+            case 'today':
+                navigateToToday();
+                break;
+            case 'next-day':
+                navigateDay(1);
+                break;
+            case 'new-reservation':
+                openNewReservationModal();
+                break;
+            case 'close-modal':
+                closeModal('[data-modal="new-reservation"]');
+                break;
+            case 'submit-reservation':
+                submitReservation();
+                break;
+            case 'close-details':
+                closeModal('[data-modal="reservation-details"]');
+                break;
+            case 'confirm-reservation':
+                updateReservationStatus('confirmed');
+                break;
+            default:
+                if (action.startsWith('view-reservation-')) {
+                    const id = parseInt(action.replace('view-reservation-', ''));
+                    viewReservationDetails(id);
+                } else if (target.hasAttribute('data-quickparty')) {
+                    const party = target.getAttribute('data-quickparty');
+                    const input = document.querySelector('[data-field="party"]');
+                    if (input) input.value = party;
+                }
         }
-        var failure = new Error(message);
-        failure.status = response.status;
-        throw failure;
-      });
-  }
-
-  if (response.status === 204) {
-    return Promise.resolve(null);
-  }
-
-  var contentLength = response.headers.get('content-length');
-  if (contentLength === '0') {
-    return Promise.resolve(null);
-  }
-
-  return response.text().then(function (text) {
-    if (!text) {
-      return null;
     }
 
-    var contentType = response.headers.get('content-type') || '';
-    if (contentType.indexOf('json') === -1) {
-      var invalid = new Error(text.trim() || 'Risposta non valida.');
-      invalid.status = response.status;
-      throw invalid;
+    function handleDateChange() {
+        const dateStr = datePicker.value;
+        if (!dateStr) return;
+
+        const [year, month, day] = dateStr.split('-').map(Number);
+        currentDate = new Date(year, month - 1, day);
+        loadReservations();
     }
 
-    try {
-      return JSON.parse(text);
-    } catch (error) {
-      var parseError = error instanceof Error ? error : new Error('Risposta non valida.');
-      parseError.status = response.status;
-      throw parseError;
-    }
-  });
-}
-function initCalendar(section, container, request, strings) {
-  section.hidden = false;
-
-  var grid = section.querySelector('[data-role="agenda-grid"]');
-  var empty = section.querySelector('[data-role="agenda-empty"]');
-  var title = section.querySelector('[data-role="agenda-title"]');
-  var hint = section.querySelector('[data-role="agenda-hint"]');
-  var dateInput = section.querySelector('[data-role="agenda-date"]');
-  var roomSelect = section.querySelector('[data-role="agenda-room"]');
-  var viewSelect = section.querySelector('[data-role="agenda-view"]');
-  var prevBtn = section.querySelector('[data-action="agenda-prev"]');
-  var nextBtn = section.querySelector('[data-action="agenda-next"]');
-  var todayBtn = section.querySelector('[data-action="agenda-today"]');
-  var createBtn = section.querySelector('[data-action="agenda-create"]');
-  var createModal = container.querySelector('[data-modal="create"]');
-  var createModalCloseBtns = createModal ? createModal.querySelectorAll('[data-action="modal-close"]') : null;
-  var createSubmitBtn = createModal ? createModal.querySelector('[data-action="create-submit"]') : null;
-  var createErrorBox = createModal ? createModal.querySelector('[data-role="create-error"]') : null;
-
-  if (!grid || !empty || !dateInput || !roomSelect || !viewSelect || !prevBtn || !nextBtn || !todayBtn || !createBtn) {
-    return;
-  }
-
-  if (strings.agendaCreate) {
-    createBtn.textContent = strings.agendaCreate;
-  }
-  if (strings.agendaPrevDay) {
-    prevBtn.textContent = strings.agendaPrevDay;
-  }
-  if (strings.agendaNextDay) {
-    nextBtn.textContent = strings.agendaNextDay;
-  }
-  if (strings.agendaToday) {
-    todayBtn.textContent = strings.agendaToday;
-  }
-
-  if (!viewSelect.options.length) {
-    addOption(viewSelect, 'day', strings.agendaViewDay || 'Giorno');
-    addOption(viewSelect, 'week', strings.agendaViewWeek || 'Settimana');
-  }
-
-  var state = {
-    date: normalizeDate(new Date()),
-    mode: 'day',
-    room: 'all',
-    rooms: [],
-    tables: [],
-    days: [],
-    loading: false,
-  };
-
-  var tableIndex = {};
-  var lastSlots = [];
-  var lastColumns = [];
-
-  dateInput.value = formatDate(state.date);
-  viewSelect.value = state.mode;
-
-  roomSelect.addEventListener('change', function () {
-    state.room = roomSelect.value === '' ? 'all' : roomSelect.value;
-    render();
-  });
-
-  viewSelect.addEventListener('change', function () {
-    var mode = viewSelect.value === 'week' ? 'week' : 'day';
-    if (mode !== state.mode) {
-      state.mode = mode;
-      updateNavLabels();
-      loadAgenda();
-    }
-  });
-
-  dateInput.addEventListener('change', function () {
-    var parsed = parseISODate(dateInput.value);
-    if (parsed) {
-      state.date = parsed;
-      loadAgenda();
-    }
-  });
-
-  prevBtn.addEventListener('click', function () {
-    state.date = state.mode === 'week' ? addDays(state.date, -7) : addDays(state.date, -1);
-    dateInput.value = formatDate(state.date);
-    loadAgenda();
-  });
-
-  nextBtn.addEventListener('click', function () {
-    state.date = state.mode === 'week' ? addDays(state.date, 7) : addDays(state.date, 1);
-    dateInput.value = formatDate(state.date);
-    loadAgenda();
-  });
-
-  todayBtn.addEventListener('click', function () {
-    state.date = normalizeDate(new Date());
-    dateInput.value = formatDate(state.date);
-    loadAgenda();
-  });
-
-  createBtn.addEventListener('click', function () {
-    var defaultTime = lastSlots.length ? lastSlots[0] : '19:00';
-    var defaultColumn = null;
-    for (var i = 0; i < lastColumns.length; i++) {
-      if (lastColumns[i].type === 'table') {
-        defaultColumn = lastColumns[i];
-        break;
-      }
+    function handleServiceChange() {
+        currentService = serviceFilter?.value || '';
+        loadReservations();
     }
 
-    openQuickCreate({
-      date: formatDate(state.date),
-      time: defaultTime,
-      tableId: defaultColumn ? defaultColumn.id : null,
-      roomId: defaultColumn ? defaultColumn.room_id : state.room !== 'all' ? parseInt(state.room, 10) : null,
-    });
-  });
-
-  updateNavLabels();
-  loadAgenda();
-
-  var createState = { slot: null };
-
-  function setCreateError(message) {
-    if (!createErrorBox) return;
-    if (!message) {
-      createErrorBox.hidden = true;
-      createErrorBox.textContent = '';
-      return;
-    }
-    createErrorBox.hidden = false;
-    createErrorBox.textContent = message;
-  }
-
-  function getCreateField(name) {
-    return createModal ? createModal.querySelector('[data-field="' + name + '"]') : null;
-  }
-
-  function openCreateModal(slot) {
-    if (!createModal) {
-      return;
-    }
-    createState.slot = slot || {};
-    setCreateError('');
-
-    var fDate = getCreateField('date');
-    var fTime = getCreateField('time');
-    var fParty = getCreateField('party');
-    var fFirst = getCreateField('first_name');
-    var fLast = getCreateField('last_name');
-    var fRoom = getCreateField('room_id');
-    var fTable = getCreateField('table_id');
-    var fNotes = getCreateField('notes');
-
-    if (fDate) fDate.value = slot && slot.date ? slot.date : formatDate(state.date);
-    if (fTime) fTime.value = slot && slot.time ? slot.time : (lastSlots.length ? lastSlots[0] : '19:00');
-    if (fParty) fParty.value = slot && slot.party ? String(slot.party) : '2';
-    if (fFirst) fFirst.value = slot && slot.guest ? String(slot.guest).split(' ')[0] : '';
-    if (fLast) fLast.value = slot && slot.guest ? String(slot.guest).split(' ').slice(1).join(' ') : '';
-    if (fRoom) fRoom.value = slot && slot.roomId ? String(slot.roomId) : (state.room !== 'all' ? String(state.room) : '');
-    if (fTable) fTable.value = slot && slot.tableId ? String(slot.tableId) : '';
-    if (fNotes) fNotes.value = '';
-
-    createModal.hidden = false;
-    createModal.setAttribute('aria-hidden', 'false');
-
-    var firstFocusable = fFirst || fDate || createSubmitBtn;
-    if (firstFocusable && typeof firstFocusable.focus === 'function') {
-      setTimeout(function () { firstFocusable.focus(); }, 0);
-    }
-  }
-
-  function closeCreateModal() {
-    if (!createModal) return;
-    createModal.hidden = true;
-    createModal.setAttribute('aria-hidden', 'true');
-  }
-
-  if (createModal) {
-    if (createModalCloseBtns) {
-      for (var i = 0; i < createModalCloseBtns.length; i++) {
-        createModalCloseBtns[i].addEventListener('click', function () { closeCreateModal(); });
-      }
-    }
-    createModal.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeCreateModal();
-      }
-    });
-
-    var quickPartyBtns = createModal.querySelectorAll('[data-quickparty]');
-    if (quickPartyBtns && quickPartyBtns.length) {
-      for (var q = 0; q < quickPartyBtns.length; q++) {
-        quickPartyBtns[q].addEventListener('click', function () {
-          var value = this.getAttribute('data-quickparty');
-          var fParty = getCreateField('party');
-          if (fParty) fParty.value = value;
-        });
-      }
+    // Navigation
+    function navigateDay(offset) {
+        currentDate.setDate(currentDate.getDate() + offset);
+        datePicker.value = formatDate(currentDate);
+        loadReservations();
     }
 
-    if (createSubmitBtn) {
-      createSubmitBtn.addEventListener('click', function () {
-        var fDate = getCreateField('date');
-        var fTime = getCreateField('time');
-        var fParty = getCreateField('party');
-        var fFirst = getCreateField('first_name');
-        var fLast = getCreateField('last_name');
-        var fRoom = getCreateField('room_id');
-        var fTable = getCreateField('table_id');
-        var fNotes = getCreateField('notes');
+    function navigateToToday() {
+        currentDate = new Date();
+        datePicker.value = formatDate(currentDate);
+        loadReservations();
+    }
 
-        var dateVal = fDate ? fDate.value : '';
-        var timeVal = fTime ? fTime.value : '';
-        var partyVal = fParty ? parseInt(fParty.value, 10) : 0;
-        var firstVal = fFirst ? fFirst.value.trim() : '';
-        var lastVal = fLast ? fLast.value.trim() : '';
-        var roomVal = fRoom && fRoom.value !== '' ? parseInt(fRoom.value, 10) : null;
-        var tableVal = fTable && fTable.value !== '' ? parseInt(fTable.value, 10) : null;
-        var notesVal = fNotes ? fNotes.value : '';
-
-        if (!dateVal || !timeVal || !partyVal || partyVal <= 0 || !firstVal) {
-          setCreateError(strings.agendaCreateInvalid || fpResvAgendaTranslate('Enter a valid name and party size.'));
-          return;
-        }
-
-        var payload = {
-          date: dateVal,
-          time: timeVal,
-          party: partyVal,
-          first_name: firstVal,
-          last_name: lastVal,
-          status: 'pending',
+    // API
+    function request(path, options = {}) {
+        const url = path.startsWith('http') ? path : `${restRoot}/${path.replace(/^\//, '')}`;
+        
+        const config = {
+            method: options.method || 'GET',
+            headers: {
+                'X-WP-Nonce': nonce,
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
         };
-        if (roomVal) payload.room_id = roomVal;
-        if (tableVal) payload.table_id = tableVal;
-        if (notesVal) payload.notes = notesVal;
 
-        createSubmitBtn.disabled = true;
-        setCreateError('');
-        request('/fp-resv/v1/agenda/reservations', { method: 'POST', data: payload })
-          .then(function () {
-            announce(strings.agendaCreateSuccess || fpResvAgendaTranslate('Reservation created.'));
-            closeCreateModal();
-            createSubmitBtn.disabled = false;
-            loadAgenda();
-          })
-          .catch(function (err) {
-            createSubmitBtn.disabled = false;
-            setCreateError((err && err.message) || strings.agendaCreateError || 'Impossibile creare la prenotazione.');
-          });
-      });
-    }
-  }
-
-  function updateNavLabels() {
-    if (state.mode === 'week') {
-      if (strings.agendaPrevWeek) {
-        prevBtn.textContent = strings.agendaPrevWeek;
-      }
-      if (strings.agendaNextWeek) {
-        nextBtn.textContent = strings.agendaNextWeek;
-      }
-    } else {
-      if (strings.agendaPrevDay) {
-        prevBtn.textContent = strings.agendaPrevDay;
-      }
-      if (strings.agendaNextDay) {
-        nextBtn.textContent = strings.agendaNextDay;
-      }
-    }
-  }
-
-  function loadAgenda() {
-    state.loading = true;
-    setMessage(strings.agendaLoading || 'Caricamento…', false);
-    grid.innerHTML = '';
-    lastSlots = [];
-    lastColumns = [];
-
-    var params = new URLSearchParams();
-    params.append('date', formatDate(state.date));
-    params.append('range', state.mode === 'week' ? 'week' : 'day');
-
-    request('/fp-resv/v1/agenda?' + params.toString())
-      .then(function (response) {
-        state.loading = false;
-        applyData(response || {});
-        render();
-      })
-      .catch(function () {
-        state.loading = false;
-        setMessage(strings.agendaError || 'Impossibile caricare l’agenda.', true);
-      });
-  }
-
-  function applyData(payload) {
-    state.rooms = Array.isArray(payload.rooms) ? payload.rooms : [];
-    state.tables = Array.isArray(payload.tables) ? payload.tables : [];
-    state.days = normalizeDays(payload);
-
-    tableIndex = {};
-    for (var i = 0; i < state.tables.length; i++) {
-      var table = state.tables[i];
-      if (table && table.id !== null && table.id !== undefined) {
-        tableIndex[String(table.id)] = table;
-      }
-    }
-  }
-
-  function render() {
-    var heading = state.mode === 'week' ? strings.agendaWeekTitle : strings.agendaDayTitle;
-    if (title) {
-      var formatted = state.mode === 'week' ? formatWeekRange(state.date) : formatHumanDate(state.date);
-      title.textContent = (heading || '') + (formatted ? ' · ' + formatted : '');
-    }
-
-    buildRoomOptions();
-
-    if (state.loading) {
-      setMessage(strings.agendaLoading || 'Caricamento…', false);
-      return;
-    }
-
-    grid.innerHTML = '';
-    grid.classList.remove('fp-resv-calendar__grid--day');
-    grid.classList.remove('fp-resv-calendar__grid--week');
-
-    var days = state.mode === 'week' ? expandWeekDays(state.days, state.date) : [findDay(state.date)];
-    if (hint) {
-      var totals = countTotals(days);
-      var baseHint = strings.agendaDragHelp || '';
-      var countsLabel = (totals.reservations > 0 || totals.party > 0)
-        ? (' · ' + totals.reservations + ' prenotazioni · ' + totals.party + ' coperti')
-        : '';
-      hint.textContent = baseHint + countsLabel;
-    }
-    lastSlots = [];
-    lastColumns = [];
-
-    if (state.mode === 'week') {
-      renderWeek(days);
-    } else {
-      renderDayView(days[0]);
-    }
-
-    var hasReservations = false;
-    for (var i = 0; i < days.length; i++) {
-      if (days[i] && Array.isArray(days[i].reservations) && days[i].reservations.length) {
-        hasReservations = true;
-        break;
-      }
-    }
-
-    if (!hasReservations && !lastSlots.length) {
-      setMessage(strings.agendaEmpty || 'Nessuna prenotazione per il periodo selezionato.', false);
-    } else {
-      setMessage('', false);
-    }
-  }
-
-  function renderDayView(day) {
-    var dayData = day || { date: formatDate(state.date), reservations: [] };
-
-    var wrapper = document.createElement('div');
-    wrapper.className = 'fp-resv-calendar__day-view';
-    grid.classList.add('fp-resv-calendar__grid--day');
-    grid.appendChild(wrapper);
-
-    var header = document.createElement('header');
-    header.className = 'fp-resv-calendar__day-header';
-    header.textContent = formatHumanDate(parseISODate(dayData.date));
-    wrapper.appendChild(header);
-
-    var timeline = document.createElement('div');
-    timeline.className = 'fp-resv-calendar__timeline';
-    wrapper.appendChild(timeline);
-
-    var columns = buildColumns(dayData);
-    lastColumns = columns.slice();
-
-    var headerRow = document.createElement('div');
-    headerRow.className = 'fp-resv-calendar__timeline-row fp-resv-calendar__timeline-row--header';
-
-    var timeHead = document.createElement('div');
-    timeHead.className = 'fp-resv-calendar__timeline-time';
-    timeHead.textContent = strings.agendaTimeLabel || 'Orario';
-    headerRow.appendChild(timeHead);
-
-    for (var c = 0; c < columns.length; c++) {
-      var columnCell = document.createElement('div');
-      columnCell.className = 'fp-resv-calendar__timeline-slot fp-resv-calendar__timeline-slot--header';
-      columnCell.textContent = columns[c].label;
-      headerRow.appendChild(columnCell);
-    }
-
-    timeline.appendChild(headerRow);
-
-    var slots = buildTimeSlots(dayData);
-    lastSlots = slots.slice();
-
-    var dragState = { current: null };
-
-    for (var s = 0; s < slots.length; s++) {
-      (function () {
-        var slotTime = slots[s];
-        var row = document.createElement('div');
-        row.className = 'fp-resv-calendar__timeline-row';
-
-        var timeCell = document.createElement('div');
-        timeCell.className = 'fp-resv-calendar__timeline-time';
-        timeCell.textContent = slotTime;
-        row.appendChild(timeCell);
-
-        for (var col = 0; col < columns.length; col++) {
-          (function () {
-            var column = columns[col];
-            var cell = document.createElement('div');
-            cell.className = 'fp-resv-calendar__timeline-slot';
-            cell.setAttribute('data-slot', dayData.date + 'T' + slotTime + ':00');
-            cell.setAttribute('data-time', slotTime);
-
-            if (column.type === 'table' && column.id !== null) {
-              cell.setAttribute('data-table', String(column.id));
-              if (column.room_id !== null && column.room_id !== undefined) {
-                cell.setAttribute('data-room', String(column.room_id));
-              }
-              if (!column.active) {
-                cell.classList.add('is-inactive');
-              }
-            } else {
-              cell.setAttribute('data-table', '');
-              cell.classList.add('fp-resv-calendar__timeline-slot--unassigned');
+        if (options.data) {
+            config.body = JSON.stringify(options.data);
+            if (!config.method || config.method === 'GET') {
+                config.method = 'POST';
             }
+        }
 
-            cell.addEventListener('dragover', function (event) {
-              if (!dragState.current) {
-                return;
-              }
-              event.preventDefault();
-              cell.classList.add('is-droppable');
-            });
-
-            cell.addEventListener('dragleave', function () {
-              cell.classList.remove('is-droppable');
-            });
-
-            cell.addEventListener('drop', function (event) {
-              cell.classList.remove('is-droppable');
-              event.preventDefault();
-              if (!dragState.current) {
-                return;
-              }
-
-              var targetTable = column.type === 'table' ? column.id : null;
-              var targetRoom = column.type === 'table' ? column.room_id : state.room !== 'all' ? parseInt(state.room, 10) : null;
-
-              if (
-                dragState.current.date === dayData.date &&
-                dragState.current.time === slotTime &&
-                (dragState.current.tableId || null) === (targetTable || null)
-              ) {
-                return;
-              }
-
-              moveReservation(
-                dragState.current.id,
-                {
-                  date: dayData.date,
-                  time: slotTime,
-                  table_id: targetTable,
-                  room_id: targetRoom,
-                }
-              );
-            });
-
-            cell.addEventListener('dblclick', function () {
-              openQuickCreate(
-                {
-                  date: dayData.date,
-                  time: slotTime,
-                  tableId: column.type === 'table' ? column.id : null,
-                  roomId: column.type === 'table' ? column.room_id : state.room !== 'all' ? parseInt(state.room, 10) : null,
-                }
-              );
-            });
-
-            var reservations = findReservationsForSlot(dayData, column, slotTime);
-            for (var r = 0; r < reservations.length; r++) {
-              cell.appendChild(createReservationCard(reservations[r], dragState));
+        return fetch(url, config).then(response => {
+            if (!response.ok) {
+                return response.json().catch(() => ({})).then(payload => {
+                    throw new Error(payload.message || 'Request failed');
+                });
             }
-
-            row.appendChild(cell);
-          })();
-        }
-
-        timeline.appendChild(row);
-      })();
-    }
-  }
-
-  function renderWeek(days) {
-    grid.classList.add('fp-resv-calendar__grid--week');
-    for (var i = 0; i < days.length; i++) {
-      var day = days[i];
-      var container = document.createElement('section');
-      container.className = 'fp-resv-calendar__week-day';
-
-      var header = document.createElement('header');
-      header.className = 'fp-resv-calendar__week-day-header';
-      header.textContent = formatHumanDate(parseISODate(day.date));
-      container.appendChild(header);
-
-      var list = document.createElement('ul');
-      list.className = 'fp-resv-calendar__week-list';
-
-      var reservations = Array.isArray(day.reservations) ? day.reservations : [];
-      if (!reservations.length) {
-        var emptyItem = document.createElement('li');
-        emptyItem.className = 'fp-resv-calendar__week-empty';
-        emptyItem.textContent = strings.agendaEmpty || 'Nessuna prenotazione.';
-        list.appendChild(emptyItem);
-      } else {
-        for (var r = 0; r < reservations.length; r++) {
-          if (!shouldDisplayReservation(reservations[r])) {
-            continue;
-          }
-          var item = document.createElement('li');
-          item.className = 'fp-resv-calendar__week-item';
-          item.innerHTML =
-            '<strong>' +
-            escapeHtml(reservations[r].time || '') +
-            '</strong><span>' +
-            escapeHtml(reservations[r].customer && reservations[r].customer.name ? reservations[r].customer.name : '') +
-            '</span><span class="fp-resv-calendar__week-meta">' +
-            escapeHtml(String(reservations[r].party || 0)) +
-            ' px</span>';
-          list.appendChild(item);
-        }
-      }
-
-      container.appendChild(list);
-      grid.appendChild(container);
-    }
-  }
-
-  function buildRoomOptions() {
-    var current = state.room;
-    roomSelect.innerHTML = '';
-    addOption(roomSelect, '', strings.agendaRoomAll || 'Tutte le sale');
-
-    for (var i = 0; i < state.rooms.length; i++) {
-      var room = state.rooms[i];
-      if (!room || room.id === undefined || room.id === null) {
-        continue;
-      }
-      var option = document.createElement('option');
-      option.value = String(room.id);
-      option.textContent = room.name || ('Sala ' + room.id);
-      if (String(room.id) === String(current)) {
-        option.selected = true;
-      }
-      roomSelect.appendChild(option);
-    }
-
-    if (current !== 'all' && roomSelect.value !== String(current)) {
-      roomSelect.value = String(current);
-    }
-  }
-
-  function buildColumns(day) {
-    var columns = [];
-    var selectedRoom = state.room;
-
-    for (var i = 0; i < state.tables.length; i++) {
-      var table = state.tables[i];
-      if (!table) {
-        continue;
-      }
-      var roomId = table.room_id !== undefined && table.room_id !== null ? String(table.room_id) : '';
-      if (selectedRoom !== 'all' && roomId !== String(selectedRoom)) {
-        continue;
-      }
-      columns.push({
-        type: 'table',
-        id: table.id,
-        room_id: table.room_id !== undefined ? table.room_id : null,
-        label: buildTableLabel(table),
-        active: !!table.active,
-      });
-    }
-
-    if (!columns.length || hasUnassignedReservations(day)) {
-      columns.push({
-        type: 'unassigned',
-        id: null,
-        room_id: null,
-        label: strings.agendaUnassigned || 'Da assegnare',
-        active: true,
-      });
-    }
-
-    return columns;
-  }
-
-  function buildTableLabel(table) {
-    var label = table.label || table.code || ('Tavolo ' + table.id);
-    var capacity = table.seats_std || table.seats_max || table.seats_min;
-    if (capacity) {
-      label += ' · ' + capacity + ' px';
-    }
-    if (table.room_name) {
-      label += ' (' + table.room_name + ')';
-    }
-    if (table.status && table.status !== 'available') {
-      label += ' · ' + table.status;
-    }
-    return label;
-  }
-
-  function buildTimeSlots(day) {
-    var reservations = Array.isArray(day.reservations) ? day.reservations : [];
-    var min = 18 * 60;
-    var max = 22 * 60;
-    var found = false;
-
-    for (var i = 0; i < reservations.length; i++) {
-      var reservation = reservations[i];
-      if (!shouldDisplayReservation(reservation)) {
-        continue;
-      }
-      var minutes = timeToMinutes(reservation.time);
-      if (!Number.isFinite(minutes)) {
-        continue;
-      }
-      if (!found) {
-        min = minutes;
-        max = minutes;
-        found = true;
-      } else {
-        if (minutes < min) {
-          min = minutes;
-        }
-        if (minutes > max) {
-          max = minutes;
-        }
-      }
-    }
-
-    if (!found) {
-      return defaultSlots();
-    }
-
-    min = Math.floor(min / 30) * 30;
-    max = Math.ceil(max / 30) * 30;
-    if (max <= min) {
-      max = min + 120;
-    }
-
-    var slots = [];
-    for (var current = min; current <= max; current += 30) {
-      slots.push(minutesToTime(current));
-    }
-    return slots;
-  }
-
-  function defaultSlots() {
-    var slots = [];
-    for (var current = 18 * 60; current <= 22 * 60; current += 30) {
-      slots.push(minutesToTime(current));
-    }
-    return slots;
-  }
-
-  function countTotals(days) {
-    var totalReservations = 0;
-    var totalParty = 0;
-    for (var i = 0; i < days.length; i++) {
-      var reservations = Array.isArray(days[i] && days[i].reservations) ? days[i].reservations : [];
-      for (var r = 0; r < reservations.length; r++) {
-        if (!shouldDisplayReservation(reservations[r])) continue;
-        totalReservations += 1;
-        var p = Number(reservations[r].party || 0);
-        if (Number.isFinite(p)) totalParty += p;
-      }
-    }
-    return { reservations: totalReservations, party: totalParty };
-  }
-
-  function hasUnassignedReservations(day) {
-    var reservations = Array.isArray(day.reservations) ? day.reservations : [];
-    for (var i = 0; i < reservations.length; i++) {
-      if (!shouldDisplayReservation(reservations[i])) {
-        continue;
-      }
-      if (reservations[i].table_id === null || reservations[i].table_id === undefined) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function findReservationsForSlot(day, column, time) {
-    var reservations = Array.isArray(day.reservations) ? day.reservations : [];
-    var matches = [];
-
-    for (var i = 0; i < reservations.length; i++) {
-      var entry = reservations[i];
-      if (!shouldDisplayReservation(entry)) {
-        continue;
-      }
-      if ((entry.time || '') !== time) {
-        continue;
-      }
-      if (column.type === 'table') {
-        if (entry.table_id === null || entry.table_id === undefined) {
-          continue;
-        }
-        if (String(entry.table_id) !== String(column.id)) {
-          continue;
-        }
-      } else if (entry.table_id !== null && entry.table_id !== undefined) {
-        continue;
-      }
-      matches.push(entry);
-    }
-
-    return matches;
-  }
-
-  function shouldDisplayReservation(reservation) {
-    if (!reservation) {
-      return false;
-    }
-
-    if (state.room === 'all') {
-      return true;
-    }
-
-    var roomId = reservation.room_id !== undefined && reservation.room_id !== null ? String(reservation.room_id) : null;
-    if (roomId !== null) {
-      return roomId === String(state.room);
-    }
-
-    if (reservation.table_id !== undefined && reservation.table_id !== null) {
-      var table = tableIndex[String(reservation.table_id)];
-      if (table && table.room_id !== undefined && table.room_id !== null) {
-        return String(table.room_id) === String(state.room);
-      }
-    }
-
-    return true;
-  }
-
-  function createReservationCard(reservation, dragState) {
-    var card = document.createElement('article');
-    card.className = 'fp-resv-calendar__reservation status-' + sanitizeStatus(reservation.status);
-    card.setAttribute('data-reservation-id', String(reservation.id));
-    card.setAttribute('draggable', 'true');
-
-    var time = document.createElement('span');
-    time.className = 'fp-resv-calendar__reservation-time';
-    time.textContent = reservation.time || '';
-    card.appendChild(time);
-
-    var name = document.createElement('div');
-    name.className = 'fp-resv-calendar__reservation-name';
-    name.textContent = reservation.customer && reservation.customer.name ? reservation.customer.name : '';
-    card.appendChild(name);
-
-    var meta = document.createElement('div');
-    meta.className = 'fp-resv-calendar__reservation-meta';
-    meta.textContent = String(reservation.party || 0) + ' px';
-    card.appendChild(meta);
-
-    if (reservation.notes) {
-      var notes = document.createElement('div');
-      notes.className = 'fp-resv-calendar__reservation-notes';
-      notes.textContent = reservation.notes;
-      card.appendChild(notes);
-    }
-
-    var actions = document.createElement('div');
-    actions.className = 'fp-resv-calendar__reservation-actions';
-
-    function addAction(label, payload) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'button button-small';
-      btn.textContent = label;
-      btn.addEventListener('click', function () {
-        request('/fp-resv/v1/agenda/reservations/' + reservation.id, { method: 'POST', data: payload })
-          .then(function () {
-            announce(fpResvAgendaTranslate('Reservation updated.'));
-            loadAgenda();
-          })
-          .catch(function () {
-            window.alert(fpResvAgendaTranslate('Update failed.'));
-          });
-      });
-      actions.appendChild(btn);
-    }
-
-    addAction(strings.actionConfirm || fpResvAgendaTranslate('Conferma'), { status: 'confirmed' });
-    addAction(strings.actionVisited || fpResvAgendaTranslate('Check-in'), { status: 'visited', visited: true });
-    addAction(strings.actionNoShow || fpResvAgendaTranslate('No-show'), { status: 'no-show' });
-
-    card.appendChild(actions);
-
-    card.addEventListener('dragstart', function (event) {
-      dragState.current = {
-        id: reservation.id,
-        date: reservation.date || '',
-        time: reservation.time || '',
-        tableId: reservation.table_id !== undefined ? reservation.table_id : null,
-      };
-      card.classList.add('is-dragging');
-      if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = 'move';
-        try {
-          event.dataTransfer.setData('text/plain', JSON.stringify(dragState.current));
-        } catch (error) {
-          // Ignore serialization errors.
-        }
-      }
-    });
-
-    card.addEventListener('dragend', function () {
-      dragState.current = null;
-      card.classList.remove('is-dragging');
-    });
-
-    card.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openQuickCreate(
-          {
-            date: reservation.date || formatDate(state.date),
-            time: reservation.time || '19:00',
-            tableId: reservation.table_id !== undefined ? reservation.table_id : null,
-            roomId: reservation.room_id !== undefined ? reservation.room_id : null,
-          }
-        );
-      }
-    });
-
-    return card;
-  }
-
-  function findDay(date) {
-    var iso = formatDate(date);
-    for (var i = 0; i < state.days.length; i++) {
-      if (state.days[i] && state.days[i].date === iso) {
-        return state.days[i];
-      }
-    }
-    return { date: iso, reservations: [] };
-  }
-
-  function normalizeDays(payload) {
-    if (Array.isArray(payload.days)) {
-      return payload.days.map(normalizeDay);
-    }
-
-    if (Array.isArray(payload.reservations)) {
-      var grouped = {};
-      for (var i = 0; i < payload.reservations.length; i++) {
-        var reservation = normalizeReservation(payload.reservations[i]);
-        var date = reservation.date || formatDate(state.date);
-        if (!grouped[date]) {
-          grouped[date] = { date: date, reservations: [] };
-        }
-        grouped[date].reservations.push(reservation);
-      }
-      var result = [];
-      for (var key in grouped) {
-        if (Object.prototype.hasOwnProperty.call(grouped, key)) {
-          result.push(grouped[key]);
-        }
-      }
-      return result;
-    }
-
-    return [];
-  }
-
-  function normalizeDay(day) {
-    var date = day && day.date ? String(day.date) : formatDate(state.date);
-    var reservations = Array.isArray(day.reservations) ? day.reservations.map(normalizeReservation) : [];
-    return { date: date, reservations: reservations };
-  }
-
-  function normalizeReservation(entry) {
-    var reservation = entry || {};
-    return {
-      id: reservation.id !== undefined ? Number(reservation.id) : null,
-      status: reservation.status || 'pending',
-      date: reservation.date || reservation.reservation_date || formatDate(state.date),
-      time: reservation.time || '',
-      party: reservation.party !== undefined ? Number(reservation.party) : 0,
-      notes: reservation.notes || '',
-      allergies: reservation.allergies || '',
-      room_id: reservation.room_id !== undefined && reservation.room_id !== null ? Number(reservation.room_id) : null,
-      table_id: reservation.table_id !== undefined && reservation.table_id !== null ? Number(reservation.table_id) : null,
-      customer: normalizeCustomer(reservation.customer),
-    };
-  }
-
-  function normalizeCustomer(customer) {
-    if (!customer || typeof customer !== 'object') {
-      return { name: '' };
-    }
-    var name = customer.name || '';
-    if (!name) {
-      var first = customer.first_name || '';
-      var last = customer.last_name || '';
-      name = (first + ' ' + last).trim();
-    }
-    if (!name) {
-      name = customer.email || customer.phone || '';
-    }
-    return {
-      id: customer.id !== undefined && customer.id !== null ? Number(customer.id) : null,
-      name: name,
-      email: customer.email || '',
-      phone: customer.phone || '',
-    };
-  }
-
-  function expandWeekDays(days, date) {
-    var start = startOfWeek(date);
-    var result = [];
-    for (var i = 0; i < 7; i++) {
-      var dayDate = addDays(start, i);
-      var iso = formatDate(dayDate);
-      var match = null;
-      for (var j = 0; j < days.length; j++) {
-        if (days[j] && days[j].date === iso) {
-          match = days[j];
-          break;
-        }
-      }
-      result.push(match || { date: iso, reservations: [] });
-    }
-    return result;
-  }
-
-  function moveReservation(id, payload) {
-    request('/fp-resv/v1/agenda/reservations/' + id + '/move', {
-      method: 'POST',
-      data: {
-        date: payload.date,
-        time: payload.time,
-        table_id: payload.table_id,
-        room_id: payload.room_id,
-      },
-    })
-      .then(function () {
-        announce(strings.agendaMoveSuccess || fpResvAgendaTranslate('Reservation updated.'));
-        loadAgenda();
-      })
-      .catch(function () {
-        window.alert(strings.agendaMoveError || fpResvAgendaTranslate('Unable to move the reservation.'));
-      });
-  }
-
-  function openQuickCreate(slot) {
-    openCreateModal(slot);
-  }
-
-  function setMessage(message, isError) {
-    if (!empty) {
-      return;
-    }
-    if (!message) {
-      empty.hidden = true;
-      empty.textContent = '';
-      empty.classList.remove('is-error');
-      return;
-    }
-    empty.hidden = false;
-    empty.textContent = message;
-    if (isError) {
-      empty.classList.add('is-error');
-    } else {
-      empty.classList.remove('is-error');
-    }
-  }
-}
-function _splitName(value) {
-  var parts = (value || '').split(/\s+/).filter(Boolean);
-  if (!parts.length) {
-    return { first: value, last: '' };
-  }
-  var first = parts.shift();
-  return { first: first || value, last: parts.join(' ') };
-}
-
-function timeToMinutes(time) {
-  var parts = (time || '').split(':');
-  if (parts.length < 2) {
-    return NaN;
-  }
-  var hours = parseInt(parts[0], 10);
-  var minutes = parseInt(parts[1], 10);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return NaN;
-  }
-  return hours * 60 + minutes;
-}
-
-function minutesToTime(minutes) {
-  var hours = Math.floor(minutes / 60);
-  var mins = minutes % 60;
-  return pad(hours) + ':' + pad(mins);
-}
-
-function pad(value) {
-  var string = String(Math.abs(value));
-  return (string.length < 2 ? '0' : '') + string;
-}
-
-function normalizeDate(date) {
-  var normalized = new Date(date.getTime());
-  normalized.setHours(0, 0, 0, 0);
-  return normalized;
-}
-
-function formatDate(date) {
-  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
-}
-
-function parseISODate(value) {
-  if (!value) {
-    return null;
-  }
-  var parts = value.split('-');
-  if (parts.length !== 3) {
-    return null;
-  }
-  var year = parseInt(parts[0], 10);
-  var month = parseInt(parts[1], 10) - 1;
-  var day = parseInt(parts[2], 10);
-  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
-    return null;
-  }
-  return normalizeDate(new Date(year, month, day));
-}
-
-function formatHumanDate(value) {
-  if (!value) {
-    return '';
-  }
-  var date = value instanceof Date ? value : parseISODate(String(value));
-  if (!date) {
-    return '';
-  }
-  return date.toLocaleDateString(undefined, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function formatWeekRange(date) {
-  var start = startOfWeek(date);
-  var end = addDays(start, 6);
-  return formatHumanDate(start) + ' – ' + formatHumanDate(end);
-}
-
-function startOfWeek(date) {
-  var normalized = normalizeDate(date);
-  var day = normalized.getDay();
-  var diff = day === 0 ? -6 : 1 - day;
-  return addDays(normalized, diff);
-}
-
-function addDays(date, amount) {
-  var clone = new Date(date.getTime());
-  clone.setDate(clone.getDate() + amount);
-  return normalizeDate(clone);
-}
-
-function sanitizeStatus(status) {
-  return String(status || 'pending').toLowerCase().replace(/[^a-z0-9-]/g, '-');
-}
-
-function escapeHtml(value) {
-  var div = document.createElement('div');
-  div.textContent = value || '';
-  return div.innerHTML;
-}
-
-function addOption(select, value, label) {
-  var option = document.createElement('option');
-  option.value = value;
-  option.textContent = label;
-  select.appendChild(option);
-}
-
-function announce(message) {
-  if (window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
-    window.wp.a11y.speak(message);
-  }
-}
-function initArrivals(section, range, request, strings) {
-  section.hidden = false;
-
-  var title = section.querySelector('[data-role="arrivals-title"]');
-  var list = section.querySelector('[data-role="arrivals-list"]');
-  var empty = section.querySelector('[data-role="arrivals-empty"]');
-  var reload = section.querySelector('[data-action="arrivals-reload"]');
-  var roomFilter = section.querySelector('[data-role="arrivals-room"]');
-  var statusFilter = section.querySelector('[data-role="arrivals-status"]');
-
-  if (title) {
-    var baseTitle = strings.arrivalsTitle || 'Prenotazioni in arrivo';
-    title.textContent = range === 'week' ? baseTitle + ' · 7 giorni' : baseTitle + ' · Oggi';
-  }
-
-  if (reload && strings.arrivalsReload) {
-    reload.textContent = strings.arrivalsReload;
-  }
-
-  function buildQuery(params) {
-    var query = new URLSearchParams();
-    Object.keys(params).forEach(function (key) {
-      var value = params[key];
-      if (value === undefined || value === null || value === '') {
-        return;
-      }
-      query.append(key, value);
-    });
-    return query.toString();
-  }
-
-  function toggle(element, shouldShow) {
-    if (!element) {
-      return;
-    }
-    element.hidden = !shouldShow;
-  }
-
-  function renderArrivals(reservations) {
-    if (!list || !empty) {
-      return;
-    }
-
-    list.innerHTML = '';
-
-    if (!reservations || !reservations.length) {
-      empty.textContent = strings.arrivalsEmpty || 'Nessuna prenotazione imminente.';
-      toggle(empty, true);
-      toggle(list, false);
-      return;
-    }
-
-    reservations.forEach(function (item) {
-      var card = document.createElement('li');
-      card.className = 'fp-resv-arrivals__card';
-
-      var header = document.createElement('header');
-      header.className = 'fp-resv-arrivals__card-header';
-      header.innerHTML =
-        '<span class="fp-resv-arrivals__time">' +
-        escapeHtml(item.time || '') +
-        '</span>' +
-        '<span class="fp-resv-arrivals__table">' +
-        escapeHtml(item.table_label || '') +
-        '</span>' +
-        '<span class="fp-resv-arrivals__party">' +
-        escapeHtml(String(item.party || 0)) +
-        ' px</span>';
-
-      var body = document.createElement('div');
-      body.className = 'fp-resv-arrivals__card-body';
-
-      var guestName = document.createElement('p');
-      guestName.className = 'fp-resv-arrivals__guest';
-      guestName.textContent = item.guest || '';
-      body.appendChild(guestName);
-
-      if (item.notes) {
-        var notes = document.createElement('p');
-        notes.className = 'fp-resv-arrivals__notes';
-        notes.textContent = item.notes;
-        body.appendChild(notes);
-      }
-
-      if (item.allergies && item.allergies.length) {
-        var badges = document.createElement('ul');
-        badges.className = 'fp-resv-arrivals__badges';
-        item.allergies.forEach(function (badge) {
-          var badgeItem = document.createElement('li');
-          badgeItem.textContent = badge;
-          badges.appendChild(badgeItem);
+            if (response.status === 204) return null;
+            return response.json();
         });
-        body.appendChild(badges);
-      }
-
-      var actions = document.createElement('div');
-      actions.className = 'fp-resv-arrivals__actions';
-      actions.appendChild(createActionButton(item, 'confirm'));
-      actions.appendChild(createActionButton(item, 'visited'));
-      actions.appendChild(createActionButton(item, 'no-show'));
-      actions.appendChild(createActionButton(item, 'move'));
-
-      card.appendChild(header);
-      card.appendChild(body);
-      card.appendChild(actions);
-
-      list.appendChild(card);
-    });
-
-    toggle(empty, false);
-    toggle(list, true);
-  }
-
-  function createActionButton(item, action) {
-    var labelKey =
-      action === 'confirm'
-        ? 'actionConfirm'
-        : action === 'visited'
-        ? 'actionVisited'
-        : action === 'no-show'
-        ? 'actionNoShow'
-        : 'actionMove';
-
-    var button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'button button-small';
-    button.textContent = strings[labelKey] || action;
-    button.addEventListener('click', function () {
-      handleAction(item, action);
-    });
-
-    return button;
-  }
-
-  function handleAction(item, action) {
-    if (!item || !item.id) {
-      return;
     }
 
-    if (action === 'move') {
-      window.alert(strings.drawerPlaceholder || fpResvAgendaTranslate('Feature in development.'));
-      return;
+    function loadReservations() {
+        showLoading();
+
+        const dateStr = formatDate(currentDate);
+        const params = new URLSearchParams({
+            date: dateStr,
+            ...(currentService && { service: currentService })
+        });
+
+        request(`reservations?${params}`)
+            .then(data => {
+                reservations = Array.isArray(data) ? data : (data.reservations || []);
+                renderTimeline();
+                updateSummary();
+            })
+            .catch(error => {
+                console.error('Error loading reservations:', error);
+                showEmpty();
+            });
     }
 
-    var payload = {};
-    if (action === 'confirm') {
-      payload.status = 'confirmed';
-    }
-    if (action === 'visited') {
-      payload.status = 'visited';
-      payload.visited = true;
-    }
-    if (action === 'no-show') {
-      payload.status = 'no-show';
-    }
-
-    request('/fp-resv/v1/agenda/reservations/' + item.id, {
-      method: 'POST',
-      data: payload,
-    })
-      .then(function () {
-        announce(strings.agendaMoveSuccess || fpResvAgendaTranslate('Reservation updated.'));
-        loadArrivals();
-      })
-      .catch(function () {
-        announce(strings.arrivalsError || 'Aggiornamento non riuscito');
-      });
-  }
-
-  function loadArrivals() {
-    if (empty) {
-      empty.textContent = strings.arrivalsLoading || 'Caricamento…';
-      toggle(empty, true);
+    function createReservation(data) {
+        return request('reservations', { method: 'POST', data })
+            .then(() => {
+                loadReservations();
+                closeModal('[data-modal="new-reservation"]');
+            })
+            .catch(error => {
+                const errorEl = document.querySelector('[data-role="form-error"]');
+                if (errorEl) {
+                    errorEl.textContent = error.message || 'Impossibile creare la prenotazione';
+                    errorEl.hidden = false;
+                }
+                throw error;
+            });
     }
 
-    var params = {
-      range: range,
-    };
-
-    if (roomFilter && roomFilter.value.trim() !== '') {
-      params.room = roomFilter.value.trim();
-    }
-    if (statusFilter && statusFilter.value.trim() !== '') {
-      params.status = statusFilter.value.trim();
+    function updateReservationStatus(status) {
+        // Implementazione placeholder
+        console.log('Update status to:', status);
+        closeModal('[data-modal="reservation-details"]');
     }
 
-    var query = buildQuery(params);
+    // Rendering
+    function showLoading() {
+        if (loadingEl) loadingEl.hidden = false;
+        if (emptyEl) emptyEl.hidden = true;
+        if (timelineEl) timelineEl.hidden = true;
+    }
 
-    request('/fp-resv/v1/reservations/arrivals?' + query)
-      .then(function (response) {
-        var reservations = (response && response.reservations) || [];
-        renderArrivals(reservations);
-      })
-      .catch(function () {
-        if (empty) {
-          empty.textContent = strings.arrivalsError || 'Errore durante il caricamento';
-          toggle(empty, true);
+    function showEmpty() {
+        if (loadingEl) loadingEl.hidden = true;
+        if (emptyEl) emptyEl.hidden = false;
+        if (timelineEl) timelineEl.hidden = true;
+    }
+
+    function renderTimeline() {
+        if (!timelineEl) return;
+
+        if (loadingEl) loadingEl.hidden = true;
+
+        if (!reservations.length) {
+            showEmpty();
+            return;
         }
-        if (list) {
-          toggle(list, false);
+
+        emptyEl.hidden = true;
+        timelineEl.hidden = false;
+
+        // Group by time slot
+        const slots = groupByTimeSlot(reservations);
+        
+        timelineEl.innerHTML = '';
+
+        Object.keys(slots).sort().forEach(time => {
+            const slotReservations = slots[time];
+            
+            const slotEl = document.createElement('div');
+            slotEl.className = 'fp-resv-timeline__slot';
+            
+            slotEl.innerHTML = `
+                <div class="fp-resv-timeline__time">${time}</div>
+                <div class="fp-resv-timeline__reservations">
+                    ${slotReservations.map(renderReservationCard).join('')}
+                </div>
+            `;
+            
+            timelineEl.appendChild(slotEl);
+        });
+    }
+
+    function groupByTimeSlot(reservations) {
+        const slots = {};
+        
+        reservations.forEach(resv => {
+            const time = formatTime(resv.slot_start || resv.time || '12:00');
+            if (!slots[time]) {
+                slots[time] = [];
+            }
+            slots[time].push(resv);
+        });
+        
+        return slots;
+    }
+
+    function renderReservationCard(resv) {
+        const status = resv.status || 'pending';
+        const statusLabels = {
+            'pending': 'In attesa',
+            'confirmed': 'Confermata',
+            'visited': 'Servita',
+            'no_show': 'No-show',
+            'cancelled': 'Annullata'
+        };
+
+        const name = [resv.first_name, resv.last_name].filter(Boolean).join(' ') || 'Cliente';
+        const party = resv.party || resv.guests || 2;
+        const phone = resv.phone || '';
+        const notes = resv.notes || '';
+
+        return `
+            <div class="fp-resv-reservation-card" data-status="${status}" data-action="view-reservation-${resv.id}">
+                <div class="fp-resv-reservation-card__header">
+                    <div class="fp-resv-reservation-card__name">${escapeHtml(name)}</div>
+                    <div class="fp-resv-reservation-card__badge">${statusLabels[status]}</div>
+                </div>
+                <div class="fp-resv-reservation-card__info">
+                    <div class="fp-resv-reservation-card__info-item">
+                        <span class="dashicons dashicons-groups"></span>
+                        <span>${party} ${party === 1 ? 'coperto' : 'coperti'}</span>
+                    </div>
+                    ${phone ? `
+                    <div class="fp-resv-reservation-card__info-item">
+                        <span class="dashicons dashicons-phone"></span>
+                        <span>${escapeHtml(phone)}</span>
+                    </div>
+                    ` : ''}
+                    ${notes ? `
+                    <div class="fp-resv-reservation-card__info-item">
+                        <span class="dashicons dashicons-info"></span>
+                        <span>${escapeHtml(notes.substring(0, 30))}${notes.length > 30 ? '...' : ''}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateSummary() {
+        if (!summaryEl) return;
+
+        const dateEl = summaryEl.querySelector('.fp-resv-agenda__summary-date');
+        const statsEl = summaryEl.querySelector('.fp-resv-agenda__summary-stats');
+
+        if (dateEl) {
+            dateEl.textContent = formatDateLong(currentDate);
         }
-      });
-  }
 
-  if (reload) {
-    reload.addEventListener('click', function () {
-      loadArrivals();
-    });
-  }
+        if (statsEl) {
+            const total = reservations.length;
+            const confirmed = reservations.filter(r => r.status === 'confirmed').length;
+            const totalGuests = reservations.reduce((sum, r) => sum + (r.party || r.guests || 0), 0);
+            
+            statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
+        }
+    }
 
-  loadArrivals();
-}
+    // Modals
+    function openNewReservationModal() {
+        const modal = document.querySelector('[data-modal="new-reservation"]');
+        if (!modal) return;
+
+        const form = modal.querySelector('[data-form="new-reservation"]');
+        if (form) {
+            form.reset();
+            
+            // Set default date and time
+            const dateInput = form.querySelector('[data-field="date"]');
+            const timeInput = form.querySelector('[data-field="time"]');
+            
+            if (dateInput) dateInput.value = formatDate(currentDate);
+            if (timeInput) timeInput.value = '19:30';
+
+            // Clear errors
+            const errorEl = form.querySelector('[data-role="form-error"]');
+            if (errorEl) errorEl.hidden = true;
+        }
+
+        openModal(modal);
+    }
+
+    function submitReservation() {
+        const form = document.querySelector('[data-form="new-reservation"]');
+        if (!form || !form.checkValidity()) {
+            form?.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Combine date and time into slot_start
+        if (data.date && data.time) {
+            data.slot_start = `${data.date} ${data.time}`;
+        }
+
+        // Set default status
+        data.status = 'pending';
+
+        createReservation(data);
+    }
+
+    function viewReservationDetails(id) {
+        const resv = reservations.find(r => r.id === id);
+        if (!resv) return;
+
+        const modal = document.querySelector('[data-modal="reservation-details"]');
+        if (!modal) return;
+
+        const contentEl = modal.querySelector('[data-role="details-content"]');
+        if (contentEl) {
+            contentEl.innerHTML = renderDetails(resv);
+        }
+
+        openModal(modal);
+    }
+
+    function renderDetails(resv) {
+        const name = [resv.first_name, resv.last_name].filter(Boolean).join(' ') || 'N/D';
+        const statusLabels = {
+            'pending': 'In attesa',
+            'confirmed': 'Confermata',
+            'visited': 'Servita',
+            'no_show': 'No-show',
+            'cancelled': 'Annullata'
+        };
+
+        return `
+            <div class="fp-resv-details__section">
+                <h3 class="fp-resv-details__section-title">Informazioni prenotazione</h3>
+                <div class="fp-resv-details__grid">
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Nome cliente</div>
+                        <div class="fp-resv-details__value">${escapeHtml(name)}</div>
+                    </div>
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Stato</div>
+                        <div class="fp-resv-details__value">${statusLabels[resv.status] || resv.status}</div>
+                    </div>
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Data e ora</div>
+                        <div class="fp-resv-details__value">${formatDateTimeLong(resv.slot_start || resv.date)}</div>
+                    </div>
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Numero coperti</div>
+                        <div class="fp-resv-details__value">${resv.party || resv.guests || 0}</div>
+                    </div>
+                    ${resv.email ? `
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Email</div>
+                        <div class="fp-resv-details__value">${escapeHtml(resv.email)}</div>
+                    </div>
+                    ` : ''}
+                    ${resv.phone ? `
+                    <div class="fp-resv-details__item">
+                        <div class="fp-resv-details__label">Telefono</div>
+                        <div class="fp-resv-details__value">${escapeHtml(resv.phone)}</div>
+                    </div>
+                    ` : ''}
+                </div>
+                ${resv.notes ? `
+                <div class="fp-resv-details__item" style="margin-top: 16px;">
+                    <div class="fp-resv-details__label">Note</div>
+                    <div class="fp-resv-details__value">${escapeHtml(resv.notes)}</div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    function openModal(modal) {
+        if (!modal) return;
+        currentModal = modal;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+
+        // Focus first input
+        requestAnimationFrame(() => {
+            const firstInput = modal.querySelector('input, select, textarea');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(selector) {
+        const modal = typeof selector === 'string' ? document.querySelector(selector) : selector;
+        if (!modal) return;
+
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        currentModal = null;
+
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+
+    // Utility functions
+    function formatDate(date) {
+        const d = date instanceof Date ? date : new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function formatDateLong(date) {
+        const d = date instanceof Date ? date : new Date(date);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return d.toLocaleDateString('it-IT', options);
+    }
+
+    function formatTime(timeStr) {
+        if (!timeStr) return '';
+        const time = timeStr.includes(':') ? timeStr : timeStr.substring(0, 5);
+        return time.substring(0, 5);
+    }
+
+    function formatDateTimeLong(dateTimeStr) {
+        if (!dateTimeStr) return 'N/D';
+        const dt = new Date(dateTimeStr);
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit' };
+        return `${dt.toLocaleDateString('it-IT', dateOptions)} alle ${dt.toLocaleTimeString('it-IT', timeOptions)}`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+})();
