@@ -1604,6 +1604,19 @@ class FormApp {
         if (this.errorAlert && this.errorMessage) {
             this.errorMessage.textContent = finalMessage;
             this.errorAlert.hidden = false;
+            
+            // Scroll automatico verso l'alert di errore
+            requestAnimationFrame(() => {
+                if (typeof this.errorAlert.scrollIntoView === 'function') {
+                    this.errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                // Focus sull'alert per l'accessibilità
+                if (typeof this.errorAlert.focus === 'function') {
+                    this.errorAlert.setAttribute('tabindex', '-1');
+                    this.errorAlert.focus({ preventScroll: true });
+                }
+            });
         }
 
         this.state.hintOverride = finalMessage;

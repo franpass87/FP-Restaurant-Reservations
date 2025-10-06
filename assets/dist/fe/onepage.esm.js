@@ -112,7 +112,7 @@ function dt(a) {
   }
   return {};
 }
-function b(a, t) {
+function v(a, t) {
   if (!a)
     return null;
   const e = Object.assign({ event: a }, t || {});
@@ -173,7 +173,7 @@ function yt(a) {
   return a ? a.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex="0"]') : null;
 }
 const mt = ["date", "party", "slots", "details", "confirm"];
-function vt(a) {
+function bt(a) {
   return a.text().then((t) => {
     if (!t)
       return {};
@@ -453,7 +453,7 @@ class G {
     }
     this.applyMealSelection(t), this.applyMealAvailabilityNotice(e, i, { skipSlotReset: !0 });
     const s = this.events.meal_selected || "meal_selected";
-    b(s, {
+    v(s, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
     }), i !== "full" && this.scheduleAvailabilityUpdate({ immediate: !0 });
@@ -563,7 +563,7 @@ class G {
       return;
     this.state.unlocked[t] = !0;
     const e = this.events.section_unlocked || "section_unlocked";
-    b(e, { section: t });
+    v(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
     const s = t.getAttribute("data-step") || "", r = i && i.silent === !0;
@@ -612,7 +612,7 @@ class G {
     }
     if (t && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
-      b(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
+      v(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
   }
   updateInlineErrors() {
@@ -673,7 +673,7 @@ class G {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    ft(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && b("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    ft(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && v("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
@@ -719,7 +719,7 @@ class G {
     if (t.preventDefault(), this.state.touchedFields.consent = !0, !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
-    b(e, {
+    v(e, {
       source: "form",
       form_id: this.form && this.form.id ? this.form.id : this.root.id || "",
       date: i.date,
@@ -739,8 +739,8 @@ class G {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l }), !p.ok) {
-        const f = await vt(p), m = f && f.message || this.copy.submitError;
+      if (l = Math.round(performance.now() - n), v("ui_latency", { op: "submit", ms: l }), !p.ok) {
+        const f = await bt(p), m = f && f.message || this.copy.submitError;
         throw Object.assign(new Error(m), {
           status: p.status,
           payload: f
@@ -749,7 +749,7 @@ class G {
       const u = await p.json();
       this.handleSubmitSuccess(u);
     } catch (p) {
-      l || (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(p, l);
+      l || (l = Math.round(performance.now() - n), v("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(p, l);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -769,14 +769,16 @@ class G {
       });
     }
     t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
-      i && i.event && b(i.event, i);
+      i && i.event && v(i.event, i);
     });
   }
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, r = t && typeof t == "object" && t.payload || null, n = X(s, r);
-    this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1), this.state.hintOverride = n, this.updateSubmitState();
+    this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
+      typeof this.errorAlert.scrollIntoView == "function" && this.errorAlert.scrollIntoView({ behavior: "smooth", block: "center" }), typeof this.errorAlert.focus == "function" && (this.errorAlert.setAttribute("tabindex", "-1"), this.errorAlert.focus({ preventScroll: !0 }));
+    })), this.state.hintOverride = n, this.updateSubmitState();
     const l = this.events.submit_error || "submit_error";
-    b(l, { code: i, latency: e });
+    v(l, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.state.hintOverride = "";
@@ -809,7 +811,7 @@ class G {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), b("phone_validation_error", { field: "phone" }), b("ui_validation_error", { field: "phone" }));
+    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), v("phone_validation_error", { field: "phone" }), v("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (typeof t.value == "string") {
@@ -820,7 +822,7 @@ class G {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), b("ui_validation_error", { field: "email" }));
+    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), v("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -896,10 +898,10 @@ class G {
     this.updateSummary(), this.updateSubmitState();
   }
   handleAvailabilityLatency(t) {
-    b("ui_latency", { op: "availability", ms: Math.round(t) });
+    v("ui_latency", { op: "availability", ms: Math.round(t) });
   }
   handleAvailabilityRetry(t) {
-    b("availability_retry", { attempt: t });
+    v("availability_retry", { attempt: t });
   }
   handleWindowFocus() {
     this.availabilityController && typeof this.availabilityController.revalidate == "function" && this.availabilityController.revalidate();
@@ -908,7 +910,7 @@ class G {
     if (this.state.started)
       return;
     const t = this.events.start || "reservation_start";
-    b(t, { source: "form" }), this.state.started = !0;
+    v(t, { source: "form" }), this.state.started = !0;
   }
   handleDelegatedTrackingEvent(t) {
     const e = t.target instanceof HTMLElement ? t.target : null;
@@ -925,13 +927,13 @@ class G {
       const n = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
       n && (r.label = n.trim());
     }
-    b(s, r);
+    v(s, r);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
       return;
     const e = t.detail || {}, i = this.events.confirmed || "reservation_confirmed";
-    b(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && b(this.events.purchase || "purchase", e.purchase);
+    v(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && v(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
     typeof t.scrollIntoView == "function" && t.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1064,9 +1066,9 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   if (!e)
     return;
   const i = t.payload || t.data || {};
-  b(e, i && typeof i == "object" ? i : {});
+  v(e, i && typeof i == "object" ? i : {});
 });
-const bt = 400, gt = 6e4, St = 3, J = 600;
+const vt = 400, gt = 6e4, St = 3, J = 600;
 function At(a, t) {
   let e;
   try {
@@ -1090,15 +1092,15 @@ function Ct(a) {
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const h = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), v = (S) => S.some((c) => h.startsWith(c)), w = (S) => S.some((c) => h.includes(c));
-    return v(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || v(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : v(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const h = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), b = (S) => S.some((c) => h.startsWith(c)), w = (S) => S.some((c) => h.includes(c));
+    return b(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || b(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : b(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function A(o, d) {
     const y = Array.isArray(o) ? o : [], h = y.length;
     if (h === 0)
       return { state: "full", slots: 0 };
-    const v = y.map((c) => E(c && c.status)).filter((c) => c !== "");
-    return v.some((c) => c === "limited") ? { state: "limited", slots: h } : v.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : v.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
+    const b = y.map((c) => E(c && c.status)).filter((c) => c !== "");
+    return b.some((c) => c === "limited") ? { state: "limited", slots: h } : b.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : b.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
   }
   function _(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
@@ -1113,8 +1115,8 @@ function Ct(a) {
   function q(o, d) {
     const y = typeof d == "string" ? d : d ? "loading" : "idle", h = typeof o == "string" ? o : "";
     e && (e.textContent = h, e.setAttribute("data-state", y));
-    const v = y === "loading";
-    t.setAttribute("data-loading", v ? "true" : "false"), i && i.setAttribute("aria-busy", v ? "true" : "false");
+    const b = y === "loading";
+    t.setAttribute("data-loading", b ? "true" : "false"), i && i.setAttribute("aria-busy", b ? "true" : "false");
   }
   function C() {
     if (!i)
@@ -1128,7 +1130,7 @@ function Ct(a) {
   }
   function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", h = d && typeof o.date == "string" ? o.date.trim() : "", v = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && h !== "" && (v !== "" && v !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
+    const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", h = d && typeof o.date == "string" ? o.date.trim() : "", b = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && h !== "" && (b !== "" && b !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
     q(g, "idle"), i && V(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
   function N() {
@@ -1172,17 +1174,17 @@ function Ct(a) {
       const S = document.createElement("li"), c = document.createElement("button");
       c.type = "button", c.textContent = w.label || "", c.dataset.slot = w.start || "", c.dataset.slotStatus = w.status || "", c.setAttribute("aria-pressed", f && f.start === w.start ? "true" : "false"), c.addEventListener("click", () => Z(w, c)), S.appendChild(c), i.appendChild(S);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
-    const v = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    _(d, A(h, v));
+    const b = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
+    _(d, A(h, b));
   }
   function L(o, d) {
     if (u = o, !o || !o.date || !o.party) {
       I(o);
       return;
     }
-    const y = ++m, h = JSON.stringify([o.date, o.meal, o.party]), v = l.get(h);
-    if (v && Date.now() - v.timestamp < gt && d === 0) {
-      j(v.payload, o, y);
+    const y = ++m, h = JSON.stringify([o.date, o.meal, o.party]), b = l.get(h);
+    if (b && Date.now() - b.timestamp < gt && d === 0) {
+      j(b.payload, o, y);
       return;
     }
     B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), _(o, { state: "loading", slots: 0 });
@@ -1231,8 +1233,8 @@ function Ct(a) {
   return {
     schedule(o, d = {}) {
       p && window.clearTimeout(p);
-      const y = d && typeof d == "object" ? d : {}, h = o || (typeof a.getParams == "function" ? a.getParams() : null), v = !!(h && h.requiresMeal);
-      if (!h || !h.date || !h.party || v && !h.meal) {
+      const y = d && typeof d == "object" ? d : {}, h = o || (typeof a.getParams == "function" ? a.getParams() : null), b = !!(h && h.requiresMeal);
+      if (!h || !h.date || !h.party || b && !h.meal) {
         u = h, I(h || {});
         return;
       }
@@ -1242,7 +1244,7 @@ function Ct(a) {
       }
       p = window.setTimeout(() => {
         L(h, 0);
-      }, bt);
+      }, vt);
     },
     revalidate() {
       if (!u)
