@@ -1232,6 +1232,12 @@ class FormApp {
                 }
             }
 
+            // Nascondi il messaggio di errore per il campo consent se è valido
+            if (key === 'consent' && field && field.checked) {
+                visible = false;
+                text = '';
+            }
+
             if (visible) {
                 errorEl.textContent = text;
                 errorEl.hidden = false;
