@@ -1028,7 +1028,7 @@ class G {
 }
 typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = G, window.fpResvApp = window.FPResv);
 function W() {
-  console.log("[FP-RESV] Plugin v0.1.3 loaded - Slot validation active");
+  console.log("[FP-RESV] Plugin v0.1.5 loaded - Complete form functionality active");
   const a = document.querySelectorAll("[data-fp-resv]");
   console.log("[FP-RESV] Found widgets:", a.length), Array.prototype.forEach.call(a, function(t) {
     try {

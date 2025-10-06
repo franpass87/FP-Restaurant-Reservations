@@ -2099,7 +2099,7 @@ if (typeof window !== 'undefined') {
 
 // Initialize immediately if DOM is already ready
 function initializeFPResv() {
-    console.log('[FP-RESV] Plugin v0.1.3 loaded - Slot validation active');
+    console.log('[FP-RESV] Plugin v0.1.5 loaded - Complete form functionality active');
     const widgets = document.querySelectorAll('[data-fp-resv]');
     console.log('[FP-RESV] Found widgets:', widgets.length);
     
