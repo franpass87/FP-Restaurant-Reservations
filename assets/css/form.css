@@ -648,6 +648,46 @@
     min-width: 0;
 }
 
+/* Extras: checkbox inline layout and dedicated section styling */
+.fp-resv-field--checkbox {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+    column-gap: 0.65rem;
+    row-gap: 0.35rem;
+}
+
+.fp-resv-field--checkbox .fp-checkbox {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+}
+
+.fp-resv-extra {
+    border: 1px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.35));
+    border-radius: calc(var(--fp-resv-radius-lg) * 0.8);
+    padding: clamp(0.85rem, 2.5vw, 1.25rem);
+    background: var(--fp-resv-color-surface-alt);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.fp-resv-extra__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.fp-resv-extra__title::before {
+    content: '';
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--fp-resv-color-primary), var(--fp-resv-color-primary-strong));
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+    flex: 0 0 auto;
+}
+
 .fp-resv-field--phone {
     grid-column: 1 / -1;
 }
