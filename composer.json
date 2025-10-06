@@ -33,7 +33,7 @@
     },
     "scripts": {
         "build": [
-            "rm -rf vendor",
+            "if exist vendor rmdir /s /q vendor",
             "@composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader",
             "composer dump-autoload -o --classmap-authoritative"
         ]

@@ -94,7 +94,7 @@ final class WidgetController
                         console.error("[FP-RESV] Direct script injection failed");
                         // Fallback to development version
                         const devScript = document.createElement("script");
-                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/onepage.js') . '?v=' . esc_js($version) . '";
+                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/form-app-fallback.js') . '?v=' . esc_js($version) . '";
                         devScript.onload = function() {
                             console.log("[FP-RESV] Development script loaded");
                             initializeFPResv();
@@ -138,7 +138,7 @@ final class WidgetController
             });
         } else {
             // Fall back to development module
-            $moduleUrl = Plugin::$url . 'assets/js/fe/onepage.js';
+            $moduleUrl = Plugin::$url . 'assets/js/fe/form-app-fallback.js';
             
             wp_register_script(
                 self::HANDLE_MODULE,

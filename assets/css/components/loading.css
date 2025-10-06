@@ -1,0 +1,214 @@
+/**
+ * Componenti per stati di caricamento e vuoti
+ */
+
+/* Loading state */
+.fp-resv-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+}
+
+.fp-resv-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #4338ca;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.fp-resv-spinner--small {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+.fp-resv-spinner--large {
+    width: 60px;
+    height: 60px;
+    border-width: 6px;
+}
+
+.fp-resv-loading p {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Empty state */
+.fp-resv-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 12px;
+    text-align: center;
+}
+
+.fp-resv-empty .dashicons {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #d1d5db;
+}
+
+.fp-resv-empty h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.fp-resv-empty p {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Empty state specifico per tabelle */
+.fp-resv-tables-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--fp-resv-admin-muted);
+    font-size: 15px;
+    background: var(--fp-resv-admin-surface-alt);
+    border-radius: 12px;
+    border: 2px dashed rgba(148, 163, 184, 0.3);
+}
+
+/* Stati di errore */
+.fp-resv-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 12px;
+    text-align: center;
+    color: #dc2626;
+}
+
+.fp-resv-error .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #dc2626;
+}
+
+.fp-resv-error h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.fp-resv-error p {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Stati di successo */
+.fp-resv-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 12px;
+    text-align: center;
+    color: #059669;
+}
+
+.fp-resv-success .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #059669;
+}
+
+.fp-resv-success h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.fp-resv-success p {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Animazioni */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.fp-resv-loading--pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stati nascosti */
+.fp-resv-loading[hidden],
+.fp-resv-empty[hidden],
+.fp-resv-error[hidden],
+.fp-resv-success[hidden] {
+    display: none !important;
+}
+
+/* Loading overlay */
+.fp-resv-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.fp-resv-loading-overlay[hidden] {
+    display: none !important;
+}
+
+/* Skeleton loading */
+.fp-resv-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.fp-resv-skeleton--text {
+    height: 16px;
+    margin-bottom: 8px;
+}
+
+.fp-resv-skeleton--title {
+    height: 24px;
+    margin-bottom: 12px;
+}
+
+.fp-resv-skeleton--button {
+    height: 40px;
+    width: 120px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

@@ -1,0 +1,209 @@
+/**
+ * FP Restaurant Reservations - CSS Ottimizzato
+ * Versione modulare per migliorare la manutenibilità
+ */
+
+/* Import dei componenti modulari */
+@import url('./components/buttons.css');
+@import url('./components/cards.css');
+@import url('./components/modals.css');
+@import url('./components/forms.css');
+@import url('./components/loading.css');
+
+/* Layout principale */
+.fp-resv-style-admin__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    gap: var(--fp-resv-admin-gap);
+}
+
+.fp-resv-style-admin__form .form-table th {
+    width: 200px;
+}
+
+.fp-resv-style-admin__form .form-table td {
+    padding: 0;
+}
+
+.fp-resv-style-admin__form .form-table {
+    width: 100%;
+}
+
+.fp-resv-style-admin__form .form-table .regular-text,
+.fp-resv-style-admin__form .form-table select,
+.fp-resv-style-admin__form .form-table textarea,
+.fp-resv-style-admin__form .form-table input[type="number"],
+.fp-resv-style-admin__form .form-table input[type="text"],
+.fp-resv-style-admin__form .form-table .wp-color-picker {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.fp-resv-style-admin__form .wp-picker-container {
+    width: 100%;
+}
+
+.fp-resv-style-admin__preview {
+    display: grid;
+    gap: 24px;
+    position: sticky;
+    top: 24px;
+}
+
+/* Preview componenti */
+.fp-resv-style-preview {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    display: grid;
+    gap: 1.5rem;
+}
+
+.fp-resv-style-preview__header h2 {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.fp-resv-style-preview__subtitle {
+    margin: 0.4rem 0 0;
+    color: #475569;
+}
+
+.fp-resv-style-preview__stage {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(241, 245, 249, 0.9));
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 22px 55px rgba(15, 23, 42, 0.12);
+}
+
+.fp-resv-style-preview__iframe {
+    width: 100%;
+    min-height: 640px;
+    border: 0;
+    background: transparent;
+}
+
+.fp-resv-style-preview__contrast {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.fp-resv-style-preview__contrast-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 0.85rem 1rem;
+    transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.fp-resv-style-preview__contrast-item.is-warning {
+    border-color: #f97316;
+    box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.2);
+    background: #fff7ed;
+}
+
+.fp-resv-style-preview__contrast-item:hover {
+    transform: translateY(-1px);
+}
+
+.fp-resv-style-preview__swatch {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.fp-resv-style-preview__contrast-copy h4 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.fp-resv-style-preview__contrast-copy p {
+    margin: 0.35rem 0 0;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.fp-resv-style-preview__ratio {
+    font-weight: 600;
+    margin-right: 0.35rem;
+}
+
+.fp-resv-style-preview__grade {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+
+.fp-resv-style-preview__contrast-item.is-warning .fp-resv-style-preview__grade {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+.fp-resv-style-preview__contrast-item.is-warning .fp-resv-style-preview__swatch {
+    box-shadow: 0 12px 28px rgba(217, 119, 6, 0.32);
+}
+
+.fp-resv-style-preview__contrast-item.is-warning .fp-resv-style-preview__contrast-copy p {
+    color: #9a3412;
+}
+
+/* Azioni admin */
+.fp-resv-admin__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fp-resv-admin__reset-form {
+    display: inline-flex;
+}
+
+.fp-resv-admin__reset {
+    color: #dc2626;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+.fp-resv-admin__reset:hover,
+.fp-resv-admin__reset:focus {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .fp-resv-style-admin__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .fp-resv-style-admin__preview {
+        position: static;
+    }
+
+    .fp-resv-style-preview__iframe {
+        min-height: 520px;
+    }
+}

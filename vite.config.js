@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: !isProd,
       minify: isProd ? 'esbuild' : false,
       lib: {
-        entry: path.resolve(__dirname, 'assets/js/fe/onepage.js'),
+        entry: path.resolve(__dirname, 'assets/js/fe/form-app-optimized.js'),
         name: 'FPResv',
         formats: ['es', 'iife'],
         fileName: (format) => {

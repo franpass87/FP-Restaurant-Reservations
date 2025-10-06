@@ -1,0 +1,210 @@
+/**
+ * Componenti per form e input
+ */
+
+/* Form base */
+.fp-resv-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fp-resv-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.fp-resv-form__row label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-form__row label span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.fp-resv-form__row input,
+.fp-resv-form__row textarea,
+.fp-resv-form__row select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-form__row input:focus,
+.fp-resv-form__row textarea:focus,
+.fp-resv-form__row select:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-form__full {
+    grid-column: 1 / -1;
+}
+
+/* Form inline */
+.fp-resv-inline-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+}
+
+.fp-resv-inline-form input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.fp-resv-inline-form input:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-inline-form .button {
+    border-radius: 8px;
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
+/* Form prenotazione nel modal */
+.fp-resv-reservation-form .fp-resv-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.fp-resv-reservation-form .fp-resv-form__row label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-reservation-form .fp-resv-form__row label span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.fp-resv-reservation-form .fp-resv-form__row input,
+.fp-resv-reservation-form .fp-resv-form__row textarea {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.fp-resv-reservation-form .fp-resv-form__row input:focus,
+.fp-resv-reservation-form .fp-resv-form__row textarea:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-reservation-form .fp-resv-form__full {
+    grid-column: 1 / -1;
+}
+
+.fp-resv-reservation-form .fp-resv-quickparty {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.fp-resv-reservation-form .fp-resv-quickparty .button {
+    min-width: 44px;
+    height: 44px;
+    border-radius: 8px;
+}
+
+/* Campi form */
+.fp-resv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-field label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.fp-resv-field input,
+.fp-resv-field select,
+.fp-resv-field textarea {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-field input:focus,
+.fp-resv-field select:focus,
+.fp-resv-field textarea:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-field input[type="color"] {
+    height: 48px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+/* Stati form */
+.fp-resv-field input:invalid,
+.fp-resv-field select:invalid,
+.fp-resv-field textarea:invalid {
+    border-color: #dc2626;
+}
+
+.fp-resv-field input:invalid:focus,
+.fp-resv-field select:invalid:focus,
+.fp-resv-field textarea:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Messaggi di errore */
+.fp-resv-field-error {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.fp-resv-field-error[hidden] {
+    display: none;
+}
+
+/* Responsive form */
+@media (max-width: 640px) {
+    .fp-resv-form__row,
+    .fp-resv-reservation-form .fp-resv-form__row {
+        grid-template-columns: 1fr;
+    }
+    
+    .fp-resv-inline-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fp-resv-inline-form input,
+    .fp-resv-inline-form .button {
+        width: 100%;
+    }
+}

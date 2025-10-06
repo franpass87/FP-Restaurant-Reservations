@@ -1,0 +1,250 @@
+/**
+ * Componenti per card e contenitori
+ */
+
+/* Card base */
+.fp-resv-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.15);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.fp-resv-card:hover {
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
+}
+
+/* Card prenotazione */
+.fp-resv-reservation-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fp-resv-reservation-card:hover {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Colori per stato prenotazione */
+.fp-resv-reservation-card[data-status="pending"] {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.fp-resv-reservation-card[data-status="confirmed"] {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.fp-resv-reservation-card[data-status="visited"] {
+    border-left-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.fp-resv-reservation-card[data-status="no_show"] {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+}
+
+.fp-resv-reservation-card[data-status="cancelled"] {
+    border-left-color: #9ca3af;
+    background: #f9fafb;
+    opacity: 0.7;
+}
+
+/* Header card prenotazione */
+.fp-resv-reservation-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fp-resv-reservation-card__name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+    flex: 1;
+}
+
+.fp-resv-reservation-card__badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.fp-resv-reservation-card[data-status="pending"] .fp-resv-reservation-card__badge {
+    background: #fbbf24;
+    color: #78350f;
+}
+
+.fp-resv-reservation-card[data-status="confirmed"] .fp-resv-reservation-card__badge {
+    background: #34d399;
+    color: #064e3b;
+}
+
+.fp-resv-reservation-card[data-status="visited"] .fp-resv-reservation-card__badge {
+    background: #60a5fa;
+    color: #1e3a8a;
+}
+
+.fp-resv-reservation-card[data-status="no_show"] .fp-resv-reservation-card__badge {
+    background: #f87171;
+    color: #7f1d1d;
+}
+
+.fp-resv-reservation-card[data-status="cancelled"] .fp-resv-reservation-card__badge {
+    background: #d1d5db;
+    color: #374151;
+}
+
+/* Info card prenotazione */
+.fp-resv-reservation-card__info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.fp-resv-reservation-card__info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fp-resv-reservation-card__info-item .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Azioni card prenotazione */
+.fp-resv-reservation-card__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* Card sala */
+.fp-resv-room-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.15);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.fp-resv-room-card:hover {
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
+}
+
+.fp-resv-room-card header {
+    padding: 20px 24px;
+    background: linear-gradient(135deg, var(--room-color, #4338ca) 0%, color-mix(in srgb, var(--room-color, #4338ca) 80%, black) 100%);
+    border-bottom: 3px solid var(--room-color, #4338ca);
+}
+
+.fp-resv-room-card header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.fp-resv-room-card header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.fp-resv-room-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 24px;
+    background: #f9fafb;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.fp-resv-room-card__actions .button {
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+
+/* Lista tavoli */
+.fp-resv-table-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fp-resv-table-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    transition: background 0.15s ease;
+}
+
+.fp-resv-table-item:last-child {
+    border-bottom: none;
+}
+
+.fp-resv-table-item:hover {
+    background: #f9fafb;
+}
+
+.fp-resv-table-code {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+    min-width: 80px;
+}
+
+.fp-resv-table-meta {
+    flex: 1;
+    font-size: 13px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fp-resv-table-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fp-resv-table-actions .button-link {
+    font-size: 13px;
+    padding: 4px 10px;
+    text-decoration: none;
+    color: #4338ca;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.fp-resv-table-actions .button-link:hover {
+    background: rgba(67, 56, 202, 0.1);
+    color: #3730a3;
+}

@@ -1,0 +1,293 @@
+/**
+ * Componenti per modali e overlay
+ */
+
+/* Modal base */
+.fp-resv-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000; /* sopra WP adminbar e overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.fp-resv-modal[hidden] {
+    display: none !important;
+}
+
+.fp-resv-modal__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    animation: fadeIn 0.2s ease;
+}
+
+.fp-resv-modal__dialog {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 560px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.fp-resv-modal__dialog--wide {
+    max-width: 700px;
+}
+
+/* Armonizzazione overlay con tema/plugin */
+.fp-resv-admin--agenda .fp-resv-modal {
+    z-index: 100010;
+}
+
+/* Header modal */
+.fp-resv-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fp-resv-modal__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.fp-resv-modal__header .button-link {
+    font-size: 28px;
+    line-height: 1;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-modal__header .button-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* Body modal */
+.fp-resv-modal__body {
+    padding: 16px 20px;
+}
+
+/* Footer modal */
+.fp-resv-modal__footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Modal tables specifico */
+.fp-resv-tables-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.fp-resv-tables-modal[hidden] {
+    display: none !important;
+}
+
+.fp-resv-tables-modal__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    animation: fadeIn 0.2s ease;
+}
+
+.fp-resv-tables-modal__dialog {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 500px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.fp-resv-tables-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fp-resv-tables-modal__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.fp-resv-tables-modal__header .button-link {
+    font-size: 28px;
+    line-height: 1;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-tables-modal__header .button-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.fp-resv-tables-modal__body {
+    padding: 24px;
+}
+
+.fp-resv-tables-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fp-resv-tables-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-tables-modal__field label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.fp-resv-tables-modal__field input,
+.fp-resv-tables-modal__field select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-tables-modal__field input[type="color"] {
+    height: 48px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.fp-resv-tables-modal__field input:focus,
+.fp-resv-tables-modal__field select:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.fp-resv-tables-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.fp-resv-tables-modal__footer .button {
+    border-radius: 8px;
+    padding: 8px 18px;
+}
+
+/* Animazioni */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive modali */
+@media (max-width: 640px) {
+    .fp-resv-modal__dialog,
+    .fp-resv-tables-modal__dialog {
+        max-width: 100%;
+        margin: 10px;
+    }
+    
+    .fp-resv-modal__header,
+    .fp-resv-tables-modal__header {
+        padding: 16px 20px;
+    }
+    
+    .fp-resv-modal__body,
+    .fp-resv-tables-modal__body {
+        padding: 20px;
+    }
+    
+    .fp-resv-modal__footer,
+    .fp-resv-tables-modal__footer {
+        padding: 12px 20px;
+    }
+}

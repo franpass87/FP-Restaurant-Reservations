@@ -1,3 +1,13 @@
+## 0.1.3 - Documentazione Ottimizzata (2025-01-27)
+
+### Changed
+- Consolidata la documentazione rimuovendo file ridondanti e duplicati
+- Aggiornato README.md con informazioni sui miglioramenti architetturali
+- Ottimizzata la struttura della documentazione per migliore navigabilità
+
+### Removed
+- File di documentazione consolidati: `COMPLETAMENTO_LAVORO.md`, `CONSEGNA_PROGETTO.md`, `IMPLEMENTAZIONE_COMPLETATA.md`, `EXECUTIVE_SUMMARY.md`, `RIEPILOGO_FINALE.md`, `INDICE_DOCUMENTAZIONE.md`, `README-IMPROVEMENTS.md`
+
 ## PATCH-FORM-UX-REFINEMENTS
 - Migliorata la logica di disponibilità frontend normalizzando gli stati (`available`, `waitlist`, `busy`, `full`) così le pill pasto assumono il colore corretto.
 - Aggiunta legenda cromatica e stato neutro "Sconosciuto" per i turni quando i dati non sono ancora disponibili.
