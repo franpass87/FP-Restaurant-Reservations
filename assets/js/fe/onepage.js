@@ -979,15 +979,22 @@ class FormApp {
     }
 
     navigateToNext(section) {
+        console.log('[DEBUG] navigateToNext chiamato per step:', section.getAttribute('data-step'));
+        
         if (!this.isSectionValid(section)) {
             const stepKey = section.getAttribute('data-step') || '';
+            console.log('[DEBUG] Sezione non valida, stepKey:', stepKey);
             
             // Gestione specifica per lo step slots
             if (stepKey === 'slots') {
                 const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
                 const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
                 
+                console.log('[DEBUG] timeField:', timeField, 'value:', timeField ? timeField.value : 'null');
+                console.log('[DEBUG] slotStartField:', slotStartField, 'value:', slotStartField ? slotStartField.value : 'null');
+                
                 if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
+                    console.log('[DEBUG] Bloccando navigazione - slot non selezionato');
                     // Mostra un messaggio di errore specifico per la mancanza di selezione orario
                     const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
                     if (slotsSection) {
@@ -1019,6 +1026,7 @@ class FormApp {
             return;
         }
 
+        console.log('[DEBUG] Sezione valida, procedendo al prossimo step');
         this.completeSection(section, true);
     }
 
