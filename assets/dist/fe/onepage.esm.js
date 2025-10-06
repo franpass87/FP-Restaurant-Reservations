@@ -30,7 +30,7 @@ function ot(a) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function D(a, t) {
+function z(a, t) {
   const e = a.value, { masked: i } = ot(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
@@ -38,7 +38,7 @@ function D(a, t) {
   }
   a.setAttribute("data-phone-local", R(a.value)), a.setAttribute("data-phone-cc", k(t));
 }
-function z(a, t) {
+function D(a, t) {
   const e = R(a.value), i = k(t);
   return {
     e164: nt(i, e),
@@ -96,10 +96,10 @@ function X(a, t) {
   const e = lt(t);
   return e === "" ? a : a ? a.includes(e) ? a : a + " (" + e + ")" : e;
 }
-let O = null;
+let V = null;
 const H = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function ct() {
-  return O || (O = Promise.resolve().then(() => wt)), O;
+  return V || (V = Promise.resolve().then(() => wt)), V;
 }
 function dt(a) {
   const t = a.getAttribute("data-fp-resv");
@@ -257,7 +257,7 @@ class G {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && D(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
@@ -279,13 +279,18 @@ class G {
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && D(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
       return;
-    const t = (i) => {
-      if (i && i.type === "click" && i.preventDefault(), typeof this.dateField.focus == "function" && this.dateField.focus(), typeof this.dateField.showPicker == "function")
+    const t = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+    this.dateField.setAttribute("min", t), this.dateField.addEventListener("change", (s) => {
+      const r = s.target.value;
+      r && r < t ? (s.target.setCustomValidity("Non è possibile prenotare per giorni passati."), s.target.setAttribute("aria-invalid", "true")) : (s.target.setCustomValidity(""), s.target.setAttribute("aria-invalid", "false"));
+    });
+    const e = (s) => {
+      if (s && s.type === "click" && s.preventDefault(), typeof this.dateField.focus == "function" && this.dateField.focus(), typeof this.dateField.showPicker == "function")
         try {
           this.dateField.showPicker();
         } catch {
@@ -296,18 +301,18 @@ class G {
         } catch {
         }
     };
-    this.dateField.addEventListener("focus", t), this.dateField.addEventListener("click", t);
-    const e = this.dateField.closest(".fp-resv-field, .fp-field");
-    if (e) {
-      e.style.cursor = "pointer", e.addEventListener("click", (r) => {
-        r.target !== this.dateField && (r.preventDefault(), r.stopPropagation(), t(r));
+    this.dateField.addEventListener("focus", e), this.dateField.addEventListener("click", e);
+    const i = this.dateField.closest(".fp-resv-field, .fp-field");
+    if (i) {
+      i.style.cursor = "pointer", i.addEventListener("click", (n) => {
+        n.target !== this.dateField && (n.preventDefault(), n.stopPropagation(), e(n));
       });
-      const i = e.querySelector('.fp-icon--calendar, [class*="calendar"]');
-      i && (i.style.cursor = "pointer", i.addEventListener("click", (r) => {
-        r.preventDefault(), r.stopPropagation(), t(r);
+      const s = i.querySelector('.fp-icon--calendar, [class*="calendar"]');
+      s && (s.style.cursor = "pointer", s.addEventListener("click", (n) => {
+        n.preventDefault(), n.stopPropagation(), e(n);
       }));
-      const s = e.querySelector("label");
-      s && (s.style.cursor = "pointer");
+      const r = i.querySelector("label");
+      r && (r.style.cursor = "pointer");
     }
   }
   initializeAvailability() {
@@ -361,7 +366,7 @@ class G {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? D(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
     const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, l = ut(e);
     if (!l) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
@@ -642,7 +647,7 @@ class G {
       }
       let E = !1, A = "";
       if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (E = !0, A = e[u] || ""), u === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (E = !1, A = ""), u === "phone" && this.phoneField) {
-        const _ = z(this.phoneField, this.getPhoneCountryCode());
+        const _ = D(this.phoneField, this.getPhoneCountryCode());
         _.local && !K(_.local) && (E = !0, A = this.copy.invalidPhone);
       }
       u === "consent" && f && f.checked && (E = !1, A = ""), E ? (m.textContent = A, m.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (m.textContent = "", m.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
@@ -788,7 +793,7 @@ class G {
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
     }), this.phoneField) {
-      const i = z(this.phoneField, this.getPhoneCountryCode());
+      const i = D(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
@@ -800,13 +805,13 @@ class G {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = z(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = z(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
@@ -1079,7 +1084,7 @@ function At(a, t) {
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function V(a) {
+function O(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
@@ -1121,7 +1126,7 @@ function Ct(a) {
   function C() {
     if (!i)
       return;
-    V(i);
+    O(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
       const y = document.createElement("li"), h = document.createElement("span");
@@ -1131,7 +1136,7 @@ function Ct(a) {
   function I(o) {
     s && (s.hidden = !1);
     const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", h = d && typeof o.date == "string" ? o.date.trim() : "", b = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && h !== "" && (b !== "" && b !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
-    q(g, "idle"), i && V(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
+    q(g, "idle"), i && O(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1164,7 +1169,7 @@ function Ct(a) {
   function j(o, d, y) {
     if (y && y !== m || d && u && d !== u || (B(), N(), !i))
       return;
-    V(i);
+    O(i);
     const h = o && Array.isArray(o.slots) ? o.slots : [];
     if (h.length === 0) {
       I(d);

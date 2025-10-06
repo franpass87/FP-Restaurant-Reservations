@@ -63,6 +63,15 @@ class ReservationValidator
                 ['date' => $date]
             );
         }
+
+        // Controlla che la data non sia nel passato
+        $today = new DateTimeImmutable('today');
+        if ($dt < $today) {
+            throw new InvalidDateException(
+                __('Non è possibile prenotare per giorni passati.', 'fp-restaurant-reservations'),
+                ['date' => $date]
+            );
+        }
     }
 
     /**

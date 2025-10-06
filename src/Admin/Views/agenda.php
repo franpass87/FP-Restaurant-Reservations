@@ -102,7 +102,7 @@ $headingId   = 'fp-resv-agenda-title';
                 <div class="fp-resv-form__row">
                     <label>
                         <span><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="date" name="date" required data-field="date">
+                        <input type="date" name="date" min="<?php echo esc_attr(date('Y-m-d')); ?>" required data-field="date">
                     </label>
                     <label>
                         <span><?php esc_html_e('Ora', 'fp-restaurant-reservations'); ?> *</span>

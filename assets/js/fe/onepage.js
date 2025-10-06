@@ -425,6 +425,22 @@ class FormApp {
             return;
         }
 
+        // Imposta la data minima a oggi per impedire la selezione di date passate
+        const today = new Date().toISOString().split('T')[0];
+        this.dateField.setAttribute('min', today);
+
+        // Aggiungi validazione per date passate
+        this.dateField.addEventListener('change', (event) => {
+            const selectedDate = event.target.value;
+            if (selectedDate && selectedDate < today) {
+                event.target.setCustomValidity('Non è possibile prenotare per giorni passati.');
+                event.target.setAttribute('aria-invalid', 'true');
+            } else {
+                event.target.setCustomValidity('');
+                event.target.setAttribute('aria-invalid', 'false');
+            }
+        });
+
         const openPicker = (event) => {
             // Previeni il comportamento default per garantire che il picker si apra
             if (event && event.type === 'click') {

@@ -1174,6 +1174,10 @@
     margin-inline-end: auto;
 }
 
+#fp-resv-default .fp-resv-step__footer {
+    margin-top: 20px;
+}
+
 .fp-resv-widget__actions {
     display: grid;
     gap: 0.65rem;
