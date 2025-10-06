@@ -44,7 +44,7 @@ final class WidgetController
             return;
         }
 
-        $version = Plugin::VERSION;
+        $version = Plugin::VERSION . '.' . filemtime(Plugin::$dir . 'assets/css/form.css');
 
         wp_register_style(
             'fp-resv-form',
