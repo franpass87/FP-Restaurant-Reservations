@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use FP\Resv\Core\Metrics;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use InvalidArgumentException;
@@ -21,6 +22,7 @@ use function in_array;
 use function is_array;
 use function json_decode;
 use function max;
+use function microtime;
 use function min;
 use function preg_match;
 use function preg_split;
@@ -29,6 +31,8 @@ use function sprintf;
 use function str_contains;
 use function strtolower;
 use function trim;
+use function wp_cache_get;
+use function wp_cache_set;
 use const ARRAY_A;
 use wpdb;
 
@@ -59,12 +63,254 @@ class Availability
     }
 
     /**
+     * Find slots for a date range (optimized batch loading).
+     * 
+     * @param array<string, mixed> $criteria
+     * @param DateTimeImmutable $from
+     * @param DateTimeImmutable $to
+     * @return array<string, array<string, mixed>>
+     */
+    public function findSlotsForDateRange(array $criteria, DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        $stopTimer = Metrics::timer('availability.calculation_batch', [
+            'party' => $criteria['party'] ?? 0,
+            'days' => $from->diff($to)->days + 1,
+        ]);
+
+        $party = isset($criteria['party']) ? (int) $criteria['party'] : 0;
+        $roomId = isset($criteria['room']) ? (int) $criteria['room'] : null;
+
+        if ($roomId <= 0) {
+            $roomId = null;
+        }
+
+        $timezone = $this->resolveTimezone();
+        
+        // Load data once for entire range
+        $rooms = $this->loadRooms($roomId);
+        $tables = $this->loadTables($roomId);
+        $closures = $this->loadClosures($from, $to->setTime(23, 59, 59), $timezone);
+        
+        $mealKey = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
+        $mealSettings = $this->resolveMealSettings($mealKey);
+        $turnoverMinutes = $mealSettings['turnover'];
+        $bufferMinutes = $mealSettings['buffer'];
+
+        $results = [];
+        $current = $from;
+
+        while ($current <= $to) {
+            $dayStart = new DateTimeImmutable($current->format('Y-m-d') . ' 00:00:00', $timezone);
+            $dayEnd = $dayStart->setTime(23, 59, 59);
+
+            // Load reservations for this specific day
+            $reservations = $this->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
+
+            // Calculate slots using preloaded data
+            $slots = $this->calculateSlotsForDay(
+                $dayStart,
+                array_merge($criteria, ['date' => $dayStart->format('Y-m-d')]),
+                $rooms,
+                $tables,
+                $closures,
+                $reservations,
+                $mealSettings
+            );
+
+            $results[$dayStart->format('Y-m-d')] = $slots;
+            $current = $current->add(new DateInterval('P1D'));
+        }
+
+        Metrics::gauge('availability.batch_days_processed', count($results));
+        $stopTimer();
+
+        return $results;
+    }
+
+    /**
+     * Calculate slots for a single day using preloaded data.
+     * 
+     * @param array<string, mixed> $criteria
+     * @param array<int, array{id:int, capacity:int}> $rooms
+     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $tables
+     * @param array<int, array<string, mixed>> $closures
+     * @param array<int, array{id:int, party:int, table_id:int|null, room_id:int|null, window_start:DateTimeImmutable, window_end:DateTimeImmutable}> $reservations
+     * @param array<string, mixed> $mealSettings
+     * @return array<string, mixed>
+     */
+    private function calculateSlotsForDay(
+        DateTimeImmutable $dayStart,
+        array $criteria,
+        array $rooms,
+        array $tables,
+        array $closures,
+        array $reservations,
+        array $mealSettings
+    ): array {
+        $party = (int) ($criteria['party'] ?? 0);
+        $roomId = isset($criteria['room']) ? (int) $criteria['room'] : null;
+
+        if ($roomId <= 0) {
+            $roomId = null;
+        }
+
+        $timezone = $dayStart->getTimezone();
+        $schedule = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+
+        if ($schedule === []) {
+            return [
+                'date' => $dayStart->format('Y-m-d'),
+                'timezone' => $timezone->getName(),
+                'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
+                'slots' => [],
+                'meta' => [
+                    'has_availability' => false,
+                    'reason' => __('Nessun turno configurato per la data selezionata.', 'fp-restaurant-reservations'),
+                ],
+            ];
+        }
+
+        $slotInterval = $mealSettings['slot_interval'];
+        $turnoverMinutes = $mealSettings['turnover'];
+        $maxParallel = $mealSettings['max_parallel'];
+        $waitlistEnabled = $this->options->getField('fp_resv_general', 'enable_waitlist', '0') === '1';
+        $mergeStrategy = (string) $this->options->getField(
+            'fp_resv_general',
+            'merge_strategy',
+            $this->options->getField('fp_resv_rooms', 'merge_strategy', 'smart')
+        );
+        $defaultRoomCap = max(
+            1,
+            (int) $this->options->getField(
+                'fp_resv_general',
+                'default_room_capacity',
+                $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40')
+            )
+        );
+
+        $roomCapacities = $this->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
+        $slots = [];
+
+        foreach ($schedule as $window) {
+            $startMinute = $window['start'];
+            $endMinute = $window['end'];
+
+            for ($minute = $startMinute; $minute + $turnoverMinutes <= $endMinute; $minute += $slotInterval) {
+                $slotStart = $dayStart->add(new DateInterval('PT' . $minute . 'M'));
+                $slotEnd = $slotStart->add(new DateInterval('PT' . $turnoverMinutes . 'M'));
+
+                $closureEffect = $this->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
+                if ($closureEffect['status'] === 'blocked') {
+                    $slots[] = $this->buildSlotPayload(
+                        $slotStart,
+                        $slotEnd,
+                        'blocked',
+                        0,
+                        $party,
+                        $waitlistEnabled,
+                        $closureEffect['reasons'],
+                        []
+                    );
+                    continue;
+                }
+
+                $availableTables = $this->filterAvailableTables($tables, $closureEffect['blocked_tables']);
+                $hasPhysicalTables = $availableTables !== [];
+                $overlapping = $this->filterOverlappingReservations($reservations, $slotStart, $slotEnd);
+                $parallelCount = count($overlapping);
+                $unassignedCapacity = 0;
+
+                foreach ($overlapping as $reservation) {
+                    if ($reservation['table_id'] !== null) {
+                        unset($availableTables[$reservation['table_id']]);
+                    } else {
+                        $unassignedCapacity += $reservation['party'];
+                    }
+                }
+
+                if ($parallelCount >= $maxParallel) {
+                    $reasons = $closureEffect['reasons'];
+                    $reasons[] = __('Limite di prenotazioni parallele raggiunto per lo slot selezionato.', 'fp-restaurant-reservations');
+
+                    $slots[] = $this->buildSlotPayload(
+                        $slotStart,
+                        $slotEnd,
+                        'full',
+                        0,
+                        $party,
+                        $waitlistEnabled,
+                        $reasons,
+                        []
+                    );
+                    continue;
+                }
+
+                $baseCapacity = $this->resolveCapacityForScope($roomCapacities, $roomId, $hasPhysicalTables);
+                $allowedCapacity = $this->applyCapacityReductions(
+                    $baseCapacity,
+                    $availableTables,
+                    0,
+                    $closureEffect['capacity_percent']
+                );
+                $capacity = $this->applyCapacityReductions(
+                    $baseCapacity,
+                    $availableTables,
+                    $unassignedCapacity,
+                    $closureEffect['capacity_percent']
+                );
+
+                if ($mealSettings['capacity_limit'] !== null) {
+                    $allowedCapacity = min($allowedCapacity, $mealSettings['capacity_limit']);
+                    $capacity = min($capacity, $mealSettings['capacity_limit']);
+                }
+
+                $status = $this->determineStatus($capacity, $allowedCapacity, $party);
+                $reasons = $closureEffect['reasons'];
+
+                if ($status === 'full' && $waitlistEnabled) {
+                    $reasons[] = __('Disponibile solo lista di attesa per questo orario.', 'fp-restaurant-reservations');
+                }
+
+                $suggestions = $hasPhysicalTables
+                    ? $this->suggestTables($availableTables, $party, $mergeStrategy)
+                    : [];
+
+                $slots[] = $this->buildSlotPayload(
+                    $slotStart,
+                    $slotEnd,
+                    $status,
+                    $capacity,
+                    $party,
+                    $waitlistEnabled,
+                    $reasons,
+                    $suggestions
+                );
+            }
+        }
+
+        return [
+            'date' => $dayStart->format('Y-m-d'),
+            'timezone' => $timezone->getName(),
+            'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
+            'slots' => $slots,
+            'meta' => [
+                'has_availability' => $this->hasAvailability($slots),
+            ],
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $criteria
      *
      * @return array<string, mixed>
      */
     public function findSlots(array $criteria): array
     {
+        $stopTimer = Metrics::timer('availability.calculation', [
+            'party' => $criteria['party'] ?? 0,
+            'meal' => $criteria['meal'] ?? 'default',
+        ]);
+
         $dateString = isset($criteria['date']) ? trim((string) $criteria['date']) : '';
         $party      = isset($criteria['party']) ? (int) $criteria['party'] : 0;
         $roomId     = isset($criteria['room']) ? (int) $criteria['room'] : null;
@@ -225,7 +471,7 @@ class Availability
             }
         }
 
-        return [
+        $result = [
             'date'     => $dayStart->format('Y-m-d'),
             'timezone' => $timezone->getName(),
             'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
@@ -234,6 +480,15 @@ class Availability
                 'has_availability' => $this->hasAvailability($slots),
             ],
         ];
+
+        Metrics::gauge('availability.slots_found', count($slots), [
+            'date' => $dateString,
+            'party' => $party,
+        ]);
+
+        $stopTimer();
+
+        return $result;
     }
 
     private function isValidDate(string $value): bool
@@ -435,6 +690,13 @@ class Availability
      */
     private function loadRooms(?int $roomId): array
     {
+        $cacheKey = 'fp_resv_rooms_' . ($roomId ?? 'all');
+        $cached = wp_cache_get($cacheKey, 'fp_resv');
+
+        if ($cached !== false && is_array($cached)) {
+            return $cached;
+        }
+
         $table = $this->wpdb->prefix . 'fp_rooms';
         $where = 'active = 1';
         if ($roomId !== null) {
@@ -454,6 +716,8 @@ class Availability
             ];
         }
 
+        wp_cache_set($cacheKey, $rooms, 'fp_resv', 300); // 5 minutes
+
         return $rooms;
     }
 
@@ -469,6 +733,13 @@ class Availability
      */
     private function loadTables(?int $roomId): array
     {
+        $cacheKey = 'fp_resv_tables_' . ($roomId ?? 'all');
+        $cached = wp_cache_get($cacheKey, 'fp_resv');
+
+        if ($cached !== false && is_array($cached)) {
+            return $cached;
+        }
+
         $table = $this->wpdb->prefix . 'fp_tables';
         $where = 'active = 1';
         if ($roomId !== null) {
@@ -496,6 +767,8 @@ class Availability
                 'join_group' => $row['join_group'] !== null ? trim((string) $row['join_group']) : null,
             ];
         }
+
+        wp_cache_set($cacheKey, $tables, 'fp_resv', 300); // 5 minutes
 
         return $tables;
     }

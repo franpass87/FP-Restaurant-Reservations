@@ -2,6 +2,7 @@
   "name": "fp-restaurant-reservations",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "description": "Build tooling placeholder for FP Restaurant Reservations.",
   "scripts": {
     "lint:php": "phpcs",

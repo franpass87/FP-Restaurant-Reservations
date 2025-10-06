@@ -138,12 +138,6 @@
         return state;
     };
 
-    const clampTime = (hours, minutes) => {
-        const h = Math.min(23, Math.max(0, Number.isFinite(hours) ? hours : 0));
-        const m = Math.min(59, Math.max(0, Number.isFinite(minutes) ? minutes : 0));
-        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-    };
-
     const normalizeTime = (value) => {
         if (typeof value !== 'string') {
             return '';

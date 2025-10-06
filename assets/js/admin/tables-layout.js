@@ -1,4 +1,3 @@
-/* global fpResvTablesSettings */
 (function () {
     const root = document.querySelector('[data-fp-resv-tables]');
     if (!root) {

@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Reservations;
 
 use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
+use FP\Resv\Core\Metrics;
 use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Service;
 use InvalidArgumentException;
@@ -24,12 +25,16 @@ use function get_transient;
 use function in_array;
 use function is_array;
 use function is_string;
+use function md5;
 use function preg_match;
 use function register_rest_route;
 use function rest_ensure_response;
 use function sanitize_text_field;
+use function serialize;
 use function set_transient;
 use function strtolower;
+use function wp_cache_get;
+use function wp_cache_set;
 use function wp_json_encode;
 use function wp_rand;
 use function wp_verify_nonce;
@@ -119,6 +124,7 @@ final class REST
                 'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             ]);
 
+            Metrics::increment('availability.rate_limited');
             return $response;
         }
 
@@ -157,18 +163,41 @@ final class REST
 
         $cacheKey = 'fp_resv_avail_' . md5($cacheKeyBase);
 
+        // Try wp_cache first (in-memory, faster)
+        $wpCacheKey = 'fp_avail_' . md5($cacheKeyBase);
+        $wpCached = wp_cache_get($wpCacheKey, 'fp_resv_api');
+        
+        if ($wpCached !== false && is_array($wpCached)) {
+            Metrics::increment('availability.cache_hit', 1, ['type' => 'memory']);
+            $response = rest_ensure_response($wpCached);
+            if ($response instanceof WP_REST_Response) {
+                $response->set_headers([
+                    'Cache-Control'    => 'no-store, no-cache, must-revalidate, max-age=0',
+                    'X-FP-Resv-Cache'  => 'hit-memory',
+                ]);
+            }
+            return $response;
+        }
+
+        // Fallback to transient (database)
         $cached = get_transient($cacheKey);
         if (is_array($cached)) {
+            Metrics::increment('availability.cache_hit', 1, ['type' => 'transient']);
+            // Populate wp_cache for next request
+            wp_cache_set($wpCacheKey, $cached, 'fp_resv_api', 10);
+            
             $response = rest_ensure_response($cached);
             if ($response instanceof WP_REST_Response) {
                 $response->set_headers([
                     'Cache-Control'    => 'no-store, no-cache, must-revalidate, max-age=0',
-                    'X-FP-Resv-Cache'  => 'hit',
+                    'X-FP-Resv-Cache'  => 'hit-transient',
                 ]);
             }
 
             return $response;
         }
+
+        Metrics::increment('availability.cache_miss');
 
         try {
             $result = $this->availability->findSlots($criteria);
@@ -189,6 +218,8 @@ final class REST
             );
         }
 
+        // Cache in both wp_cache (10s, memory) and transient (30-60s, DB fallback)
+        wp_cache_set($wpCacheKey, $result, 'fp_resv_api', 10);
         set_transient($cacheKey, $result, wp_rand(30, 60));
 
         $response = rest_ensure_response($result);
