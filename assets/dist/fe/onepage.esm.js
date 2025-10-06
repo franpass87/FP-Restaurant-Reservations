@@ -169,10 +169,10 @@ function U(a, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-function mt(a) {
+function yt(a) {
   return a ? a.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex="0"]') : null;
 }
-const yt = ["date", "party", "slots", "details", "confirm"];
+const mt = ["date", "party", "slots", "details", "confirm"];
 function vt(a) {
   return a.text().then((t) => {
     if (!t)
@@ -187,7 +187,7 @@ function vt(a) {
 class G {
   constructor(t) {
     this.root = t, this.dataset = dt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
-    const e = Array.from(yt);
+    const e = Array.from(mt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
     this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)).forEach((s) => {
@@ -283,18 +283,30 @@ class G {
   initializeDateField() {
     if (!this.dateField)
       return;
-    const t = () => {
-      if (typeof this.dateField.showPicker == "function")
+    const t = (i) => {
+      if (i && i.type === "click" && i.preventDefault(), typeof this.dateField.focus == "function" && this.dateField.focus(), typeof this.dateField.showPicker == "function")
         try {
           this.dateField.showPicker();
         } catch {
         }
+      else
+        try {
+          this.dateField.click();
+        } catch {
+        }
     };
-    this.dateField.addEventListener("focus", t), this.dateField.addEventListener("click", t), this.dateField.addEventListener("mousedown", t);
-    const e = this.dateField.closest(".fp-resv-field");
+    this.dateField.addEventListener("focus", t), this.dateField.addEventListener("click", t);
+    const e = this.dateField.closest(".fp-resv-field, .fp-field");
     if (e) {
-      const i = e.querySelector(".fp-icon--calendar");
-      i && i.addEventListener("click", t);
+      e.style.cursor = "pointer", e.addEventListener("click", (r) => {
+        r.target !== this.dateField && (r.preventDefault(), r.stopPropagation(), t(r));
+      });
+      const i = e.querySelector('.fp-icon--calendar, [class*="calendar"]');
+      i && (i.style.cursor = "pointer", i.addEventListener("click", (r) => {
+        r.preventDefault(), r.stopPropagation(), t(r);
+      }));
+      const s = e.querySelector("label");
+      s && (s.style.cursor = "pointer");
     }
   }
   initializeAvailability() {
@@ -917,7 +929,7 @@ class G {
   }
   scrollIntoView(t) {
     typeof t.scrollIntoView == "function" && t.scrollIntoView({ behavior: "smooth", block: "start" });
-    const e = mt(t);
+    const e = yt(t);
     e && typeof e.focus == "function" && e.focus({ preventScroll: !0 });
   }
   isConsentField(t) {
@@ -1072,15 +1084,15 @@ function Ct(a) {
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), y = (S) => S.some((c) => u.startsWith(c)), w = (S) => S.some((c) => u.includes(c));
-    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const u = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), m = (S) => S.some((c) => u.startsWith(c)), w = (S) => S.some((c) => u.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function A(o, d) {
-    const m = Array.isArray(o) ? o : [], u = m.length;
+    const y = Array.isArray(o) ? o : [], u = y.length;
     if (u === 0)
       return { state: "full", slots: 0 };
-    const y = m.map((c) => E(c && c.status)).filter((c) => c !== "");
-    return y.some((c) => c === "limited") ? { state: "limited", slots: u } : y.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : y.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
+    const m = y.map((c) => E(c && c.status)).filter((c) => c !== "");
+    return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
   function _(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
@@ -1093,10 +1105,10 @@ function Ct(a) {
     h && L(h, 0);
   });
   function q(o, d) {
-    const m = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
-    e && (e.textContent = u, e.setAttribute("data-state", m));
-    const y = m === "loading";
-    t.setAttribute("data-loading", y ? "true" : "false"), i && i.setAttribute("aria-busy", y ? "true" : "false");
+    const y = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
+    e && (e.textContent = u, e.setAttribute("data-state", y));
+    const m = y === "loading";
+    t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
   function C() {
     if (!i)
@@ -1104,13 +1116,13 @@ function Ct(a) {
     V(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
-      const m = document.createElement("li"), u = document.createElement("span");
-      u.className = "fp-skeleton", m.appendChild(u), i.appendChild(m);
+      const y = document.createElement("li"), u = document.createElement("span");
+      u.className = "fp-skeleton", y.appendChild(u), i.appendChild(y);
     }
   }
   function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", m = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", w = m !== "", P = w && u !== "" && (y !== "" && y !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
+    const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && u !== "" && (m !== "" && m !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
     q(g, "idle"), i && V(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
   function N() {
@@ -1122,14 +1134,14 @@ function Ct(a) {
   function Q(o) {
     const d = a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
     if (r) {
-      const m = r.querySelector("[data-fp-resv-slots-boundary-message]");
-      m && (m.textContent = o || d), r.hidden = !1;
+      const y = r.querySelector("[data-fp-resv-slots-boundary-message]");
+      y && (y.textContent = o || d), r.hidden = !1;
     }
     q(o || d, "error"), _(h, { state: "error", slots: 0 });
   }
   function Z(o, d) {
-    const m = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(m, (u) => {
+    const y = i ? i.querySelectorAll("button[data-slot]") : [];
+    Array.prototype.forEach.call(y, (u) => {
       u.setAttribute("aria-pressed", u === d ? "true" : "false");
     }), f = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
   }
@@ -1141,8 +1153,8 @@ function Ct(a) {
       d.setAttribute("aria-pressed", "false");
     });
   }
-  function j(o, d, m) {
-    if (m && m !== v || d && h && d !== h || (B(), N(), !i))
+  function j(o, d, y) {
+    if (y && y !== v || d && h && d !== h || (B(), N(), !i))
       return;
     V(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
@@ -1154,17 +1166,17 @@ function Ct(a) {
       const S = document.createElement("li"), c = document.createElement("button");
       c.type = "button", c.textContent = w.label || "", c.dataset.slot = w.start || "", c.dataset.slotStatus = w.status || "", c.setAttribute("aria-pressed", f && f.start === w.start ? "true" : "false"), c.addEventListener("click", () => Z(w, c)), S.appendChild(c), i.appendChild(S);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
-    const y = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    _(d, A(u, y));
+    const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
+    _(d, A(u, m));
   }
   function L(o, d) {
     if (h = o, !o || !o.date || !o.party) {
       I(o);
       return;
     }
-    const m = ++v, u = JSON.stringify([o.date, o.meal, o.party]), y = l.get(u);
-    if (y && Date.now() - y.timestamp < gt && d === 0) {
-      j(y.payload, o, m);
+    const y = ++v, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
+    if (m && Date.now() - m.timestamp < gt && d === 0) {
+      j(m.payload, o, y);
       return;
     }
     B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), _(o, { state: "loading", slots: 0 });
@@ -1182,12 +1194,12 @@ function Ct(a) {
       }
       return P;
     })).then((c) => {
-      if (m !== v)
+      if (y !== v)
         return;
       const P = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, m);
+      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, y);
     }).catch((c) => {
-      if (m !== v)
+      if (y !== v)
         return;
       const P = performance.now() - S;
       typeof a.onLatency == "function" && a.onLatency(P);
@@ -1213,12 +1225,12 @@ function Ct(a) {
   return {
     schedule(o, d = {}) {
       p && window.clearTimeout(p);
-      const m = d && typeof d == "object" ? d : {}, u = o || (typeof a.getParams == "function" ? a.getParams() : null), y = !!(u && u.requiresMeal);
-      if (!u || !u.date || !u.party || y && !u.meal) {
+      const y = d && typeof d == "object" ? d : {}, u = o || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(u && u.requiresMeal);
+      if (!u || !u.date || !u.party || m && !u.meal) {
         h = u, I(u || {});
         return;
       }
-      if (m.immediate) {
+      if (y.immediate) {
         L(u, 0);
         return;
       }
