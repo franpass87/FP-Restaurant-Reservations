@@ -1,58 +1,58 @@
-const st = /\D+/g;
-function U(a) {
-  return a ? String(a).replace(st, "") : "";
+const at = /\D+/g;
+function J(a) {
+  return a ? String(a).replace(at, "") : "";
 }
-function w(a) {
-  const t = U(a);
+function k(a) {
+  const t = J(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function F(a) {
-  return U(a);
+function N(a) {
+  return J(a);
 }
-function at(a, t) {
-  const e = w(a), i = F(t);
+function rt(a, t) {
+  const e = k(a), i = N(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
-function nt(a) {
-  const t = F(a);
+function K(a) {
+  const t = N(a);
   return t.length >= 6 && t.length <= 15;
 }
-function rt(a) {
-  const t = F(a);
+function nt(a) {
+  const t = N(a);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
-  let s = 0, n = 0;
+  let s = 0, r = 0;
   for (; s < t.length; ) {
-    const r = t.length - s;
-    let c = e[n % e.length];
-    r <= 4 && (c = r), i.push(t.slice(s, s + c)), s += c, n += 1;
+    const n = t.length - s;
+    let l = e[r % e.length];
+    n <= 4 && (l = n), i.push(t.slice(s, s + l)), s += l, r += 1;
   }
   return { masked: i.join(" "), digits: t };
 }
-function I(a, t) {
-  const e = a.value, { masked: i } = rt(e), s = a.selectionStart;
+function z(a, t) {
+  const e = a.value, { masked: i } = nt(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
-    const n = i.length - e.length, r = Math.max(0, s + n);
-    a.setSelectionRange(r, r);
+    const r = i.length - e.length, n = Math.max(0, s + r);
+    a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", F(a.value)), a.setAttribute("data-phone-cc", w(t));
+  a.setAttribute("data-phone-local", N(a.value)), a.setAttribute("data-phone-cc", k(t));
 }
-function R(a, t) {
-  const e = F(a.value), i = w(t);
+function D(a, t) {
+  const e = N(a.value), i = k(t);
   return {
-    e164: at(i, e),
+    e164: rt(i, e),
     local: e,
     country: i
   };
 }
-function T(a) {
+function V(a) {
   if (a == null)
     return "";
   if (typeof a == "string")
     return a.trim();
   if (Array.isArray(a))
-    return a.map((e) => T(e)).filter((e) => e !== "").join("; ");
+    return a.map((e) => V(e)).filter((e) => e !== "").join("; ");
   if (typeof a == "object") {
     if (typeof a.message == "string" && a.message.trim() !== "")
       return a.message.trim();
@@ -74,32 +74,32 @@ function ot(a) {
       continue;
     }
     if (typeof e != "object") {
-      const s = T(e);
+      const s = V(e);
       if (s !== "")
         return s;
       continue;
     }
     const i = ["details", "detail", "debug", "error"];
     for (let s = 0; s < i.length; s += 1) {
-      const n = i[s];
-      if (Object.prototype.hasOwnProperty.call(e, n)) {
-        const r = T(e[n]);
-        if (r !== "")
-          return r;
+      const r = i[s];
+      if (Object.prototype.hasOwnProperty.call(e, r)) {
+        const n = V(e[r]);
+        if (n !== "")
+          return n;
       }
     }
     Object.prototype.hasOwnProperty.call(e, "data") && e.data && typeof e.data == "object" && t.push(e.data);
   }
   return "";
 }
-function H(a, t) {
+function $(a, t) {
   const e = ot(t);
   return e === "" ? a : a ? a.includes(e) ? a : a + " (" + e + ")" : e;
 }
 let O = null;
-const V = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
+const H = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function lt() {
-  return O || (O = Promise.resolve().then(() => wt)), O;
+  return O || (O = Promise.resolve().then(() => Ct)), O;
 }
 function ct(a) {
   const t = a.getAttribute("data-fp-resv");
@@ -118,7 +118,7 @@ function v(a, t) {
   const e = Object.assign({ event: a }, t || {});
   return window.dataLayer = window.dataLayer || [], window.dataLayer.push(e), window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(e), e;
 }
-function W(a, t) {
+function X(a, t) {
   if (!a)
     return null;
   if (typeof a.closest == "function")
@@ -132,7 +132,7 @@ function W(a, t) {
   return null;
 }
 function dt(a) {
-  return W(a, "data-fp-resv-section");
+  return X(a, "data-fp-resv-section");
 }
 function ut(a, t) {
   if (!a)
@@ -160,7 +160,7 @@ function ft(a) {
   const t = String(a).replace(",", "."), e = parseFloat(t);
   return Number.isNaN(e) ? null : e;
 }
-function j(a, t) {
+function U(a, t) {
   if (a && typeof a == "string")
     try {
       return new URL(a, window.location.origin).toString();
@@ -184,15 +184,15 @@ function mt(a) {
     }
   });
 }
-class J {
+class Y {
   constructor(t) {
     this.root = t, this.dataset = ct(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(yt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
-    this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, n) => this.getStepOrderIndex(s) - this.getStepOrderIndex(n)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, n) => this.getStepOrderIndex(s) - this.getStepOrderIndex(n)).forEach((s) => {
+    this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)).forEach((s) => {
       this.progress.appendChild(s);
-    }), this.submitButton = this.form ? this.form.querySelector("[data-fp-resv-submit]") : null, this.submitLabel = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-label]") || this.submitButton : null, this.submitSpinner = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-spinner]") : null, this.submitHint = this.form ? this.form.querySelector("[data-fp-resv-submit-hint]") : null, this.stickyCta = this.form ? this.form.querySelector("[data-fp-resv-sticky-cta]") : null, this.successAlert = this.form ? this.form.querySelector("[data-fp-resv-success]") : null, this.errorAlert = this.form ? this.form.querySelector("[data-fp-resv-error]") : null, this.errorMessage = this.form ? this.form.querySelector("[data-fp-resv-error-message]") : null, this.errorRetry = this.form ? this.form.querySelector("[data-fp-resv-error-retry]") : null, this.mealButtons = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-meal]")), this.mealNotice = t.querySelector("[data-fp-resv-meal-notice]"), this.mealNoticeText = this.mealNotice ? this.mealNotice.querySelector("[data-fp-resv-meal-notice-text]") || this.mealNotice : null, this.hiddenMeal = this.form ? this.form.querySelector('input[name="fp_resv_meal"]') : null, this.hiddenPrice = this.form ? this.form.querySelector('input[name="fp_resv_price_per_person"]') : null, this.hiddenSlot = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, this.dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null, this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field="party"]') : null, this.summaryTargets = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-summary]")), this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field="phone"]') : null, this.phonePrefixField = this.form ? this.form.querySelector('[data-fp-resv-field="phone_prefix"]') : null, this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name="fp_resv_phone_e164"]') : null, this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name="fp_resv_phone_cc"]') : null, this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name="fp_resv_phone_local"]') : null, this.availabilityRoot = this.form ? this.form.querySelector("[data-fp-resv-slots]") : null, this.state = {
+    }), this.submitButton = this.form ? this.form.querySelector("[data-fp-resv-submit]") : null, this.submitLabel = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-label]") || this.submitButton : null, this.submitSpinner = this.submitButton ? this.submitButton.querySelector("[data-fp-resv-submit-spinner]") : null, this.submitHint = this.form ? this.form.querySelector("[data-fp-resv-submit-hint]") : null, this.stickyCta = this.form ? this.form.querySelector("[data-fp-resv-sticky-cta]") : null, this.successAlert = this.form ? this.form.querySelector("[data-fp-resv-success]") : null, this.errorAlert = this.form ? this.form.querySelector("[data-fp-resv-error]") : null, this.errorMessage = this.form ? this.form.querySelector("[data-fp-resv-error-message]") : null, this.errorRetry = this.form ? this.form.querySelector("[data-fp-resv-error-retry]") : null, this.mealButtons = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-meal]")), this.mealNotice = t.querySelector("[data-fp-resv-meal-notice]"), this.mealNoticeText = this.mealNotice ? this.mealNotice.querySelector("[data-fp-resv-meal-notice-text]") || this.mealNotice : null, this.hiddenMeal = this.form ? this.form.querySelector('input[name="fp_resv_meal"]') : null, this.hiddenPrice = this.form ? this.form.querySelector('input[name="fp_resv_price_per_person"]') : null, this.hiddenSlot = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, this.dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null, this.partyField = this.form ? this.form.querySelector('[data-fp-resv-field="party"]') : null, this.summaryTargets = Array.prototype.slice.call(t.querySelectorAll("[data-fp-resv-summary]")), this.phoneField = this.form ? this.form.querySelector('[data-fp-resv-field="phone"]') : null, this.phonePrefixField = this.form ? this.form.querySelector('[data-fp-resv-field="phone_prefix"]') : null, this.hiddenPhoneE164 = this.form ? this.form.querySelector('input[name="fp_resv_phone_e164"]') : null, this.hiddenPhoneCc = this.form ? this.form.querySelector('input[name="fp_resv_phone_cc"]') : null, this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name="fp_resv_phone_local"]') : null, this.availabilityRoot = this.form ? this.form.querySelector("[data-fp-resv-slots]") : null, this.availabilityIndicator = this.form ? this.form.querySelector("[data-fp-resv-availability-indicator]") : null, this.state = {
       started: !1,
       formValidEmitted: !1,
       sectionStates: {},
@@ -206,7 +206,7 @@ class J {
       lastAvailabilityParams: null,
       mealAvailability: {}
     }, this.copy = {
-      ctaDisabled: this.messages.cta_complete_fields || "Complete required fields",
+      ctaDisabled: this.messages.cta_complete_fields || "Completa i campi richiesti",
       ctaEnabled: this.messages.cta_book_now || this.strings.actions && this.strings.actions.submit || "Prenota ora",
       ctaSending: this.messages.cta_sending || "Invio…",
       updatingSlots: this.messages.msg_updating_slots || "Aggiornamento disponibilità…",
@@ -215,11 +215,11 @@ class J {
       selectMeal: this.messages.msg_select_meal || "Seleziona un servizio per visualizzare gli orari disponibili.",
       slotsError: this.messages.msg_slots_error || "Impossibile aggiornare la disponibilità. Riprova.",
       invalidPhone: this.messages.msg_invalid_phone || "Inserisci un numero di telefono valido (minimo 6 cifre).",
-      invalidEmail: this.messages.msg_invalid_email || "Enter a valid email address.",
-      submitError: this.messages.msg_submit_error || "We could not complete your reservation. Please try again.",
+      invalidEmail: this.messages.msg_invalid_email || "Inserisci un indirizzo email valido.",
+      submitError: this.messages.msg_submit_error || "Non è stato possibile completare la prenotazione. Riprova.",
       submitSuccess: this.messages.msg_submit_success || "Prenotazione inviata con successo.",
       mealFullNotice: this.messages.meal_full_notice || "Nessuna disponibilità per questo servizio. Scegli un altro giorno."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateSummary(), V(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), H(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -255,29 +255,29 @@ class J {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && I(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
       return;
-    const t = w(this.phonePrefixField.value);
+    const t = k(this.phonePrefixField.value);
     let e = t;
     if (e === "" && this.phoneCountryCode) {
-      const i = w(this.phoneCountryCode);
+      const i = k(this.phoneCountryCode);
       i && (e = i);
     }
     if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const i = w(this.hiddenPhoneCc.value);
+      const i = k(this.hiddenPhoneCc.value);
       i && (e = i);
     }
     if (e === "") {
       const i = this.config && this.config.defaults || {};
       if (i.phone_country_code) {
-        const s = w(i.phone_country_code);
+        const s = k(i.phone_country_code);
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && I(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -305,9 +305,9 @@ class J {
         start: i.getAttribute("data-slot") || "",
         label: i.textContent || "",
         status: i.getAttribute("data-slot-status") || ""
-      }, n = this.availabilityRoot.querySelectorAll("button[data-slot]");
-      Array.prototype.forEach.call(n, (r) => {
-        r.setAttribute("aria-pressed", r === i ? "true" : "false");
+      }, r = this.availabilityRoot.querySelectorAll("button[data-slot]");
+      Array.prototype.forEach.call(r, (n) => {
+        n.setAttribute("aria-pressed", n === i ? "true" : "false");
       }), this.handleSlotSelected(s);
     });
     const t = (e = {}) => {
@@ -318,7 +318,7 @@ class J {
       }
       this.scheduleAvailabilityUpdate(i);
     };
-    V(() => {
+    H(() => {
       lt().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
@@ -342,20 +342,20 @@ class J {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? I(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
-    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", n = i && typeof e.value == "string" ? e.value : "", r = !i || s !== n, c = dt(e);
-    if (!c) {
+    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, l = dt(e);
+    if (!l) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
       return;
     }
-    this.ensureSectionActive(c), this.updateSectionAttributes(c, "active"), i && (e.dataset.fpResvLastValue = n), (i === "date" || i === "party" || i === "slots" || i === "time") && ((i === "date" || i === "party") && r && this.clearSlotSelection({ schedule: !1 }), (i !== "date" || r || t.type === "change") && this.scheduleAvailabilityUpdate()), this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
+    this.ensureSectionActive(l), this.updateSectionAttributes(l, "active"), i && (e.dataset.fpResvLastValue = r), (i === "date" || i === "party" || i === "slots" || i === "time") && ((i === "date" || i === "party") && n && this.clearSlotSelection({ schedule: !1 }), (i !== "date" || n || t.type === "change") && this.scheduleAvailabilityUpdate()), this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors();
   }
   handleFieldBlur(t) {
     const e = t.target;
     if (!e || !(e instanceof HTMLElement))
       return;
     const i = e.getAttribute("data-fp-resv-field");
-    i && (i === "phone" && this.phoneField && this.validatePhoneField(), i === "email" && e instanceof HTMLInputElement && this.validateEmailField(e));
+    i && (i === "phone" && this.phoneField && this.validatePhoneField(), i === "email" && e instanceof HTMLInputElement && this.validateEmailField(e), this.updateInlineErrors());
   }
   handleKeydown(t) {
     if (t.key !== "Enter")
@@ -406,14 +406,14 @@ class J {
       return;
     let i = !1;
     this.sections.forEach((s) => {
-      const n = s.getAttribute("data-step") || "";
-      if (n === t)
-        i = !0, this.updateSectionAttributes(s, "active", { silent: !0 }), this.dispatchSectionUnlocked(n);
+      const r = s.getAttribute("data-step") || "";
+      if (r === t)
+        i = !0, this.updateSectionAttributes(s, "active", { silent: !0 }), this.dispatchSectionUnlocked(r);
       else if (i)
         this.updateSectionAttributes(s, "locked", { silent: !0 });
       else {
-        const c = this.state.sectionStates[n] === "locked" ? "locked" : "completed";
-        this.updateSectionAttributes(s, c, { silent: !0 });
+        const l = this.state.sectionStates[r] === "locked" ? "locked" : "completed";
+        this.updateSectionAttributes(s, l, { silent: !0 });
       }
     }), this.updateProgressIndicators(), this.scrollIntoView(e), requestAnimationFrame(() => {
       const s = e.querySelector('input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
@@ -424,13 +424,13 @@ class J {
     t.preventDefault(), this.clearError(), this.focusFirstInvalid(), this.updateSubmitState();
   }
   handleMealSelection(t) {
-    this.mealButtons.forEach(function(n) {
-      n.removeAttribute("data-active"), n.setAttribute("aria-pressed", "false");
+    this.mealButtons.forEach(function(r) {
+      r.removeAttribute("data-active"), r.setAttribute("aria-pressed", "false");
     }), t.setAttribute("data-active", "true"), t.setAttribute("aria-pressed", "true");
     const e = t.getAttribute("data-fp-resv-meal") || "", i = this.state.mealAvailability ? this.state.mealAvailability[e] : "";
     if (this.applyMealAvailabilityIndicator(e, i), i === "full") {
-      const n = t.getAttribute("data-meal-default-notice") || "", r = this.copy.mealFullNotice || n;
-      r !== "" && t.setAttribute("data-meal-notice", r);
+      const r = t.getAttribute("data-meal-default-notice") || "", n = this.copy.mealFullNotice || r;
+      n !== "" && t.setAttribute("data-meal-notice", n);
     }
     this.applyMealSelection(t), this.applyMealAvailabilityNotice(e, i, { skipSlotReset: !0 });
     const s = this.events.meal_selected || "meal_selected";
@@ -442,20 +442,20 @@ class J {
   updateMealNoticeFromButton(t, e) {
     if (!this.mealNotice)
       return;
-    const i = typeof e == "string" ? e : t && t.getAttribute("data-meal-notice") || "", s = i ? i.trim() : "", n = this.mealNoticeText || this.mealNotice;
-    s !== "" && n ? (n.textContent = s, this.mealNotice.hidden = !1) : n && (n.textContent = "", this.mealNotice.hidden = !0);
+    const i = typeof e == "string" ? e : t && t.getAttribute("data-meal-notice") || "", s = i ? i.trim() : "", r = this.mealNoticeText || this.mealNotice;
+    s !== "" && r ? (r.textContent = s, this.mealNotice.hidden = !1) : r && (r.textContent = "", this.mealNotice.hidden = !0);
   }
   applyMealAvailabilityNotice(t, e, i = {}) {
-    const s = this.mealButtons.find((c) => (c.getAttribute("data-fp-resv-meal") || "") === t);
+    const s = this.mealButtons.find((l) => (l.getAttribute("data-fp-resv-meal") || "") === t);
     if (!s)
       return;
-    const n = s.getAttribute("data-meal-default-notice") || "";
+    const r = s.getAttribute("data-meal-default-notice") || "";
     if ((typeof e == "string" ? e : "") === "full") {
-      const c = this.copy.mealFullNotice || n;
-      c !== "" ? s.setAttribute("data-meal-notice", c) : n === "" && s.removeAttribute("data-meal-notice"), s.setAttribute("aria-disabled", "true"), s.setAttribute("data-meal-unavailable", "true"), s.hasAttribute("data-active") && (i.skipSlotReset !== !0 && this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(s));
+      const l = this.copy.mealFullNotice || r;
+      l !== "" ? s.setAttribute("data-meal-notice", l) : r === "" && s.removeAttribute("data-meal-notice"), s.setAttribute("aria-disabled", "true"), s.setAttribute("data-meal-unavailable", "true"), s.hasAttribute("data-active") && (i.skipSlotReset !== !0 && this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(s));
       return;
     }
-    s.removeAttribute("aria-disabled"), s.removeAttribute("data-meal-unavailable"), n !== "" ? s.setAttribute("data-meal-notice", n) : s.hasAttribute("data-meal-notice") && s.removeAttribute("data-meal-notice"), s.hasAttribute("data-active") && this.updateMealNoticeFromButton(s);
+    s.removeAttribute("aria-disabled"), s.removeAttribute("data-meal-unavailable"), r !== "" ? s.setAttribute("data-meal-notice", r) : s.hasAttribute("data-meal-notice") && s.removeAttribute("data-meal-notice"), s.hasAttribute("data-active") && this.updateMealNoticeFromButton(s);
   }
   applyMealSelection(t) {
     const e = t.getAttribute("data-fp-resv-meal") || "";
@@ -468,21 +468,21 @@ class J {
     const e = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
     if (e && (e.value = "", e.removeAttribute("data-slot-start")), this.availabilityController && typeof this.availabilityController.clearSelection == "function" && this.availabilityController.clearSelection(), this.availabilityRoot) {
       const s = this.availabilityRoot.querySelectorAll('button[data-slot][aria-pressed="true"]');
-      Array.prototype.forEach.call(s, (n) => {
-        n.setAttribute("aria-pressed", "false");
+      Array.prototype.forEach.call(s, (r) => {
+        r.setAttribute("aria-pressed", "false");
       });
     }
     const i = this.sections.find((s) => (s.getAttribute("data-step") || "") === "slots");
     if (i) {
-      const s = i.getAttribute("data-step") || "", n = this.state.sectionStates[s] || "locked";
+      const s = i.getAttribute("data-step") || "", r = this.state.sectionStates[s] || "locked";
       this.updateSectionAttributes(i, "locked", { silent: !0 });
-      const r = this.sections.indexOf(i);
-      if (r !== -1)
-        for (let c = r + 1; c < this.sections.length; c += 1) {
-          const p = this.sections[c];
-          this.updateSectionAttributes(p, "locked", { silent: !0 });
+      const n = this.sections.indexOf(i);
+      if (n !== -1)
+        for (let l = n + 1; l < this.sections.length; l += 1) {
+          const y = this.sections[l];
+          this.updateSectionAttributes(y, "locked", { silent: !0 });
         }
-      this.updateProgressIndicators(), (t.forceRewind && s || n === "completed" || n === "active") && this.activateSectionByKey(s);
+      this.updateProgressIndicators(), (t.forceRewind && s || r === "completed" || r === "active") && this.activateSectionByKey(s);
     }
     t.schedule !== !1 && this.scheduleAvailabilityUpdate(), this.updateSummary(), this.updateSubmitState();
   }
@@ -497,11 +497,11 @@ class J {
     const s = this.sections.indexOf(t);
     if (s === -1)
       return;
-    const n = this.sections[s + 1];
-    if (!n)
+    const r = this.sections[s + 1];
+    if (!r)
       return;
-    const r = n.getAttribute("data-step") || String(s + 1);
-    this.state.sectionStates[r] !== "completed" && (this.state.sectionStates[r] = "active", this.updateSectionAttributes(n, "active"), this.dispatchSectionUnlocked(r), this.scrollIntoView(n));
+    const n = r.getAttribute("data-step") || String(s + 1);
+    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(r, "active"), this.dispatchSectionUnlocked(n), this.scrollIntoView(r));
   }
   navigateToPrevious(t) {
     const e = this.sections.indexOf(t);
@@ -529,10 +529,10 @@ class J {
     v(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
-    const s = t.getAttribute("data-step") || "", n = i && i.silent === !0;
+    const s = t.getAttribute("data-step") || "", r = i && i.silent === !0;
     this.state.sectionStates[s] = e, t.setAttribute("data-state", e), e === "completed" ? t.setAttribute("data-complete-hidden", "true") : t.removeAttribute("data-complete-hidden");
-    const r = e === "active";
-    t.setAttribute("aria-hidden", r ? "false" : "true"), t.setAttribute("aria-expanded", r ? "true" : "false"), r ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style && typeof t.style.removeProperty == "function" && t.style.removeProperty("display")) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style && typeof t.style.setProperty == "function" && t.style.setProperty("display", "none", "important")), n || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
+    const n = e === "active";
+    t.setAttribute("aria-hidden", n ? "false" : "true"), t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style && typeof t.style.removeProperty == "function" && t.style.removeProperty("display")) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style && typeof t.style.setProperty == "function" && t.style.setProperty("display", "none", "important")), r || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
   }
   updateProgressIndicators() {
     if (!this.progress)
@@ -540,25 +540,30 @@ class J {
     const t = this, e = this.progressItems && this.progressItems.length ? this.progressItems : Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]"));
     let i = 0;
     const s = e.length || 1;
-    Array.prototype.forEach.call(e, function(r, c) {
-      const p = r.getAttribute("data-step") || "", h = t.state.sectionStates[p] || "locked";
-      r.setAttribute("data-state", h), r.setAttribute("data-progress-state", h === "completed" ? "done" : h);
-      const b = r.querySelector(".fp-progress__label");
-      b && (h === "active" ? b.removeAttribute("aria-hidden") : b.setAttribute("aria-hidden", "true"));
-      const m = h === "locked";
-      r.tabIndex = m ? -1 : 0, m ? r.setAttribute("aria-disabled", "true") : r.removeAttribute("aria-disabled"), h === "active" ? (r.setAttribute("aria-current", "step"), i = Math.max(i, c + 0.5)) : r.removeAttribute("aria-current"), h === "completed" ? (r.setAttribute("data-completed", "true"), i = Math.max(i, c + 1)) : r.removeAttribute("data-completed");
+    Array.prototype.forEach.call(e, function(n, l) {
+      const y = n.getAttribute("data-step") || "", h = t.state.sectionStates[y] || "locked";
+      n.setAttribute("data-state", h), n.setAttribute("data-progress-state", h === "completed" ? "done" : h);
+      const f = n.querySelector(".fp-progress__label");
+      f && (h === "active" ? f.removeAttribute("aria-hidden") : f.setAttribute("aria-hidden", "true"));
+      const b = h === "locked";
+      n.tabIndex = b ? -1 : 0, b ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), h === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), h === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
     });
-    const n = Math.min(100, Math.max(0, Math.round(i / s * 100)));
-    this.progress.style.setProperty("--fp-progress-fill", n + "%");
+    const r = Math.min(100, Math.max(0, Math.round(i / s * 100)));
+    this.progress.style.setProperty("--fp-progress-fill", r + "%");
   }
   isSectionValid(t) {
     const e = t.querySelectorAll("[data-fp-resv-field]");
     if (e.length === 0)
       return !0;
-    let i = !0;
-    return Array.prototype.forEach.call(e, function(s) {
-      typeof s.checkValidity == "function" && !s.checkValidity() && (i = !1);
-    }), i;
+    if ((t.getAttribute("data-step") || "") === "slots") {
+      const r = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
+      if (!r || r.value.trim() === "")
+        return !1;
+    }
+    let s = !0;
+    return Array.prototype.forEach.call(e, function(r) {
+      typeof r.checkValidity == "function" && !r.checkValidity() && (s = !1);
+    }), s;
   }
   updateSubmitState() {
     if (!this.submitButton)
@@ -572,6 +577,35 @@ class J {
       const e = this.events.form_valid || "form_valid";
       v(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
+  }
+  updateInlineErrors() {
+    var i, s, r, n, l, y;
+    if (!this.form)
+      return;
+    const t = {
+      first_name: this.form.querySelector('[data-fp-resv-field="first_name"]'),
+      last_name: this.form.querySelector('[data-fp-resv-field="last_name"]'),
+      email: this.form.querySelector('[data-fp-resv-field="email"]'),
+      phone: this.form.querySelector('[data-fp-resv-field="phone"]'),
+      consent: this.form.querySelector('[data-fp-resv-field="consent"]')
+    }, e = {
+      first_name: ((s = (i = this.strings) == null ? void 0 : i.messages) == null ? void 0 : s.required_first_name) || "Inserisci il nome",
+      last_name: ((n = (r = this.strings) == null ? void 0 : r.messages) == null ? void 0 : n.required_last_name) || "Inserisci il cognome",
+      email: this.copy.invalidEmail,
+      phone: this.copy.invalidPhone,
+      consent: ((y = (l = this.strings) == null ? void 0 : l.messages) == null ? void 0 : y.required_consent) || "Accetta la privacy per procedere"
+    };
+    Object.keys(t).forEach((h) => {
+      const f = t[h], b = this.form.querySelector(`[data-fp-resv-error="${h}"]`);
+      if (!b)
+        return;
+      let E = !1, w = "";
+      if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (E = !0, w = e[h] || ""), h === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (E = !1, w = ""), h === "phone" && this.phoneField) {
+        const _ = D(this.phoneField, this.getPhoneCountryCode());
+        _.local && !K(_.local) && (E = !0, w = this.copy.invalidPhone);
+      }
+      E ? (b.textContent = w, b.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (b.textContent = "", b.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
+    });
   }
   getActiveSectionKey() {
     for (let t = 0; t < this.sections.length; t += 1) {
@@ -603,33 +637,39 @@ class J {
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), c = this.form.querySelector('[data-fp-resv-field="phone"]'), p = this.form.querySelector('[data-fp-resv-field="notes"]');
-    let h = "";
-    s && s.value && (h = s.value.trim()), n && n.value && (h = (h + " " + n.value.trim()).trim());
-    let b = "";
-    if (r && r.value && (b = r.value.trim()), c && c.value) {
-      const m = this.getPhoneCountryCode(), x = (m ? "+" + m + " " : "") + c.value.trim();
-      b = b !== "" ? b + " / " + x : x;
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), y = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), f = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), b = this.form.querySelector('[data-fp-resv-field="pets"]');
+    let E = "";
+    s && s.value && (E = s.value.trim()), r && r.value && (E = (E + " " + r.value.trim()).trim());
+    let w = "";
+    if (n && n.value && (w = n.value.trim()), l && l.value) {
+      const A = this.getPhoneCountryCode(), R = (A ? "+" + A + " " : "") + l.value.trim();
+      w = w !== "" ? w + " / " + R : R;
     }
-    this.summaryTargets.forEach(function(m) {
-      switch (m.getAttribute("data-fp-resv-summary")) {
+    const _ = [];
+    h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && _.push("Seggioloni: " + parseInt(h.value, 10)), f && "checked" in f && f.checked && _.push("Tavolo accessibile per sedia a rotelle"), b && "checked" in b && b.checked && _.push("Animali domestici");
+    const q = _.join("; ");
+    this.summaryTargets.forEach(function(A) {
+      switch (A.getAttribute("data-fp-resv-summary")) {
         case "date":
-          m.textContent = t && t.value ? t.value : "";
+          A.textContent = t && t.value ? t.value : "";
           break;
         case "time":
-          m.textContent = e && e.value ? e.value : "";
+          A.textContent = e && e.value ? e.value : "";
           break;
         case "party":
-          m.textContent = i && i.value ? i.value : "";
+          A.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          m.textContent = h;
+          A.textContent = E;
           break;
         case "contact":
-          m.textContent = b;
+          A.textContent = w;
           break;
         case "notes":
-          m.textContent = p && p.value ? p.value : "";
+          A.textContent = y && y.value ? y.value : "";
+          break;
+        case "extras":
+          A.textContent = q;
           break;
       }
     });
@@ -645,10 +685,10 @@ class J {
       party: i.party,
       meal: i.meal
     }), this.preparePhonePayload(), this.state.sending = !0, this.updateSubmitState(), this.clearError();
-    const s = this.serializeForm(), n = this.getReservationEndpoint(), r = performance.now();
-    let c = 0;
+    const s = this.serializeForm(), r = this.getReservationEndpoint(), n = performance.now();
+    let l = 0;
     try {
-      const p = await fetch(n, {
+      const y = await fetch(r, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -658,17 +698,17 @@ class J {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (c = Math.round(performance.now() - r), v("ui_latency", { op: "submit", ms: c }), !p.ok) {
-        const b = await mt(p), m = b && b.message || this.copy.submitError;
-        throw Object.assign(new Error(m), {
-          status: p.status,
-          payload: b
+      if (l = Math.round(performance.now() - n), v("ui_latency", { op: "submit", ms: l }), !y.ok) {
+        const f = await mt(y), b = f && f.message || this.copy.submitError;
+        throw Object.assign(new Error(b), {
+          status: y.status,
+          payload: f
         });
       }
-      const h = await p.json();
+      const h = await y.json();
       this.handleSubmitSuccess(h);
-    } catch (p) {
-      c || (c = Math.round(performance.now() - r), v("ui_latency", { op: "submit", ms: c })), this.handleSubmitError(p, c);
+    } catch (y) {
+      l || (l = Math.round(performance.now() - n), v("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(y, l);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -677,15 +717,25 @@ class J {
   handleSubmitSuccess(t) {
     this.clearError();
     const e = t && t.message || this.copy.submitSuccess;
-    this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, typeof this.successAlert.focus == "function" && this.successAlert.focus()), t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
+    if (this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, typeof this.successAlert.focus == "function" && this.successAlert.focus()), this.form) {
+      this.form.setAttribute("data-state", "submitted");
+      const i = this.form.querySelectorAll("input, select, textarea, button");
+      Array.prototype.forEach.call(i, (s) => {
+        try {
+          s.setAttribute("disabled", "disabled");
+        } catch {
+        }
+      });
+    }
+    t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
       i && i.event && v(i.event, i);
     });
   }
   handleSubmitError(t, e) {
-    const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, n = t && typeof t == "object" && t.payload || null, r = H(s, n);
-    this.errorAlert && this.errorMessage && (this.errorMessage.textContent = r, this.errorAlert.hidden = !1), this.state.hintOverride = r, this.updateSubmitState();
-    const c = this.events.submit_error || "submit_error";
-    v(c, { code: i, latency: e });
+    const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, r = t && typeof t == "object" && t.payload || null, n = $(s, r);
+    this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1), this.state.hintOverride = n, this.updateSubmitState();
+    const l = this.events.submit_error || "submit_error";
+    v(l, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.state.hintOverride = "";
@@ -695,11 +745,11 @@ class J {
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
     }), this.phoneField) {
-      const i = R(this.phoneField, this.getPhoneCountryCode());
+      const i = D(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
-      const i = w(this.phonePrefixField.value);
+      const i = k(this.phonePrefixField.value);
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
@@ -707,18 +757,18 @@ class J {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = R(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = R(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    nt(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), v("phone_validation_error", { field: "phone" }), v("ui_validation_error", { field: "phone" }));
+    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), v("phone_validation_error", { field: "phone" }), v("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (typeof t.value == "string") {
@@ -729,8 +779,7 @@ class J {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.setCustomValidity("");
-    t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), v("ui_validation_error", { field: "email" }));
+    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), v("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -760,25 +809,32 @@ class J {
   applyMealAvailabilityIndicator(t, e) {
     if (!t)
       return;
-    const i = this.mealButtons.find((r) => (r.getAttribute("data-fp-resv-meal") || "") === t);
+    const i = this.mealButtons.find((n) => (n.getAttribute("data-fp-resv-meal") || "") === t);
     if (!i)
       return;
-    const s = ["available", "limited", "full"], n = e ? String(e).toLowerCase() : "";
-    if (s.indexOf(n) === -1) {
+    const s = ["available", "limited", "full"], r = e ? String(e).toLowerCase() : "";
+    if (s.indexOf(r) === -1) {
       i.removeAttribute("data-availability-state");
       return;
     }
-    i.setAttribute("data-availability-state", n);
+    i.setAttribute("data-availability-state", r);
   }
   handleMealAvailabilitySummary(t, e) {
     if (!e || !e.meal)
       return;
-    const i = t && t.state ? String(t.state).toLowerCase() : "", s = ["available", "limited", "full"], n = e.meal;
+    const i = t && t.state ? String(t.state).toLowerCase() : "", s = ["available", "limited", "full"], r = e.meal;
     if (this.state.mealAvailability || (this.state.mealAvailability = {}), s.indexOf(i) === -1) {
-      delete this.state.mealAvailability[n], this.applyMealAvailabilityIndicator(n, ""), this.applyMealAvailabilityNotice(n, "", { skipSlotReset: !0 });
+      delete this.state.mealAvailability[r], this.applyMealAvailabilityIndicator(r, ""), this.applyMealAvailabilityNotice(r, "", { skipSlotReset: !0 });
       return;
     }
-    this.state.mealAvailability[n] = i, this.applyMealAvailabilityIndicator(n, i), this.applyMealAvailabilityNotice(n, i);
+    if (this.state.mealAvailability[r] = i, this.applyMealAvailabilityIndicator(r, i), this.applyMealAvailabilityNotice(r, i), this.availabilityIndicator) {
+      let n = "";
+      if (t && typeof t == "object") {
+        const l = typeof t.slots == "number" ? t.slots : 0;
+        i === "available" ? n = `Disponibile (${l})` : i === "limited" ? n = `Disponibilità limitata (${l})` : i === "full" && (n = "Completamente prenotato");
+      }
+      this.availabilityIndicator.textContent = n, this.availabilityIndicator.hidden = n === "", this.availabilityIndicator.setAttribute("data-state", i || "");
+    }
   }
   handleSlotSelected(t) {
     this.handleFirstInteraction();
@@ -817,18 +873,18 @@ class J {
     const e = t.target instanceof HTMLElement ? t.target : null;
     if (!e)
       return;
-    const i = W(e, "data-fp-resv-event");
+    const i = X(e, "data-fp-resv-event");
     if (!i)
       return;
     const s = i.getAttribute("data-fp-resv-event");
     if (!s)
       return;
-    let n = ut(i, "data-fp-resv-payload");
-    if ((!n || typeof n != "object") && (n = {}), n.trigger || (n.trigger = t.type || "click"), !n.href && i instanceof HTMLAnchorElement && i.href && (n.href = i.href), !n.label) {
-      const r = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
-      r && (n.label = r.trim());
+    let r = ut(i, "data-fp-resv-payload");
+    if ((!r || typeof r != "object") && (r = {}), r.trigger || (r.trigger = t.type || "click"), !r.href && i instanceof HTMLAnchorElement && i.href && (r.href = i.href), !r.label) {
+      const n = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
+      n && (r.label = n.trim());
     }
-    v(s, n);
+    v(s, r);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
@@ -855,30 +911,30 @@ class J {
     let i = !1;
     const s = this.form.querySelector('[data-fp-resv-field="consent"]');
     s && "checked" in s && (e.analytics = s.checked ? "granted" : "denied", e.clarity = s.checked ? "granted" : "denied", i = !0);
-    const n = this.form.querySelector('[data-fp-resv-field="marketing_consent"]');
-    n && "checked" in n && (e.ads = n.checked ? "granted" : "denied", i = !0);
-    const r = this.form.querySelector('[data-fp-resv-field="profiling_consent"]');
-    r && "checked" in r && (e.personalization = r.checked ? "granted" : "denied", i = !0), i && t.updateConsent(e);
+    const r = this.form.querySelector('[data-fp-resv-field="marketing_consent"]');
+    r && "checked" in r && (e.ads = r.checked ? "granted" : "denied", i = !0);
+    const n = this.form.querySelector('[data-fp-resv-field="profiling_consent"]');
+    n && "checked" in n && (e.personalization = n.checked ? "granted" : "denied", i = !0), i && t.updateConsent(e);
   }
   getPhoneCountryCode() {
     if (this.phonePrefixField && this.phonePrefixField.value) {
-      const e = w(this.phonePrefixField.value);
+      const e = k(this.phonePrefixField.value);
       if (e)
         return e;
     }
     if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const e = w(this.hiddenPhoneCc.value);
+      const e = k(this.hiddenPhoneCc.value);
       if (e)
         return e;
     }
     if (this.phoneCountryCode) {
-      const e = w(this.phoneCountryCode);
+      const e = k(this.phoneCountryCode);
       if (e)
         return e;
     }
     const t = this.config && this.config.defaults || {};
     if (t.phone_country_code) {
-      const e = w(t.phone_country_code);
+      const e = k(t.phone_country_code);
       if (e)
         return e;
     }
@@ -886,11 +942,11 @@ class J {
   }
   getReservationEndpoint() {
     const t = this.config.endpoints || {};
-    return j(t.reservations, "/wp-json/fp-resv/v1/reservations");
+    return U(t.reservations, "/wp-json/fp-resv/v1/reservations");
   }
   getAvailabilityEndpoint() {
     const t = this.config.endpoints || {};
-    return j(t.availability, "/wp-json/fp-resv/v1/availability");
+    return U(t.availability, "/wp-json/fp-resv/v1/availability");
   }
   loadExternalScript(t, e, i) {
     if (typeof window > "u" || typeof document > "u")
@@ -901,33 +957,33 @@ class J {
         return Promise.resolve(s);
     }
     return new Promise((s) => {
-      const n = () => {
+      const r = () => {
         if (typeof e == "function") {
-          const p = e();
-          s(p || null);
+          const y = e();
+          s(y || null);
           return;
         }
         s(null);
       };
-      let r = document.querySelector(`script[src="${t}"]`);
-      if (!r && i && (r = document.querySelector(`script[${i}]`)), r) {
+      let n = document.querySelector(`script[src="${t}"]`);
+      if (!n && i && (n = document.querySelector(`script[${i}]`)), n) {
         if (typeof e == "function") {
-          const p = e();
-          if (p) {
-            s(p);
+          const y = e();
+          if (y) {
+            s(y);
             return;
           }
         }
-        r.addEventListener("load", n, { once: !0 }), r.addEventListener("error", () => s(null), { once: !0 });
+        n.addEventListener("load", r, { once: !0 }), n.addEventListener("error", () => s(null), { once: !0 });
         return;
       }
-      r = document.createElement("script"), r.src = t, r.async = !0, i && r.setAttribute(i, "1"), r.onload = n, r.onerror = () => s(null);
-      const c = document.head || document.body || document.documentElement;
-      if (!c) {
+      n = document.createElement("script"), n.src = t, n.async = !0, i && n.setAttribute(i, "1"), n.onload = r, n.onerror = () => s(null);
+      const l = document.head || document.body || document.documentElement;
+      if (!l) {
         s(null);
         return;
       }
-      c.appendChild(r);
+      l.appendChild(n);
     });
   }
   loadStripeIfNeeded() {
@@ -947,11 +1003,11 @@ class J {
     )), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = J);
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Y);
 document.addEventListener("DOMContentLoaded", function() {
   const a = document.querySelectorAll("[data-fp-resv]");
   Array.prototype.forEach.call(a, function(t) {
-    new J(t);
+    new Y(t);
   });
 });
 document.addEventListener("fp-resv:tracking:push", function(a) {
@@ -963,199 +1019,199 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   const i = t.payload || t.data || {};
   v(e, i && typeof i == "object" ? i : {});
 });
-const bt = 400, vt = 6e4, gt = 3, K = 600;
+const bt = 400, vt = 6e4, gt = 3, W = 600;
 function St(a, t) {
   let e;
   try {
     e = new URL(a, window.location.origin);
   } catch {
-    const s = window.location.origin.replace(/\/$/, ""), n = a.startsWith("/") ? s + a : s + "/" + a;
-    e = new URL(n, window.location.origin);
+    const s = window.location.origin.replace(/\/$/, ""), r = a.startsWith("/") ? s + a : s + "/" + a;
+    e = new URL(r, window.location.origin);
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function D(a) {
+function T(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
 function At(a) {
-  const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), r = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, c = /* @__PURE__ */ new Map();
-  let p = null, h = null, b = null, m = 0;
-  function M(o) {
+  const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
+  let y = null, h = null, f = null, b = 0;
+  function E(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), y = (S) => S.some((l) => u.startsWith(l)), A = (S) => S.some((l) => u.includes(l));
-    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || A(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const u = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), m = (S) => S.some((c) => u.startsWith(c)), C = (S) => S.some((c) => u.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
-  function x(o, d) {
-    const f = Array.isArray(o) ? o : [], u = f.length;
+  function w(o, d) {
+    const p = Array.isArray(o) ? o : [], u = p.length;
     if (u === 0)
       return { state: "full", slots: 0 };
-    const y = f.map((l) => M(l && l.status)).filter((l) => l !== "");
-    return y.some((l) => l === "limited") ? { state: "limited", slots: u } : y.some((l) => l === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : y.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
+    const m = p.map((c) => E(c && c.status)).filter((c) => c !== "");
+    return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
-  function q(o, d) {
+  function _(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
         a.onAvailabilitySummary(d, o || h || {});
       } catch {
       }
   }
-  r && r.addEventListener("click", () => {
-    h && E(h, 0);
+  n && n.addEventListener("click", () => {
+    h && L(h, 0);
   });
-  function L(o, d) {
-    const f = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
-    e && (e.textContent = u, e.setAttribute("data-state", f));
-    const y = f === "loading";
-    t.setAttribute("data-loading", y ? "true" : "false"), i && i.setAttribute("aria-busy", y ? "true" : "false");
+  function q(o, d) {
+    const p = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
+    e && (e.textContent = u, e.setAttribute("data-state", p));
+    const m = p === "loading";
+    t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
-  function X() {
+  function A() {
     if (!i)
       return;
-    D(i);
+    T(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
-      const f = document.createElement("li"), u = document.createElement("span");
-      u.className = "fp-skeleton", f.appendChild(u), i.appendChild(f);
+      const p = document.createElement("li"), u = document.createElement("span");
+      u.className = "fp-skeleton", p.appendChild(u), i.appendChild(p);
     }
   }
-  function N(o) {
+  function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", f = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", A = f !== "", C = A && u !== "" && (y !== "" && y !== "0"), g = A ? C && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
-    L(g, "idle"), i && D(i), q(o, { state: C ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = p !== "", P = C && u !== "" && (m !== "" && m !== "0"), g = C ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
+    q(g, "idle"), i && T(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
-  function $() {
+  function R() {
     s && (s.hidden = !0);
   }
-  function z() {
-    n && (n.hidden = !0);
+  function B() {
+    r && (r.hidden = !0);
   }
-  function Y(o) {
-    const d = a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "We could not update available times. Please try again.";
-    if (n) {
-      const f = n.querySelector("[data-fp-resv-slots-boundary-message]");
-      f && (f.textContent = o || d), n.hidden = !1;
+  function G(o) {
+    const d = a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
+    if (r) {
+      const p = r.querySelector("[data-fp-resv-slots-boundary-message]");
+      p && (p.textContent = o || d), r.hidden = !1;
     }
-    L(o || d, "error"), q(h, { state: "error", slots: 0 });
+    q(o || d, "error"), _(h, { state: "error", slots: 0 });
   }
-  function G(o, d) {
-    const f = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(f, (u) => {
+  function Q(o, d) {
+    const p = i ? i.querySelectorAll("button[data-slot]") : [];
+    Array.prototype.forEach.call(p, (u) => {
       u.setAttribute("aria-pressed", u === d ? "true" : "false");
-    }), b = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
+    }), f = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
   }
-  function Q() {
-    if (b = null, !i)
+  function Z() {
+    if (f = null, !i)
       return;
     const o = i.querySelectorAll("button[data-slot]");
     Array.prototype.forEach.call(o, (d) => {
       d.setAttribute("aria-pressed", "false");
     });
   }
-  function B(o, d, f) {
-    if (f && f !== m || d && h && d !== h || (z(), $(), !i))
+  function j(o, d, p) {
+    if (p && p !== b || d && h && d !== h || (B(), R(), !i))
       return;
-    D(i);
+    T(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
     if (u.length === 0) {
-      N(d);
+      I(d);
       return;
     }
-    u.forEach((A) => {
-      const S = document.createElement("li"), l = document.createElement("button");
-      l.type = "button", l.textContent = A.label || "", l.dataset.slot = A.start || "", l.dataset.slotStatus = A.status || "", l.setAttribute("aria-pressed", b && b.start === A.start ? "true" : "false"), l.addEventListener("click", () => G(A, l)), S.appendChild(l), i.appendChild(S);
-    }), L(a.strings && a.strings.slotsUpdated || "", !1);
-    const y = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    q(d, x(u, y));
+    u.forEach((C) => {
+      const S = document.createElement("li"), c = document.createElement("button");
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", f && f.start === C.start ? "true" : "false"), c.addEventListener("click", () => Q(C, c)), S.appendChild(c), i.appendChild(S);
+    }), q(a.strings && a.strings.slotsUpdated || "", !1);
+    const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
+    _(d, w(u, m));
   }
-  function E(o, d) {
+  function L(o, d) {
     if (h = o, !o || !o.date || !o.party) {
-      N(o);
+      I(o);
       return;
     }
-    const f = ++m, u = JSON.stringify([o.date, o.meal, o.party]), y = c.get(u);
-    if (y && Date.now() - y.timestamp < vt && d === 0) {
-      B(y.payload, o, f);
+    const p = ++b, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
+    if (m && Date.now() - m.timestamp < vt && d === 0) {
+      j(m.payload, o, p);
       return;
     }
-    z(), X(), L(a.strings && a.strings.updatingSlots || "Updating availability…", "loading"), q(o, { state: "loading", slots: 0 });
-    const A = St(a.endpoint, o), S = performance.now();
-    fetch(A, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((l) => l.json().catch(() => ({})).then((C) => {
-      if (!l.ok) {
+    B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), _(o, { state: "loading", slots: 0 });
+    const C = St(a.endpoint, o), S = performance.now();
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((P) => {
+      if (!c.ok) {
         const g = new Error("availability_error");
-        g.status = l.status, g.payload = C;
-        const k = l.headers.get("Retry-After");
-        if (k) {
-          const P = Number.parseInt(k, 10);
-          Number.isFinite(P) && (g.retryAfter = P);
+        g.status = c.status, g.payload = P;
+        const F = c.headers.get("Retry-After");
+        if (F) {
+          const x = Number.parseInt(F, 10);
+          Number.isFinite(x) && (g.retryAfter = x);
         }
         throw g;
       }
-      return C;
-    })).then((l) => {
-      if (f !== m)
+      return P;
+    })).then((c) => {
+      if (p !== b)
         return;
-      const C = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(C), c.set(u, { payload: l, timestamp: Date.now() }), B(l, o, f);
-    }).catch((l) => {
-      if (f !== m)
+      const P = performance.now() - S;
+      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
+    }).catch((c) => {
+      if (p !== b)
         return;
-      const C = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(C);
-      const g = l && l.payload && typeof l.payload == "object" ? l.payload.data || {} : {}, k = typeof l.status == "number" ? l.status : g && typeof g.status == "number" ? g.status : 0;
-      let P = 0;
-      if (l && typeof l.retryAfter == "number" && Number.isFinite(l.retryAfter))
-        P = l.retryAfter;
+      const P = performance.now() - S;
+      typeof a.onLatency == "function" && a.onLatency(P);
+      const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, F = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
+      let x = 0;
+      if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
+        x = c.retryAfter;
       else if (g && typeof g.retry_after < "u") {
-        const _ = Number.parseInt(g.retry_after, 10);
-        Number.isFinite(_) && (P = _);
+        const M = Number.parseInt(g.retry_after, 10);
+        Number.isFinite(M) && (x = M);
       }
-      if (d >= gt - 1 ? !1 : k === 429 || k >= 500 && k < 600 ? !0 : k === 0) {
-        const _ = d + 1;
-        typeof a.onRetry == "function" && a.onRetry(_);
-        const it = P > 0 ? Math.max(P * 1e3, K) : K * Math.pow(2, d);
-        window.setTimeout(() => E(o, _), it);
+      if (d >= gt - 1 ? !1 : F === 429 || F >= 500 && F < 600 ? !0 : F === 0) {
+        const M = d + 1;
+        typeof a.onRetry == "function" && a.onRetry(M);
+        const st = x > 0 ? Math.max(x * 1e3, W) : W * Math.pow(2, d);
+        window.setTimeout(() => L(o, M), st);
         return;
       }
-      const Z = l && l.payload && (l.payload.message || l.payload.code) || g && g.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "We could not update available times. Please try again.", tt = l && l.payload || g || null, et = H(Z, tt);
-      Y(et);
+      const tt = c && c.payload && (c.payload.message || c.payload.code) || g && g.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", et = c && c.payload || g || null, it = $(tt, et);
+      G(it);
     });
   }
   return {
     schedule(o, d = {}) {
-      p && window.clearTimeout(p);
-      const f = d && typeof d == "object" ? d : {}, u = o || (typeof a.getParams == "function" ? a.getParams() : null), y = !!(u && u.requiresMeal);
-      if (!u || !u.date || !u.party || y && !u.meal) {
-        h = u, N(u || {});
+      y && window.clearTimeout(y);
+      const p = d && typeof d == "object" ? d : {}, u = o || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(u && u.requiresMeal);
+      if (!u || !u.date || !u.party || m && !u.meal) {
+        h = u, I(u || {});
         return;
       }
-      if (f.immediate) {
-        E(u, 0);
+      if (p.immediate) {
+        L(u, 0);
         return;
       }
-      p = window.setTimeout(() => {
-        E(u, 0);
+      y = window.setTimeout(() => {
+        L(u, 0);
       }, bt);
     },
     revalidate() {
       if (!h)
         return;
       const o = JSON.stringify([h.date, h.meal, h.party]);
-      c.delete(o), E(h, 0);
+      l.delete(o), L(h, 0);
     },
     getSelection() {
-      return b;
+      return f;
     },
     clearSelection() {
-      Q();
+      Z();
     }
   };
 }
-const wt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ct = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   createAvailabilityController: At
 }, Symbol.toStringTag, { value: "Module" }));
