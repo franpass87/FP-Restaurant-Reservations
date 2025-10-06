@@ -235,6 +235,7 @@ class FormApp {
             pendingAvailabilityOptions: null,
             lastAvailabilityParams: null,
             mealAvailability: {},
+            touchedFields: {},
         };
 
         this.copy = {
@@ -638,6 +639,9 @@ class FormApp {
         if (!fieldKey) {
             return;
         }
+
+        // Segna il campo come toccato (per mostrare gli errori)
+        this.state.touchedFields[fieldKey] = true;
 
         if (fieldKey === 'phone' && this.phoneField) {
             this.validatePhoneField();
@@ -1272,6 +1276,13 @@ class FormApp {
                 return;
             }
 
+            // Non mostrare errori per i campi consent finché non sono stati toccati
+            if (key === 'consent' && !this.state.touchedFields[key]) {
+                errorEl.textContent = '';
+                errorEl.hidden = true;
+                return;
+            }
+
             let visible = false;
             let text = '';
             if (field && typeof field.checkValidity === 'function' && !field.checkValidity()) {
@@ -1479,9 +1490,13 @@ class FormApp {
     async handleSubmit(event) {
         event.preventDefault();
 
+        // Segna tutti i campi come toccati quando si tenta di inviare
+        this.state.touchedFields.consent = true;
+
         if (!this.form.checkValidity()) {
             this.form.reportValidity();
             this.focusFirstInvalid();
+            this.updateInlineErrors();
             this.updateSubmitState();
             return false;
         }
