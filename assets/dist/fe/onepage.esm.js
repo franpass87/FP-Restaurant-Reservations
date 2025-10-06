@@ -204,7 +204,8 @@ class G {
       pendingAvailability: !1,
       pendingAvailabilityOptions: null,
       lastAvailabilityParams: null,
-      mealAvailability: {}
+      mealAvailability: {},
+      touchedFields: {}
     }, this.copy = {
       ctaDisabled: this.messages.cta_complete_fields || "Completa i campi richiesti",
       ctaEnabled: this.messages.cta_book_now || this.strings.actions && this.strings.actions.submit || "Prenota ora",
@@ -373,7 +374,7 @@ class G {
     if (!e || !(e instanceof HTMLElement))
       return;
     const i = e.getAttribute("data-fp-resv-field");
-    i && (i === "phone" && this.phoneField && this.validatePhoneField(), i === "email" && e instanceof HTMLInputElement && this.validateEmailField(e), this.updateInlineErrors());
+    i && (this.state.touchedFields[i] = !0, i === "phone" && this.phoneField && this.validatePhoneField(), i === "email" && e instanceof HTMLInputElement && this.validateEmailField(e), this.updateInlineErrors());
   }
   handleKeydown(t) {
     if (t.key !== "Enter")
@@ -543,10 +544,11 @@ class G {
         const r = this.sections.find((n) => (n.getAttribute("data-step") || "") === "slots");
         if (r) {
           const n = r.querySelector("[data-fp-resv-slots-status]");
-          n && (n.textContent = "Seleziona un orario per continuare", n.style.color = "#dc2626", setTimeout(() => {
-            n.textContent = "", n.style.color = "";
+          n && (n.textContent = this.copy.slotRequired || "Seleziona un orario per continuare.", n.style.color = "#dc2626", n.setAttribute("data-state", "error"), setTimeout(() => {
+            n.textContent = "", n.style.color = "", n.removeAttribute("data-state");
           }, 3e3));
         }
+        return;
       }
     }
     if (!this.isSectionValid(t)) {
@@ -576,12 +578,12 @@ class G {
     let i = 0;
     const s = e.length || 1;
     Array.prototype.forEach.call(e, function(n, l) {
-      const p = n.getAttribute("data-step") || "", h = t.state.sectionStates[p] || "locked";
-      n.setAttribute("data-state", h), n.setAttribute("data-progress-state", h === "completed" ? "done" : h);
+      const p = n.getAttribute("data-step") || "", u = t.state.sectionStates[p] || "locked";
+      n.setAttribute("data-state", u), n.setAttribute("data-progress-state", u === "completed" ? "done" : u);
       const f = n.querySelector(".fp-progress__label");
-      f && (h === "active" ? f.removeAttribute("aria-hidden") : f.setAttribute("aria-hidden", "true"));
-      const v = h === "locked";
-      n.tabIndex = v ? -1 : 0, v ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), h === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), h === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
+      f && (u === "active" ? f.removeAttribute("aria-hidden") : f.setAttribute("aria-hidden", "true"));
+      const m = u === "locked";
+      n.tabIndex = m ? -1 : 0, m ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), u === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), u === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
     });
     const r = Math.min(100, Math.max(0, Math.round(i / s * 100)));
     this.progress.style.setProperty("--fp-progress-fill", r + "%");
@@ -630,16 +632,20 @@ class G {
       phone: this.copy.invalidPhone,
       consent: ((p = (l = this.strings) == null ? void 0 : l.messages) == null ? void 0 : p.required_consent) || "Accetta la privacy per procedere"
     };
-    Object.keys(t).forEach((h) => {
-      const f = t[h], v = this.form.querySelector(`[data-fp-resv-error="${h}"]`);
-      if (!v)
+    Object.keys(t).forEach((u) => {
+      const f = t[u], m = this.form.querySelector(`[data-fp-resv-error="${u}"]`);
+      if (!m)
         return;
+      if (u === "consent" && !this.state.touchedFields[u]) {
+        m.textContent = "", m.hidden = !0;
+        return;
+      }
       let E = !1, A = "";
-      if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (E = !0, A = e[h] || ""), h === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (E = !1, A = ""), h === "phone" && this.phoneField) {
+      if (f && typeof f.checkValidity == "function" && !f.checkValidity() && (E = !0, A = e[u] || ""), u === "email" && f && f.value && f.value.trim() !== "" && f.checkValidity() && (E = !1, A = ""), u === "phone" && this.phoneField) {
         const _ = z(this.phoneField, this.getPhoneCountryCode());
         _.local && !K(_.local) && (E = !0, A = this.copy.invalidPhone);
       }
-      h === "consent" && f && f.checked && (E = !1, A = ""), E ? (v.textContent = A, v.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (v.textContent = "", v.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
+      u === "consent" && f && f.checked && (E = !1, A = ""), E ? (m.textContent = A, m.hidden = !1, f && f.setAttribute && f.setAttribute("aria-invalid", "true")) : (m.textContent = "", m.hidden = !0, f && f.removeAttribute && f.removeAttribute("aria-invalid"));
     });
   }
   getActiveSectionKey() {
@@ -672,7 +678,7 @@ class G {
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), p = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), f = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), v = this.form.querySelector('[data-fp-resv-field="pets"]');
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), p = this.form.querySelector('[data-fp-resv-field="notes"]'), u = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), f = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), m = this.form.querySelector('[data-fp-resv-field="pets"]');
     let E = "";
     s && s.value && (E = s.value.trim()), r && r.value && (E = (E + " " + r.value.trim()).trim());
     let A = "";
@@ -681,7 +687,7 @@ class G {
       A = A !== "" ? A + " / " + N : N;
     }
     const _ = [];
-    h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && _.push("Seggioloni: " + parseInt(h.value, 10)), f && "checked" in f && f.checked && _.push("Tavolo accessibile per sedia a rotelle"), v && "checked" in v && v.checked && _.push("Animali domestici");
+    u && typeof u.value == "string" && parseInt(u.value, 10) > 0 && _.push("Seggioloni: " + parseInt(u.value, 10)), f && "checked" in f && f.checked && _.push("Tavolo accessibile per sedia a rotelle"), m && "checked" in m && m.checked && _.push("Animali domestici");
     const q = _.join("; ");
     this.summaryTargets.forEach(function(C) {
       switch (C.getAttribute("data-fp-resv-summary")) {
@@ -710,8 +716,8 @@ class G {
     });
   }
   async handleSubmit(t) {
-    if (t.preventDefault(), !this.form.checkValidity())
-      return this.form.reportValidity(), this.focusFirstInvalid(), this.updateSubmitState(), !1;
+    if (t.preventDefault(), this.state.touchedFields.consent = !0, !this.form.checkValidity())
+      return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
     b(e, {
       source: "form",
@@ -734,14 +740,14 @@ class G {
         credentials: "same-origin"
       });
       if (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l }), !p.ok) {
-        const f = await vt(p), v = f && f.message || this.copy.submitError;
-        throw Object.assign(new Error(v), {
+        const f = await vt(p), m = f && f.message || this.copy.submitError;
+        throw Object.assign(new Error(m), {
           status: p.status,
           payload: f
         });
       }
-      const h = await p.json();
-      this.handleSubmitSuccess(h);
+      const u = await p.json();
+      this.handleSubmitSuccess(u);
     } catch (p) {
       l || (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(p, l);
     } finally {
@@ -1077,38 +1083,38 @@ function V(a) {
 }
 function Ct(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
-  let p = null, h = null, f = null, v = 0;
+  let p = null, u = null, f = null, m = 0;
   function E(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), m = (S) => S.some((c) => u.startsWith(c)), w = (S) => S.some((c) => u.includes(c));
-    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const h = ((S) => typeof S.normalize == "function" ? S.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : S)(d), v = (S) => S.some((c) => h.startsWith(c)), w = (S) => S.some((c) => h.includes(c));
+    return v(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || v(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : v(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function A(o, d) {
-    const y = Array.isArray(o) ? o : [], u = y.length;
-    if (u === 0)
+    const y = Array.isArray(o) ? o : [], h = y.length;
+    if (h === 0)
       return { state: "full", slots: 0 };
-    const m = y.map((c) => E(c && c.status)).filter((c) => c !== "");
-    return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
+    const v = y.map((c) => E(c && c.status)).filter((c) => c !== "");
+    return v.some((c) => c === "limited") ? { state: "limited", slots: h } : v.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : v.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
   }
   function _(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
-        a.onAvailabilitySummary(d, o || h || {});
+        a.onAvailabilitySummary(d, o || u || {});
       } catch {
       }
   }
   n && n.addEventListener("click", () => {
-    h && L(h, 0);
+    u && L(u, 0);
   });
   function q(o, d) {
-    const y = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
-    e && (e.textContent = u, e.setAttribute("data-state", y));
-    const m = y === "loading";
-    t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
+    const y = typeof d == "string" ? d : d ? "loading" : "idle", h = typeof o == "string" ? o : "";
+    e && (e.textContent = h, e.setAttribute("data-state", y));
+    const v = y === "loading";
+    t.setAttribute("data-loading", v ? "true" : "false"), i && i.setAttribute("aria-busy", v ? "true" : "false");
   }
   function C() {
     if (!i)
@@ -1116,13 +1122,13 @@ function Ct(a) {
     V(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
-      const y = document.createElement("li"), u = document.createElement("span");
-      u.className = "fp-skeleton", y.appendChild(u), i.appendChild(y);
+      const y = document.createElement("li"), h = document.createElement("span");
+      h.className = "fp-skeleton", y.appendChild(h), i.appendChild(y);
     }
   }
   function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && u !== "" && (m !== "" && m !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
+    const d = o && typeof o == "object", y = d && typeof o.meal == "string" ? o.meal.trim() : "", h = d && typeof o.date == "string" ? o.date.trim() : "", v = d && typeof o.party < "u" ? String(o.party).trim() : "", w = y !== "", P = w && h !== "" && (v !== "" && v !== "0"), g = w ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
     q(g, "idle"), i && V(i), _(o, { state: P ? "full" : "unknown", slots: 0 });
   }
   function N() {
@@ -1137,12 +1143,12 @@ function Ct(a) {
       const y = r.querySelector("[data-fp-resv-slots-boundary-message]");
       y && (y.textContent = o || d), r.hidden = !1;
     }
-    q(o || d, "error"), _(h, { state: "error", slots: 0 });
+    q(o || d, "error"), _(u, { state: "error", slots: 0 });
   }
   function Z(o, d) {
     const y = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(y, (u) => {
-      u.setAttribute("aria-pressed", u === d ? "true" : "false");
+    Array.prototype.forEach.call(y, (h) => {
+      h.setAttribute("aria-pressed", h === d ? "true" : "false");
     }), f = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
   }
   function tt() {
@@ -1154,29 +1160,29 @@ function Ct(a) {
     });
   }
   function j(o, d, y) {
-    if (y && y !== v || d && h && d !== h || (B(), N(), !i))
+    if (y && y !== m || d && u && d !== u || (B(), N(), !i))
       return;
     V(i);
-    const u = o && Array.isArray(o.slots) ? o.slots : [];
-    if (u.length === 0) {
+    const h = o && Array.isArray(o.slots) ? o.slots : [];
+    if (h.length === 0) {
       I(d);
       return;
     }
-    u.forEach((w) => {
+    h.forEach((w) => {
       const S = document.createElement("li"), c = document.createElement("button");
       c.type = "button", c.textContent = w.label || "", c.dataset.slot = w.start || "", c.dataset.slotStatus = w.status || "", c.setAttribute("aria-pressed", f && f.start === w.start ? "true" : "false"), c.addEventListener("click", () => Z(w, c)), S.appendChild(c), i.appendChild(S);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
-    const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    _(d, A(u, m));
+    const v = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
+    _(d, A(h, v));
   }
   function L(o, d) {
-    if (h = o, !o || !o.date || !o.party) {
+    if (u = o, !o || !o.date || !o.party) {
       I(o);
       return;
     }
-    const y = ++v, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
-    if (m && Date.now() - m.timestamp < gt && d === 0) {
-      j(m.payload, o, y);
+    const y = ++m, h = JSON.stringify([o.date, o.meal, o.party]), v = l.get(h);
+    if (v && Date.now() - v.timestamp < gt && d === 0) {
+      j(v.payload, o, y);
       return;
     }
     B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), _(o, { state: "loading", slots: 0 });
@@ -1194,12 +1200,12 @@ function Ct(a) {
       }
       return P;
     })).then((c) => {
-      if (y !== v)
+      if (y !== m)
         return;
       const P = performance.now() - S;
-      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, y);
+      typeof a.onLatency == "function" && a.onLatency(P), l.set(h, { payload: c, timestamp: Date.now() }), j(c, o, y);
     }).catch((c) => {
-      if (y !== v)
+      if (y !== m)
         return;
       const P = performance.now() - S;
       typeof a.onLatency == "function" && a.onLatency(P);
@@ -1225,24 +1231,24 @@ function Ct(a) {
   return {
     schedule(o, d = {}) {
       p && window.clearTimeout(p);
-      const y = d && typeof d == "object" ? d : {}, u = o || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(u && u.requiresMeal);
-      if (!u || !u.date || !u.party || m && !u.meal) {
-        h = u, I(u || {});
+      const y = d && typeof d == "object" ? d : {}, h = o || (typeof a.getParams == "function" ? a.getParams() : null), v = !!(h && h.requiresMeal);
+      if (!h || !h.date || !h.party || v && !h.meal) {
+        u = h, I(h || {});
         return;
       }
       if (y.immediate) {
-        L(u, 0);
+        L(h, 0);
         return;
       }
       p = window.setTimeout(() => {
-        L(u, 0);
+        L(h, 0);
       }, bt);
     },
     revalidate() {
-      if (!h)
+      if (!u)
         return;
-      const o = JSON.stringify([h.date, h.meal, h.party]);
-      l.delete(o), L(h, 0);
+      const o = JSON.stringify([u.date, u.meal, u.party]);
+      l.delete(o), L(u, 0);
     },
     getSelection() {
       return f;
