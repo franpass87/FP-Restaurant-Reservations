@@ -75,7 +75,7 @@ final class WidgetController
             );
 
             wp_enqueue_script(self::HANDLE_LEGACY);
-        } elseif (!$moduleExists) {
+        } else {
             // Fall back to the development module if the build artefact is missing.
             $moduleUrl = Plugin::$url . 'assets/js/fe/onepage.js';
             
