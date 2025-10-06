@@ -1019,6 +1019,7 @@ class Y {
 }
 typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Y);
 document.addEventListener("DOMContentLoaded", function() {
+  console.log("[FP-RESV] Plugin v0.1.2 loaded - Slot validation active");
   const a = document.querySelectorAll("[data-fp-resv]");
   Array.prototype.forEach.call(a, function(t) {
     new Y(t);

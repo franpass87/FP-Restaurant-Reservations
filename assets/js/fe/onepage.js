@@ -2075,6 +2075,7 @@ if (typeof window !== 'undefined') {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('[FP-RESV] Plugin v0.1.2 loaded - Slot validation active');
     const widgets = document.querySelectorAll('[data-fp-resv]');
     Array.prototype.forEach.call(widgets, function (widget) {
         new FormApp(widget);
