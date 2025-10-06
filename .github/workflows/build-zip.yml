@@ -1,63 +1,56 @@
-name: (deprecated) Build Plugin Zip
+name: Build ZIP on merge to main
 
 on:
-  workflow_dispatch:
+  pull_request:
+    types: [closed]
 
 permissions:
   contents: read
 
 jobs:
-  package:
-    name: Prepare distribution zip
+  build-zip:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     env:
       PLUGIN_SLUG: fp-restaurant-reservations
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          fetch-depth: 0
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
 
-      - name: Validate composer configuration
-        run: composer validate --no-check-all --no-check-publish
-
-      - name: Install PHP dependencies (if lock file present)
-        if: hashFiles('composer.lock') != ''
-        run: composer install --no-dev --prefer-dist --no-progress --no-interaction
-
-      - name: Prepare package directory
+      - name: Install composer deps (no dev)
         run: |
-          rm -rf package
-          mkdir -p "package/$PLUGIN_SLUG"
-          rsync -a ./ "package/$PLUGIN_SLUG" \
-            --delete \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude 'node_modules/' \
-            --exclude 'vendor/' \
-            --exclude 'tests/' \
-            --exclude 'docs/' \
-            --exclude 'package/' \
-            --exclude 'scripts/' \
-            --exclude '.gitignore' \
-            --exclude '*.zip' \
-            --exclude '*.log' \
-            --exclude '.codex-state.json' \
-            --exclude 'package-lock.json' \
-            --exclude 'pnpm-lock.yaml' \
-            --exclude 'yarn.lock' \
-            --exclude 'phpstan.neon' \
-            --exclude 'phpcs.xml' \
-            --exclude '.rebuild-state.json' \
-            --exclude 'AUDIT.md'
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+          composer dump-autoload -o --classmap-authoritative
 
-      - name: Create zip archive
-        working-directory: package
-        run: zip -r "../$PLUGIN_SLUG.zip" "$PLUGIN_SLUG"
+      - name: Ensure tools present
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync zip
 
-      - name: Upload build artifact
+      - name: Package plugin
+        run: |
+          set -e
+          OUTDIR=build/${PLUGIN_SLUG}
+          rm -rf build && mkdir -p "$OUTDIR"
+          rsync -a ./ "$OUTDIR" \
+            --exclude ".git/" --exclude ".github/" --exclude "node_modules/" \
+            --exclude "tests/" --exclude "docs/" --exclude "build/" \
+            --exclude "scripts/" --exclude ".gitignore" --exclude "*.zip" \
+            --exclude "*.log" --exclude "AUDIT/" --exclude "AUDIT.md" \
+            --exclude "phpstan.neon" --exclude "phpcs.xml"
+          (cd build && zip -r "${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}")
+          echo "ZIP creato: build/${PLUGIN_SLUG}.zip"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PLUGIN_SLUG }}
-          path: ${{ env.PLUGIN_SLUG }}.zip
+          path: build/*.zip
           if-no-files-found: error
