@@ -1046,27 +1046,30 @@ class FormApp {
             return;
         }
         
-        // Per lo step slots, controlla se ci sono slot disponibili
+        // Per lo step slots, controlla se ci sono slot disponibili e BLOCCA se non selezionati
         if (stepKey === 'slots') {
             const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
             const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
             
-            // Se non ci sono slot selezionati, mostra un messaggio ma non bloccare
+            // Se non ci sono slot selezionati, mostra un messaggio e BLOCCA la navigazione
             if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
                 const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
                 if (slotsSection) {
                     const statusEl = slotsSection.querySelector('[data-fp-resv-slots-status]');
                     if (statusEl) {
-                        statusEl.textContent = 'Seleziona un orario per continuare';
+                        statusEl.textContent = this.copy.slotRequired || 'Seleziona un orario per continuare.';
                         statusEl.style.color = '#dc2626';
+                        statusEl.setAttribute('data-state', 'error');
                         
                         setTimeout(() => {
                             statusEl.textContent = '';
                             statusEl.style.color = '';
+                            statusEl.removeAttribute('data-state');
                         }, 3000);
                     }
                 }
-                // Non bloccare la navigazione, permetti di continuare
+                // BLOCCA la navigazione - non procedere
+                return;
             }
         }
         
