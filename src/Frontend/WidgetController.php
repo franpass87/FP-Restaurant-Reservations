@@ -64,8 +64,9 @@ final class WidgetController
         $moduleExists = file_exists($modulePath);
         $legacyExists = file_exists($legacyPath);
 
-        // Force immediate script loading with inline initialization
+        // AGGRESSIVE FIX: Force JavaScript loading with multiple fallbacks
         if ($legacyExists) {
+            // Try multiple loading strategies
             wp_register_script(
                 self::HANDLE_LEGACY,
                 $legacyUrl,
@@ -76,40 +77,63 @@ final class WidgetController
 
             wp_enqueue_script(self::HANDLE_LEGACY);
             
-            // Add inline script to force initialization
-            add_action('wp_footer', function() use ($legacyUrl) {
+            // Add aggressive inline initialization with multiple fallbacks
+            add_action('wp_footer', function() use ($legacyUrl, $legacyPath) {
                 echo '<script>
-                // Force FP-RESV initialization
-                (function() {
-                    console.log("[FP-RESV] Force initialization script loaded");
+                console.log("[FP-RESV] AGGRESSIVE initialization starting...");
+                
+                // Strategy 1: Direct script injection if wp_enqueue fails
+                function injectScriptDirectly() {
+                    const script = document.createElement("script");
+                    script.src = "' . esc_js($legacyUrl) . '?v=' . Plugin::VERSION . '&t=' . filemtime($legacyPath) . '";
+                    script.onload = function() {
+                        console.log("[FP-RESV] Script loaded directly, initializing...");
+                        initializeFPResv();
+                    };
+                    script.onerror = function() {
+                        console.error("[FP-RESV] Direct script injection failed");
+                        // Fallback to development version
+                        const devScript = document.createElement("script");
+                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/onepage.js') . '?v=' . Plugin::VERSION . '";
+                        devScript.onload = function() {
+                            console.log("[FP-RESV] Development script loaded");
+                            initializeFPResv();
+                        };
+                        document.head.appendChild(devScript);
+                    };
+                    document.head.appendChild(script);
+                }
+                
+                function initializeFPResv() {
+                    console.log("[FP-RESV] Attempting initialization...");
                     
-                    function initFPResv() {
-                        if (window.FPResv && window.FPResv.FormApp) {
-                            console.log("[FP-RESV] FPResv found, initializing widgets");
-                            const widgets = document.querySelectorAll("[data-fp-resv]");
-                            console.log("[FP-RESV] Found widgets:", widgets.length);
-                            
-                            widgets.forEach(function(widget) {
-                                try {
-                                    new window.FPResv.FormApp(widget);
-                                    console.log("[FP-RESV] Widget initialized:", widget.id || "unnamed");
-                                } catch (error) {
-                                    console.error("[FP-RESV] Error initializing widget:", error);
-                                }
-                            });
-                        } else {
-                            console.log("[FP-RESV] FPResv not found, retrying in 100ms");
-                            setTimeout(initFPResv, 100);
-                        }
-                    }
-                    
-                    // Start initialization
-                    if (document.readyState === "loading") {
-                        document.addEventListener("DOMContentLoaded", initFPResv);
+                    if (window.FPResv && window.FPResv.FormApp) {
+                        console.log("[FP-RESV] SUCCESS: FPResv found, initializing widgets");
+                        const widgets = document.querySelectorAll("[data-fp-resv]");
+                        console.log("[FP-RESV] Found widgets:", widgets.length);
+                        
+                        widgets.forEach(function(widget) {
+                            try {
+                                new window.FPResv.FormApp(widget);
+                                console.log("[FP-RESV] Widget initialized:", widget.id || "unnamed");
+                            } catch (error) {
+                                console.error("[FP-RESV] Error initializing widget:", error);
+                            }
+                        });
                     } else {
-                        initFPResv();
+                        console.log("[FP-RESV] FPResv not available, trying direct injection...");
+                        injectScriptDirectly();
                     }
-                })();
+                }
+                
+                // Start with immediate check
+                setTimeout(function() {
+                    if (window.FPResv && window.FPResv.FormApp) {
+                        initializeFPResv();
+                    } else {
+                        injectScriptDirectly();
+                    }
+                }, 100);
                 </script>';
             });
         } else {
