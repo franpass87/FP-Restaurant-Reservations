@@ -10,6 +10,24 @@
 
     let rooms = Array.isArray(settings.initialState && settings.initialState.rooms) ? settings.initialState.rooms : [];
 
+    // Debug: test endpoint availability
+    const testEndpoint = () => {
+        return fetch(`${restRoot}/tables/overview`, {
+            method: 'GET',
+            headers: {
+                'X-WP-Nonce': settings.nonce || '',
+            },
+            credentials: 'same-origin',
+        }).then(response => {
+            console.log('[FP-Resv] Endpoint test response:', {
+                status: response.status,
+                ok: response.ok,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+            return response;
+        });
+    };
+
     // Utility: API request
     const request = (path, options = {}) => {
         const url = typeof path === 'string' && path.startsWith('http') ? path : `${restRoot}${path}`;
@@ -44,8 +62,17 @@
                 return null;
             }
             return response.text().then((text) => {
-                if (!text) return {};
-                try { return JSON.parse(text); } catch (e) { return {}; }
+                if (!text) {
+                    // Restituisce null invece di {} per indicare una risposta vuota valida
+                    return null;
+                }
+                try { 
+                    return JSON.parse(text); 
+                } catch (e) { 
+                    // Log dell'errore di parsing JSON
+                    try { console.error('[FP-Resv] JSON parse error', { url, text, error: e.message }); } catch (_) {}
+                    throw new Error('Risposta non valida dal server');
+                }
             });
         });
     };
@@ -282,7 +309,16 @@
                 // Mantieni lo stato corrente se la risposta non è nel formato atteso
                 const valid = payload && Array.isArray(payload.rooms);
                 if (!valid) {
-                    const errorMsg = payload && payload.message ? payload.message : 'Risposta inattesa dal server. Visualizzo dati correnti.';
+                    let errorMsg = 'Risposta inattesa dal server. Visualizzo dati correnti.';
+                    
+                    if (payload === null) {
+                        errorMsg = 'Nessuna risposta dal server. Verificare i permessi di accesso.';
+                    } else if (payload && payload.message) {
+                        errorMsg = payload.message;
+                    } else if (payload && typeof payload === 'object') {
+                        errorMsg = 'Formato dati non valido ricevuto dal server.';
+                    }
+                    
                     notify(errorMsg, 'warning');
                     try { console.warn('[FP-Resv] Unexpected overview payload', payload); } catch (_) {}
                 }
@@ -290,8 +326,19 @@
                 render();
             })
             .catch((error) => {
-                alert((error && error.message) ? error.message : 'Impossibile aggiornare le sale.');
+                let errorMessage = 'Impossibile aggiornare le sale.';
+                
+                if (error && error.message) {
+                    errorMessage = error.message;
+                } else if (error && error.status === 403) {
+                    errorMessage = 'Permessi insufficienti per accedere alle sale.';
+                } else if (error && error.status === 404) {
+                    errorMessage = 'Endpoint API non trovato. Verificare la configurazione del plugin.';
+                }
+                
+                alert(errorMessage);
                 notify('Impossibile aggiornare le sale. Dati correnti mantenuti.', 'warning');
+                try { console.error('[FP-Resv] Refresh error', error); } catch (_) {}
             })
             .finally(() => { 
                 root.dataset.state = ''; 
@@ -335,12 +382,28 @@
                     status: data.status 
                 } 
             })
-            .then(() => {
-                closeModal();
-                refresh();
+            .then((result) => {
+                if (result && result.id) {
+                    closeModal();
+                    refresh();
+                    notify('Tavolo creato con successo', 'success');
+                } else {
+                    throw new Error('Risposta inattesa dal server durante la creazione del tavolo');
+                }
             })
             .catch((error) => { 
-                alert((error && error.message) ? error.message : 'Impossibile creare il tavolo.'); 
+                let errorMessage = 'Impossibile creare il tavolo.';
+                
+                if (error && error.message) {
+                    errorMessage = error.message;
+                } else if (error && error.status === 403) {
+                    errorMessage = 'Permessi insufficienti per creare tavoli.';
+                } else if (error && error.status === 400) {
+                    errorMessage = 'Dati non validi per la creazione del tavolo.';
+                }
+                
+                alert(errorMessage);
+                try { console.error('[FP-Resv] Add table error', error); } catch (_) {}
             });
         });
     };
@@ -489,6 +552,11 @@
         }
     });
 
+    // Test endpoint availability on startup
+    testEndpoint().catch(error => {
+        console.error('[FP-Resv] Endpoint test failed:', error);
+    });
+    
     // Initial render
     render();
     // Imposta badge al primo caricamento

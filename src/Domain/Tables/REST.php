@@ -332,7 +332,9 @@ final class REST
 
     private function canManage(): bool
     {
-        return current_user_can('manage_options');
+        // Verifica che l'utente abbia i permessi per gestire le opzioni
+        // o almeno i permessi per gestire le prenotazioni
+        return current_user_can('manage_options') || current_user_can('edit_posts');
     }
 
     /**
@@ -342,9 +344,17 @@ final class REST
     {
         try {
             $result = $operation();
+            
+            // Log per debug: verifica che il risultato sia valido
+            if (!is_array($result)) {
+                error_log('[FP-Resv] Tables REST: Invalid result type from operation: ' . gettype($result));
+            }
+            
         } catch (InvalidArgumentException $exception) {
+            error_log('[FP-Resv] Tables REST: Invalid argument - ' . $exception->getMessage());
             return new WP_Error('fp_resv_tables_invalid', $exception->getMessage(), ['status' => 400]);
         } catch (\Throwable $exception) {
+            error_log('[FP-Resv] Tables REST: Unexpected error - ' . $exception->getMessage());
             return new WP_Error('fp_resv_tables_error', $exception->getMessage(), ['status' => 500]);
         }
 
