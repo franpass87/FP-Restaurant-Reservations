@@ -218,18 +218,6 @@ final class AdminPages
             56
         );
 
-        // Aggiunge anche il sottomenu per la pagina principale per compatibilità con alcuni setup WP
-        add_submenu_page(
-            $firstPage['slug'],
-            (string) $firstPage['page_title'],
-            (string) $firstPage['menu_title'],
-            self::CAPABILITY,
-            $firstPage['slug'],
-            function () use ($firstKey): void {
-                $this->renderSettingsPage($firstKey);
-            }
-        );
-
         foreach ($this->pages as $pageKey => $page) {
             if ($pageKey === $firstKey) {
                 // già aggiunto sopra
