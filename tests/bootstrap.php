@@ -338,6 +338,103 @@ function __(
     return $text;
 }
 
+if (!function_exists('esc_attr')) {
+    function esc_attr(string $text): string
+    {
+        return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}
+
+if (!function_exists('esc_html')) {
+    function esc_html(string $text): string
+    {
+        return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}
+
+if (!function_exists('esc_url')) {
+    function esc_url(string $url): string
+    {
+        return filter_var($url, FILTER_SANITIZE_URL) ?: '';
+    }
+}
+
+if (!function_exists('esc_url_raw')) {
+    function esc_url_raw(string $url): string
+    {
+        return filter_var($url, FILTER_SANITIZE_URL) ?: '';
+    }
+}
+
+if (!function_exists('esc_attr__')) {
+    function esc_attr__(string $text, string $domain = 'default'): string
+    {
+        return esc_attr(__($text, $domain));
+    }
+}
+
+if (!function_exists('esc_attr_e')) {
+    function esc_attr_e(string $text, string $domain = 'default'): void
+    {
+        echo esc_attr(__($text, $domain));
+    }
+}
+
+if (!function_exists('esc_html__')) {
+    function esc_html__(string $text, string $domain = 'default'): string
+    {
+        return esc_html(__($text, $domain));
+    }
+}
+
+if (!function_exists('esc_html_e')) {
+    function esc_html_e(string $text, string $domain = 'default'): void
+    {
+        echo esc_html(__($text, $domain));
+    }
+}
+
+if (!function_exists('sanitize_key')) {
+    function sanitize_key(string $key): string
+    {
+        $key = strtolower($key);
+        $key = preg_replace('/[^a-z0-9_\-]/', '', $key);
+
+        return $key ?? '';
+    }
+}
+
+if (!function_exists('admin_url')) {
+    function admin_url(string $path = ''): string
+    {
+        $base = 'https://example.test/wp-admin/';
+
+        return $base . ltrim($path, '/');
+    }
+}
+
+if (!function_exists('add_query_arg')) {
+    function add_query_arg(string $key, string $value, ?string $url = null): string
+    {
+        $url = $url ?? 'https://example.test/';
+        $parts = parse_url($url);
+        $query = [];
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+        $query[$key] = $value;
+        $parts['query'] = http_build_query($query);
+
+        $scheme   = $parts['scheme'] ?? 'https';
+        $host     = $parts['host'] ?? 'example.test';
+        $port     = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path     = $parts['path'] ?? '/';
+        $queryStr = $parts['query'] ? '?' . $parts['query'] : '';
+
+        return $scheme . '://' . $host . $port . $path . $queryStr;
+    }
+}
+
 function wp_nonce_field(string $action, string $name): void
 {
     // no-op for tests
