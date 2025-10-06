@@ -123,11 +123,39 @@ wp eval-file tools/refresh-cache.php
 ```
 
 #### Opzione 2: URL Admin (se non hai SSH)
-1. Fai login nell'admin WordPress
-2. Vai a: `Impostazioni → FP Restaurant Reservations`
-3. Aggiungi `&fp_resv_refresh_cache=1` alla fine dell'URL
-4. Premi Invio
-5. Vedrai il messaggio di conferma
+
+**Metodo A - Con toolbar link (consigliato):**
+
+Aggiungi questo a `functions.php` del tema:
+```php
+add_action('admin_bar_menu', function($wp_admin_bar) {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    $wp_admin_bar->add_node([
+        'id'    => 'fp_resv_refresh_cache',
+        'title' => '🔄 Refresh Cache Plugin',
+        'href'  => wp_nonce_url(
+            admin_url('admin.php?page=fp-resv-settings&fp_resv_refresh_cache=1'),
+            'fp_resv_refresh_cache'
+        ),
+    ]);
+}, 100);
+```
+
+Poi clicca sul link "🔄 Refresh Cache Plugin" nella toolbar admin.
+
+**Metodo B - Console browser:**
+
+Apri la console del browser (F12) in qualsiasi pagina admin e esegui:
+```javascript
+fetch(ajaxurl, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'action=fp_resv_refresh_cache'
+}).then(() => location.reload());
+```
 
 #### Opzione 3: REST API (per automazione)
 ```bash
