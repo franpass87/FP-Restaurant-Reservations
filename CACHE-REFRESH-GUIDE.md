@@ -39,11 +39,28 @@ wp eval-file tools/refresh-cache.php
 
 ### 3. Via URL Admin (Manuale)
 
-Aggiungi `?fp_resv_refresh_cache=1` a qualsiasi pagina admin del plugin:
+⚠️ **Nota:** Per motivi di sicurezza, l'URL richiede un nonce valido.
 
+**Metodo consigliato - Aggiungi questo codice a `functions.php` del tema:**
+
+```php
+add_action('admin_bar_menu', function($wp_admin_bar) {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    $wp_admin_bar->add_node([
+        'id'    => 'fp_resv_refresh_cache',
+        'title' => '🔄 Refresh Cache Plugin',
+        'href'  => wp_nonce_url(
+            admin_url('admin.php?page=fp-resv-settings&fp_resv_refresh_cache=1'),
+            'fp_resv_refresh_cache'
+        ),
+    ]);
+}, 100);
 ```
-https://tuosito.com/wp-admin/admin.php?page=fp-resv-settings&fp_resv_refresh_cache=1
-```
+
+Questo aggiunge un link nella toolbar admin per refresh facile e sicuro.
 
 ### 4. Via Codice PHP
 

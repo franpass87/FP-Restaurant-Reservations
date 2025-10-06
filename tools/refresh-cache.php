@@ -33,9 +33,23 @@ if (php_sapi_name() === 'cli' && !defined('ABSPATH')) {
 }
 
 // Hook for admin page refresh
-if (defined('ABSPATH') && is_admin() && current_user_can('manage_options')) {
+if (defined('ABSPATH') && is_admin()) {
     add_action('admin_init', function() {
+        // Check permissions first
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
         if (isset($_GET['fp_resv_refresh_cache']) && $_GET['fp_resv_refresh_cache'] === '1') {
+            // Verify nonce for security
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'fp_resv_refresh_cache')) {
+                wp_die(
+                    esc_html__('Verifica di sicurezza fallita.', 'fp-restaurant-reservations'),
+                    esc_html__('Errore', 'fp-restaurant-reservations'),
+                    ['response' => 403]
+                );
+            }
+            
             if (class_exists('FP\Resv\Core\Plugin')) {
                 \FP\Resv\Core\Plugin::forceRefreshAssets();
                 wp_safe_redirect(admin_url('admin.php?page=fp-resv-settings&cache_refreshed=1'));
@@ -45,6 +59,10 @@ if (defined('ABSPATH') && is_admin() && current_user_can('manage_options')) {
     });
     
     add_action('admin_notices', function() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
         if (isset($_GET['cache_refreshed']) && $_GET['cache_refreshed'] === '1') {
             echo '<div class="notice notice-success is-dismissible"><p>';
             echo esc_html__('Cache plugin aggiornata con successo!', 'fp-restaurant-reservations');

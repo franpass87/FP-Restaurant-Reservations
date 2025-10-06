@@ -130,7 +130,8 @@ final class Plugin
      */
     public static function forceRefreshAssets(): void
     {
-        update_option('fp_resv_last_upgrade', time());
+        $timestamp = time();
+        update_option('fp_resv_last_upgrade', $timestamp, false);
         
         // Also clear all caches
         if (function_exists('wp_cache_flush')) {
@@ -141,7 +142,7 @@ final class Plugin
         
         Logging::log('plugin', 'Asset cache manually refreshed', [
             'version' => self::VERSION,
-            'timestamp' => time(),
+            'timestamp' => $timestamp,
         ]);
     }
 
@@ -190,8 +191,9 @@ final class Plugin
         Migrations::run();
 
         // Set initial upgrade timestamp if not already set
-        if (!get_option('fp_resv_last_upgrade')) {
-            update_option('fp_resv_last_upgrade', time());
+        $upgradeTime = get_option('fp_resv_last_upgrade', false);
+        if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
+            update_option('fp_resv_last_upgrade', time(), false);
         }
     }
 
@@ -201,15 +203,23 @@ final class Plugin
      */
     public static function onUpgrade(): void
     {
+        $timestamp = time();
+        
         // Clear all WordPress caches
         if (function_exists('wp_cache_flush')) {
             wp_cache_flush();
         }
 
         // Clear transients that might be caching old data
-        if (function_exists('delete_transient')) {
-            global $wpdb;
-            $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_%fp_resv%' OR option_name LIKE '_transient_timeout_%fp_resv%'");
+        global $wpdb;
+        if (isset($wpdb) && isset($wpdb->options)) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+                    $wpdb->esc_like('_transient_') . '%fp_resv%',
+                    $wpdb->esc_like('_transient_timeout_') . '%fp_resv%'
+                )
+            );
         }
 
         // Clear plugin-specific caches
@@ -217,12 +227,12 @@ final class Plugin
 
         // Update last upgrade timestamp option
         if (function_exists('update_option')) {
-            update_option('fp_resv_last_upgrade', time());
+            update_option('fp_resv_last_upgrade', $timestamp, false);
         }
 
         Logging::log('plugin', 'Plugin upgraded and caches cleared', [
             'version' => self::VERSION,
-            'timestamp' => time(),
+            'timestamp' => $timestamp,
         ]);
     }
 

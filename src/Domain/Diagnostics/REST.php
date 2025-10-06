@@ -195,6 +195,9 @@ final class REST
 
     public function handleRefreshCache(WP_REST_Request $request): WP_REST_Response
     {
+        // Parameter $request is required by REST API signature but not used in this endpoint
+        unset($request);
+        
         Plugin::forceRefreshAssets();
         
         return rest_ensure_response([
