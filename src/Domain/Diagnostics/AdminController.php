@@ -60,15 +60,16 @@ final class AdminController
         $baseHandle   = 'fp-resv-admin-shell';
         $styleHandle  = 'fp-resv-admin-diagnostics';
         $scriptHandle = 'fp-resv-admin-diagnostics-js';
+        $version      = Plugin::assetVersion();
 
-        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
 
         if (file_exists(Plugin::$dir . 'assets/css/admin-diagnostics.css')) {
             wp_enqueue_style(
                 $styleHandle,
                 Plugin::$url . 'assets/css/admin-diagnostics.css',
                 [$baseHandle],
-                Plugin::VERSION
+                $version
             );
         }
 
@@ -76,7 +77,7 @@ final class AdminController
             $scriptHandle,
             Plugin::$url . 'assets/js/admin/diagnostics-dashboard.js',
             ['wp-api-fetch'],
-            Plugin::VERSION,
+            $version,
             true
         );
 

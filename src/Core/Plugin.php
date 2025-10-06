@@ -88,6 +88,18 @@ final class Plugin
      */
     public static $url = null;
 
+    /**
+     * Get the asset version string with cache busting timestamp.
+     * This ensures browser caches are invalidated when the plugin is updated.
+     * 
+     * @return string Version string like "0.1.6.1234567890"
+     */
+    public static function assetVersion(): string
+    {
+        $upgradeTime = get_option('fp_resv_last_upgrade', 0);
+        return self::VERSION . '.' . $upgradeTime;
+    }
+
     public static function boot(string $file): void
     {
         self::$file = $file;
@@ -103,6 +115,22 @@ final class Plugin
             });
         });
 
+        // Clear all caches when plugin is upgraded
+        add_action('upgrader_process_complete', static function ($upgrader_object, $options): void {
+            if ($options['action'] === 'update' && $options['type'] === 'plugin') {
+                if (isset($options['plugins'])) {
+                    foreach ($options['plugins'] as $plugin) {
+                        if ($plugin === plugin_basename($file)) {
+                            self::runBootstrapStage('upgrade', static function (): void {
+                                self::onUpgrade();
+                            });
+                            break;
+                        }
+                    }
+                }
+            }
+        }, 10, 2);
+
         add_action('plugins_loaded', static function (): void {
             self::runBootstrapStage('bootstrap', static function (): void {
                 self::onPluginsLoaded();
@@ -115,6 +143,42 @@ final class Plugin
         ServiceContainer::getInstance();
 
         Migrations::run();
+
+        // Set initial upgrade timestamp if not already set
+        if (!get_option('fp_resv_last_upgrade')) {
+            update_option('fp_resv_last_upgrade', time());
+        }
+    }
+
+    /**
+     * Called when the plugin is upgraded.
+     * Clears all caches to ensure new files are loaded.
+     */
+    public static function onUpgrade(): void
+    {
+        // Clear all WordPress caches
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
+
+        // Clear transients that might be caching old data
+        if (function_exists('delete_transient')) {
+            global $wpdb;
+            $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_%fp_resv%' OR option_name LIKE '_transient_timeout_%fp_resv%'");
+        }
+
+        // Clear plugin-specific caches
+        CacheManager::invalidateAll();
+
+        // Update last upgrade timestamp option
+        if (function_exists('update_option')) {
+            update_option('fp_resv_last_upgrade', time());
+        }
+
+        Logging::log('plugin', 'Plugin upgraded and caches cleared', [
+            'version' => self::VERSION,
+            'timestamp' => time(),
+        ]);
     }
 
     public static function onPluginsLoaded(): void

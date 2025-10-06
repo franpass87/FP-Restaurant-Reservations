@@ -424,12 +424,31 @@ class FormApp {
             return;
         }
 
-        const openPicker = () => {
+        const openPicker = (event) => {
+            // Previeni il comportamento default per garantire che il picker si apra
+            if (event && event.type === 'click') {
+                event.preventDefault();
+            }
+            
+            // Focus sull'input prima di aprire il picker
+            if (typeof this.dateField.focus === 'function') {
+                this.dateField.focus();
+            }
+            
+            // Apri il picker nativo del browser
             if (typeof this.dateField.showPicker === 'function') {
                 try {
                     this.dateField.showPicker();
                 } catch (error) {
                     // Alcuni browser (es. Safari) potrebbero non supportare showPicker: ignora.
+                    // In questo caso il focus dovrebbe comunque aprire il picker
+                }
+            } else {
+                // Fallback: trigger click sull'input
+                try {
+                    this.dateField.click();
+                } catch (error) {
+                    // noop
                 }
             }
         };
@@ -437,14 +456,38 @@ class FormApp {
         // Make the entire input area clickable
         this.dateField.addEventListener('focus', openPicker);
         this.dateField.addEventListener('click', openPicker);
-        this.dateField.addEventListener('mousedown', openPicker);
         
-        // Also make the calendar icon clickable
-        const dateContainer = this.dateField.closest('.fp-resv-field');
+        // Make the entire field container clickable
+        const dateContainer = this.dateField.closest('.fp-resv-field, .fp-field');
         if (dateContainer) {
-            const calendarIcon = dateContainer.querySelector('.fp-icon--calendar');
+            // Rendi cliccabile tutta l'area del campo, incluso il label
+            dateContainer.style.cursor = 'pointer';
+            dateContainer.addEventListener('click', (event) => {
+                // Non aprire se hanno cliccato direttamente sull'input (già gestito sopra)
+                if (event.target === this.dateField) {
+                    return;
+                }
+                
+                event.preventDefault();
+                event.stopPropagation();
+                openPicker(event);
+            });
+            
+            // Trova anche l'icona del calendario se esiste
+            const calendarIcon = dateContainer.querySelector('.fp-icon--calendar, [class*="calendar"]');
             if (calendarIcon) {
-                calendarIcon.addEventListener('click', openPicker);
+                calendarIcon.style.cursor = 'pointer';
+                calendarIcon.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openPicker(event);
+                });
+            }
+            
+            // Rendi cliccabile anche il label
+            const label = dateContainer.querySelector('label');
+            if (label) {
+                label.style.cursor = 'pointer';
             }
         }
     }

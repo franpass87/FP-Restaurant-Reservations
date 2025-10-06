@@ -64,13 +64,14 @@ final class AdminController
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/closures-app.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-closures.css';
+        $version   = Plugin::assetVersion();
 
-        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], Plugin::VERSION, true);
+        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], $version, true);
 
-        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], Plugin::VERSION);
+        wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
 
         if (file_exists(Plugin::$dir . 'assets/css/admin-closures.css')) {
-            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], Plugin::VERSION);
+            wp_enqueue_style($styleHandle, $styleUrl, [$baseHandle], $version);
         }
 
         $timezone = wp_timezone();
