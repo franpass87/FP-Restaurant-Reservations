@@ -246,6 +246,7 @@ class FormApp {
             slotsEmpty: this.messages.slots_empty || '',
             selectMeal: this.messages.msg_select_meal || 'Seleziona un servizio per visualizzare gli orari disponibili.',
             slotsError: this.messages.msg_slots_error || 'Impossibile aggiornare la disponibilità. Riprova.',
+            slotRequired: this.messages.slot_required || 'Seleziona un orario per continuare.',
             invalidPhone: this.messages.msg_invalid_phone || 'Inserisci un numero di telefono valido (minimo 6 cifre).',
             invalidEmail: this.messages.msg_invalid_email || 'Inserisci un indirizzo email valido.',
             submitError: this.messages.msg_submit_error || 'Non è stato possibile completare la prenotazione. Riprova.',
@@ -979,6 +980,33 @@ class FormApp {
 
     navigateToNext(section) {
         if (!this.isSectionValid(section)) {
+            const stepKey = section.getAttribute('data-step') || '';
+            
+            // Gestione specifica per lo step slots
+            if (stepKey === 'slots') {
+                const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
+                const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
+                
+                if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
+                    // Mostra un messaggio di errore specifico per la mancanza di selezione orario
+                    const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
+                    if (slotsSection) {
+                        const statusEl = slotsSection.querySelector('[data-fp-resv-slots-status]');
+                        if (statusEl) {
+                            statusEl.textContent = this.copy.slotRequired;
+                            statusEl.style.color = '#dc2626'; // Colore rosso per l'errore
+                            
+                            // Rimuovi il messaggio di errore dopo 3 secondi
+                            setTimeout(() => {
+                                statusEl.textContent = '';
+                                statusEl.style.color = '';
+                            }, 3000);
+                        }
+                    }
+                    return;
+                }
+            }
+            
             const invalid = this.findFirstInvalid(section);
             if (invalid) {
                 if (typeof invalid.reportValidity === 'function') {
@@ -1103,7 +1131,13 @@ class FormApp {
         const stepKey = section.getAttribute('data-step') || '';
         if (stepKey === 'slots') {
             const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
-            if (!timeField || timeField.value.trim() === '') {
+            const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
+            
+            // Verifica che sia stato selezionato un orario (sia nel campo time che nel campo slot_start)
+            const hasTimeSelection = timeField && timeField.value.trim() !== '';
+            const hasSlotSelection = slotStartField && slotStartField.value.trim() !== '';
+            
+            if (!hasTimeSelection || !hasSlotSelection) {
                 return false;
             }
         }
