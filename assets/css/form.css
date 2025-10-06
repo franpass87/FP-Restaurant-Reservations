@@ -674,10 +674,12 @@
 .fp-resv-extra__title {
     margin: 0 0 1rem;
     font-size: 1.02em;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 0.45rem;
-    padding-right: 0.5rem; /* Evita che il testo esca dal box */
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .fp-resv-extra__title::before {
@@ -1496,10 +1498,30 @@
 /* Make date input more clickable and intuitive */
 .fp-resv [data-fp-resv-field="date"] {
     cursor: pointer;
+    user-select: none;
 }
 
 .fp-resv [data-fp-resv-field="date"]:hover {
-    border-color: var(--fp-color-primary);
+    border-color: var(--fp-resv-color-primary);
+}
+
+/* Rendi cliccabile tutta l'area del campo data */
+.fp-resv .fp-field:has([data-fp-resv-field="date"]),
+.fp-resv .fp-resv-field:has([data-fp-resv-field="date"]) {
+    cursor: pointer;
+}
+
+.fp-resv .fp-field:has([data-fp-resv-field="date"]) label,
+.fp-resv .fp-resv-field:has([data-fp-resv-field="date"]) label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Evidenzia il campo al hover */
+.fp-resv .fp-field:has([data-fp-resv-field="date"]):hover [data-fp-resv-field="date"],
+.fp-resv .fp-resv-field:has([data-fp-resv-field="date"]):hover [data-fp-resv-field="date"] {
+    border-color: var(--fp-resv-color-primary);
+    background: rgba(255, 255, 255, 1);
 }
 
 /* === Overrides UI: consensi, overflow testo, CTA sticky === */
