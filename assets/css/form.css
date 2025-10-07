@@ -1219,6 +1219,12 @@
     margin-top: 20px;
 }
 
+/* Step-specific margin for step 1 (date) and step 2 (party) to ensure visibility on external themes */
+.fp-resv-widget [data-step="date"] .fp-resv-step__footer,
+.fp-resv-widget [data-step="party"] .fp-resv-step__footer {
+    margin-top: 20px !important;
+}
+
 .fp-resv-widget__actions {
     display: grid;
     gap: 0.65rem;
