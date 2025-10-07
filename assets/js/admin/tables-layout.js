@@ -54,7 +54,7 @@
                     const error = new Error(payload && payload.message ? payload.message : 'Request failed');
                     error.status = response.status;
                     // Log tecnico per debug
-                    try { console.error('[FP-Resv] API error', { url, status: response.status, payload }); } catch (_) {}
+                    try { console.error('[FP-Resv] API error', { url, status: response.status, payload }); } catch (_) { void 0; }
                     throw error;
                 });
             }
@@ -70,7 +70,7 @@
                     return JSON.parse(text); 
                 } catch (e) { 
                     // Log dell'errore di parsing JSON
-                    try { console.error('[FP-Resv] JSON parse error', { url, text, error: e.message }); } catch (_) {}
+                    try { console.error('[FP-Resv] JSON parse error', { url, text, error: e.message }); } catch (_) { void 0; }
                     throw new Error('Risposta non valida dal server');
                 }
             });
@@ -113,7 +113,7 @@
         note.style.color = '#111827';
         note.textContent = message;
         root.insertBefore(note, root.firstChild);
-        setTimeout(() => { try { note.remove(); } catch (_) {} }, 5000);
+        setTimeout(() => { try { note.remove(); } catch (_) { void 0; } }, 5000);
     };
 
     // Modal management
@@ -320,7 +320,7 @@
                     }
                     
                     notify(errorMsg, 'warning');
-                    try { console.warn('[FP-Resv] Unexpected overview payload', payload); } catch (_) {}
+                    try { console.warn('[FP-Resv] Unexpected overview payload', payload); } catch (_) { void 0; }
                 }
                 rooms = valid ? payload.rooms : rooms;
                 render();
@@ -338,7 +338,7 @@
                 
                 alert(errorMessage);
                 notify('Impossibile aggiornare le sale. Dati correnti mantenuti.', 'warning');
-                try { console.error('[FP-Resv] Refresh error', error); } catch (_) {}
+                try { console.error('[FP-Resv] Refresh error', error); } catch (_) { void 0; }
             })
             .finally(() => { 
                 root.dataset.state = ''; 
@@ -418,7 +418,7 @@
                 }
                 
                 alert(errorMessage);
-                try { console.error('[FP-Resv] Add table error', error); } catch (_) {}
+                try { console.error('[FP-Resv] Add table error', error); } catch (_) { void 0; }
             });
         });
     };
