@@ -1122,6 +1122,8 @@ class FormApp {
     updateSectionAttributes(section, state, options = {}) {
         const key = section.getAttribute('data-step') || '';
         const silent = options && options.silent === true;
+        console.log(`[FP-RESV] updateSectionAttributes: step=${key}, state=${state}, silent=${silent}`);
+        
         this.state.sectionStates[key] = state;
         section.setAttribute('data-state', state);
 
@@ -1143,6 +1145,7 @@ class FormApp {
             section.style.display = 'block';
             section.style.visibility = 'visible';
             section.style.opacity = '1';
+            console.log(`[FP-RESV] Step ${key} made visible`);
         } else {
             section.hidden = true;
             section.setAttribute('hidden', '');
@@ -1150,6 +1153,7 @@ class FormApp {
             section.style.display = 'none';
             section.style.visibility = 'hidden';
             section.style.opacity = '0';
+            console.log(`[FP-RESV] Step ${key} hidden`);
         }
 
         if (!silent) {
@@ -2195,8 +2199,21 @@ function initializeFPResv() {
     
     Array.prototype.forEach.call(widgets, function (widget) {
         try {
-            new FormApp(widget);
-            console.log('[FP-RESV] Widget initialized:', widget.id || 'unnamed');
+            console.log('[FP-RESV] Initializing widget:', widget.id || 'unnamed');
+            console.log('[FP-RESV] Widget sections found:', widget.querySelectorAll('[data-fp-resv-section]').length);
+            
+            const app = new FormApp(widget);
+            console.log('[FP-RESV] Widget initialized successfully:', widget.id || 'unnamed');
+            
+            // Debug: check initial state
+            const sections = app.sections || [];
+            sections.forEach(function(section, index) {
+                const step = section.getAttribute('data-step');
+                const state = section.getAttribute('data-state');
+                const hidden = section.hasAttribute('hidden');
+                console.log(`[FP-RESV] Step ${index + 1} (${step}): state=${state}, hidden=${hidden}`);
+            });
+            
         } catch (error) {
             console.error('[FP-RESV] Error initializing widget:', error);
         }

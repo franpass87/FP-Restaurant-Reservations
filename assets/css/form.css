@@ -1146,6 +1146,34 @@
     display: none !important;
 }
 
+/* Forza la visibilità per lo step attivo anche se ha attributi conflittuali */
+.fp-resv-step[data-state="active"][hidden] {
+    display: grid !important;
+}
+
+.fp-resv-step[data-state="active"][aria-hidden="true"] {
+    display: grid !important;
+}
+
+/* Fallback: mostra il primo step se JavaScript non è caricato */
+.fp-resv-step:first-child {
+    display: grid !important;
+}
+
+/* Nascondi gli altri step se JavaScript non è caricato */
+.fp-resv-step:not(:first-child) {
+    display: none !important;
+}
+
+/* Sovrascrivi il fallback quando JavaScript è attivo */
+.fp-resv-step[data-state="locked"]:first-child {
+    display: none !important;
+}
+
+.fp-resv-step[data-state="active"]:not(:first-child) {
+    display: grid !important;
+}
+
 .fp-resv-step[data-state="locked"] {
     opacity: 0.55;
     filter: saturate(0.8);
