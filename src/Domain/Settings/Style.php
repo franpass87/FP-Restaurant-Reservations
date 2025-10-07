@@ -964,6 +964,7 @@ final class Style
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
+    margin-top: 20px !important;
 }
 %s .fp-slots,
 %s .fp-resv-slots {

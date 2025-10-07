@@ -1225,6 +1225,11 @@
     margin-top: 20px !important;
 }
 
+/* Force margin-top for all step footers to ensure visibility */
+.fp-resv-step__footer {
+    margin-top: 20px !important;
+}
+
 .fp-resv-widget__actions {
     display: grid;
     gap: 0.65rem;
