@@ -2,10 +2,16 @@
 
 ## 🚀 Quick Start
 
+### Per Nuovi Utenti
+1. **[QUICK-START.md](../QUICK-START.md)** - 5 minuti per partire!
+2. **[README.md](../README.md)** - Overview principale del plugin
+3. **[STATUS.md](../STATUS.md)** - Stato attuale del progetto
+
 ### Per Sviluppatori
 1. **[README.md](../README.md)** - Overview principale del plugin
 2. **[EXAMPLES.md](EXAMPLES.md)** - 8 scenari pratici completi
 3. **[MIGRATION-GUIDE.md](MIGRATION-GUIDE.md)** - Piano migrazione 4 fasi
+4. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Linee guida contribuzione
 
 ### Per DevOps
 1. **[CACHE-GUIDE.md](CACHE-GUIDE.md)** - Setup Redis/Memcached
@@ -13,6 +19,11 @@
 3. **[MIGRATION-GUIDE.md](MIGRATION-GUIDE.md)** - Deployment
 
 ## 📖 Guide Tecniche
+
+### Documentazione Principale
+- **[STATUS.md](../STATUS.md)** - Stato completo del progetto
+- **[QUICK-START.md](../QUICK-START.md)** - Guida rapida installazione
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Come contribuire
 
 ### Architettura e Performance
 - **[CACHE-GUIDE.md](CACHE-GUIDE.md)** - Caching multi-livello
@@ -77,6 +88,8 @@
 
 ---
 
-**Ultimo aggiornamento**: 2025-01-27  
+**Ultimo aggiornamento**: 2025-10-07  
+**Versione plugin**: 0.1.6  
 **Status**: ✅ Ottimizzata e consolidata  
-**Qualità**: ⭐⭐⭐⭐⭐ Eccellente
+**Qualità**: ⭐⭐⭐⭐⭐ Eccellente  
+**Security Audit**: ✅ 5/5 problemi risolti

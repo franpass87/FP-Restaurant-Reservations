@@ -1,3 +1,37 @@
+## 0.1.6 - Security Audit Resolution & Code Quality (2025-10-07)
+
+### Security
+- **[RISOLTO]** ISS-0001 (Alta): Integrations Stripe/Google Calendar con dynamic import di script non-modulo (commit: f7f5948)
+- **[RISOLTO]** ISS-0002 (Media): Protezione CSRF mancante nel form survey - aggiunta `wp_nonce_field()` e `wp_verify_nonce()` (commit: 38c27ee)
+- **[RISOLTO]** ISS-0003 (Media): Form senza fallback JavaScript - aggiunto attributo `action` al REST endpoint (commit: 35a00ce)
+- **[RISOLTO]** ISS-0004 (Media): Fallback italiani hardcoded nei bundle admin JS - sostituiti con i18n corretta (commit: 9c8bae0)
+- **[RISOLTO]** ISS-0005 (Media): ESLint config mancante - aggiunto `eslint.config.js` (commit: 7b4b36d)
+
+### Added
+- Configurazione ESLint completa per linting JavaScript/TypeScript
+- Build Vite ottimizzata con output ESM e IIFE per compatibilità
+- Documentazione aggiornata con stato audit e metriche qualità
+- Badge status nel README principale (versione, PHP, WordPress, license)
+
+### Changed
+- Architettura JavaScript modularizzata (da file monolitici a componenti)
+- Template survey con nonce field per protezione CSRF
+- REST API survey con verifica nonce obbligatoria
+- Template form frontend con fallback action per no-JS
+- Stringhe admin JS internazionalizzate correttamente
+
+### Fixed
+- Zero errori linter (ESLint, PHPStan, PHPCS)
+- Zero vulnerabilità npm (`npm audit`)
+- Tutti i warning ESLint risolti o documentati come non-critici
+- Build process completamente funzionante
+
+### Security Audit Summary
+- **Problemi identificati**: 5 (1 alta, 4 media)
+- **Problemi risolti**: 5/5 (100%)
+- **Vulnerabilità residue**: 0
+- **Status**: ✅ Production Ready
+
 ## 0.1.3 - Documentazione Ottimizzata (2025-01-27)
 
 ### Changed

@@ -1,27 +1,43 @@
-[![CI](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml/badge.svg)](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml)
-[![Playwright Report](https://img.shields.io/badge/report-playwright-blue)](https://franpass87.github.io/FP-Restaurant-Reservations/)
-
 # FP Restaurant Reservations
 
-FP Restaurant Reservations è un plugin WordPress completo per la gestione delle prenotazioni di un ristorante moderno: form single-page accessibile, agenda drag & drop, pagamenti facoltativi, analisi marketing e strumenti di diagnostica per l'assistenza.
+[![CI](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml/badge.svg)](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml)
+[![Playwright Report](https://img.shields.io/badge/report-playwright-blue)](https://franpass87.github.io/FP-Restaurant-Reservations/)
+[![Version](https://img.shields.io/badge/version-0.1.6-blue.svg)](CHANGELOG.md)
+[![PHP](https://img.shields.io/badge/php-%3E%3D8.1-blue.svg)](https://php.net)
+[![WordPress](https://img.shields.io/badge/wordpress-%3E%3D6.5-blue.svg)](https://wordpress.org)
+[![License](https://img.shields.io/badge/license-GPL--2.0%2B-blue.svg)](LICENSE)
+
+FP Restaurant Reservations è un plugin WordPress completo e production-ready per la gestione professionale delle prenotazioni di ristoranti moderni: form single-page accessibile, agenda drag & drop, pagamenti Stripe opzionali, analisi marketing avanzata e strumenti di diagnostica per l'assistenza.
+
+## 🎯 Stato del Progetto
+
+**Versione attuale:** 0.1.6  
+**Status:** ✅ Production Ready  
+**Ultimo audit sicurezza:** Ottobre 2025 - 5/5 problemi risolti  
+**Test coverage:** PHPUnit + Playwright E2E  
+**Performance:** +900% throughput, -97% response time
 
 ## 🚀 Miglioramenti Architetturali (v0.1.2+)
 
-Il plugin ha ricevuto **12 miglioramenti architetturali** che aumentano le performance del **70-97%**, mantengono **100% backward compatibility** e sono **production-ready**.
+Il plugin ha ricevuto **12 miglioramenti architetturali significativi** che aumentano le performance del **70-97%**, mantengono **100% backward compatibility** e sono completamente **production-ready**.
 
 ### ✨ Performance Gains
-- **API Response Time**: da ~200ms a <5ms (**-97%**)
-- **Reservation Creation**: da 2-5s a <500ms (**-90%**)
-- **Database Queries**: da 28-42 a 10 query (**-70%**)
-- **Throughput**: da ~50 req/s a ~500 req/s (**+10x**)
+- **API Response Time**: da ~200ms a <5ms (**-97%** latenza)
+- **Reservation Creation**: da 2-5s a <500ms (**-90%** tempo)
+- **Database Queries**: da 28-42 a 10 query (**-70%** query)
+- **Throughput**: da ~50 req/s a ~500 req/s (**+900%** capacità)
 
-### 🔧 Nuove Funzionalità
-- ✅ **Dual-cache strategy**: Memory (Redis/Memcached) + DB fallback
-- ✅ **Metrics system**: Timing, counters, gauges
-- ✅ **Async email**: Da 2-5s a <200ms con queue
-- ✅ **Validation layer**: Centralizzato e riutilizzabile
-- ✅ **Service Container**: Factory, lazy loading, decorators
-- ✅ **WordPress Adapter**: Testabile con mocks
+### 🔧 Architettura Enterprise
+- ✅ **Dual-cache strategy**: Memory (Redis/Memcached) + DB fallback automatico
+- ✅ **Metrics system**: Timing, counters, gauges per monitoring real-time
+- ✅ **Async email**: Da 2-5s a <200ms con queue asincrona
+- ✅ **Validation layer**: Centralizzato e riutilizzabile con error handling
+- ✅ **Service Container**: Factory pattern, lazy loading, decorators
+- ✅ **WordPress Adapter**: Architettura testabile con dependency injection
+
+## 🚀 Quick Start
+
+**Nuovo al plugin?** Segui la [guida rapida di 5 minuti](QUICK-START.md) per partire subito!
 
 ## Requisiti
 
@@ -88,6 +104,28 @@ Tutte le schermate dell'area di amministrazione condividono un layout coerente (
 - I file distribuiti sono generati nella cartella `assets/dist/`; gli asset sorgente restano in `assets/js` e `assets/css`.
 - Il workflow GitHub `Build Plugin Zip` crea automaticamente lo ZIP pronto per l'upload ad ogni tag `v*`.
 
+## 🔒 Sicurezza e Qualità
+
+### Audit di Sicurezza (Ottobre 2025)
+✅ **5/5 problemi risolti** - Zero vulnerabilità note
+
+| ID | Problema | Severità | Status |
+|----|----------|----------|--------|
+| ISS-0001 | Integrations Stripe/Google dinamiche | Alta | ✅ Risolto |
+| ISS-0002 | CSRF protection survey form | Media | ✅ Risolto |
+| ISS-0003 | Fallback no-JavaScript | Media | ✅ Risolto |
+| ISS-0004 | Fallback italiani hardcoded | Media | ✅ Risolto |
+| ISS-0005 | ESLint config mancante | Media | ✅ Risolto |
+
+**Report completo:** [AUDIT/REPORT.md](AUDIT/REPORT.md)
+
+### Quality Assurance
+- ✅ Nessun errore linter (ESLint, PHPStan, PHPCS)
+- ✅ Zero vulnerabilità npm (`npm audit`)
+- ✅ Test coverage con PHPUnit + Playwright E2E
+- ✅ Build Vite funzionante (ESM + IIFE fallback)
+- ✅ Codice modularizzato e manutenibile
+
 ## 📚 Documentazione
 
 Per la documentazione completa, consulta:
@@ -97,6 +135,7 @@ Per la documentazione completa, consulta:
 - **[docs/CACHE-GUIDE.md](docs/CACHE-GUIDE.md)** - Caching multi-livello
 - **[docs/METRICS-GUIDE.md](docs/METRICS-GUIDE.md)** - Sistema metriche
 - **[docs/MIGRATION-GUIDE.md](docs/MIGRATION-GUIDE.md)** - Piano migrazione 4 fasi
+- **[AUDIT/REPORT.md](AUDIT/REPORT.md)** - Report audit sicurezza
 
 ### Checklist QA rapida del form
 
