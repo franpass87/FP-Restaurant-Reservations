@@ -1,6 +1,10 @@
-
 import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
 import { formatDebugMessage } from './debug.js';
+import { parseDataset, parseJsonAttribute, toNumber } from './utils/data.js';
+import { closestWithAttribute, firstFocusable } from './utils/dom.js';
+import { setAriaDisabled } from './utils/a11y.js';
+import { resolveEndpoint, safeJson } from './utils/net.js';
+import { pushDataLayerEvent } from './tracking/dataLayer.js';
 
 let availabilityModulePromise = null;
 const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
@@ -15,7 +19,7 @@ function loadAvailabilityModule() {
     return availabilityModulePromise;
 }
 
-function parseDataset(root) {
+function __old_parseDataset(root) {
     const raw = root.getAttribute('data-fp-resv');
     if (!raw) {
         return {};
@@ -32,7 +36,7 @@ function parseDataset(root) {
     return {};
 }
 
-function pushDataLayerEvent(name, payload) {
+function __old_pushDataLayerEvent(name, payload) {
     if (!name) {
         return null;
     }
@@ -48,7 +52,7 @@ function pushDataLayerEvent(name, payload) {
     return event;
 }
 
-function closestWithAttribute(element, attribute) {
+function __old_closestWithAttribute(element, attribute) {
     if (!element) {
         return null;
     }
@@ -72,7 +76,7 @@ function closestSection(element) {
     return closestWithAttribute(element, 'data-fp-resv-section');
 }
 
-function parseJsonAttribute(element, attribute) {
+function __old_parseJsonAttribute(element, attribute) {
     if (!element) {
         return {};
     }
@@ -96,7 +100,7 @@ function parseJsonAttribute(element, attribute) {
     return {};
 }
 
-function setAriaDisabled(element, disabled) {
+function __old_setAriaDisabled(element, disabled) {
     if (!element) {
         return;
     }
@@ -110,7 +114,7 @@ function setAriaDisabled(element, disabled) {
     }
 }
 
-function toNumber(value) {
+function __old_toNumber(value) {
     if (value === null || value === undefined) {
         return null;
     }
@@ -125,7 +129,7 @@ function toNumber(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
-function resolveEndpoint(endpoint, fallback) {
+function __old_resolveEndpoint(endpoint, fallback) {
     if (endpoint && typeof endpoint === 'string') {
         try {
             return new URL(endpoint, window.location.origin).toString();
@@ -142,7 +146,7 @@ function resolveEndpoint(endpoint, fallback) {
     return fallback;
 }
 
-function firstFocusable(section) {
+function __old_firstFocusable(section) {
     if (!section) {
         return null;
     }
@@ -153,7 +157,7 @@ function firstFocusable(section) {
 
 const STEP_ORDER = ['date', 'party', 'slots', 'details', 'confirm'];
 
-function safeJson(response) {
+function __old_safeJson(response) {
     return response.text().then((text) => {
         if (!text) {
             return {};
@@ -442,35 +446,31 @@ class FormApp {
         });
 
         const openPicker = (event) => {
-            // Previeni il comportamento default per garantire che il picker si apra
-            if (event && event.type === 'click') {
+            const isDirectInputClick = event && event.type === 'click' && event.target === this.dateField;
+
+            // Se il click è direttamente sull'input, non bloccare il default del browser
+            if (!isDirectInputClick && event && event.type === 'click') {
                 event.preventDefault();
+                event.stopPropagation();
             }
-            
-            // Focus sull'input prima di aprire il picker
+
+            // Porta il focus sull'input
             if (typeof this.dateField.focus === 'function') {
                 this.dateField.focus();
             }
-            
-            // Apri il picker nativo del browser
-            if (typeof this.dateField.showPicker === 'function') {
+
+            // Apri il picker nativo se disponibile. In caso di click diretto,
+            // lasciamo comunque che il comportamento nativo gestisca l'apertura.
+            if (!isDirectInputClick && typeof this.dateField.showPicker === 'function') {
                 try {
                     this.dateField.showPicker();
                 } catch (error) {
-                    // Alcuni browser (es. Safari) potrebbero non supportare showPicker: ignora.
-                    // In questo caso il focus dovrebbe comunque aprire il picker
-                }
-            } else {
-                // Fallback: trigger click sull'input
-                try {
-                    this.dateField.click();
-                } catch (error) {
-                    // noop
+                    // Alcuni browser (es. Safari) potrebbero non supportare showPicker. Ignora.
                 }
             }
         };
 
-        // Make the entire input area clickable
+        // Apri il calendario al focus e anche al click sull'input
         this.dateField.addEventListener('focus', openPicker);
         this.dateField.addEventListener('click', openPicker);
         
@@ -480,13 +480,10 @@ class FormApp {
             // Rendi cliccabile tutta l'area del campo, incluso il label
             dateContainer.style.cursor = 'pointer';
             dateContainer.addEventListener('click', (event) => {
-                // Non aprire se hanno cliccato direttamente sull'input (già gestito sopra)
+                // Non interferire con il click diretto sull'input (già gestito)
                 if (event.target === this.dateField) {
                     return;
                 }
-                
-                event.preventDefault();
-                event.stopPropagation();
                 openPicker(event);
             });
             
@@ -495,8 +492,6 @@ class FormApp {
             if (calendarIcon) {
                 calendarIcon.style.cursor = 'pointer';
                 calendarIcon.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
                     openPicker(event);
                 });
             }
@@ -2191,54 +2186,6 @@ if (typeof window !== 'undefined') {
     window.fpResvApp = window.FPResv; // Alias per compatibilità
 }
 
-// Initialize immediately if DOM is already ready
-function initializeFPResv() {
-    console.log('[FP-RESV] Plugin v0.1.5 loaded - Complete form functionality active');
-    const widgets = document.querySelectorAll('[data-fp-resv]');
-    console.log('[FP-RESV] Found widgets:', widgets.length);
-    
-    Array.prototype.forEach.call(widgets, function (widget) {
-        try {
-            console.log('[FP-RESV] Initializing widget:', widget.id || 'unnamed');
-            console.log('[FP-RESV] Widget sections found:', widget.querySelectorAll('[data-fp-resv-section]').length);
-            
-            const app = new FormApp(widget);
-            console.log('[FP-RESV] Widget initialized successfully:', widget.id || 'unnamed');
-            
-            // Debug: check initial state
-            const sections = app.sections || [];
-            sections.forEach(function(section, index) {
-                const step = section.getAttribute('data-step');
-                const state = section.getAttribute('data-state');
-                const hidden = section.hasAttribute('hidden');
-                console.log(`[FP-RESV] Step ${index + 1} (${step}): state=${state}, hidden=${hidden}`);
-            });
-            
-        } catch (error) {
-            console.error('[FP-RESV] Error initializing widget:', error);
-        }
-    });
-}
+export { FormApp };
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFPResv);
-} else {
-    // DOM is already ready, initialize immediately
-    initializeFPResv();
-}
-
-document.addEventListener('fp-resv:tracking:push', function (event) {
-    if (!event || !event.detail) {
-        return;
-    }
-
-    const detail = event.detail;
-    const name = detail && (detail.event || detail.name);
-    if (!name) {
-        return;
-    }
-
-    const payload = detail.payload || detail.data || {};
-    pushDataLayerEvent(name, payload && typeof payload === 'object' ? payload : {});
-});
+// Il bootstrap è stato spostato in assets/js/fe/init.js
