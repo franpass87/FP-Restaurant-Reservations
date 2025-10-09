@@ -256,7 +256,7 @@ final class REST
             
             return new WP_Error(
                 'fp_resv_invalid_nonce',
-                __('Controllo di sicurezza fallito. La sessione potrebbe essere scaduta.', 'fp-restaurant-reservations'),
+                __('Errore di sicurezza. Ricarica la pagina e riprova.', 'fp-restaurant-reservations'),
                 array_merge(['status' => 403], $debugInfo)
             );
         }
