@@ -557,10 +557,20 @@ class Availability
     {
         $defaultScheduleRaw = (string) $this->options->getField('fp_resv_general', 'service_hours_definition', '');
         $scheduleMap        = $this->parseScheduleDefinition($defaultScheduleRaw);
-        $slotInterval       = max(5, (int) $this->options->getField('fp_resv_general', 'slot_interval_minutes', '15'));
-        $turnoverMinutes    = max($slotInterval, (int) $this->options->getField('fp_resv_general', 'table_turnover_minutes', '120'));
-        $bufferMinutes      = max(0, (int) $this->options->getField('fp_resv_general', 'buffer_before_minutes', '15'));
-        $maxParallel        = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
+        
+        // Valori di default: se i campi sono vuoti, usa i default invece di convertire a 0
+        $slotIntervalRaw = $this->options->getField('fp_resv_general', 'slot_interval_minutes', '15');
+        $slotInterval = ($slotIntervalRaw !== '' && $slotIntervalRaw !== null) ? max(5, (int) $slotIntervalRaw) : 15;
+        
+        $turnoverRaw = $this->options->getField('fp_resv_general', 'table_turnover_minutes', '120');
+        $turnoverMinutes = ($turnoverRaw !== '' && $turnoverRaw !== null) ? max($slotInterval, (int) $turnoverRaw) : 120;
+        
+        $bufferRaw = $this->options->getField('fp_resv_general', 'buffer_before_minutes', '15');
+        $bufferMinutes = ($bufferRaw !== '' && $bufferRaw !== null) ? max(0, (int) $bufferRaw) : 15;
+        
+        $maxParallelRaw = $this->options->getField('fp_resv_general', 'max_parallel_parties', '8');
+        $maxParallel = ($maxParallelRaw !== '' && $maxParallelRaw !== null) ? max(1, (int) $maxParallelRaw) : 8;
+        
         $capacityLimit      = null;
 
         // Log diagnostico sempre attivo
@@ -568,6 +578,10 @@ class Availability
             'meal_key' => $mealKey,
             'default_schedule_raw' => $defaultScheduleRaw,
             'default_schedule_map' => $scheduleMap,
+            'slot_interval' => $slotInterval,
+            'turnover_minutes' => $turnoverMinutes,
+            'buffer_minutes' => $bufferMinutes,
+            'max_parallel' => $maxParallel,
         ]);
 
         // Debug logging aggiuntivo se WP_DEBUG è abilitato
