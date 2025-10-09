@@ -2042,54 +2042,11 @@ final class FormContext
             return [];
         }
 
-        // Deduplica i paesi che compaiono con prefissi diversi: mantiene
-        // la prima occorrenza e scarta le successive per evitare ripetizioni.
-        // Si preferiscono gruppi con prefisso più corto (es. +1 rispetto a +1869),
-        // in caso di pari lunghezza si usa l'ordinamento numerico del prefisso.
-
-        // Ordina i gruppi per lunghezza prefisso e poi per valore numerico
-        uasort(
-            $groups,
-            static function (array $a, array $b): int {
-                $lenA = strlen((string) ($a['value'] ?? ''));
-                $lenB = strlen((string) ($b['value'] ?? ''));
-                if ($lenA !== $lenB) {
-                    return $lenA <=> $lenB;
-                }
-
-                $numA = (int) ($a['value'] ?? 0);
-                $numB = (int) ($b['value'] ?? 0);
-
-                return $numA <=> $numB;
-            }
-        );
-
-        $usedCountries = [];
         $options = [];
 
         foreach ($groups as $group) {
             $countries = array_keys($group['countries']);
             sort($countries, SORT_NATURAL | SORT_FLAG_CASE);
-
-            // Filtra i paesi già utilizzati da un altro gruppo
-            $countries = array_values(array_filter(
-                $countries,
-                static function (string $name) use (&$usedCountries): bool {
-                    if ($name === '') {
-                        return false;
-                    }
-                    if (isset($usedCountries[$name])) {
-                        return false;
-                    }
-                    $usedCountries[$name] = true;
-                    return true;
-                }
-            ));
-
-            if ($countries === []) {
-                // Tutti i paesi di questo gruppo erano duplicati di altri prefissi
-                continue;
-            }
 
             $label = $group['prefix'];
             if ($countries !== []) {
