@@ -679,6 +679,14 @@
             wrapper.className = 'fp-resv-meal-plan__field';
             const caption = document.createElement('span');
             caption.className = 'fp-resv-meal-plan__field-label';
+            
+            // Aggiungi classe per campo obbligatorio o opzionale
+            if (options.required) {
+                caption.className += ' fp-resv-meal-plan__field-label--required';
+            } else if (options.optional) {
+                caption.className += ' fp-resv-meal-plan__field-label--optional';
+            }
+            
             const captionText = document.createElement('span');
             captionText.textContent = label;
             caption.appendChild(captionText);
@@ -985,14 +993,14 @@
                     target.key = value;
                     title.textContent = computeTitle(target);
                 });
-            }));
+            }), { required: true });
 
             const labelField = createField(strings.labelLabel, createInput(meal.label, (value) => {
                 updateMeal(index, (target) => {
                     target.label = value;
                     title.textContent = computeTitle(target);
                 });
-            }));
+            }), { required: true });
 
             const hintField = createField(strings.hintLabel, createInput(meal.hint, (value) => {
                 updateMeal(index, (target) => {
@@ -1054,7 +1062,7 @@
                 refreshHours();
             }, 'number');
             slotInput.min = '5';
-            const slotField = createField(strings.slotLabel, slotInput, { tooltip: strings.slotTooltip });
+            const slotField = createField(strings.slotLabel, slotInput, { tooltip: strings.slotTooltip, optional: true });
 
             const turnInput = createInput(meal.turn, (value) => {
                 updateMeal(index, (target) => {
@@ -1066,7 +1074,7 @@
             }, 'number');
             turnInput.min = '15';
             turnInput.step = '5';
-            const turnField = createField(strings.turnLabel, turnInput, { tooltip: strings.turnTooltip });
+            const turnField = createField(strings.turnLabel, turnInput, { tooltip: strings.turnTooltip, optional: true });
 
             const bufferInput = createInput(meal.buffer, (value) => {
                 updateMeal(index, (target) => {
@@ -1077,7 +1085,7 @@
                 refreshHours();
             }, 'number');
             bufferInput.min = '0';
-            const bufferField = createField(strings.bufferLabel, bufferInput, { tooltip: strings.bufferTooltip });
+            const bufferField = createField(strings.bufferLabel, bufferInput, { tooltip: strings.bufferTooltip, optional: true });
 
             const parallelInput = createInput(meal.parallel, (value) => {
                 updateMeal(index, (target) => {
@@ -1085,7 +1093,7 @@
                 });
             }, 'number');
             parallelInput.min = '1';
-            const parallelField = createField(strings.parallelLabel, parallelInput, { tooltip: strings.parallelTooltip });
+            const parallelField = createField(strings.parallelLabel, parallelInput, { tooltip: strings.parallelTooltip, optional: true });
 
             const capacityInput = createInput(meal.capacity, (value) => {
                 updateMeal(index, (target) => {
@@ -1093,11 +1101,18 @@
                 });
             }, 'number');
             capacityInput.min = '1';
-            const capacityField = createField(strings.capacityLabel, capacityInput);
+            const capacityField = createField(strings.capacityLabel, capacityInput, { optional: true });
 
             advanced.appendChild(hoursField);
             const numericGrid = document.createElement('div');
             numericGrid.className = 'fp-resv-meal-plan__numeric-grid';
+            
+            // Aggiungi un hint per i campi opzionali
+            const hint = document.createElement('p');
+            hint.className = 'fp-resv-meal-plan__numeric-hint';
+            hint.innerHTML = '<strong>ℹ️ Campi opzionali:</strong> Se lasciati vuoti, verranno usati i valori di default (Intervallo: 15min, Durata: 120min, Buffer: 15min, Parallele: 8)';
+            numericGrid.appendChild(hint);
+            
             numericGrid.appendChild(slotField);
             numericGrid.appendChild(turnField);
             numericGrid.appendChild(bufferField);
