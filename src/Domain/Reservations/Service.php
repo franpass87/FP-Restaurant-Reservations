@@ -15,6 +15,7 @@ use FP\Resv\Domain\Payments\StripeService as StripePayments;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
 use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
+use FP\Resv\Domain\Brevo\Client as BrevoClient;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\ICS;
@@ -91,7 +92,8 @@ class Service
         private readonly StripePayments $stripe,
         private readonly NotificationSettings $notificationSettings,
         private readonly NotificationTemplateRenderer $notificationTemplates,
-        private readonly ?GoogleCalendarService $calendar = null
+        private readonly ?GoogleCalendarService $calendar = null,
+        private readonly ?BrevoClient $brevoClient = null
     ) {
     }
 
@@ -715,6 +717,7 @@ class Service
         ]);
 
         if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
+            $this->sendBrevoConfirmationEvent($payload, $reservationId, $manageUrl, $status);
             return;
         }
 
@@ -1105,5 +1108,69 @@ class Service
         $normalized = strtolower(trim((string) $value));
 
         return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    /**
+     * Invia un evento a Brevo per far partire l'automazione di conferma
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function sendBrevoConfirmationEvent(array $payload, int $reservationId, string $manageUrl, string $status): void
+    {
+        if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
+            Logging::log('brevo', 'Brevo client non disponibile per invio evento confirmation', [
+                'reservation_id' => $reservationId,
+                'email'          => $payload['email'] ?? '',
+            ]);
+            return;
+        }
+
+        $email = (string) ($payload['email'] ?? '');
+        if ($email === '') {
+            return;
+        }
+
+        $eventProperties = [
+            'reservation' => array_filter([
+                'id'         => $reservationId,
+                'date'       => $payload['date'] ?? '',
+                'time'       => isset($payload['time']) ? substr((string) $payload['time'], 0, 5) : '',
+                'party'      => $payload['party'] ?? 0,
+                'status'     => $status,
+                'location'   => $payload['location'] ?? '',
+                'manage_url' => $manageUrl,
+            ], static fn ($value): bool => $value !== null && $value !== ''),
+            'contact' => array_filter([
+                'first_name' => $payload['first_name'] ?? '',
+                'last_name'  => $payload['last_name'] ?? '',
+                'phone'      => $payload['phone'] ?? '',
+            ], static fn ($value): bool => $value !== null && $value !== ''),
+            'meta' => array_filter([
+                'language'          => $payload['language'] ?? '',
+                'notes'             => $payload['notes'] ?? '',
+                'marketing_consent' => $payload['marketing_consent'] ?? null,
+                'utm_source'        => $payload['utm_source'] ?? '',
+                'utm_medium'        => $payload['utm_medium'] ?? '',
+                'utm_campaign'      => $payload['utm_campaign'] ?? '',
+                'gclid'             => $payload['gclid'] ?? '',
+                'fbclid'            => $payload['fbclid'] ?? '',
+                'msclkid'           => $payload['msclkid'] ?? '',
+                'ttclid'            => $payload['ttclid'] ?? '',
+                'value'             => $payload['value'] ?? null,
+                'currency'          => $payload['currency'] ?? '',
+            ], static fn ($value): bool => $value !== null && $value !== ''),
+        ];
+
+        $response = $this->brevoClient->sendEvent('email_confirmation', [
+            'email'      => strtolower(trim($email)),
+            'properties' => $eventProperties,
+        ]);
+
+        Logging::log('brevo', 'Evento email_confirmation inviato a Brevo', [
+            'reservation_id' => $reservationId,
+            'email'          => $email,
+            'success'        => $response['success'] ?? false,
+            'response'       => $response,
+        ]);
     }
 }
