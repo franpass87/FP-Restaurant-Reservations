@@ -601,6 +601,10 @@ class Service
             ? array_values(array_filter($notifications['webmaster_emails']))
             : [];
 
+        // Deduplica: rimuovi dai destinatari webmaster quelli già presenti in restaurant
+        // per evitare di inviare due email alla stessa persona
+        $webmasterRecipients = array_values(array_diff($webmasterRecipients, $restaurantRecipients));
+
         if ($restaurantRecipients === [] && $webmasterRecipients === []) {
             return;
         }
