@@ -61,10 +61,8 @@ export class FormNavigation {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            // Scroll solo quando si usa la navigazione esplicita (pulsanti avanti/indietro)
-            if (advance) {
-                this.scrollIntoView(nextSection);
-            }
+            // Non fare scroll automatico quando si clicca su Continua per evitare salti anchor
+            // La sezione si renderà visibile tramite CSS senza bisogno di scroll
         }
     }
 
@@ -188,18 +186,9 @@ export class FormNavigation {
     }
 
     scrollIntoView(section) {
-        // Scroll solo se la sezione non è già visibile
-        const rect = section.getBoundingClientRect();
-        const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-        
-        if (!isVisible && typeof section.scrollIntoView === 'function') {
-            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        // Non fare focus automatico per evitare salti
-        // const focusable = firstFocusable(section);
-        // if (focusable && typeof focusable.focus === 'function') {
-        //     focusable.focus({ preventScroll: true });
-        // }
+        // Disabilitato completamente per evitare salti anchor
+        // La navigazione tra le sezioni avviene solo tramite CSS visibility/display
+        // senza bisogno di scroll automatico che causa salti indesiderati
+        return;
     }
 }
