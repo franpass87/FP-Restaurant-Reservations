@@ -92,6 +92,22 @@ final class Roles
     {
         $adminRole = get_role('administrator');
         if ($adminRole !== null) {
+            // Verifica se la capability è già presente prima di aggiungerla
+            if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
+                $adminRole->add_cap(self::MANAGE_RESERVATIONS);
+            }
+        }
+    }
+
+    /**
+     * Verifica e ripara le capabilities degli amministratori se necessario.
+     * Questo metodo può essere chiamato durante l'inizializzazione per garantire
+     * che gli amministratori abbiano sempre accesso al plugin.
+     */
+    public static function ensureAdminCapabilities(): void
+    {
+        $adminRole = get_role('administrator');
+        if ($adminRole !== null && !$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
             $adminRole->add_cap(self::MANAGE_RESERVATIONS);
         }
     }

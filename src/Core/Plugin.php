@@ -72,7 +72,7 @@ final class Plugin
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '0.1.6';
+    const VERSION = '0.1.7';
 
     /**
      * @var string|null
@@ -267,6 +267,9 @@ final class Plugin
         $container->register('plugin.file', self::$file);
         $container->register('plugin.dir', self::$dir);
         $container->register('plugin.url', self::$url);
+
+        // Garantisce che gli amministratori abbiano sempre le capability necessarie
+        Roles::ensureAdminCapabilities();
 
         // Core adapters (for testing)
         $container->singleton('wp.adapter', static function (): Adapters\WordPressAdapter {
