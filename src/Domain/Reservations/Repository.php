@@ -12,6 +12,7 @@ use function array_key_exists;
 use function current_time;
 use function gmdate;
 use function is_array;
+use function wp_timezone;
 
 final class Repository
 {
@@ -82,7 +83,7 @@ final class Repository
         $reservation->time    = (string) $row['time'];
         $reservation->party   = (int) $row['party'];
         $reservation->email   = (string) ($row['email'] ?? '');
-        $reservation->created = new DateTimeImmutable((string) $row['created_at']);
+        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
         if (array_key_exists('calendar_event_id', $row)) {
             $reservation->calendarEventId = $row['calendar_event_id'] !== null
                 ? (string) $row['calendar_event_id']
@@ -127,7 +128,7 @@ final class Repository
         $reservation->time    = (string) $row['time'];
         $reservation->party   = (int) $row['party'];
         $reservation->email   = (string) ($row['email'] ?? '');
-        $reservation->created = new DateTimeImmutable((string) $row['created_at']);
+        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
         if (array_key_exists('calendar_event_id', $row)) {
             $reservation->calendarEventId = $row['calendar_event_id'] !== null
                 ? (string) $row['calendar_event_id']

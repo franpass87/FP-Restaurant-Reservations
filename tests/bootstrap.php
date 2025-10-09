@@ -612,3 +612,10 @@ if (!function_exists('wp_cache_add')) {
     }
 }
 
+if (!function_exists('wp_timezone')) {
+    function wp_timezone(): DateTimeZone
+    {
+        return new DateTimeZone('Europe/Rome');
+    }
+}
+
