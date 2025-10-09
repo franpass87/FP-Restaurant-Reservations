@@ -1470,6 +1470,20 @@ final class Style
         width: 100%;
         justify-content: center;
     }
+    /* Bottoni slot orari a tutta larghezza e incolonnati su mobile */
+    %s .fp-slots__list,
+    %s .fp-resv-slots__list {
+        grid-template-columns: 1fr !important;
+        display: grid !important;
+    }
+    %s .fp-slots__list button,
+    %s .fp-resv-slots__list button {
+        width: 100% !important;
+    }
+    %s .fp-slots__list > li,
+    %s .fp-resv-slots__list > li {
+        width: 100% !important;
+    }
 }
 CSS;
 
