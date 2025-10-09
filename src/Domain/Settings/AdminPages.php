@@ -196,6 +196,10 @@ final class AdminPages
 
     public function registerMenu(): void
     {
+        // Assicura che gli amministratori abbiano sempre la capability necessaria
+        // Questo risolve il problema quando la capability non viene aggiunta correttamente all'attivazione
+        Roles::ensureAdminCapabilities();
+        
         if ($this->pages === []) {
             return;
         }
@@ -207,10 +211,15 @@ final class AdminPages
 
         $firstPage = $this->pages[$firstKey];
 
+        // Determina la capability appropriata: usa manage_options per admin se manage_fp_reservations non è disponibile
+        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
+            ? 'manage_options' 
+            : self::CAPABILITY;
+
         add_menu_page(
             (string) $firstPage['page_title'],
             __('FP Reservations', 'fp-restaurant-reservations'),
-            self::CAPABILITY,
+            $capability,
             $firstPage['slug'],
             function () use ($firstKey): void {
                 $this->renderSettingsPage($firstKey);
@@ -229,7 +238,7 @@ final class AdminPages
                 $firstPage['slug'],
                 (string) $page['page_title'],
                 (string) $page['menu_title'],
-                self::CAPABILITY,
+                $capability, // Usa la stessa capability del menu principale per coerenza
                 $page['slug'],
                 function () use ($pageKey): void {
                     $this->renderSettingsPage($pageKey);
