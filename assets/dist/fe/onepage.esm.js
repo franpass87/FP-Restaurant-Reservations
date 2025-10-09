@@ -352,7 +352,7 @@ class G {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
       return;
     }
-    this.ensureSectionActive(l), this.updateSectionAttributes(l, "active"), i && (e.dataset.fpResvLastValue = r), (i === "date" || i === "party" || i === "slots" || i === "time") && ((i === "date" || i === "party") && n && this.clearSlotSelection({ schedule: !1 }), (i !== "date" || n || t.type === "change") && this.scheduleAvailabilityUpdate()), this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors();
+    this.ensureSectionActive(l), this.updateSectionAttributes(l, "active"), i && (e.dataset.fpResvLastValue = r), (i === "date" || i === "party" || i === "slots" || i === "time") && ((i === "date" || i === "party") && n && (this.clearSlotSelection({ schedule: !1 }), this.state.mealAvailability = {}), (i !== "date" || n || t.type === "change") && this.scheduleAvailabilityUpdate()), this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors();
   }
   handleFieldBlur(t) {
     const e = t.target;
@@ -441,7 +441,7 @@ class G {
     y(s, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
-    }), i !== "full" && this.scheduleAvailabilityUpdate({ immediate: !0 });
+    }), this.scheduleAvailabilityUpdate({ immediate: !0 });
   }
   updateMealNoticeFromButton(t, e) {
     if (!this.mealNotice)
