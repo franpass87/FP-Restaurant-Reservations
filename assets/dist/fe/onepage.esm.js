@@ -759,13 +759,9 @@ class G {
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, r = t && typeof t == "object" && t.payload || null;
     let n = X(s, r);
-    if (i === 403) {
-      const h = this.messages.reload_hint || "La sessione potrebbe essere scaduta. Ricarica la pagina e riprova.";
-      n = n + " " + h, this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (f) => {
-        f.preventDefault(), window.location.reload();
-      });
-    }
-    this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
+    i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (h) => {
+      h.preventDefault(), window.location.reload();
+    }), this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
       typeof this.errorAlert.scrollIntoView == "function" && this.errorAlert.scrollIntoView({ behavior: "smooth", block: "center" }), typeof this.errorAlert.focus == "function" && (this.errorAlert.setAttribute("tabindex", "-1"), this.errorAlert.focus({ preventScroll: !0 }));
     })), this.state.hintOverride = n, this.updateSubmitState();
     const l = this.events.submit_error || "submit_error";

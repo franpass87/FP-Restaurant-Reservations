@@ -1585,11 +1585,8 @@ class FormApp {
         const debugSource = error && typeof error === 'object' ? error.payload || null : null;
         let finalMessage = formatDebugMessage(message, debugSource);
 
-        // Se l'errore è 403 (nonce invalido), suggerisci di ricaricare la pagina
+        // Se l'errore è 403 (nonce invalido), mostra il pulsante per ricaricare la pagina
         if (status === 403) {
-            const reloadHint = this.messages.reload_hint || 'La sessione potrebbe essere scaduta. Ricarica la pagina e riprova.';
-            finalMessage = finalMessage + ' ' + reloadHint;
-            
             // Aggiungi un pulsante per ricaricare la pagina
             if (this.errorAlert && this.errorRetry) {
                 this.errorRetry.textContent = this.messages.reload_button || 'Ricarica pagina';
