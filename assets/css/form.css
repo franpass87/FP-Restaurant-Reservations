@@ -1458,66 +1458,123 @@
 
 .fp-resv-summary {
     display: grid;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-radius: calc(var(--fp-resv-radius-lg) * 0.85);
-    background: linear-gradient(145deg, rgba(248, 250, 252, 0.95) 0%, var(--fp-resv-color-surface-alt) 100%);
-    border: 1.5px solid rgba(148, 163, 184, 0.2);
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    gap: 1.25rem;
+    padding: 2rem;
+    border-radius: calc(var(--fp-resv-radius-lg) * 1.2);
+    background: linear-gradient(145deg, #ffffff 0%, rgba(248, 250, 252, 0.98) 100%);
+    border: 2px solid rgba(148, 163, 184, 0.15);
+    box-shadow: 
+        0 10px 25px -5px rgba(15, 23, 42, 0.08),
+        0 4px 12px -2px rgba(15, 23, 42, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    position: relative;
+    overflow: hidden;
+}
+
+.fp-resv-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        var(--fp-resv-color-primary) 0%, 
+        rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.7) 100%);
 }
 
 .fp-resv-summary__title {
-    font-size: 1.15em;
+    font-size: 1.35em;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--fp-resv-color-text);
-    margin: 0 0 0.5rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+    margin: 0 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(148, 163, 184, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fp-resv-summary__title::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--fp-resv-color-primary) 0%, rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.8) 100%);
+    color: white;
+    font-size: 0.75em;
+    font-weight: 900;
+    flex-shrink: 0;
 }
 
 .fp-resv-summary__disclaimer {
-    font-size: 0.88em;
+    font-size: 0.9em;
     color: var(--fp-resv-color-muted);
     font-style: italic;
-    line-height: 1.5;
-    margin-top: 0.5rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(148, 163, 184, 0.15);
+    line-height: 1.6;
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: rgba(148, 163, 184, 0.05);
+    border-radius: calc(var(--fp-resv-radius-lg) * 0.75);
+    border-left: 3px solid rgba(148, 163, 184, 0.3);
 }
 
 .fp-resv-summary__list {
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .fp-resv-summary__list > div {
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: calc(var(--fp-resv-radius-lg) * 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    transition: all 0.2s ease;
+}
+
+.fp-resv-summary__list > div:hover {
+    background: rgba(248, 250, 252, 0.8);
+    border-color: rgba(148, 163, 184, 0.2);
+    transform: translateY(-1px);
 }
 
 .fp-resv-summary__list > div:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    margin-bottom: 0;
 }
 
 .fp-resv-summary__list dt {
-    font-size: 0.82em;
+    font-size: 0.78em;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     color: var(--fp-resv-color-primary);
     font-weight: 700;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.fp-resv-summary__list dt::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--fp-resv-color-primary);
+    flex-shrink: 0;
 }
 
 .fp-resv-summary__list dd {
     margin: 0;
-    font-size: 1.02em;
+    font-size: 1.05em;
     font-weight: 600;
     color: var(--fp-resv-color-text);
     word-break: break-word;
     white-space: pre-wrap;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .fp-alert--error {
