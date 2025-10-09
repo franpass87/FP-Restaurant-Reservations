@@ -88,7 +88,10 @@ final class AdminPages
 
     public function register(): void
     {
-        add_action('admin_menu', [$this, 'registerMenu']);
+        // Priorità 5: crea il menu principale per primo
+        add_action('admin_menu', [$this, 'registerMainMenu'], 5);
+        // Priorità 20: aggiunge i submenu delle impostazioni dopo i menu operativi (Agenda, Tables, ecc.)
+        add_action('admin_menu', [$this, 'registerSubmenuPages'], 20);
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('admin_post_fp_resv_style_reset', [$this, 'handleStyleReset']);
@@ -194,10 +197,12 @@ final class AdminPages
         exit;
     }
 
-    public function registerMenu(): void
+    /**
+     * Registra il menu principale (priorità 5)
+     */
+    public function registerMainMenu(): void
     {
         // Assicura che gli amministratori abbiano sempre la capability necessaria
-        // Questo risolve il problema quando la capability non viene aggiunta correttamente all'attivazione
         Roles::ensureAdminCapabilities();
         
         if ($this->pages === []) {
@@ -227,10 +232,32 @@ final class AdminPages
             'dashicons-clipboard',
             56
         );
+    }
+
+    /**
+     * Registra i submenu delle impostazioni (priorità 20 - dopo i menu operativi)
+     */
+    public function registerSubmenuPages(): void
+    {
+        if ($this->pages === []) {
+            return;
+        }
+
+        $firstKey = array_key_first($this->pages);
+        if ($firstKey === null) {
+            return;
+        }
+
+        $firstPage = $this->pages[$firstKey];
+
+        // Determina la capability appropriata
+        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
+            ? 'manage_options' 
+            : self::CAPABILITY;
 
         foreach ($this->pages as $pageKey => $page) {
             if ($pageKey === $firstKey) {
-                // già aggiunto sopra
+                // già aggiunto come menu principale
                 continue;
             }
 
@@ -238,7 +265,7 @@ final class AdminPages
                 $firstPage['slug'],
                 (string) $page['page_title'],
                 (string) $page['menu_title'],
-                $capability, // Usa la stessa capability del menu principale per coerenza
+                $capability,
                 $page['slug'],
                 function () use ($pageKey): void {
                     $this->renderSettingsPage($pageKey);

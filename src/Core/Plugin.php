@@ -447,6 +447,14 @@ final class Plugin
         $container->register('tracking.manager', $trackingManager);
 
         if (is_admin()) {
+            // Ordine logico dei menu:
+            // 1. Menu principale + Impostazioni (AdminPages)
+            // 2. Agenda (operazioni quotidiane)
+            // 3. Sale & Tavoli (configurazione layout)
+            // 4. Chiusure (gestione eccezioni)
+            // 5. Report & Analytics (analisi dati)
+            // 6. Diagnostica (debugging e log)
+            
             $adminPages = new AdminPages();
             $adminPages->register();
             $container->register(AdminPages::class, $adminPages);
