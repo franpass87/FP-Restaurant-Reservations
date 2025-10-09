@@ -394,6 +394,9 @@ class Service
         if ($payload['table_id'] === 0) {
             $payload['table_id'] = null;
         }
+        $payload['request_id'] = isset($payload['request_id']) && is_string($payload['request_id'])
+            ? sanitize_text_field($payload['request_id'])
+            : null;
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;

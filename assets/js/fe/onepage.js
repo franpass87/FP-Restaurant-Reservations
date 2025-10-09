@@ -1572,6 +1572,11 @@ class FormApp {
     async handleSubmit(event) {
         event.preventDefault();
 
+        // Protezione contro doppio submit
+        if (this.state.sending) {
+            return false;
+        }
+
         // Segna tutti i campi come toccati quando si tenta di inviare
         this.state.touchedFields.consent = true;
 
@@ -1599,6 +1604,14 @@ class FormApp {
         this.clearError();
 
         const payload = this.serializeForm();
+        
+        // Genera un ID univoco per questa richiesta (idempotency key)
+        // Se c'è un retry, userà lo stesso ID per evitare duplicati
+        if (!this.state.requestId) {
+            this.state.requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        payload.request_id = this.state.requestId;
+        
         const endpoint = this.getReservationEndpoint();
         const start = performance.now();
         let latency = 0;
@@ -1670,9 +1683,11 @@ class FormApp {
                 });
             }
 
-            const data = await response.json();
-            this.handleSubmitSuccess(data);
-        } catch (error) {
+        const data = await response.json();
+        this.handleSubmitSuccess(data);
+        // Reset request_id dopo successo
+        this.state.requestId = null;
+    } catch (error) {
             if (!latency) {
                 latency = Math.round(performance.now() - start);
                 pushDataLayerEvent('ui_latency', { op: 'submit', ms: latency });

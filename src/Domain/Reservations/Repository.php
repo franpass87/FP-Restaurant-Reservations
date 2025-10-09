@@ -99,6 +99,51 @@ final class Repository
             $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at']);
         }
 
+    return $reservation;
+    }
+
+    public function findByRequestId(string $requestId): ?Reservation
+    {
+        if ($requestId === '') {
+            return null;
+        }
+
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT * FROM ' . $this->tableName() . ' WHERE request_id = %s ORDER BY id DESC LIMIT 1',
+                $requestId
+            ),
+            ARRAY_A
+        );
+
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $reservation         = new Reservation();
+        $reservation->id      = (int) $row['id'];
+        $reservation->status  = (string) $row['status'];
+        $reservation->date    = (string) $row['date'];
+        $reservation->time    = (string) $row['time'];
+        $reservation->party   = (int) $row['party'];
+        $reservation->email   = (string) ($row['email'] ?? '');
+        $reservation->created = new DateTimeImmutable((string) $row['created_at']);
+        if (array_key_exists('calendar_event_id', $row)) {
+            $reservation->calendarEventId = $row['calendar_event_id'] !== null
+                ? (string) $row['calendar_event_id']
+                : null;
+        }
+
+        if (array_key_exists('calendar_sync_status', $row)) {
+            $reservation->calendarSyncStatus = $row['calendar_sync_status'] !== null
+                ? (string) $row['calendar_sync_status']
+                : null;
+        }
+
+        if (!empty($row['calendar_synced_at'])) {
+            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at']);
+        }
+
         return $reservation;
     }
 
