@@ -1,8 +1,26 @@
 # Fix: Duplicazione Notifiche Email e Eventi Brevo
 
+## ⚠️ IMPORTANTE: Bug Critici Risolti (2025-10-09)
+
+### Bug #1: `request_id` non salvato nel database ✅ RISOLTO
+Il campo `request_id` veniva **sanitizzato ma NON salvato** nel database, rendendo completamente inefficace il sistema di idempotenza. Questo causava la creazione di prenotazioni duplicate con ID sequenziali (#123, #124) anche con lo stesso `request_id`.
+
+**Fix applicato:** Aggiunto `'request_id' => $sanitized['request_id']` all'array `$reservationData` in `Service.php` (riga 199).
+
+### Bug #2: Email del customer non recuperata in risposta idempotente ✅ RISOLTO
+Quando il REST endpoint rilevava una richiesta duplicata e restituiva la prenotazione esistente, cercava di accedere a `$existing->customer->email` (che non esiste) invece di `$existing->email`. Inoltre, il metodo `findByRequestId()` non faceva JOIN con la tabella `customers`, quindi l'email rimaneva sempre vuota.
+
+**Conseguenza:** Il `manageUrl` veniva generato con email vuota → token errato → l'utente non poteva gestire la prenotazione.
+
+**Fix applicati:**
+1. Modificato `Repository.php::findByRequestId()` per fare JOIN con `customers` e recuperare l'email (righe 112-115)
+2. Corretto `REST.php` per accedere a `$existing->email` invece di `$existing->customer->email` (riga 357)
+
+---
+
 ## Problema Rilevato
 
-Il sistema creava **prenotazioni duplicate** con numerazioni diverse (#123, #124) in tre scenari:
+Il sistema creava **prenotazioni duplicate** con numerazioni diverse (#123, #124) in quattro scenari:
 
 ### 1. Doppio Submit (Frontend)
 - **Doppio click** rapido sul pulsante "Prenota"
@@ -17,6 +35,16 @@ Questo faceva sembrare che ci fossero due prenotazioni diverse, anche se avevano
 
 ### 3. Eventi Brevo Duplicati
 Il sistema poteva inviare **due volte lo stesso evento** a Brevo (`email_confirmation`) perché non c'era un controllo anti-duplicazione nel metodo `sendBrevoConfirmationEvent()`.
+
+### 4. Request ID non salvato (Bug Critico - RISOLTO 2025-10-09)
+Il campo `request_id` veniva correttamente:
+- ✅ Generato dal frontend (`req_{timestamp}_{random}`)
+- ✅ Inviato al backend nel payload
+- ✅ Ricevuto dal REST endpoint
+- ✅ Sanitizzato dal Service (`sanitize_text_field`)
+- ❌ **MAI salvato nel database** (mancava nell'array `$reservationData`)
+
+**Conseguenza:** Il controllo di idempotenza in `REST.php` (`findByRequestId()`) non trovava mai nulla perché tutti i `request_id` nel database erano `NULL`. Ogni richiesta (anche con lo stesso `request_id`) creava una NUOVA prenotazione.
 
 ---
 
@@ -64,6 +92,8 @@ Il sistema poteva inviare **due volte lo stesso evento** a Brevo (`email_confirm
 4. **Retry sicuro:** Se c'è un retry (es. per errore 403), usa lo stesso `request_id`, quindi il server riconosce la richiesta duplicata e restituisce la stessa prenotazione
 
 **Risultato:** Anche con retry multipli o doppi click, viene creata **una sola prenotazione**.
+
+**⚠️ AGGIORNAMENTO 2025-10-09:** Il fix precedente era INCOMPLETO perché il `request_id` non veniva salvato nel database. Fix applicato aggiungendo il campo all'array `$reservationData` in `Service.php::create()`.
 
 ---
 
@@ -124,6 +154,19 @@ Il sistema ora:
 - Skip l'invio se già presente
 - Logga ogni invio per tracciabilità
 
+### Test Request ID e Idempotenza (AGGIUNTO 2025-10-09)
+Sono stati aggiunti due test in `ServiceTest.php`:
+
+**1. `testRequestIdIsStoredForIdempotency()`** verifica:
+- Il `request_id` viene correttamente salvato nel database
+- `findByRequestId()` trova la prenotazione creata
+- L'email viene recuperata correttamente dal JOIN con customers
+- Il sistema è effettivamente idempotente
+
+**2. `testDuplicateRequestIdPreventsMultipleReservations()`** verifica:
+- Due chiamate con lo stesso `request_id` non creano prenotazioni duplicate (tramite REST.php)
+- Il controllo di idempotenza funziona correttamente nel flusso completo
+
 ---
 
 ## Benefici
@@ -149,8 +192,10 @@ Il sistema ora:
 - ✅ `src/Core/Plugin.php` - Dependency injection
 
 ### Email e Eventi
-- ✅ `src/Domain/Reservations/Service.php` - Deduplica email + protezione eventi Brevo
-- ✅ `tests/Integration/Reservations/ServiceTest.php` - Test deduplica email
+- ✅ `src/Domain/Reservations/Service.php` - Deduplica email + protezione eventi Brevo + **FIX request_id salvataggio (riga 199)**
+- ✅ `src/Domain/Reservations/Repository.php` - **FIX findByRequestId JOIN con customers (righe 112-115)**
+- ✅ `src/Domain/Reservations/REST.php` - **FIX accesso email corretto (riga 357)**
+- ✅ `tests/Integration/Reservations/ServiceTest.php` - Test deduplica email + **Test idempotenza request_id completa**
 
 ---
 
