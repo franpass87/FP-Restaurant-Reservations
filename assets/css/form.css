@@ -622,8 +622,8 @@
 }
 
 .fp-alert {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 0.85rem;
     padding: clamp(1rem, 2.2vw, 1.2rem);
     border-radius: calc(var(--fp-resv-radius-lg) * 0.75);
@@ -1533,9 +1533,9 @@
 /* Evita che il bottone dentro l'alert si estenda a tutta larghezza */
 .fp-alert .fp-btn,
 .fp-alert .fp-resv-button {
-    justify-self: start;
-    align-self: center;
+    align-self: flex-start;
     max-width: max-content;
+    margin-top: 0.25rem;
 }
 
 .fp-skeleton {
