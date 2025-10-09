@@ -36,7 +36,7 @@ if (php_sapi_name() === 'cli' && !defined('ABSPATH')) {
 if (defined('ABSPATH') && is_admin()) {
     add_action('admin_init', function() {
         // Check permissions first
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(\FP\Resv\Core\Roles::MANAGE_RESERVATIONS)) {
             return;
         }
         
@@ -59,7 +59,7 @@ if (defined('ABSPATH') && is_admin()) {
     });
     
     add_action('admin_notices', function() {
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(\FP\Resv\Core\Roles::MANAGE_RESERVATIONS)) {
             return;
         }
         
