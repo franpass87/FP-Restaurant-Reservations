@@ -42,11 +42,8 @@
         datePicker.addEventListener('change', handleDateChange);
         serviceFilter?.addEventListener('change', handleServiceChange);
 
-        // Set initial view
+        // Set initial view (this already calls loadReservations internally)
         setActiveView('day');
-
-        // Load initial data
-        loadReservations();
     }
 
     // Event Handlers
