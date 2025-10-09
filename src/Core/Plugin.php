@@ -354,6 +354,15 @@ final class Plugin
         $container->register(ClosuresService::class, $closuresService);
         $container->register('closures.service', $closuresService);
 
+        // Creiamo prima il BrevoClient per poterlo iniettare nei servizi che ne hanno bisogno
+        $brevoRepository = new BrevoRepository($wpdb);
+        $container->register(BrevoRepository::class, $brevoRepository);
+        $container->register('brevo.repository', $brevoRepository);
+
+        $brevoClient = new BrevoClient($options);
+        $container->register(BrevoClient::class, $brevoClient);
+        $container->register('brevo.client', $brevoClient);
+
         $reservationsService = new ReservationsService(
             $reservationsRepository,
             $options,
@@ -363,7 +372,8 @@ final class Plugin
             $stripe,
             $notificationsSettings,
             $notificationsTemplates,
-            $googleCalendar
+            $googleCalendar,
+            $brevoClient
         );
         $container->register(ReservationsService::class, $reservationsService);
         $container->register('reservations.service', $reservationsService);
@@ -386,14 +396,6 @@ final class Plugin
         $qaSeederCli = new QASeederCLI($qaSeeder);
         $qaSeederCli->register();
 
-        $brevoRepository = new BrevoRepository($wpdb);
-        $container->register(BrevoRepository::class, $brevoRepository);
-        $container->register('brevo.repository', $brevoRepository);
-
-        $brevoClient = new BrevoClient($options);
-        $container->register(BrevoClient::class, $brevoClient);
-        $container->register('brevo.client', $brevoClient);
-
         $brevoMapper = new BrevoMapper();
         $container->register(BrevoMapper::class, $brevoMapper);
         $container->register('brevo.mapper', $brevoMapper);
@@ -415,7 +417,8 @@ final class Plugin
             $notificationsSettings,
             $notificationsTemplates,
             $reservationsRepository,
-            $mailer
+            $mailer,
+            $brevoClient
         );
         $notificationsManager->boot();
         $container->register(NotificationsManager::class, $notificationsManager);
