@@ -80,7 +80,7 @@ final class REST
         if (!is_string($nonce) || !wp_verify_nonce($nonce, 'fp_resv_submit_survey')) {
             return new WP_Error(
                 'fp_resv_survey_invalid_nonce',
-                __('Verifica di sicurezza non superata. Aggiorna la pagina e riprova.', 'fp-restaurant-reservations'),
+                __('Errore di sicurezza. Ricarica la pagina e riprova.', 'fp-restaurant-reservations'),
                 ['status' => 403]
             );
         }

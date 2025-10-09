@@ -1522,6 +1522,34 @@ class FormApp {
 
             if (!response.ok) {
                 const errorPayload = await safeJson(response);
+                
+                // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
+                if (response.status === 403 && !this.state.nonceRetried) {
+                    const freshNonce = await this.refreshNonce();
+                    if (freshNonce) {
+                        this.state.nonceRetried = true;
+                        payload.fp_resv_nonce = freshNonce;
+                        // Riprova immediatamente con il nonce fresco
+                        const retryResponse = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-WP-Nonce': freshNonce,
+                            },
+                            body: JSON.stringify(payload),
+                            credentials: 'same-origin',
+                        });
+                        
+                        if (retryResponse.ok) {
+                            const data = await retryResponse.json();
+                            this.handleSubmitSuccess(data);
+                            this.state.nonceRetried = false;
+                            return false;
+                        }
+                    }
+                }
+                
                 const message = (errorPayload && errorPayload.message) || this.copy.submitError;
                 throw Object.assign(new Error(message), {
                     status: response.status,
@@ -1585,11 +1613,8 @@ class FormApp {
         const debugSource = error && typeof error === 'object' ? error.payload || null : null;
         let finalMessage = formatDebugMessage(message, debugSource);
 
-        // Se l'errore è 403 (nonce invalido), suggerisci di ricaricare la pagina
+        // Se l'errore è 403 (nonce invalido), mostra il pulsante per ricaricare la pagina
         if (status === 403) {
-            const reloadHint = this.messages.reload_hint || 'La sessione potrebbe essere scaduta. Ricarica la pagina e riprova.';
-            finalMessage = finalMessage + ' ' + reloadHint;
-            
             // Aggiungi un pulsante per ricaricare la pagina
             if (this.errorAlert && this.errorRetry) {
                 this.errorRetry.textContent = this.messages.reload_button || 'Ricarica pagina';
@@ -1669,6 +1694,34 @@ class FormApp {
         }
 
         return payload;
+    }
+
+    async refreshNonce() {
+        try {
+            const nonceEndpoint = this.getReservationEndpoint().replace('/reservations', '/nonce');
+            const response = await fetch(nonceEndpoint, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Aggiorna anche il campo nascosto nel form
+                const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
+                if (nonceField && data.nonce) {
+                    nonceField.value = data.nonce;
+                }
+                return data.nonce || null;
+            }
+        } catch (error) {
+            if (window.console && window.console.warn) {
+                console.warn('[fp-resv] Impossibile rigenerare il nonce', error);
+            }
+        }
+        return null;
     }
 
     preparePhonePayload() {
