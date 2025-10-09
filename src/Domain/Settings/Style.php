@@ -1450,12 +1450,12 @@ final class Style
         margin-bottom: 1.6rem;
     }
     %s .fp-meals__list {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 0.25rem;
+        flex-direction: column;
+        gap: 0.75rem;
     }
     %s .fp-meal-pill {
-        flex: 0 0 auto;
+        width: 100%;
+        justify-content: center;
     }
 }
 CSS;

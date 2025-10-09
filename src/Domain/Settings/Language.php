@@ -371,14 +371,19 @@ final class Language
                     'pdf_label'   => 'Scopri il nostro Menu',
                     'pdf_tooltip' => 'Apri il menu o la brochure in una nuova scheda.',
                     'steps_labels' => [
+                        'service' => 'Servizio',
                         'date'    => 'Data',
                         'party'   => 'Persone',
                         'slots'   => 'Orari disponibili',
                         'details' => 'Dati di contatto',
                         'confirm' => 'Conferma',
                     ],
-                    'step_order' => ['date', 'party', 'slots', 'details', 'confirm'],
+                    'step_order' => ['service', 'date', 'party', 'slots', 'details', 'confirm'],
                     'step_content' => [
+                        'service' => [
+                            'title'       => 'Scegli il servizio',
+                            'description' => 'Seleziona il tipo di servizio desiderato.',
+                        ],
                         'date' => [
                             'title'       => 'Scegli la data',
                             'description' => 'Indica il giorno preferito per la prenotazione.',
@@ -588,14 +593,19 @@ final class Language
                     'pdf_label'   => 'Discover our Menu',
                     'pdf_tooltip' => 'Open the menu or brochure in a new tab.',
                     'steps_labels' => [
+                        'service' => 'Service',
                         'date'    => 'Date',
                         'party'   => 'Guests',
                         'slots'   => 'Available times',
                         'details' => 'Contact details',
                         'confirm' => 'Confirm',
                     ],
-                    'step_order' => ['date', 'party', 'slots', 'details', 'confirm'],
+                    'step_order' => ['service', 'date', 'party', 'slots', 'details', 'confirm'],
                     'step_content' => [
+                        'service' => [
+                            'title'       => 'Choose your service',
+                            'description' => 'Select the type of service you want.',
+                        ],
                         'date' => [
                             'title'       => 'Choose the date',
                             'description' => 'Select the day you prefer for your reservation.',
