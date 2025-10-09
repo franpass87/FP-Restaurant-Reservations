@@ -292,12 +292,7 @@ export class FormApp {
         });
 
         const openPicker = () => {
-            // Porta il focus sull'input
-            if (typeof this.dateField.focus === 'function') {
-                this.dateField.focus();
-            }
-
-            // Apri il picker nativo se disponibile
+            // Apri il picker nativo se disponibile (senza fare focus che causa scroll)
             if (typeof this.dateField.showPicker === 'function') {
                 try {
                     this.dateField.showPicker();
@@ -489,7 +484,8 @@ export class FormApp {
 
         if (!this.form.checkValidity()) {
             this.form.reportValidity();
-            this.formValidation.focusFirstInvalid();
+            // Non fare focus automatico per evitare salti della pagina
+            // this.formValidation.focusFirstInvalid();
             this.updateInlineErrors();
             this.updateSubmitState();
             return false;
@@ -574,7 +570,8 @@ export class FormApp {
     handleRetrySubmit(event) {
         event.preventDefault();
         this.clearError();
-        this.formValidation.focusFirstInvalid();
+        // Non fare focus automatico per evitare salti della pagina
+        // this.formValidation.focusFirstInvalid();
         this.updateSubmitState();
     }
 
@@ -584,9 +581,10 @@ export class FormApp {
         if (this.successAlert) {
             this.successAlert.textContent = message;
             this.successAlert.hidden = false;
-            if (typeof this.successAlert.focus === 'function') {
-                this.successAlert.focus();
-            }
+            // Non fare focus automatico per evitare salti della pagina
+            // if (typeof this.successAlert.focus === 'function') {
+            //     this.successAlert.focus();
+            // }
         }
 
         // Disabilita il form dopo successo
@@ -613,18 +611,19 @@ export class FormApp {
             this.errorMessage.textContent = finalMessage;
             this.errorAlert.hidden = false;
             
-            // Scroll automatico verso l'alert di errore
-            requestAnimationFrame(() => {
-                if (typeof this.errorAlert.scrollIntoView === 'function') {
-                    this.errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                
-                // Focus sull'alert per l'accessibilità
-                if (typeof this.errorAlert.focus === 'function') {
-                    this.errorAlert.setAttribute('tabindex', '-1');
-                    this.errorAlert.focus({ preventScroll: true });
-                }
-            });
+            // Mostra l'errore senza fare scroll automatico
+            // Non fare scroll/focus per evitare salti della pagina
+            // requestAnimationFrame(() => {
+            //     if (typeof this.errorAlert.scrollIntoView === 'function') {
+            //         this.errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            //     }
+            //     
+            //     // Focus sull'alert per l'accessibilità
+            //     if (typeof this.errorAlert.focus === 'function') {
+            //         this.errorAlert.setAttribute('tabindex', '-1');
+            //         this.errorAlert.focus({ preventScroll: true });
+            //     }
+            // });
         }
 
         this.state.setHintOverride(finalMessage);
