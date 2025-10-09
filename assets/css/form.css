@@ -1760,6 +1760,12 @@
     .fp-resv-sticky-cta {
         padding-inline: 0.6rem;
     }
+
+    /* Bottoni slot orari a tutta larghezza su mobile */
+    .fp-slots__list button,
+    .fp-resv-slots__list button {
+        width: 100%;
+    }
 }
 
 /* === Step Visibility Control === */
