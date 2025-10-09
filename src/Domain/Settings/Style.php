@@ -1409,6 +1409,9 @@ final class Style
     }
 }
 @media (max-width: 640px) {
+    %s.fp-resv-widget {
+        padding: 0 !important;
+    }
     %s .fp-resv-widget__headline {
         text-align: center;
     }
