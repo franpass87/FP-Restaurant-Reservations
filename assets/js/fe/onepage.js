@@ -446,23 +446,14 @@ class FormApp {
             }
         });
 
-        const openPicker = (event) => {
-            const isDirectInputClick = event && event.type === 'click' && event.target === this.dateField;
-
-            // Se il click è direttamente sull'input, non bloccare il default del browser
-            if (!isDirectInputClick && event && event.type === 'click') {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
+        const openPicker = () => {
             // Porta il focus sull'input
             if (typeof this.dateField.focus === 'function') {
                 this.dateField.focus();
             }
 
-            // Apri il picker nativo se disponibile. In caso di click diretto,
-            // lasciamo comunque che il comportamento nativo gestisca l'apertura.
-            if (!isDirectInputClick && typeof this.dateField.showPicker === 'function') {
+            // Apri il picker nativo se disponibile
+            if (typeof this.dateField.showPicker === 'function') {
                 try {
                     this.dateField.showPicker();
                 } catch (error) {
@@ -471,38 +462,8 @@ class FormApp {
             }
         };
 
-        // Apri il calendario al focus e anche al click sull'input
-        this.dateField.addEventListener('focus', openPicker);
+        // Apri il calendario al click sull'input
         this.dateField.addEventListener('click', openPicker);
-        
-        // Make the entire field container clickable
-        const dateContainer = this.dateField.closest('.fp-resv-field, .fp-field');
-        if (dateContainer) {
-            // Rendi cliccabile tutta l'area del campo, incluso il label
-            dateContainer.style.cursor = 'pointer';
-            dateContainer.addEventListener('click', (event) => {
-                // Non interferire con il click diretto sull'input (già gestito)
-                if (event.target === this.dateField) {
-                    return;
-                }
-                openPicker(event);
-            });
-            
-            // Trova anche l'icona del calendario se esiste
-            const calendarIcon = dateContainer.querySelector('.fp-icon--calendar, [class*="calendar"]');
-            if (calendarIcon) {
-                calendarIcon.style.cursor = 'pointer';
-                calendarIcon.addEventListener('click', (event) => {
-                    openPicker(event);
-                });
-            }
-            
-            // Rendi cliccabile anche il label
-            const label = dateContainer.querySelector('label');
-            if (label) {
-                label.style.cursor = 'pointer';
-            }
-        }
     }
 
     initializeAvailability() {
