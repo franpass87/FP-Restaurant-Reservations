@@ -1,29 +1,29 @@
-function y(a, t) {
+function b(a, t) {
   if (!a)
     return null;
   const e = Object.assign({ event: a }, t || {});
   return window.dataLayer = window.dataLayer || [], window.dataLayer.push(e), window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(e), e;
 }
-const rt = /\D+/g;
-function J(a) {
-  return a ? String(a).replace(rt, "") : "";
+const nt = /\D+/g;
+function X(a) {
+  return a ? String(a).replace(nt, "") : "";
 }
-function w(a) {
-  const t = J(a);
+function _(a) {
+  const t = X(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
 function M(a) {
-  return J(a);
+  return X(a);
 }
-function nt(a, t) {
-  const e = w(a), i = M(t);
+function ot(a, t) {
+  const e = _(a), i = M(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
   const t = M(a);
   return t.length >= 6 && t.length <= 15;
 }
-function ot(a) {
+function lt(a) {
   const t = M(a);
   if (t === "")
     return { masked: "", digits: "" };
@@ -37,28 +37,28 @@ function ot(a) {
   return { masked: i.join(" "), digits: t };
 }
 function D(a, t) {
-  const e = a.value, { masked: i } = ot(e), s = a.selectionStart;
+  const e = a.value, { masked: i } = lt(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", w(t));
+  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", _(t));
 }
 function z(a, t) {
-  const e = M(a.value), i = w(t);
+  const e = M(a.value), i = _(t);
   return {
-    e164: nt(i, e),
+    e164: ot(i, e),
     local: e,
     country: i
   };
 }
-function T(a) {
+function V(a) {
   if (a == null)
     return "";
   if (typeof a == "string")
     return a.trim();
   if (Array.isArray(a))
-    return a.map((e) => T(e)).filter((e) => e !== "").join("; ");
+    return a.map((e) => V(e)).filter((e) => e !== "").join("; ");
   if (typeof a == "object") {
     if (typeof a.message == "string" && a.message.trim() !== "")
       return a.message.trim();
@@ -67,7 +67,7 @@ function T(a) {
   }
   return String(a).trim();
 }
-function lt(a) {
+function ct(a) {
   if (a == null)
     return "";
   const t = Array.isArray(a) ? [...a] : [a];
@@ -80,7 +80,7 @@ function lt(a) {
       continue;
     }
     if (typeof e != "object") {
-      const s = T(e);
+      const s = V(e);
       if (s !== "")
         return s;
       continue;
@@ -89,7 +89,7 @@ function lt(a) {
     for (let s = 0; s < i.length; s += 1) {
       const r = i[s];
       if (Object.prototype.hasOwnProperty.call(e, r)) {
-        const n = T(e[r]);
+        const n = V(e[r]);
         if (n !== "")
           return n;
       }
@@ -98,11 +98,11 @@ function lt(a) {
   }
   return "";
 }
-function X(a, t) {
-  const e = lt(t);
+function Y(a, t) {
+  const e = ct(t);
   return e === "" ? a : a ? a.includes(e) ? a : a + " (" + e + ")" : e;
 }
-function ct(a) {
+function dt(a) {
   const t = a.getAttribute("data-fp-resv");
   if (!t)
     return {};
@@ -113,7 +113,7 @@ function ct(a) {
   }
   return {};
 }
-function dt(a, t) {
+function ut(a, t) {
   if (!a)
     return {};
   const e = a.getAttribute(t);
@@ -128,7 +128,7 @@ function dt(a, t) {
   }
   return {};
 }
-function ut(a) {
+function ht(a) {
   if (a == null)
     return null;
   if (typeof a == "number")
@@ -136,7 +136,7 @@ function ut(a) {
   const t = String(a).replace(",", "."), e = parseFloat(t);
   return Number.isNaN(e) ? null : e;
 }
-function Y(a, t) {
+function G(a, t) {
   if (!a)
     return null;
   if (typeof a.closest == "function")
@@ -149,10 +149,10 @@ function Y(a, t) {
   }
   return null;
 }
-function ht(a, t) {
+function ft(a, t) {
   a && (t ? (a.setAttribute("aria-disabled", "true"), a.setAttribute("disabled", "disabled")) : (a.removeAttribute("disabled"), a.setAttribute("aria-disabled", "false")));
 }
-function ft(a) {
+function H(a) {
   return a.text().then((t) => {
     if (!t)
       return {};
@@ -163,7 +163,7 @@ function ft(a) {
     }
   });
 }
-function H(a, t) {
+function U(a, t) {
   if (a && typeof a == "string")
     try {
       return new URL(a, window.location.origin).toString();
@@ -173,17 +173,17 @@ function H(a, t) {
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
 let O = null;
-const U = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
+const $ = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function pt() {
-  return O || (O = Promise.resolve().then(() => Ct)), O;
+  return O || (O = Promise.resolve().then(() => wt)), O;
 }
 function mt(a) {
-  return Y(a, "data-fp-resv-section");
+  return G(a, "data-fp-resv-section");
 }
 const yt = ["service", "date", "party", "slots", "details", "confirm"];
-class G {
+class Q {
   constructor(t) {
-    this.root = t, this.dataset = ct(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
+    this.root = t, this.dataset = dt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(yt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
@@ -218,7 +218,7 @@ class G {
       submitError: this.messages.msg_submit_error || "Non è stato possibile completare la prenotazione. Riprova.",
       submitSuccess: this.messages.msg_submit_success || "Prenotazione inviata con successo.",
       mealFullNotice: this.messages.meal_full_notice || "Nessuna disponibilità per questo servizio. Scegli un altro giorno."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), U(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), $(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -259,20 +259,20 @@ class G {
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
       return;
-    const t = w(this.phonePrefixField.value);
+    const t = _(this.phonePrefixField.value);
     let e = t;
     if (e === "" && this.phoneCountryCode) {
-      const i = w(this.phoneCountryCode);
+      const i = _(this.phoneCountryCode);
       i && (e = i);
     }
     if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const i = w(this.hiddenPhoneCc.value);
+      const i = _(this.hiddenPhoneCc.value);
       i && (e = i);
     }
     if (e === "") {
       const i = this.config && this.config.defaults || {};
       if (i.phone_country_code) {
-        const s = w(i.phone_country_code);
+        const s = _(i.phone_country_code);
         s && (e = s);
       }
     }
@@ -322,7 +322,7 @@ class G {
       }
       this.scheduleAvailabilityUpdate(i);
     };
-    U(() => {
+    $(() => {
       pt().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
@@ -438,7 +438,7 @@ class G {
     }
     this.applyMealSelection(t), this.applyMealAvailabilityNotice(e, i, { skipSlotReset: !0 });
     const s = this.events.meal_selected || "meal_selected";
-    y(s, {
+    b(s, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
     }), this.scheduleAvailabilityUpdate({ immediate: !0 });
@@ -464,7 +464,7 @@ class G {
   applyMealSelection(t) {
     const e = t.getAttribute("data-fp-resv-meal") || "";
     this.hiddenMeal && (this.hiddenMeal.value = e);
-    const i = ut(t.getAttribute("data-meal-price"));
+    const i = ht(t.getAttribute("data-meal-price"));
     this.hiddenPrice && (this.hiddenPrice.value = i !== null ? String(i) : ""), this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(t), this.updateSubmitState();
   }
   clearSlotSelection(t = {}) {
@@ -548,7 +548,7 @@ class G {
       return;
     this.state.unlocked[t] = !0;
     const e = this.events.section_unlocked || "section_unlocked";
-    y(e, { section: t });
+    b(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
     const s = t.getAttribute("data-step") || "", r = i && i.silent === !0;
@@ -567,8 +567,8 @@ class G {
       n.setAttribute("data-state", f), n.setAttribute("data-progress-state", f === "completed" ? "done" : f);
       const v = n.querySelector(".fp-progress__label");
       v && (f === "active" ? v.removeAttribute("aria-hidden") : v.setAttribute("aria-hidden", "true"));
-      const S = f === "locked";
-      n.tabIndex = S ? -1 : 0, S ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), f === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), f === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
+      const w = f === "locked";
+      n.tabIndex = w ? -1 : 0, w ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), f === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), f === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
     });
     const r = Math.min(100, Math.max(0, Math.round(i / s * 100)));
     this.progress.style.setProperty("--fp-progress-fill", r + "%");
@@ -597,7 +597,7 @@ class G {
     }
     if (t && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
-      y(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
+      b(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
   }
   updateInlineErrors() {
@@ -657,44 +657,44 @@ class G {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    ht(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && y("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    ft(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && b("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), S = this.form.querySelector('[data-fp-resv-field="pets"]');
-    let _ = "";
-    s && s.value && (_ = s.value.trim()), r && r.value && (_ = (_ + " " + r.value.trim()).trim());
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), w = this.form.querySelector('[data-fp-resv-field="pets"]');
     let P = "";
-    if (n && n.value && (P = n.value.trim()), l && l.value) {
-      const A = this.getPhoneCountryCode(), N = (A ? "+" + A + " " : "") + l.value.trim();
-      P = P !== "" ? P + " / " + N : N;
+    s && s.value && (P = s.value.trim()), r && r.value && (P = (P + " " + r.value.trim()).trim());
+    let A = "";
+    if (n && n.value && (A = n.value.trim()), l && l.value) {
+      const C = this.getPhoneCountryCode(), N = (C ? "+" + C + " " : "") + l.value.trim();
+      A = A !== "" ? A + " / " + N : N;
     }
-    const E = [];
-    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && E.push("Seggioloni: " + parseInt(f.value, 10)), v && "checked" in v && v.checked && E.push("Tavolo accessibile per sedia a rotelle"), S && "checked" in S && S.checked && E.push("Animali domestici");
-    const q = E.join("; ");
-    this.summaryTargets.forEach(function(A) {
-      switch (A.getAttribute("data-fp-resv-summary")) {
+    const y = [];
+    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && y.push("Seggioloni: " + parseInt(f.value, 10)), v && "checked" in v && v.checked && y.push("Tavolo accessibile per sedia a rotelle"), w && "checked" in w && w.checked && y.push("Animali domestici");
+    const q = y.join("; ");
+    this.summaryTargets.forEach(function(C) {
+      switch (C.getAttribute("data-fp-resv-summary")) {
         case "date":
-          A.textContent = t && t.value ? t.value : "";
+          C.textContent = t && t.value ? t.value : "";
           break;
         case "time":
-          A.textContent = e && e.value ? e.value : "";
+          C.textContent = e && e.value ? e.value : "";
           break;
         case "party":
-          A.textContent = i && i.value ? i.value : "";
+          C.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          A.textContent = _;
+          C.textContent = P;
           break;
         case "contact":
-          A.textContent = P;
+          C.textContent = A;
           break;
         case "notes":
-          A.textContent = h && h.value ? h.value : "";
+          C.textContent = h && h.value ? h.value : "";
           break;
         case "extras":
-          A.textContent = q;
+          C.textContent = q;
           break;
       }
     });
@@ -703,7 +703,7 @@ class G {
     if (t.preventDefault(), this.state.touchedFields.consent = !0, !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
-    y(e, {
+    b(e, {
       source: "form",
       form_id: this.form && this.form.id ? this.form.id : this.root.id || "",
       date: i.date,
@@ -723,30 +723,37 @@ class G {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (l = Math.round(performance.now() - n), y("ui_latency", { op: "submit", ms: l }), !h.ok) {
-        const v = await ft(h);
+      if (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l }), !h.ok) {
+        const v = await H(h);
         if (h.status === 403 && !this.state.nonceRetried) {
-          const _ = await this.refreshNonce();
-          if (_) {
-            this.state.nonceRetried = !0, s.fp_resv_nonce = _;
-            const P = await fetch(r, {
+          await new Promise((A) => setTimeout(A, 500));
+          const P = await this.refreshNonce();
+          if (P) {
+            this.state.nonceRetried = !0, s.fp_resv_nonce = P, await new Promise((y) => setTimeout(y, 200));
+            const A = await fetch(r, {
               method: "POST",
               headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
-                "X-WP-Nonce": _
+                "X-WP-Nonce": P
               },
               body: JSON.stringify(s),
               credentials: "same-origin"
             });
-            if (P.ok) {
-              const E = await P.json();
-              return this.handleSubmitSuccess(E), this.state.nonceRetried = !1, !1;
+            if (A.ok) {
+              const y = await A.json();
+              return this.handleSubmitSuccess(y), this.state.nonceRetried = !1, !1;
+            } else {
+              const y = await H(A);
+              throw y && y.message && (y.message = y.message + " Se hai appena accettato i cookie, riprova tra qualche secondo."), Object.assign(new Error(y.message || this.copy.submitError), {
+                status: A.status,
+                payload: y
+              });
             }
           }
         }
-        const S = v && v.message || this.copy.submitError;
-        throw Object.assign(new Error(S), {
+        const w = v && v.message || this.copy.submitError;
+        throw Object.assign(new Error(w), {
           status: h.status,
           payload: v
         });
@@ -754,7 +761,7 @@ class G {
       const f = await h.json();
       this.handleSubmitSuccess(f);
     } catch (h) {
-      l || (l = Math.round(performance.now() - n), y("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(h, l);
+      l || (l = Math.round(performance.now() - n), b("ui_latency", { op: "submit", ms: l })), this.handleSubmitError(h, l);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -774,19 +781,19 @@ class G {
       });
     }
     t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
-      i && i.event && y(i.event, i);
+      i && i.event && b(i.event, i);
     });
   }
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, r = t && typeof t == "object" && t.payload || null;
-    let n = X(s, r);
+    let n = Y(s, r);
     i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (h) => {
       h.preventDefault(), window.location.reload();
     }), this.errorAlert && this.errorMessage && (this.errorMessage.textContent = n, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
       typeof this.errorAlert.scrollIntoView == "function" && this.errorAlert.scrollIntoView({ behavior: "smooth", block: "center" }), typeof this.errorAlert.focus == "function" && (this.errorAlert.setAttribute("tabindex", "-1"), this.errorAlert.focus({ preventScroll: !0 }));
     })), this.state.hintOverride = n, this.updateSubmitState();
     const l = this.events.submit_error || "submit_error";
-    y(l, { code: i, latency: e });
+    b(l, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.errorRetry && (this.errorRetry.textContent = this.messages.retry_button || "Riprova", this.errorRetry.onclick = null), this.state.hintOverride = "";
@@ -800,7 +807,7 @@ class G {
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
-      const i = w(this.phonePrefixField.value);
+      const i = _(this.phonePrefixField.value);
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
@@ -837,7 +844,7 @@ class G {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), y("phone_validation_error", { field: "phone" }), y("ui_validation_error", { field: "phone" }));
+    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), b("phone_validation_error", { field: "phone" }), b("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (typeof t.value == "string") {
@@ -848,7 +855,7 @@ class G {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), y("ui_validation_error", { field: "email" }));
+    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), b("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -920,10 +927,10 @@ class G {
     this.updateSummary(), this.updateSubmitState();
   }
   handleAvailabilityLatency(t) {
-    y("ui_latency", { op: "availability", ms: Math.round(t) });
+    b("ui_latency", { op: "availability", ms: Math.round(t) });
   }
   handleAvailabilityRetry(t) {
-    y("availability_retry", { attempt: t });
+    b("availability_retry", { attempt: t });
   }
   handleWindowFocus() {
     this.availabilityController && typeof this.availabilityController.revalidate == "function" && this.availabilityController.revalidate();
@@ -932,30 +939,30 @@ class G {
     if (this.state.started)
       return;
     const t = this.events.start || "reservation_start";
-    y(t, { source: "form" }), this.state.started = !0;
+    b(t, { source: "form" }), this.state.started = !0;
   }
   handleDelegatedTrackingEvent(t) {
     const e = t.target instanceof HTMLElement ? t.target : null;
     if (!e)
       return;
-    const i = Y(e, "data-fp-resv-event");
+    const i = G(e, "data-fp-resv-event");
     if (!i)
       return;
     const s = i.getAttribute("data-fp-resv-event");
     if (!s)
       return;
-    let r = dt(i, "data-fp-resv-payload");
+    let r = ut(i, "data-fp-resv-payload");
     if ((!r || typeof r != "object") && (r = {}), r.trigger || (r.trigger = t.type || "click"), !r.href && i instanceof HTMLAnchorElement && i.href && (r.href = i.href), !r.label) {
       const n = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
       n && (r.label = n.trim());
     }
-    y(s, r);
+    b(s, r);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
       return;
     const e = t.detail || {}, i = this.events.confirmed || "reservation_confirmed";
-    y(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && y(this.events.purchase || "purchase", e.purchase);
+    b(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && b(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
   }
@@ -980,23 +987,23 @@ class G {
   }
   getPhoneCountryCode() {
     if (this.phonePrefixField && this.phonePrefixField.value) {
-      const e = w(this.phonePrefixField.value);
+      const e = _(this.phonePrefixField.value);
       if (e)
         return e;
     }
     if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const e = w(this.hiddenPhoneCc.value);
+      const e = _(this.hiddenPhoneCc.value);
       if (e)
         return e;
     }
     if (this.phoneCountryCode) {
-      const e = w(this.phoneCountryCode);
+      const e = _(this.phoneCountryCode);
       if (e)
         return e;
     }
     const t = this.config && this.config.defaults || {};
     if (t.phone_country_code) {
-      const e = w(t.phone_country_code);
+      const e = _(t.phone_country_code);
       if (e)
         return e;
     }
@@ -1004,11 +1011,11 @@ class G {
   }
   getReservationEndpoint() {
     const t = this.config.endpoints || {};
-    return H(t.reservations, "/wp-json/fp-resv/v1/reservations");
+    return U(t.reservations, "/wp-json/fp-resv/v1/reservations");
   }
   getAvailabilityEndpoint() {
     const t = this.config.endpoints || {};
-    return H(t.availability, "/wp-json/fp-resv/v1/availability");
+    return U(t.availability, "/wp-json/fp-resv/v1/availability");
   }
   loadExternalScript(t, e, i) {
     if (typeof window > "u" || typeof document > "u")
@@ -1065,14 +1072,14 @@ class G {
     )), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = G, window.fpResvApp = window.FPResv);
-function $() {
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = Q, window.fpResvApp = window.FPResv);
+function W() {
   console.log("[FP-RESV] Plugin v0.1.5 loaded - Complete form functionality active");
   const a = document.querySelectorAll("[data-fp-resv]");
   console.log("[FP-RESV] Found widgets:", a.length), Array.prototype.forEach.call(a, function(t) {
     try {
       console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
-      const e = new G(t);
+      const e = new Q(t);
       console.log("[FP-RESV] Widget initialized successfully:", t.id || "unnamed"), (e.sections || []).forEach(function(s, r) {
         const n = s.getAttribute("data-step"), l = s.getAttribute("data-state"), h = s.hasAttribute("hidden");
         console.log(`[FP-RESV] Step ${r + 1} (${n}): state=${l}, hidden=${h}`);
@@ -1082,7 +1089,7 @@ function $() {
     }
   });
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", $) : $();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", W) : W();
 document.addEventListener("fp-resv:tracking:push", function(a) {
   if (!a || !a.detail)
     return;
@@ -1090,9 +1097,9 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   if (!e)
     return;
   const i = t.payload || t.data || {};
-  y(e, i && typeof i == "object" ? i : {});
+  b(e, i && typeof i == "object" ? i : {});
 });
-const vt = 400, bt = 6e4, gt = 3, W = 600;
+const bt = 400, vt = 6e4, gt = 3, J = 600;
 function St(a, t) {
   let e;
   try {
@@ -1103,30 +1110,30 @@ function St(a, t) {
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function V(a) {
+function T(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
 function At(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
-  let h = null, f = null, v = null, S = 0;
-  function _(o) {
+  let h = null, f = null, v = null, w = 0;
+  function P(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((b) => typeof b.normalize == "function" ? b.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : b)(d), m = (b) => b.some((c) => u.startsWith(c)), C = (b) => b.some((c) => u.includes(c));
-    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const u = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), m = (g) => g.some((c) => u.startsWith(c)), E = (g) => g.some((c) => u.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || E(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
-  function P(o, d) {
+  function A(o, d) {
     const p = Array.isArray(o) ? o : [], u = p.length;
     if (u === 0)
       return { state: "full", slots: 0 };
-    const m = p.map((c) => _(c && c.status)).filter((c) => c !== "");
+    const m = p.map((c) => P(c && c.status)).filter((c) => c !== "");
     return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
-  function E(o, d) {
+  function y(o, d) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
         a.onAvailabilitySummary(d, o || f || {});
@@ -1142,10 +1149,10 @@ function At(a) {
     const m = p === "loading";
     t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
-  function A() {
+  function C() {
     if (!i)
       return;
-    V(i);
+    T(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
       const p = document.createElement("li"), u = document.createElement("span");
@@ -1154,8 +1161,8 @@ function At(a) {
   }
   function R(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, b = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || b), k = C && !b ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
-    q(k, "idle"), i && V(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", E = d && !!o.requiresMeal, g = p !== "", S = u !== "" && (m !== "" && m !== "0") && (!E || g), k = E && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
+    q(k, "idle"), i && T(i), y(o, { state: S ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1163,21 +1170,21 @@ function At(a) {
   function B() {
     r && (r.hidden = !0);
   }
-  function Q(o) {
+  function Z(o) {
     const d = a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
     if (r) {
       const p = r.querySelector("[data-fp-resv-slots-boundary-message]");
       p && (p.textContent = o || d), r.hidden = !1;
     }
-    q(o || d, "error"), E(f, { state: "error", slots: 0 });
+    q(o || d, "error"), y(f, { state: "error", slots: 0 });
   }
-  function Z(o, d) {
+  function tt(o, d) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
     Array.prototype.forEach.call(p, (u) => {
       u.setAttribute("aria-pressed", u === d ? "true" : "false");
     }), v = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
   }
-  function tt() {
+  function et() {
     if (v = null, !i)
       return;
     const o = i.querySelectorAll("button[data-slot]");
@@ -1186,72 +1193,72 @@ function At(a) {
     });
   }
   function j(o, d, p) {
-    if (p && p !== S || d && f && d !== f || (B(), N(), !i))
+    if (p && p !== w || d && f && d !== f || (B(), N(), !i))
       return;
-    V(i);
+    T(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
     if (u.length === 0) {
       R(d);
       return;
     }
-    u.forEach((C) => {
-      const b = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", v && v.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), b.appendChild(c), i.appendChild(b);
+    u.forEach((E) => {
+      const g = document.createElement("li"), c = document.createElement("button");
+      c.type = "button", c.textContent = E.label || "", c.dataset.slot = E.start || "", c.dataset.slotStatus = E.status || "", c.setAttribute("aria-pressed", v && v.start === E.start ? "true" : "false"), c.addEventListener("click", () => tt(E, c)), g.appendChild(c), i.appendChild(g);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    E(d, P(u, m));
+    y(d, A(u, m));
   }
   function I(o, d) {
     if (f = o, !o || !o.date || !o.party) {
       R(o);
       return;
     }
-    const p = ++S, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
-    if (m && Date.now() - m.timestamp < bt && d === 0) {
+    const p = ++w, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
+    if (m && Date.now() - m.timestamp < vt && d === 0) {
       j(m.payload, o, p);
       return;
     }
-    B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
-    const C = St(a.endpoint, o), b = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
+    B(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), y(o, { state: "loading", slots: 0 });
+    const E = St(a.endpoint, o), g = performance.now();
+    fetch(E, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
-        const g = new Error("availability_error");
-        g.status = c.status, g.payload = x;
+        const S = new Error("availability_error");
+        S.status = c.status, S.payload = x;
         const k = c.headers.get("Retry-After");
         if (k) {
           const F = Number.parseInt(k, 10);
-          Number.isFinite(F) && (g.retryAfter = F);
+          Number.isFinite(F) && (S.retryAfter = F);
         }
-        throw g;
+        throw S;
       }
       return x;
     })).then((c) => {
-      if (p !== S)
+      if (p !== w)
         return;
-      const x = performance.now() - b;
+      const x = performance.now() - g;
       typeof a.onLatency == "function" && a.onLatency(x), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
     }).catch((c) => {
-      if (p !== S)
+      if (p !== w)
         return;
-      const x = performance.now() - b;
+      const x = performance.now() - g;
       typeof a.onLatency == "function" && a.onLatency(x);
-      const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
+      const S = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : S && typeof S.status == "number" ? S.status : 0;
       let F = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
         F = c.retryAfter;
-      else if (g && typeof g.retry_after < "u") {
-        const L = Number.parseInt(g.retry_after, 10);
+      else if (S && typeof S.retry_after < "u") {
+        const L = Number.parseInt(S.retry_after, 10);
         Number.isFinite(L) && (F = L);
       }
       if (d >= gt - 1 ? !1 : k === 429 || k >= 500 && k < 600 ? !0 : k === 0) {
         const L = d + 1;
         typeof a.onRetry == "function" && a.onRetry(L);
-        const at = F > 0 ? Math.max(F * 1e3, W) : W * Math.pow(2, d);
-        window.setTimeout(() => I(o, L), at);
+        const rt = F > 0 ? Math.max(F * 1e3, J) : J * Math.pow(2, d);
+        window.setTimeout(() => I(o, L), rt);
         return;
       }
-      const et = c && c.payload && (c.payload.message || c.payload.code) || g && g.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", it = c && c.payload || g || null, st = X(et, it);
-      Q(st);
+      const it = c && c.payload && (c.payload.message || c.payload.code) || S && S.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", st = c && c.payload || S || null, at = Y(it, st);
+      Z(at);
     });
   }
   return {
@@ -1268,7 +1275,7 @@ function At(a) {
       }
       h = window.setTimeout(() => {
         I(u, 0);
-      }, vt);
+      }, bt);
     },
     revalidate() {
       if (!f)
@@ -1280,11 +1287,11 @@ function At(a) {
       return v;
     },
     clearSelection() {
-      tt();
+      et();
     }
   };
 }
-const Ct = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const wt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   createAvailabilityController: At
 }, Symbol.toStringTag, { value: "Module" }));
