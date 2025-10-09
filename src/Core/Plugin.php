@@ -376,7 +376,8 @@ final class Plugin
             $notificationsSettings,
             $notificationsTemplates,
             $googleCalendar,
-            $brevoClient
+            $brevoClient,
+            $brevoRepository
         );
         $container->register(ReservationsService::class, $reservationsService);
         $container->register('reservations.service', $reservationsService);
@@ -495,7 +496,7 @@ final class Plugin
 
         I18n::init();
 
-        $reservationsRest = new ReservationsREST($availability, $reservationsService);
+        $reservationsRest = new ReservationsREST($availability, $reservationsService, $reservationsRepository);
         $reservationsRest->register();
         $container->register(ReservationsREST::class, $reservationsRest);
         $container->register('reservations.rest', $reservationsRest);

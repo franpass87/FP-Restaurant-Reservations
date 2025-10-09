@@ -93,7 +93,8 @@ class Service
         private readonly NotificationSettings $notificationSettings,
         private readonly NotificationTemplateRenderer $notificationTemplates,
         private readonly ?GoogleCalendarService $calendar = null,
-        private readonly ?BrevoClient $brevoClient = null
+        private readonly ?BrevoClient $brevoClient = null,
+        private readonly ?\FP\Resv\Domain\Brevo\Repository $brevoRepository = null
     ) {
     }
 
@@ -393,6 +394,9 @@ class Service
         if ($payload['table_id'] === 0) {
             $payload['table_id'] = null;
         }
+        $payload['request_id'] = isset($payload['request_id']) && is_string($payload['request_id'])
+            ? sanitize_text_field($payload['request_id'])
+            : null;
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;
@@ -600,6 +604,10 @@ class Service
         $webmasterRecipients = is_array($notifications['webmaster_emails'] ?? null)
             ? array_values(array_filter($notifications['webmaster_emails']))
             : [];
+
+        // Deduplica: rimuovi dai destinatari webmaster quelli già presenti in restaurant
+        // per evitare di inviare due email alla stessa persona
+        $webmasterRecipients = array_values(array_diff($webmasterRecipients, $restaurantRecipients));
 
         if ($restaurantRecipients === [] && $webmasterRecipients === []) {
             return;
@@ -1130,6 +1138,15 @@ class Service
             return;
         }
 
+        // Controlla se l'evento è già stato inviato con successo per evitare duplicati
+        if ($this->brevoRepository !== null && $this->brevoRepository->hasSuccessfulLog($reservationId, 'email_confirmation')) {
+            Logging::log('brevo', 'Evento email_confirmation già inviato, skip per evitare duplicati', [
+                'reservation_id' => $reservationId,
+                'email'          => $email,
+            ]);
+            return;
+        }
+
         $eventProperties = [
             'reservation' => array_filter([
                 'id'         => $reservationId,
@@ -1166,10 +1183,26 @@ class Service
             'properties' => $eventProperties,
         ]);
 
+        // Logga l'evento nel repository Brevo se disponibile
+        $success = $response['success'] ?? false;
+        if ($this->brevoRepository !== null) {
+            $this->brevoRepository->log(
+                $reservationId,
+                'email_confirmation',
+                [
+                    'email'      => $email,
+                    'properties' => $eventProperties,
+                    'response'   => $response,
+                ],
+                $success ? 'success' : 'error',
+                $success ? null : ($response['message'] ?? null)
+            );
+        }
+
         Logging::log('brevo', 'Evento email_confirmation inviato a Brevo', [
             'reservation_id' => $reservationId,
             'email'          => $email,
-            'success'        => $response['success'] ?? false,
+            'success'        => $success,
             'response'       => $response,
         ]);
     }

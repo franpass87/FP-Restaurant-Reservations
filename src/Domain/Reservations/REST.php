@@ -19,9 +19,13 @@ use WP_REST_Server;
 use function __;
 use function absint;
 use function add_action;
+use function add_query_arg;
 use function apply_filters;
 use function defined;
+use function esc_url_raw;
 use function get_transient;
+use function hash_hmac;
+use function home_url;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -32,18 +36,23 @@ use function rest_ensure_response;
 use function sanitize_text_field;
 use function serialize;
 use function set_transient;
+use function sprintf;
 use function strtolower;
+use function trailingslashit;
+use function trim;
 use function wp_cache_get;
 use function wp_cache_set;
 use function wp_json_encode;
 use function wp_rand;
+use function wp_salt;
 use function wp_verify_nonce;
 
 final class REST
 {
     public function __construct(
         private readonly Availability $availability,
-        private readonly Service $service
+        private readonly Service $service,
+        private readonly Repository $repository
     ) {
     }
 
@@ -334,6 +343,40 @@ final class REST
             );
         }
 
+        // Idempotency: controlla se esiste già una prenotazione con questo request_id
+        $requestId = $this->param($request, ['request_id', 'fp_resv_request_id']) ?? '';
+        if ($requestId !== '') {
+            $existing = $this->repository->findByRequestId($requestId);
+            if ($existing !== null) {
+                // Restituisci la prenotazione esistente invece di crearne una nuova
+                Logging::log('api', 'Request duplicata rilevata, restituita prenotazione esistente', [
+                    'request_id'     => $requestId,
+                    'reservation_id' => $existing->id,
+                ]);
+                
+                $manageUrl = $this->generateManageUrl($existing->id, $existing->customer->email ?? '');
+                
+                $payload = [
+                    'reservation' => [
+                        'id'         => $existing->id,
+                        'status'     => $existing->status,
+                        'manage_url' => $manageUrl,
+                    ],
+                    'message'     => __('Prenotazione già registrata.', 'fp-restaurant-reservations'),
+                ];
+
+                $response = rest_ensure_response($payload);
+                if ($response instanceof WP_REST_Response) {
+                    $response->set_status(200);
+                    $response->set_headers([
+                        'X-FP-Resv-Idempotent' => 'true',
+                    ]);
+                }
+
+                return $response;
+            }
+        }
+
         $payload = [
             'date'        => $this->param($request, ['date', 'fp_resv_date']) ?? '',
             'time'        => $this->param($request, ['time', 'fp_resv_time']) ?? '',
@@ -357,6 +400,7 @@ final class REST
             'policy_version'    => $this->param($request, ['policy_version', 'fp_resv_policy_version']) ?? '',
             'consent_timestamp' => $this->param($request, ['consent_ts', 'fp_resv_consent_ts']) ?? '',
             'value'       => $this->param($request, ['value', 'fp_resv_value']),
+            'request_id'  => $requestId, // Salva il request_id per idempotenza
             // extras
             'high_chair_count'  => $this->param($request, ['high_chair_count', 'fp_resv_high_chair_count']) ?? '0',
             'wheelchair_table'  => $this->param($request, ['wheelchair_table', 'fp_resv_wheelchair_table']) ?? '',
@@ -437,5 +481,16 @@ final class REST
         }
 
         return null;
+    }
+
+    private function generateManageUrl(int $reservationId, string $email): string
+    {
+        $base = trailingslashit(apply_filters('fp_resv_manage_base_url', home_url('/')));
+        $token = hash_hmac('sha256', sprintf('%d|%s', $reservationId, strtolower(trim($email))), wp_salt('fp_resv_manage'));
+
+        return esc_url_raw(add_query_arg([
+            'fp_resv_manage' => $reservationId,
+            'fp_resv_token'  => $token,
+        ], $base));
     }
 }
