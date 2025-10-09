@@ -530,3 +530,440 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* View Switcher */
+.fp-resv-agenda__view-switcher {
+    display: flex;
+    gap: 4px;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.fp-resv-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-view-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.fp-resv-view-btn.button-primary {
+    background: #4338ca;
+    border-color: #4338ca;
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .fp-resv-view-btn__label {
+        display: none;
+    }
+    
+    .fp-resv-view-btn {
+        padding: 8px;
+    }
+}
+
+/* Vista Settimanale */
+.fp-resv-agenda__week {
+    padding: 24px;
+}
+
+.fp-resv-week__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.fp-resv-week__day {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.fp-resv-week__header {
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.08) 0%, rgba(67, 56, 202, 0.03) 100%);
+    padding: 12px;
+    border-bottom: 2px solid #e5e7eb;
+    text-align: center;
+}
+
+.fp-resv-week__day-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.fp-resv-week__day-number {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.fp-resv-week__content {
+    padding: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-week__item {
+    padding: 8px;
+    border-radius: 6px;
+    border-left: 3px solid;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 12px;
+}
+
+.fp-resv-week__item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.15);
+}
+
+.fp-resv-week__item[data-status="pending"] {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+}
+
+.fp-resv-week__item[data-status="confirmed"] {
+    background: #f0fdf4;
+    border-left-color: #10b981;
+}
+
+.fp-resv-week__item[data-status="visited"] {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+}
+
+.fp-resv-week__item[data-status="no_show"] {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+}
+
+.fp-resv-week__item[data-status="cancelled"] {
+    background: #f9fafb;
+    border-left-color: #9ca3af;
+    opacity: 0.7;
+}
+
+.fp-resv-week__time {
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.fp-resv-week__guest {
+    font-weight: 600;
+    color: #374151;
+}
+
+.fp-resv-week__party {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.fp-resv-week__empty {
+    padding: 20px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+/* Vista Mensile */
+.fp-resv-agenda__month {
+    padding: 24px;
+}
+
+.fp-resv-month__header {
+    margin-bottom: 20px;
+}
+
+.fp-resv-month__title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+}
+
+.fp-resv-month__calendar {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.fp-resv-month__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.1) 0%, rgba(67, 56, 202, 0.05) 100%);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.fp-resv-month__weekdays > div {
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4338ca;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fp-resv-month__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.fp-resv-month__day {
+    min-height: 100px;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px;
+    position: relative;
+    background: #fff;
+    transition: background 0.15s ease;
+}
+
+.fp-resv-month__day:hover {
+    background: #f9fafb;
+}
+
+.fp-resv-month__day:nth-child(7n) {
+    border-right: none;
+}
+
+.fp-resv-month__day--empty {
+    background: #f9fafb;
+}
+
+.fp-resv-month__day--today {
+    background: #eff6ff;
+    border: 2px solid #4338ca;
+}
+
+.fp-resv-month__day-number {
+    font-weight: 700;
+    font-size: 14px;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.fp-resv-month__count {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #4338ca;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.fp-resv-month__items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fp-resv-month__item {
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.15s ease;
+}
+
+.fp-resv-month__item:hover {
+    transform: translateX(2px);
+}
+
+.fp-resv-month__item[data-status="pending"] {
+    background: #fffbeb;
+    color: #78350f;
+}
+
+.fp-resv-month__item[data-status="confirmed"] {
+    background: #f0fdf4;
+    color: #064e3b;
+}
+
+.fp-resv-month__item[data-status="visited"] {
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+.fp-resv-month__item[data-status="no_show"] {
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.fp-resv-month__item[data-status="cancelled"] {
+    background: #f9fafb;
+    color: #6b7280;
+    opacity: 0.7;
+}
+
+.fp-resv-month__more {
+    font-size: 11px;
+    color: #6b7280;
+    padding: 2px 6px;
+    font-weight: 600;
+}
+
+/* Vista Lista */
+.fp-resv-agenda__list {
+    padding: 24px;
+}
+
+.fp-resv-list__table-wrapper {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.fp-resv-list__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fp-resv-list__table thead {
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.1) 0%, rgba(67, 56, 202, 0.05) 100%);
+}
+
+.fp-resv-list__table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4338ca;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.fp-resv-list__table tbody tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s ease;
+}
+
+.fp-resv-list__table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.fp-resv-list__row {
+    cursor: pointer;
+}
+
+.fp-resv-list__table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.fp-resv-list__badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fp-resv-list__badge--pending {
+    background: #fbbf24;
+    color: #78350f;
+}
+
+.fp-resv-list__badge--confirmed {
+    background: #34d399;
+    color: #064e3b;
+}
+
+.fp-resv-list__badge--visited {
+    background: #60a5fa;
+    color: #1e3a8a;
+}
+
+.fp-resv-list__badge--no_show {
+    background: #f87171;
+    color: #7f1d1d;
+}
+
+.fp-resv-list__badge--cancelled {
+    background: #d1d5db;
+    color: #374151;
+}
+
+.fp-resv-list__notes {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+/* Responsive per viste */
+@media (max-width: 1280px) {
+    .fp-resv-week__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .fp-resv-week__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .fp-resv-month__day {
+        min-height: 80px;
+        padding: 6px;
+    }
+    
+    .fp-resv-month__item {
+        font-size: 10px;
+        padding: 3px 5px;
+    }
+}
+
+@media (max-width: 640px) {
+    .fp-resv-week__grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fp-resv-list__table th,
+    .fp-resv-list__table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
+    .fp-resv-month__grid {
+        font-size: 12px;
+    }
+    
+    .fp-resv-month__day {
+        min-height: 60px;
+    }
+}

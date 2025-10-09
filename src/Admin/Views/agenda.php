@@ -36,13 +36,13 @@ $headingId   = 'fp-resv-agenda-title';
             <!-- Toolbar con filtri -->
             <div class="fp-resv-agenda__toolbar">
                 <div class="fp-resv-agenda__nav">
-                    <button type="button" class="button" data-action="prev-day">
+                    <button type="button" class="button" data-action="prev-period">
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
                     </button>
                     <button type="button" class="button" data-action="today">
                         <?php esc_html_e('Oggi', 'fp-restaurant-reservations'); ?>
                     </button>
-                    <button type="button" class="button" data-action="next-day">
+                    <button type="button" class="button" data-action="next-period">
                         <span class="dashicons dashicons-arrow-right-alt2"></span>
                     </button>
                 </div>
@@ -55,6 +55,25 @@ $headingId   = 'fp-resv-agenda-title';
                         <option value="dinner"><?php esc_html_e('Cena', 'fp-restaurant-reservations'); ?></option>
                     </select>
                 </div>
+
+                <div class="fp-resv-agenda__view-switcher">
+                    <button type="button" class="button fp-resv-view-btn" data-action="set-view" data-view="day" title="<?php esc_attr_e('Vista giornaliera', 'fp-restaurant-reservations'); ?>">
+                        <span class="dashicons dashicons-clock"></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></span>
+                    </button>
+                    <button type="button" class="button fp-resv-view-btn" data-action="set-view" data-view="week" title="<?php esc_attr_e('Vista settimanale', 'fp-restaurant-reservations'); ?>">
+                        <span class="dashicons dashicons-calendar"></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></span>
+                    </button>
+                    <button type="button" class="button fp-resv-view-btn" data-action="set-view" data-view="month" title="<?php esc_attr_e('Vista mensile', 'fp-restaurant-reservations'); ?>">
+                        <span class="dashicons dashicons-calendar-alt"></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
+                    </button>
+                    <button type="button" class="button fp-resv-view-btn" data-action="set-view" data-view="list" title="<?php esc_attr_e('Vista a lista', 'fp-restaurant-reservations'); ?>">
+                        <span class="dashicons dashicons-list-view"></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
+                    </button>
+                </div>
                 
                 <div class="fp-resv-agenda__summary" data-role="summary">
                     <span class="fp-resv-agenda__summary-date"></span>
@@ -62,7 +81,7 @@ $headingId   = 'fp-resv-agenda-title';
                 </div>
             </div>
 
-            <!-- Timeline Agenda -->
+            <!-- Contenitore Agenda -->
             <div class="fp-resv-agenda__container" id="fp-resv-agenda-timeline">
                 <!-- Loading State -->
                 <div class="fp-resv-agenda__loading" data-role="loading" hidden>
@@ -74,15 +93,30 @@ $headingId   = 'fp-resv-agenda-title';
                 <div class="fp-resv-agenda__empty" data-role="empty" hidden>
                     <span class="dashicons dashicons-calendar-alt"></span>
                     <h3><?php esc_html_e('Nessuna prenotazione', 'fp-restaurant-reservations'); ?></h3>
-                    <p><?php esc_html_e('Non ci sono prenotazioni per questa data', 'fp-restaurant-reservations'); ?></p>
+                    <p><?php esc_html_e('Non ci sono prenotazioni per questo periodo', 'fp-restaurant-reservations'); ?></p>
                     <button type="button" class="button button-primary" data-action="new-reservation">
                         <?php esc_html_e('Crea la prima prenotazione', 'fp-restaurant-reservations'); ?>
                     </button>
                 </div>
 
-                <!-- Timeline Grid -->
-                <div class="fp-resv-agenda__timeline" data-role="timeline" hidden>
+                <!-- Vista Giornaliera (Timeline) -->
+                <div class="fp-resv-agenda__timeline" data-role="timeline" data-view="day" hidden>
                     <!-- Time slots con prenotazioni verranno generati dal JS -->
+                </div>
+
+                <!-- Vista Settimanale -->
+                <div class="fp-resv-agenda__week" data-role="week-view" data-view="week" hidden>
+                    <!-- Griglia settimana generata dal JS -->
+                </div>
+
+                <!-- Vista Mensile -->
+                <div class="fp-resv-agenda__month" data-role="month-view" data-view="month" hidden>
+                    <!-- Calendario mese generato dal JS -->
+                </div>
+
+                <!-- Vista Lista -->
+                <div class="fp-resv-agenda__list" data-role="list-view" data-view="list" hidden>
+                    <!-- Tabella lista generata dal JS -->
                 </div>
             </div>
         </section>

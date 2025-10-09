@@ -17,10 +17,14 @@
     const loadingEl = document.querySelector('[data-role="loading"]');
     const emptyEl = document.querySelector('[data-role="empty"]');
     const timelineEl = document.querySelector('[data-role="timeline"]');
+    const weekViewEl = document.querySelector('[data-role="week-view"]');
+    const monthViewEl = document.querySelector('[data-role="month-view"]');
+    const listViewEl = document.querySelector('[data-role="list-view"]');
 
     // State
     let currentDate = new Date();
     let currentService = '';
+    let currentView = 'day'; // day, week, month, list
     let reservations = [];
     let currentModal = null;
 
@@ -38,6 +42,9 @@
         datePicker.addEventListener('change', handleDateChange);
         serviceFilter?.addEventListener('change', handleServiceChange);
 
+        // Set initial view
+        setActiveView('day');
+
         // Load initial data
         loadReservations();
     }
@@ -50,14 +57,18 @@
         const action = target.getAttribute('data-action');
 
         switch (action) {
-            case 'prev-day':
-                navigateDay(-1);
+            case 'prev-period':
+                navigatePeriod(-1);
                 break;
             case 'today':
                 navigateToToday();
                 break;
-            case 'next-day':
-                navigateDay(1);
+            case 'next-period':
+                navigatePeriod(1);
+                break;
+            case 'set-view':
+                const view = target.getAttribute('data-view');
+                if (view) setActiveView(view);
                 break;
             case 'new-reservation':
                 openNewReservationModal();
@@ -101,8 +112,21 @@
     }
 
     // Navigation
-    function navigateDay(offset) {
-        currentDate.setDate(currentDate.getDate() + offset);
+    function navigatePeriod(offset) {
+        switch (currentView) {
+            case 'day':
+                currentDate.setDate(currentDate.getDate() + offset);
+                break;
+            case 'week':
+                currentDate.setDate(currentDate.getDate() + (offset * 7));
+                break;
+            case 'month':
+                currentDate.setMonth(currentDate.getMonth() + offset);
+                break;
+            case 'list':
+                currentDate.setDate(currentDate.getDate() + (offset * 7));
+                break;
+        }
         datePicker.value = formatDate(currentDate);
         loadReservations();
     }
@@ -110,6 +134,24 @@
     function navigateToToday() {
         currentDate = new Date();
         datePicker.value = formatDate(currentDate);
+        loadReservations();
+    }
+
+    function setActiveView(view) {
+        currentView = view;
+
+        // Update button states
+        document.querySelectorAll('[data-action="set-view"]').forEach(btn => {
+            btn.classList.toggle('button-primary', btn.getAttribute('data-view') === view);
+        });
+
+        // Hide all views
+        if (timelineEl) timelineEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
+
+        // Reload data
         loadReservations();
     }
 
@@ -147,22 +189,70 @@
     function loadReservations() {
         showLoading();
 
-        const dateStr = formatDate(currentDate);
+        const { startDate, endDate } = getDateRange();
         const params = new URLSearchParams({
-            date: dateStr,
+            date: startDate,
+            ...(currentView === 'week' && { range: 'week' }),
+            ...(currentView === 'month' && { range: 'month' }),
+            ...(currentView === 'list' && { range: 'week' }),
             ...(currentService && { service: currentService })
         });
 
         request(`agenda?${params}`)
             .then(data => {
                 reservations = Array.isArray(data) ? data : (data.reservations || []);
-                renderTimeline();
+                renderCurrentView();
                 updateSummary();
             })
             .catch(error => {
                 console.error('Error loading reservations:', error);
                 showEmpty();
             });
+    }
+
+    function getDateRange() {
+        const start = new Date(currentDate);
+        let end = new Date(currentDate);
+
+        switch (currentView) {
+            case 'week':
+                // Start from Monday
+                const day = start.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                start.setDate(start.getDate() + diff);
+                end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                break;
+            case 'month':
+                start.setDate(1);
+                end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+                break;
+            case 'list':
+                end.setDate(end.getDate() + 6);
+                break;
+        }
+
+        return {
+            startDate: formatDate(start),
+            endDate: formatDate(end)
+        };
+    }
+
+    function renderCurrentView() {
+        switch (currentView) {
+            case 'day':
+                renderTimeline();
+                break;
+            case 'week':
+                renderWeekView();
+                break;
+            case 'month':
+                renderMonthView();
+                break;
+            case 'list':
+                renderListView();
+                break;
+        }
     }
 
     function createReservation(data) {
@@ -233,6 +323,198 @@
             
             timelineEl.appendChild(slotEl);
         });
+    }
+
+    function renderWeekView() {
+        if (!weekViewEl) return;
+
+        if (loadingEl) loadingEl.hidden = true;
+
+        if (!reservations.length) {
+            showEmpty();
+            return;
+        }
+
+        emptyEl.hidden = true;
+        weekViewEl.hidden = false;
+
+        const { startDate } = getDateRange();
+        const weekStart = new Date(startDate);
+        const days = [];
+
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(weekStart);
+            day.setDate(weekStart.getDate() + i);
+            const dayStr = formatDate(day);
+            const dayReservations = reservations.filter(r => r.date === dayStr);
+            
+            days.push({
+                date: day,
+                dateStr: dayStr,
+                reservations: dayReservations
+            });
+        }
+
+        weekViewEl.innerHTML = `
+            <div class="fp-resv-week__grid">
+                ${days.map(day => `
+                    <div class="fp-resv-week__day">
+                        <div class="fp-resv-week__header">
+                            <div class="fp-resv-week__day-name">${formatDayName(day.date)}</div>
+                            <div class="fp-resv-week__day-number">${day.date.getDate()}</div>
+                        </div>
+                        <div class="fp-resv-week__content">
+                            ${day.reservations.length ? 
+                                day.reservations.map(resv => `
+                                    <div class="fp-resv-week__item" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
+                                        <div class="fp-resv-week__time">${formatTime(resv.slot_start || resv.time)}</div>
+                                        <div class="fp-resv-week__guest">${escapeHtml(getGuestName(resv))}</div>
+                                        <div class="fp-resv-week__party">${resv.party} ${resv.party === 1 ? 'coperto' : 'coperti'}</div>
+                                    </div>
+                                `).join('') :
+                                '<div class="fp-resv-week__empty">Nessuna prenotazione</div>'
+                            }
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderMonthView() {
+        if (!monthViewEl) return;
+
+        if (loadingEl) loadingEl.hidden = true;
+
+        emptyEl.hidden = true;
+        monthViewEl.hidden = false;
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        // Calculate calendar grid
+        const startDay = firstDay.getDay();
+        const daysInMonth = lastDay.getDate();
+        const gridStart = startDay === 0 ? -6 : 1 - startDay;
+        
+        const days = [];
+        for (let i = gridStart; i <= daysInMonth; i++) {
+            if (i < 1) {
+                days.push({ date: null, reservations: [] });
+            } else {
+                const day = new Date(year, month, i);
+                const dayStr = formatDate(day);
+                const dayReservations = reservations.filter(r => r.date === dayStr);
+                days.push({ date: day, dateStr: dayStr, reservations: dayReservations });
+            }
+        }
+
+        monthViewEl.innerHTML = `
+            <div class="fp-resv-month__header">
+                <div class="fp-resv-month__title">${formatMonthYear(currentDate)}</div>
+            </div>
+            <div class="fp-resv-month__calendar">
+                <div class="fp-resv-month__weekdays">
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mer</div>
+                    <div>Gio</div>
+                    <div>Ven</div>
+                    <div>Sab</div>
+                    <div>Dom</div>
+                </div>
+                <div class="fp-resv-month__grid">
+                    ${days.map(day => {
+                        if (!day.date) {
+                            return '<div class="fp-resv-month__day fp-resv-month__day--empty"></div>';
+                        }
+                        const isToday = formatDate(day.date) === formatDate(new Date());
+                        return `
+                            <div class="fp-resv-month__day ${isToday ? 'fp-resv-month__day--today' : ''}">
+                                <div class="fp-resv-month__day-number">${day.date.getDate()}</div>
+                                ${day.reservations.length ? `
+                                    <div class="fp-resv-month__count" title="${day.reservations.length} prenotazioni">
+                                        ${day.reservations.length}
+                                    </div>
+                                    <div class="fp-resv-month__items">
+                                        ${day.reservations.slice(0, 3).map(resv => `
+                                            <div class="fp-resv-month__item" data-status="${resv.status}" data-action="view-reservation-${resv.id}" title="${escapeHtml(getGuestName(resv))} - ${resv.party} coperti">
+                                                ${formatTime(resv.slot_start || resv.time)} ${escapeHtml(getGuestName(resv))}
+                                            </div>
+                                        `).join('')}
+                                        ${day.reservations.length > 3 ? `<div class="fp-resv-month__more">+${day.reservations.length - 3}</div>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderListView() {
+        if (!listViewEl) return;
+
+        if (loadingEl) loadingEl.hidden = true;
+
+        if (!reservations.length) {
+            showEmpty();
+            return;
+        }
+
+        emptyEl.hidden = true;
+        listViewEl.hidden = false;
+
+        // Sort reservations by date and time
+        const sortedReservations = [...reservations].sort((a, b) => {
+            const dateA = a.date + ' ' + (a.time || '00:00');
+            const dateB = b.date + ' ' + (b.time || '00:00');
+            return dateA.localeCompare(dateB);
+        });
+
+        listViewEl.innerHTML = `
+            <div class="fp-resv-list__table-wrapper">
+                <table class="fp-resv-list__table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ora</th>
+                            <th>Cliente</th>
+                            <th>Coperti</th>
+                            <th>Telefono</th>
+                            <th>Stato</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedReservations.map(resv => {
+                            const customer = resv.customer || {};
+                            const statusLabels = {
+                                'pending': 'In attesa',
+                                'confirmed': 'Confermata',
+                                'visited': 'Servita',
+                                'no_show': 'No-show',
+                                'cancelled': 'Annullata'
+                            };
+                            return `
+                                <tr class="fp-resv-list__row" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
+                                    <td>${formatDateShort(resv.date)}</td>
+                                    <td><strong>${formatTime(resv.slot_start || resv.time)}</strong></td>
+                                    <td>${escapeHtml(getGuestName(resv))}</td>
+                                    <td>${resv.party}</td>
+                                    <td>${escapeHtml(customer.phone || '-')}</td>
+                                    <td><span class="fp-resv-list__badge fp-resv-list__badge--${resv.status}">${statusLabels[resv.status] || resv.status}</span></td>
+                                    <td><span class="fp-resv-list__notes">${escapeHtml((resv.notes || '').substring(0, 40))}${resv.notes && resv.notes.length > 40 ? '...' : ''}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
 
     function groupByTimeSlot(reservations) {
@@ -490,6 +772,29 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function getGuestName(resv) {
+        const customer = resv.customer || {};
+        const name = [customer.first_name, customer.last_name].filter(Boolean).join(' ');
+        return name || customer.email || 'Cliente';
+    }
+
+    function formatDayName(date) {
+        const days = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+        return days[date.getDay()];
+    }
+
+    function formatMonthYear(date) {
+        const months = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                       'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+        return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function formatDateShort(dateStr) {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
     }
 
 })();

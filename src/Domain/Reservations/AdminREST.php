@@ -184,12 +184,23 @@ final class AdminREST
 
         $range = $request->get_param('range');
         $rangeMode = is_string($range) ? strtolower($range) : 'day';
-        if (!in_array($rangeMode, ['day', 'week'], true)) {
+        if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
             $rangeMode = 'day';
         }
 
         $start = DateTimeImmutable::createFromFormat('Y-m-d', $date) ?: new DateTimeImmutable($date);
-        $end   = $rangeMode === 'week' ? $start->add(new DateInterval('P6D')) : $start;
+        
+        if ($rangeMode === 'week') {
+            $end = $start->add(new DateInterval('P6D'));
+        } elseif ($rangeMode === 'month') {
+            // Get first and last day of the month
+            $firstDay = $start->modify('first day of this month');
+            $lastDay = $start->modify('last day of this month');
+            $start = $firstDay;
+            $end = $lastDay;
+        } else {
+            $end = $start;
+        }
 
         $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
         $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
