@@ -1705,6 +1705,12 @@ final class FormContext
             }
         }
 
+        // Estrai i giorni disponibili dalla configurazione del servizio
+        $availableDays = $this->extractAvailableDays($generalSettings, $meals);
+        if ($availableDays !== []) {
+            $config['available_days'] = $availableDays;
+        }
+
         $dictionary  = $this->language->getStrings($languageData['language']);
         $formStrings = is_array($dictionary['form'] ?? null) ? $dictionary['form'] : [];
 
@@ -2164,6 +2170,85 @@ final class FormContext
         }
 
         return 'INT';
+    }
+
+    /**
+     * Estrae i giorni disponibili dalla configurazione del servizio.
+     *
+     * @param array<string, mixed> $generalSettings
+     * @param array<int, array<string, mixed>> $meals
+     * @return array<string>
+     */
+    private function extractAvailableDays(array $generalSettings, array $meals): array
+    {
+        $dayMapping = [
+            'mon' => '1',
+            'tue' => '2',
+            'wed' => '3',
+            'thu' => '4',
+            'fri' => '5',
+            'sat' => '6',
+            'sun' => '0',
+        ];
+
+        $availableDays = [];
+
+        // Se ci sono meal configurati, estrai i giorni da ciascun meal
+        if ($meals !== []) {
+            foreach ($meals as $meal) {
+                if (!empty($meal['hours_definition'])) {
+                    $days = $this->parseDaysFromSchedule((string) $meal['hours_definition']);
+                    $availableDays = array_merge($availableDays, $days);
+                }
+            }
+        }
+
+        // Se non ci sono giorni dai meal, usa il service_hours_definition generale
+        if ($availableDays === [] && !empty($generalSettings['service_hours_definition'])) {
+            $availableDays = $this->parseDaysFromSchedule((string) $generalSettings['service_hours_definition']);
+        }
+
+        // Rimuovi duplicati e ordina
+        $availableDays = array_unique($availableDays);
+        sort($availableDays);
+
+        // Converti i giorni in numeri ISO (0=domenica, 1=lunedì, ecc.)
+        $dayNumbers = [];
+        foreach ($availableDays as $day) {
+            if (isset($dayMapping[$day])) {
+                $dayNumbers[] = $dayMapping[$day];
+            }
+        }
+
+        return $dayNumbers;
+    }
+
+    /**
+     * Estrae i giorni dalla definizione dello schedule.
+     *
+     * @param string $scheduleDefinition
+     * @return array<string>
+     */
+    private function parseDaysFromSchedule(string $scheduleDefinition): array
+    {
+        $days = [];
+        $lines = preg_split('/\n/', $scheduleDefinition) ?: [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || !str_contains($line, '=')) {
+                continue;
+            }
+
+            [$day] = explode('=', $line, 2);
+            $day = strtolower(trim($day));
+
+            if ($day !== '') {
+                $days[] = $day;
+            }
+        }
+
+        return $days;
     }
 }
 
