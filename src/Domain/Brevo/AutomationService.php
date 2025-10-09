@@ -10,6 +10,7 @@ use Exception;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\Mailer;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
+use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\Options;
 use FP\Resv\Domain\Surveys\Token as SurveyToken;
 use Throwable;
@@ -53,6 +54,7 @@ final class AutomationService
         private readonly Repository $repository,
         private readonly ReservationsRepository $reservations,
         private readonly Mailer $mailer,
+        private readonly Language $language,
         private readonly ?\FP\Resv\Domain\Notifications\Settings $notificationSettings = null
     ) {
     }
@@ -545,6 +547,37 @@ final class AutomationService
             $meta,
             static fn ($value): bool => $value !== null && $value !== ''
         );
+
+        // Formatta data e ora con il timezone corretto
+        $language = (string) ($meta['language'] ?? '');
+        if ($language === '') {
+            $language = $this->language->getDefaultLanguage();
+        }
+        
+        $general = $this->options->getGroup('fp_resv_general', [
+            'restaurant_timezone' => 'Europe/Rome',
+        ]);
+        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
+        if ($timezone === '') {
+            $timezone = 'Europe/Rome';
+        }
+
+        if (!empty($reservation['date']) && !empty($reservation['time'])) {
+            $reservationPayload['formatted_date'] = $this->language->formatDate(
+                (string) $reservation['date'],
+                $language
+            );
+            $reservationPayload['formatted_time'] = $this->language->formatTime(
+                (string) $reservation['time'],
+                $language
+            );
+            $reservationPayload['formatted_datetime'] = $this->language->formatDateTime(
+                (string) $reservation['date'],
+                (string) $reservation['time'],
+                $language,
+                $timezone
+            );
+        }
 
         $firstNameKey = $this->findAttributeKey($attributes, ['FIRSTNAME', 'firstname', 'first_name']);
         $lastNameKey = $this->findAttributeKey($attributes, ['LASTNAME', 'lastname', 'last_name']);
