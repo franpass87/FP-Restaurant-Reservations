@@ -1762,12 +1762,20 @@
     .fp-resv-slots__list,
     #fp-resv-default .fp-slots__list,
     #fp-resv-default .fp-resv-slots__list {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        display: grid !important;
     }
     
     .fp-slots__list button,
-    .fp-resv-slots__list button {
-        width: 100%;
+    .fp-resv-slots__list button,
+    #fp-resv-default .fp-slots__list button,
+    #fp-resv-default .fp-resv-slots__list button {
+        width: 100% !important;
+    }
+    
+    .fp-slots__list > li,
+    .fp-resv-slots__list > li {
+        width: 100% !important;
     }
 }
 
