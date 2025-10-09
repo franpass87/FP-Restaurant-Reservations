@@ -26,6 +26,7 @@ use function sanitize_html_class;
 use function sanitize_key;
 use function sanitize_text_field;
 use function sprintf;
+use function str_contains;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
