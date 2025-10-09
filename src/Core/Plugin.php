@@ -72,7 +72,7 @@ final class Plugin
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '0.1.7';
+    const VERSION = '0.1.8';
 
     /**
      * @var string|null
@@ -267,6 +267,9 @@ final class Plugin
         $container->register('plugin.file', self::$file);
         $container->register('plugin.dir', self::$dir);
         $container->register('plugin.url', self::$url);
+
+        // Auto cache buster - aggiorna automaticamente la cache quando cambia la versione
+        AutoCacheBuster::init();
 
         // Garantisce che gli amministratori abbiano sempre le capability necessarie
         Roles::ensureAdminCapabilities();
