@@ -255,16 +255,25 @@ Puoi verificare l'invio degli eventi controllando i log nel backend.
 
 Gli eventi email (`email_confirmation`, `email_reminder`, `email_review`) sono **diversi** dagli eventi di stato esistenti:
 
-- `reservation_confirmed` - Inviato quando lo stato diventa "confirmed" (sempre)
+- `reservation_confirmed` - Inviato quando lo stato diventa "confirmed" (SOLO se Brevo NON gestisce già le email di conferma)
 - `reservation_visited` - Inviato quando lo stato diventa "visited" (sempre)
 - `email_confirmation` - Inviato SOLO quando Brevo deve gestire l'email di conferma
 - `email_reminder` - Inviato SOLO quando Brevo deve gestire l'email di reminder
 - `email_review` - Inviato SOLO quando Brevo deve gestire l'email di review
 
+### ⚠️ Protezione Duplicati Email
+
+Il sistema previene automaticamente l'invio di email duplicate:
+
+- Se Brevo gestisce le email di conferma tramite `email_confirmation`, l'evento `reservation_confirmed` NON viene inviato
+- Questo evita che entrambi gli eventi attivino automazioni email in Brevo
+- La logica è gestita automaticamente dal sistema
+
 Questo permette di:
 - Separare la logica di stato dalla logica di invio email
 - Usare Brevo per le email ma altri sistemi per gli eventi di stato
 - Avere maggiore controllo su quando e come vengono inviate le email
+- **Evitare automaticamente email duplicate**
 
 ## File Modificati
 

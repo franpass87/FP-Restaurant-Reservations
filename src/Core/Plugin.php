@@ -409,7 +409,8 @@ final class Plugin
             $brevoMapper,
             $brevoRepository,
             $reservationsRepository,
-            $mailer
+            $mailer,
+            $notificationsSettings
         );
         $brevoAutomation->boot();
         $container->register(BrevoAutomation::class, $brevoAutomation);
