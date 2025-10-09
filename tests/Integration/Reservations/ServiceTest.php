@@ -99,6 +99,7 @@ final class ServiceTest extends TestCase
             $stripe,
             $notificationSettings,
             $notificationTemplates,
+            null,
             null
         );
 
@@ -201,6 +202,7 @@ final class ServiceTest extends TestCase
             $stripe,
             $notificationSettings,
             $notificationTemplates,
+            null,
             null
         );
 
@@ -240,6 +242,108 @@ final class ServiceTest extends TestCase
         self::assertSame('text/html', $customerMail['context']['content_type']);
         self::assertStringContainsString('<html lang="en"', $customerMail['message']);
         self::assertStringContainsString('Manage reservation', $customerMail['message']);
+    }
+
+    public function testCreateReservationDeduplicatesStaffEmails(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.42';
+
+        // Configura lo stesso indirizzo email sia per restaurant che per webmaster
+        update_option('fp_resv_notifications', [
+            'restaurant_emails' => ['admin@example.test', 'manager@example.test'],
+            'webmaster_emails'  => ['admin@example.test', 'tech@example.test'],
+            'attach_ics'        => '0',
+            'sender_name'       => 'FP Restaurant',
+            'sender_email'      => 'booking@example.test',
+            'customer_template_logo_url' => '',
+            'customer_template_header'   => '',
+            'customer_template_footer'   => '',
+        ]);
+
+        $options      = new Options();
+        Consent::init($options);
+
+        $language     = new Language($options);
+        $mailer       = new class extends Mailer {
+            /** @var array<int, array<string, mixed>> */
+            public array $sent = [];
+
+            public function send(
+                string $to,
+                string $subject,
+                string $message,
+                array $headers = [],
+                array $attachments = [],
+                array $context = []
+            ): bool {
+                $this->sent[] = compact('to', 'subject', 'message', 'headers', 'attachments', 'context');
+
+                return true;
+            }
+        };
+
+        $reservations          = new ReservationsRepository($this->wpdb);
+        $customers             = new CustomersRepository($this->wpdb);
+        $paymentsRepo          = new PaymentsRepository($this->wpdb);
+        $stripe                = new StripeService($options, $paymentsRepo);
+        $notificationSettings  = new NotificationSettings($options);
+        $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
+
+        $service = new Service(
+            $reservations,
+            $options,
+            $language,
+            $mailer,
+            $customers,
+            $stripe,
+            $notificationSettings,
+            $notificationTemplates,
+            null,
+            null
+        );
+
+        $service->create([
+            'date'        => '2024-07-15',
+            'time'        => '21:00',
+            'party'       => 3,
+            'first_name'  => 'Alan',
+            'last_name'   => 'Turing',
+            'email'       => 'alan@example.test',
+            'phone'       => '+39 055 987654',
+            'notes'       => 'Test deduplica',
+            'language'    => 'it',
+            'locale'      => 'it_IT',
+            'location'    => 'default',
+            'currency'    => 'EUR',
+        ]);
+
+        // Verifica che siano state inviate esattamente 4 email:
+        // 1. cliente (alan@example.test)
+        // 2. restaurant (admin@example.test,manager@example.test)
+        // 3. webmaster (tech@example.test) - admin@example.test è stato rimosso per deduplica
+        self::assertCount(3, $mailer->sent);
+
+        // Email cliente
+        $customerMail = $mailer->sent[0];
+        self::assertSame('alan@example.test', $customerMail['to']);
+        self::assertSame('customer_confirmation', $customerMail['context']['channel']);
+
+        // Email restaurant
+        $restaurantMail = $mailer->sent[1];
+        self::assertSame('admin@example.test,manager@example.test', $restaurantMail['to']);
+        self::assertSame('restaurant_notification', $restaurantMail['context']['channel']);
+
+        // Email webmaster - deve contenere solo tech@example.test
+        // perché admin@example.test è già in restaurant_emails
+        $webmasterMail = $mailer->sent[2];
+        self::assertSame('tech@example.test', $webmasterMail['to']);
+        self::assertSame('webmaster_notification', $webmasterMail['context']['channel']);
+
+        // Verifica che admin@example.test abbia ricevuto solo 1 email (quella restaurant)
+        $allRecipients = array_map(fn($mail) => explode(',', $mail['to']), $mailer->sent);
+        $flatRecipients = array_merge(...$allRecipients);
+        $adminCount = count(array_filter($flatRecipients, fn($email) => $email === 'admin@example.test'));
+        self::assertSame(1, $adminCount, 'admin@example.test dovrebbe ricevere solo 1 email, non 2');
     }
 }
 

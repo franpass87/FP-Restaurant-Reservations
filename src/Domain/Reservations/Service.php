@@ -93,7 +93,8 @@ class Service
         private readonly NotificationSettings $notificationSettings,
         private readonly NotificationTemplateRenderer $notificationTemplates,
         private readonly ?GoogleCalendarService $calendar = null,
-        private readonly ?BrevoClient $brevoClient = null
+        private readonly ?BrevoClient $brevoClient = null,
+        private readonly ?\FP\Resv\Domain\Brevo\Repository $brevoRepository = null
     ) {
     }
 
@@ -1134,6 +1135,15 @@ class Service
             return;
         }
 
+        // Controlla se l'evento è già stato inviato con successo per evitare duplicati
+        if ($this->brevoRepository !== null && $this->brevoRepository->hasSuccessfulLog($reservationId, 'email_confirmation')) {
+            Logging::log('brevo', 'Evento email_confirmation già inviato, skip per evitare duplicati', [
+                'reservation_id' => $reservationId,
+                'email'          => $email,
+            ]);
+            return;
+        }
+
         $eventProperties = [
             'reservation' => array_filter([
                 'id'         => $reservationId,
@@ -1170,10 +1180,26 @@ class Service
             'properties' => $eventProperties,
         ]);
 
+        // Logga l'evento nel repository Brevo se disponibile
+        $success = $response['success'] ?? false;
+        if ($this->brevoRepository !== null) {
+            $this->brevoRepository->log(
+                $reservationId,
+                'email_confirmation',
+                [
+                    'email'      => $email,
+                    'properties' => $eventProperties,
+                    'response'   => $response,
+                ],
+                $success ? 'success' : 'error',
+                $success ? null : ($response['message'] ?? null)
+            );
+        }
+
         Logging::log('brevo', 'Evento email_confirmation inviato a Brevo', [
             'reservation_id' => $reservationId,
             'email'          => $email,
-            'success'        => $response['success'] ?? false,
+            'success'        => $success,
             'response'       => $response,
         ]);
     }
