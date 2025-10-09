@@ -278,16 +278,19 @@ final class REST
 
         // Verifica il nonce
         $nonceValid = wp_verify_nonce($nonce, 'fp_resv_submit');
+        
+        // SEMPRE includi info di debug in caso di fallimento (non solo con WP_DEBUG)
         if (!is_string($nonce) || $nonce === '' || !$nonceValid) {
-            $debugInfo = [];
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                $debugInfo = [
-                    'nonce_found' => is_string($nonce) && $nonce !== '',
-                    'nonce_valid' => $nonceValid !== false,
-                    'nonce_action' => 'fp_resv_submit',
-                    'nonce_value' => substr($nonce, 0, 10) . '...',
-                ];
-            }
+            $debugInfo = [
+                'nonce_found' => is_string($nonce) && $nonce !== '',
+                'nonce_valid' => $nonceValid !== false,
+                'nonce_action' => 'fp_resv_submit',
+                'nonce_value' => is_string($nonce) ? substr($nonce, 0, 10) . '...' : 'null',
+                'from_json' => is_array($jsonParams) && isset($jsonParams['fp_resv_nonce']),
+                'from_param' => $request->get_param('fp_resv_nonce') !== null,
+                'from_header' => $request->get_header('X-WP-Nonce') !== null,
+                'user_logged_in' => is_user_logged_in(),
+            ];
             
             return new WP_Error(
                 'fp_resv_invalid_nonce',
