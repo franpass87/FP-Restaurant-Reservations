@@ -12,19 +12,19 @@ function _(a) {
   const t = X(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function M(a) {
+function N(a) {
   return X(a);
 }
 function ot(a, t) {
-  const e = _(a), i = M(t);
+  const e = _(a), i = N(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
-  const t = M(a);
+  const t = N(a);
   return t.length >= 6 && t.length <= 15;
 }
 function lt(a) {
-  const t = M(a);
+  const t = N(a);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
@@ -42,10 +42,10 @@ function V(a, t) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", _(t));
+  a.setAttribute("data-phone-local", N(a.value)), a.setAttribute("data-phone-cc", _(t));
 }
 function D(a, t) {
-  const e = M(a.value), i = _(t);
+  const e = N(a.value), i = _(t);
   return {
     e164: ot(i, e),
     local: e,
@@ -469,10 +469,14 @@ class Q {
     const s = this.mealButtons.find((l) => (l.getAttribute("data-fp-resv-meal") || "") === t);
     if (!s)
       return;
-    const r = s.getAttribute("data-meal-default-notice") || "";
-    if ((typeof e == "string" ? e : "") === "full") {
+    const r = s.getAttribute("data-meal-default-notice") || "", n = typeof e == "string" ? e : "";
+    if (n === "full") {
       const l = this.copy.mealFullNotice || r;
       l !== "" ? s.setAttribute("data-meal-notice", l) : r === "" && s.removeAttribute("data-meal-notice"), s.setAttribute("aria-disabled", "true"), s.setAttribute("data-meal-unavailable", "true"), s.hasAttribute("data-active") && (i.skipSlotReset !== !0 && this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(s));
+      return;
+    }
+    if (n === "unavailable") {
+      s.setAttribute("data-meal-notice", "Orari di servizio non configurati per questa data."), s.setAttribute("aria-disabled", "true"), s.setAttribute("data-meal-unavailable", "true"), s.hasAttribute("data-active") && (i.skipSlotReset !== !0 && this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(s));
       return;
     }
     s.removeAttribute("aria-disabled"), s.removeAttribute("data-meal-unavailable"), r !== "" ? s.setAttribute("data-meal-notice", r) : s.hasAttribute("data-meal-notice") && s.removeAttribute("data-meal-notice"), s.hasAttribute("data-active") && this.updateMealNoticeFromButton(s);
@@ -683,12 +687,12 @@ class Q {
     s && s.value && (P = s.value.trim()), r && r.value && (P = (P + " " + r.value.trim()).trim());
     let w = "";
     if (n && n.value && (w = n.value.trim()), l && l.value) {
-      const C = this.getPhoneCountryCode(), N = (C ? "+" + C + " " : "") + l.value.trim();
-      w = w !== "" ? w + " / " + N : N;
+      const C = this.getPhoneCountryCode(), M = (C ? "+" + C + " " : "") + l.value.trim();
+      w = w !== "" ? w + " / " + M : M;
     }
     const b = [];
     f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && b.push("Seggioloni: " + parseInt(f.value, 10)), y && "checked" in y && y.checked && b.push("Tavolo accessibile per sedia a rotelle"), A && "checked" in A && A.checked && b.push("Animali domestici");
-    const q = b.join("; ");
+    const x = b.join("; ");
     this.summaryTargets.forEach(function(C) {
       switch (C.getAttribute("data-fp-resv-summary")) {
         case "date":
@@ -710,7 +714,7 @@ class Q {
           C.textContent = h && h.value ? h.value : "";
           break;
         case "extras":
-          C.textContent = q;
+          C.textContent = x;
           break;
       }
     });
@@ -904,13 +908,13 @@ class Q {
     const i = this.mealButtons.find((n) => (n.getAttribute("data-fp-resv-meal") || "") === t);
     if (!i)
       return;
-    const s = ["available", "limited", "full"], r = e ? String(e).toLowerCase() : "";
-    i.removeAttribute("data-availability-state"), r === "full" ? (i.setAttribute("aria-disabled", "true"), i.setAttribute("data-meal-unavailable", "true")) : s.indexOf(r) !== -1 && (i.removeAttribute("aria-disabled"), i.removeAttribute("data-meal-unavailable"));
+    const s = ["available", "limited", "full", "unavailable"], r = e ? String(e).toLowerCase() : "";
+    i.removeAttribute("data-availability-state"), r === "full" || r === "unavailable" ? (i.setAttribute("aria-disabled", "true"), i.setAttribute("data-meal-unavailable", "true")) : s.indexOf(r) !== -1 && (i.removeAttribute("aria-disabled"), i.removeAttribute("data-meal-unavailable"));
   }
   handleMealAvailabilitySummary(t, e) {
     if (!e || !e.meal)
       return;
-    const i = t && t.state ? String(t.state).toLowerCase() : "", s = ["available", "limited", "full"], r = e.meal;
+    const i = t && t.state ? String(t.state).toLowerCase() : "", s = ["available", "limited", "full", "unavailable"], r = e.meal;
     if (this.state.mealAvailability || (this.state.mealAvailability = {}), s.indexOf(i) === -1) {
       delete this.state.mealAvailability[r], this.applyMealAvailabilityIndicator(r, ""), this.applyMealAvailabilityNotice(r, "", { skipSlotReset: !0 });
       return;
@@ -919,7 +923,7 @@ class Q {
       let n = "";
       if (t && typeof t == "object") {
         const l = typeof t.slots == "number" ? t.slots : 0;
-        i === "available" ? n = `Disponibile (${l})` : i === "limited" ? n = `Disponibilità limitata (${l})` : i === "full" && (n = "Completamente prenotato");
+        i === "available" ? n = `Disponibile (${l})` : i === "limited" ? n = `Disponibilità limitata (${l})` : i === "full" ? n = "Completamente prenotato" : i === "unavailable" && (n = "Non disponibile per questa data");
       }
       this.availabilityIndicator.textContent = n, this.availabilityIndicator.hidden = n === "", this.availabilityIndicator.setAttribute("data-state", i || "");
     }
@@ -1149,7 +1153,7 @@ function At(a) {
   function w(o, d) {
     const p = Array.isArray(o) ? o : [], u = p.length;
     if (u === 0)
-      return { state: "full", slots: 0 };
+      return d === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
     const m = p.map((c) => P(c && c.status)).filter((c) => c !== "");
     return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
@@ -1163,7 +1167,7 @@ function At(a) {
   n && n.addEventListener("click", () => {
     f && I(f, 0);
   });
-  function q(o, d) {
+  function x(o, d) {
     const p = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof o == "string" ? o : "";
     e && (e.textContent = u, e.setAttribute("data-state", p));
     const m = p === "loading";
@@ -1182,12 +1186,12 @@ function At(a) {
   function R(o) {
     s && (s.hidden = !1);
     const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", E = d && !!o.requiresMeal, g = p !== "", S = u !== "" && (m !== "" && m !== "0") && (!E || g), k = E && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
-    q(k, "idle"), i && O(i), b(o, { state: S ? "full" : "unknown", slots: 0 });
+    x(k, "idle"), i && O(i), b(o, { state: S ? "unavailable" : "unknown", slots: 0 });
   }
-  function N() {
+  function M() {
     s && (s.hidden = !0);
   }
-  function j() {
+  function B() {
     r && (r.hidden = !0);
   }
   function Z(o) {
@@ -1196,7 +1200,7 @@ function At(a) {
       const p = r.querySelector("[data-fp-resv-slots-boundary-message]");
       p && (p.textContent = o || d), r.hidden = !1;
     }
-    q(o || d, "error"), b(f, { state: "error", slots: 0 });
+    x(o || d, "error"), b(f, { state: "error", slots: 0 });
   }
   function tt(o, d) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
@@ -1212,8 +1216,8 @@ function At(a) {
       d.setAttribute("aria-pressed", "false");
     });
   }
-  function B(o, d, p) {
-    if (p && p !== A || d && f && d !== f || (j(), N(), !i))
+  function j(o, d, p) {
+    if (p && p !== A || d && f && d !== f || (B(), M(), !i))
       return;
     O(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
@@ -1224,7 +1228,7 @@ function At(a) {
     u.forEach((E) => {
       const g = document.createElement("li"), c = document.createElement("button");
       c.type = "button", c.textContent = E.label || "", c.dataset.slot = E.start || "", c.dataset.slotStatus = E.status || "", c.setAttribute("aria-pressed", y && y.start === E.start ? "true" : "false"), c.addEventListener("click", () => tt(E, c)), g.appendChild(c), i.appendChild(g);
-    }), q(a.strings && a.strings.slotsUpdated || "", !1);
+    }), x(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
     b(d, w(u, m));
   }
@@ -1235,15 +1239,15 @@ function At(a) {
     }
     const p = ++A, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
     if (m && Date.now() - m.timestamp < vt && d === 0) {
-      B(m.payload, o, p);
+      j(m.payload, o, p);
       return;
     }
-    j(), C(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), b(o, { state: "loading", slots: 0 });
+    B(), C(), x(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), b(o, { state: "loading", slots: 0 });
     const E = St(a.endpoint, o), g = performance.now();
-    fetch(E, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
+    fetch(E, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((q) => {
       if (!c.ok) {
         const S = new Error("availability_error");
-        S.status = c.status, S.payload = x;
+        S.status = c.status, S.payload = q;
         const k = c.headers.get("Retry-After");
         if (k) {
           const F = Number.parseInt(k, 10);
@@ -1251,17 +1255,17 @@ function At(a) {
         }
         throw S;
       }
-      return x;
+      return q;
     })).then((c) => {
       if (p !== A)
         return;
-      const x = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(x), l.set(u, { payload: c, timestamp: Date.now() }), B(c, o, p);
+      const q = performance.now() - g;
+      typeof a.onLatency == "function" && a.onLatency(q), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
     }).catch((c) => {
       if (p !== A)
         return;
-      const x = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(x);
+      const q = performance.now() - g;
+      typeof a.onLatency == "function" && a.onLatency(q);
       const S = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : S && typeof S.status == "number" ? S.status : 0;
       let F = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
