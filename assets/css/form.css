@@ -357,7 +357,7 @@
 
 .fp-progress__item[data-state="active"],
 .fp-progress__item[data-progress-state="active"],
-.fp-resv-step[aria-hidden="false"] ~ .fp-progress__item,
+.fp-resv-step[data-state="active"] ~ .fp-progress__item,
 .fp-progress__item:first-child {
     color: var(--fp-resv-color-text);
 }
@@ -1257,7 +1257,6 @@
     display: grid !important;
 }
 
-.fp-resv-step[aria-hidden="true"],
 .fp-resv-step[hidden] {
     display: none !important;
 }
@@ -1276,9 +1275,6 @@
     display: grid !important;
 }
 
-.fp-resv-step[data-state="active"][aria-hidden="true"] {
-    display: grid !important;
-}
 
 /* Fallback: mostra il primo step se JavaScript non è caricato */
 .fp-resv-step:first-child {
@@ -1761,7 +1757,14 @@
         padding-inline: 0.6rem;
     }
 
-    /* Bottoni slot orari a tutta larghezza su mobile */
+    /* Bottoni slot orari a tutta larghezza e incolonnati su mobile */
+    .fp-slots__list,
+    .fp-resv-slots__list,
+    #fp-resv-default .fp-slots__list,
+    #fp-resv-default .fp-resv-slots__list {
+        grid-template-columns: 1fr;
+    }
+    
     .fp-slots__list button,
     .fp-resv-slots__list button {
         width: 100%;

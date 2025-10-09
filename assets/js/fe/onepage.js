@@ -1098,7 +1098,6 @@ class FormApp {
         }
 
         const isActive = state === 'active';
-        section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         section.setAttribute('aria-expanded', isActive ? 'true' : 'false');
 
         // Force visibility control for step navigation
