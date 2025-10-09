@@ -115,9 +115,9 @@ final class AutomationService
 
         if ($status === 'confirmed') {
             $attributes = $contact['attributes'] ?? [];
-            $reservationDate = $attributes['RESERVATION_DATE'] ?? ($payload['date'] ?? '');
-            $reservationTime = $attributes['RESERVATION_TIME'] ?? ($payload['time'] ?? '');
-            $reservationParty = $attributes['RESERVATION_PARTY'] ?? (isset($payload['party']) ? (int) $payload['party'] : 0);
+            $reservationDate = $this->findAttributeValue($attributes, ['RESERVATION_DATE', 'reservation_date'], $payload['date'] ?? '');
+            $reservationTime = $this->findAttributeValue($attributes, ['RESERVATION_TIME', 'reservation_time'], $payload['time'] ?? '');
+            $reservationParty = $this->findAttributeValue($attributes, ['RESERVATION_PARTY', 'reservation_party'], isset($payload['party']) ? (int) $payload['party'] : 0);
             $eventProperties = $this->buildEventProperties(
                 $contact,
                 $attributes,
@@ -207,9 +207,9 @@ final class AutomationService
         $this->subscribeContact($reservationId, $contact, $subscriptionContext);
 
         $attributes = $contact['attributes'] ?? [];
-        $reservationDate = $attributes['RESERVATION_DATE'] ?? ($context['date'] ?? '');
-        $reservationTime = $attributes['RESERVATION_TIME'] ?? (isset($context['time']) ? substr((string) $context['time'], 0, 5) : '');
-        $reservationParty = $attributes['RESERVATION_PARTY'] ?? (isset($context['party']) ? (int) $context['party'] : 0);
+        $reservationDate = $this->findAttributeValue($attributes, ['RESERVATION_DATE', 'reservation_date'], $context['date'] ?? '');
+        $reservationTime = $this->findAttributeValue($attributes, ['RESERVATION_TIME', 'reservation_time'], isset($context['time']) ? substr((string) $context['time'], 0, 5) : '');
+        $reservationParty = $this->findAttributeValue($attributes, ['RESERVATION_PARTY', 'reservation_party'], isset($context['party']) ? (int) $context['party'] : 0);
 
         if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed') {
             $eventProperties = $this->buildEventProperties(
@@ -541,14 +541,18 @@ final class AutomationService
             static fn ($value): bool => $value !== null && $value !== ''
         );
 
+        $firstNameKey = $this->findAttributeKey($attributes, ['FIRSTNAME', 'firstname', 'first_name']);
+        $lastNameKey = $this->findAttributeKey($attributes, ['LASTNAME', 'lastname', 'last_name']);
+        $phoneKey = $this->findAttributeKey($attributes, ['PHONE', 'phone']);
+
         $properties = [
             'reservation' => $reservationPayload,
             'contact'     => array_filter(
                 [
                     'email'      => $contact['email'] ?? '',
-                    'first_name' => $attributes['FIRSTNAME'] ?? '',
-                    'last_name'  => $attributes['LASTNAME'] ?? '',
-                    'phone'      => $attributes['PHONE'] ?? '',
+                    'first_name' => $firstNameKey ? ($attributes[$firstNameKey] ?? '') : '',
+                    'last_name'  => $lastNameKey ? ($attributes[$lastNameKey] ?? '') : '',
+                    'phone'      => $phoneKey ? ($attributes[$phoneKey] ?? '') : '',
                 ],
                 static fn ($value): bool => $value !== null && $value !== ''
             ),
@@ -959,5 +963,38 @@ final class AutomationService
         $settings = $this->options->getGroup('fp_resv_brevo', []);
 
         return ($settings['brevo_enabled'] ?? '0') === '1' && $this->client->isConnected();
+    }
+
+    /**
+     * Trova la chiave di un attributo negli attributes array provando diverse varianti.
+     * 
+     * @param array<string, mixed> $attributes
+     * @param array<int, string> $possibleKeys
+     * @return string|null
+     */
+    private function findAttributeKey(array $attributes, array $possibleKeys): ?string
+    {
+        foreach ($possibleKeys as $key) {
+            if (array_key_exists($key, $attributes)) {
+                return $key;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Trova il valore di un attributo provando diverse chiavi possibili.
+     * 
+     * @param array<string, mixed> $attributes
+     * @param array<int, string> $possibleKeys
+     * @param mixed $default
+     * @return mixed
+     */
+    private function findAttributeValue(array $attributes, array $possibleKeys, mixed $default = null): mixed
+    {
+        $key = $this->findAttributeKey($attributes, $possibleKeys);
+        
+        return $key !== null ? $attributes[$key] : $default;
     }
 }

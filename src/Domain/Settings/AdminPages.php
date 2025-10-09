@@ -2128,6 +2128,172 @@ final class AdminPages
                             ],
                         ],
                     ],
+                    'brevo-attributes' => [
+                        'title'       => __('Mapping Attributi', 'fp-restaurant-reservations'),
+                        'description' => __('Configura i nomi degli attributi Brevo per i contatti.', 'fp-restaurant-reservations'),
+                        'fields'      => [
+                            'brevo_attr_firstname' => [
+                                'label'       => __('Nome', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'FIRSTNAME',
+                            ],
+                            'brevo_attr_lastname' => [
+                                'label'       => __('Cognome', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'LASTNAME',
+                            ],
+                            'brevo_attr_email' => [
+                                'label'       => __('Email', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'EMAIL',
+                            ],
+                            'brevo_attr_phone' => [
+                                'label'       => __('Telefono', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'PHONE',
+                            ],
+                            'brevo_attr_sms' => [
+                                'label'       => __('SMS', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'SMS',
+                            ],
+                            'brevo_attr_whatsapp' => [
+                                'label'       => __('WhatsApp', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'WHATSAPP',
+                            ],
+                            'brevo_attr_lang' => [
+                                'label'       => __('Lingua (campo 1)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'LANG',
+                            ],
+                            'brevo_attr_lingua' => [
+                                'label'       => __('Lingua (campo 2)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'LINGUA',
+                            ],
+                            'brevo_attr_reservation_date' => [
+                                'label'       => __('Data prenotazione (EN)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_DATE',
+                            ],
+                            'brevo_attr_prenotazione_data' => [
+                                'label'       => __('Data prenotazione (IT)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'PRENOTAZIONE_DATA',
+                            ],
+                            'brevo_attr_reservation_time' => [
+                                'label'       => __('Orario prenotazione (EN)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_TIME',
+                            ],
+                            'brevo_attr_prenotazione_orario' => [
+                                'label'       => __('Orario prenotazione (IT, numero)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'PRENOTAZIONE_ORARIO',
+                            ],
+                            'brevo_attr_reservation_party' => [
+                                'label'       => __('Numero persone (EN)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_PARTY',
+                            ],
+                            'brevo_attr_persone' => [
+                                'label'       => __('Numero persone (IT)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'PERSONE',
+                            ],
+                            'brevo_attr_reservation_status' => [
+                                'label'       => __('Stato prenotazione', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_STATUS',
+                            ],
+                            'brevo_attr_note' => [
+                                'label'       => __('Note (IT)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'NOTE',
+                            ],
+                            'brevo_attr_notes' => [
+                                'label'       => __('Note (EN)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'NOTES',
+                            ],
+                            'brevo_attr_marketing_consent' => [
+                                'label'       => __('Consenso marketing', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'MARKETING_CONSENT',
+                            ],
+                            'brevo_attr_resvid' => [
+                                'label'       => __('ID prenotazione (breve)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESVID',
+                            ],
+                            'brevo_attr_reservation_id' => [
+                                'label'       => __('ID prenotazione (completo)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_ID',
+                            ],
+                            'brevo_attr_reservation_location' => [
+                                'label'       => __('Location prenotazione', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_LOCATION',
+                            ],
+                            'brevo_attr_reservation_manage_link' => [
+                                'label'       => __('Link gestione prenotazione', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_MANAGE_LINK',
+                            ],
+                            'brevo_attr_utm_source' => [
+                                'label'       => __('UTM Source', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_UTM_SOURCE',
+                            ],
+                            'brevo_attr_utm_medium' => [
+                                'label'       => __('UTM Medium', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_UTM_MEDIUM',
+                            ],
+                            'brevo_attr_utm_campaign' => [
+                                'label'       => __('UTM Campaign', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'RESERVATION_UTM_CAMPAIGN',
+                            ],
+                            'brevo_attr_gclid' => [
+                                'label'       => __('Google Click ID', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'GCLID',
+                            ],
+                            'brevo_attr_fbclid' => [
+                                'label'       => __('Facebook Click ID', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'FBCLID',
+                            ],
+                            'brevo_attr_msclkid' => [
+                                'label'       => __('Microsoft Click ID', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'MSCLKID',
+                            ],
+                            'brevo_attr_ttclid' => [
+                                'label'       => __('TikTok Click ID', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'TTCLID',
+                            ],
+                            'brevo_attr_amount' => [
+                                'label'       => __('Importo (campo 1)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'AMOUNT',
+                            ],
+                            'brevo_attr_value' => [
+                                'label'       => __('Importo (campo 2)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'VALUE',
+                            ],
+                            'brevo_attr_currency' => [
+                                'label'       => __('Valuta', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => 'CURRENCY',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'google-calendar' => [
