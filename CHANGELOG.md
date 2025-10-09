@@ -1,3 +1,11 @@
+## 0.1.8 - WPML Language Detection Improvement (2025-10-09)
+
+### Fixed
+- **[RISOLTO]** Rilevamento lingua WPML: il menu/PDF inglese ora si carica correttamente quando l'utente naviga su `/en/`
+  - Migliorato il rilevamento della lingua WPML usando la costante `ICL_LANGUAGE_CODE` come metodo principale
+  - Aggiunto fallback al filtro `wpml_current_language` per compatibilità
+  - Il sistema ora rileva correttamente la lingua su tutte le pagine multilingua WPML
+
 ## 0.1.7 - Admin Menu Access Fix (2025-10-09)
 
 ### Fixed

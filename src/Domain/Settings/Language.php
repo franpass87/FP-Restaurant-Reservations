@@ -70,11 +70,21 @@ final class Language
         $supported = $this->getSupportedLocales();
         $fallback  = $this->getFallbackLocale();
 
+        // Rileva la lingua corrente da WPML
+        // ICL_LANGUAGE_CODE è la costante più affidabile fornita da WPML per ottenere la lingua corrente.
+        // Se non è disponibile, usa il filtro wpml_current_language come fallback.
+        $wpmlLanguage = null;
+        if (defined('ICL_LANGUAGE_CODE')) {
+            $wpmlLanguage = ICL_LANGUAGE_CODE;
+        } elseif (apply_filters('wpml_current_language', null) !== null) {
+            $wpmlLanguage = apply_filters('wpml_current_language', null);
+        }
+
         $candidates = [
             ['value' => $hints['lang'] ?? '', 'source' => 'manual'],
             ['value' => $hints['locale'] ?? '', 'source' => 'attribute'],
             ['value' => apply_filters('fp_resv_language_hint', null, $hints), 'source' => 'filter'],
-            ['value' => apply_filters('wpml_current_language', null), 'source' => 'wpml'],
+            ['value' => $wpmlLanguage, 'source' => 'wpml'],
             ['value' => function_exists('pll_current_language') ? \pll_current_language('slug') : null, 'source' => 'polylang'],
         ];
 
