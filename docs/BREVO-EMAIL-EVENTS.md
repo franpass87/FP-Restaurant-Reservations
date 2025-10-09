@@ -86,9 +86,23 @@ Il sistema ora invia eventi a Brevo per attivare le automazioni email quando Bre
 
 ## ⚠️ IMPORTANTE
 
-> **Quando usi Brevo, le "Preferenze di invio" WordPress NON vengono utilizzate!**
+> **Quando usi Brevo, le "Preferenze di invio" WordPress NON vengono utilizzate per le email ai clienti!**
 > 
 > Tutto (logo, template, mittente) deve essere configurato in Brevo.
+
+### 📧 Email ai Clienti vs Email Interne
+
+**Email ai CLIENTI (possono usare Brevo):**
+- ✅ Email di Conferma
+- ✅ Email di Reminder
+- ✅ Email di Review
+
+**Email INTERNE Staff/Webmaster (SEMPRE WordPress):**
+- 🔔 Notifica allo Staff (restaurant_emails)
+- 🔔 Notifica al Webmaster (webmaster_emails)
+- ❌ NON passano MAI da Brevo
+- ✅ Usano sempre i template e le impostazioni WordPress
+- ✅ Invio immediato e affidabile
 
 ## Eventi Implementati
 
