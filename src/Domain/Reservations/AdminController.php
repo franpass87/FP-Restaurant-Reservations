@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reservations;
 
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Roles;
 use function __;
 use function add_action;
 use function add_submenu_page;
@@ -21,7 +22,7 @@ use function wp_localize_script;
 
 final class AdminController
 {
-    private const CAPABILITY = 'manage_options';
+    private const CAPABILITY = Roles::MANAGE_RESERVATIONS;
     private const PAGE_SLUG = 'fp-resv-agenda';
 
     private ?string $pageHook = null;

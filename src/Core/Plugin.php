@@ -8,6 +8,7 @@ use FP\Resv\Core\Adapters;
 use FP\Resv\Core\AsyncMailer;
 use FP\Resv\Core\Consent;
 use FP\Resv\Core\Privacy;
+use FP\Resv\Core\Roles;
 use FP\Resv\Core\Scheduler;
 use FP\Resv\Core\Security;
 use FP\Resv\Domain\Brevo\AutomationService as BrevoAutomation;
@@ -161,6 +162,12 @@ final class Plugin
             });
         });
 
+        register_deactivation_hook($file, static function (): void {
+            self::runBootstrapStage('deactivation', static function (): void {
+                self::onDeactivate();
+            });
+        });
+
         // Clear all caches when plugin is upgraded
         add_action('upgrader_process_complete', static function ($upgrader_object, $options) use ($file): void {
             if ($options['action'] === 'update' && $options['type'] === 'plugin') {
@@ -190,11 +197,26 @@ final class Plugin
 
         Migrations::run();
 
+        // Crea i ruoli personalizzati del plugin
+        Roles::create();
+
         // Set initial upgrade timestamp if not already set
         $upgradeTime = get_option('fp_resv_last_upgrade', false);
         if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
             update_option('fp_resv_last_upgrade', time(), false);
         }
+    }
+
+    /**
+     * Called when the plugin is deactivated.
+     */
+    public static function onDeactivate(): void
+    {
+        // Nota: non rimuoviamo il ruolo in quanto gli utenti assegnati perderebbero i permessi
+        // Il ruolo viene mantenuto anche dopo la disattivazione
+        Logging::log('plugin', 'Plugin deactivated', [
+            'version' => self::VERSION,
+        ]);
     }
 
     /**
@@ -224,6 +246,9 @@ final class Plugin
 
         // Clear plugin-specific caches
         CacheManager::invalidateAll();
+
+        // Ricrea i ruoli personalizzati per aggiornare le capabilities
+        Roles::create();
 
         // Update last upgrade timestamp option
         if (function_exists('update_option')) {

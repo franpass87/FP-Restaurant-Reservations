@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Reservations;
 
 use DateInterval;
 use DateTimeImmutable;
+use FP\Resv\Core\Roles;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Tables\LayoutService;
 use InvalidArgumentException;
@@ -561,7 +562,7 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        return current_user_can('manage_options');
+        return current_user_can(Roles::MANAGE_RESERVATIONS);
     }
 
     private function sanitizeDate(mixed $value): ?string

@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Events;
 use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\RateLimiter;
+use FP\Resv\Core\Roles;
 use InvalidArgumentException;
 use RuntimeException;
 use WP_Error;
@@ -73,7 +74,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleListTickets'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
             ]
         );
 
@@ -83,7 +84,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleExportTickets'],
-                'permission_callback' => static fn (): bool => current_user_can('manage_options'),
+                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
             ]
         );
     }

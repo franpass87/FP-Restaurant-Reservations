@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core;
 
+use FP\Resv\Core\Roles;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -21,7 +22,7 @@ final class Security
 
     public static function currentUserCanManage(): bool
     {
-        return current_user_can('manage_options');
+        return current_user_can(Roles::MANAGE_RESERVATIONS);
     }
 
     public static function enforceNoStoreHeaders(
