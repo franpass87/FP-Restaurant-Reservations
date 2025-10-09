@@ -321,6 +321,28 @@
     align-self: flex-start;
 }
 
+.fp-resv-meal-plan__hours-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.fp-resv-meal-plan__hours-apply-all {
+    font-size: 12px;
+    color: var(--fp-resv-admin-muted, #64748b);
+    text-decoration: none;
+}
+
+.fp-resv-meal-plan__hours-apply-all:hover:not(:disabled) {
+    color: var(--fp-resv-admin-strong, #0f172a);
+}
+
+.fp-resv-meal-plan__hours-apply-all:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .fp-resv-meal-plan__numeric-grid {
     display: grid;
     gap: 16px;

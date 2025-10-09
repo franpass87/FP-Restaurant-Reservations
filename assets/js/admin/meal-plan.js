@@ -27,6 +27,8 @@
         capacityLabel: 'Maximum capacity',
         removeMeal: 'Remove meal',
         emptyState: 'No meals configured yet. Add one to get started.',
+        applyToAll: 'Apply to all days',
+        removeSlot: 'Remove slot',
     };
 
     const knownMealKeys = new Set([
@@ -898,8 +900,35 @@
                         }, { rerender: true });
                     });
 
+                    const applyToAllButton = document.createElement('button');
+                    applyToAllButton.type = 'button';
+                    applyToAllButton.className = 'button-link fp-resv-meal-plan__hours-apply-all';
+                    applyToAllButton.textContent = strings.applyToAll;
+                    applyToAllButton.disabled = !checkbox.checked || ranges.length === 0;
+                    applyToAllButton.addEventListener('click', () => {
+                        if (confirm('Vuoi davvero applicare questi orari a tutti gli altri giorni? Gli orari esistenti verranno sovrascritti.')) {
+                            updateMeal(index, (mealTarget) => {
+                                const targetState = ensureMealHoursDefinition(mealTarget, hoursConfig);
+                                const sourceRanges = Array.isArray(targetState[dayKey]) ? targetState[dayKey] : [];
+                                const rangesCopy = sourceRanges.map(r => ({ start: r.start, end: r.end }));
+                                
+                                hoursConfig.days.forEach((otherDay) => {
+                                    if (otherDay.key !== dayKey) {
+                                        targetState[otherDay.key] = rangesCopy.map(r => ({ start: r.start, end: r.end }));
+                                    }
+                                });
+                                syncMealHoursDefinition(mealTarget, hoursConfig);
+                            }, { rerender: true });
+                        }
+                    });
+
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'fp-resv-meal-plan__hours-buttons';
+                    buttonGroup.appendChild(addButton);
+                    buttonGroup.appendChild(applyToAllButton);
+
                     dayCard.appendChild(rangeList);
-                    dayCard.appendChild(addButton);
+                    dayCard.appendChild(buttonGroup);
                     grid.appendChild(dayCard);
                 });
             };

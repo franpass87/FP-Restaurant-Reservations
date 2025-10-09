@@ -395,6 +395,8 @@ final class AdminPages
                     'capacityLabel'  => __('Capacità massima', 'fp-restaurant-reservations'),
                     'removeMeal'     => __('Rimuovi pasto', 'fp-restaurant-reservations'),
                     'emptyState'     => __('Nessun pasto configurato. Aggiungine uno per iniziare.', 'fp-restaurant-reservations'),
+                    'applyToAll'     => __('Applica a tutti i giorni', 'fp-restaurant-reservations'),
+                    'removeSlot'     => __('Rimuovi fascia', 'fp-restaurant-reservations'),
                 ];
 
                 $stringsJson = wp_json_encode($strings);
