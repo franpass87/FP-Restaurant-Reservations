@@ -1074,6 +1074,15 @@ class Availability
             );
         }
 
+        // FIX: Se non ci sono sale né tavoli, crea una sala virtuale con capacità di default
+        // Questo previene capacity = 0 quando i tavoli sono disabilitati
+        if (empty($capacities)) {
+            $capacities[0] = [
+                'capacity'       => $defaultRoomCap,
+                'table_capacity' => 0,
+            ];
+        }
+
         return $capacities;
     }
 

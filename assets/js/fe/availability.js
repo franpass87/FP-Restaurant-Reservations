@@ -92,7 +92,15 @@ export function createAvailabilityController(options) {
     function summarizeSlots(slots, hasAvailabilityFlag) {
         const safeSlots = Array.isArray(slots) ? slots : [];
         const slotCount = safeSlots.length;
+        
+        // Se non ci sono slot E hasAvailabilityFlag è false, 
+        // significa che la configurazione non prevede orari (non è "full")
         if (slotCount === 0) {
+            // Se hasAvailabilityFlag è esplicitamente false, lo schedule è vuoto
+            if (hasAvailabilityFlag === false) {
+                return { state: 'unavailable', slots: 0 };
+            }
+            // Altrimenti è veramente pieno
             return { state: 'full', slots: 0 };
         }
 
@@ -209,7 +217,9 @@ export function createAvailabilityController(options) {
             clearChildren(listEl);
         }
 
-        const state = readyForAvailability ? 'full' : 'unknown';
+        // Non usare 'full' automaticamente quando non ci sono slot
+        // Usa 'unavailable' per distinguere da 'full' (prenotato)
+        const state = readyForAvailability ? 'unavailable' : 'unknown';
         notifyAvailability(params, { state, slots: 0 });
     }
 

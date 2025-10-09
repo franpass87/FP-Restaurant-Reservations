@@ -957,6 +957,23 @@ class FormApp {
             return;
         }
 
+        if (normalizedState === 'unavailable') {
+            const unavailableNotice = 'Orari di servizio non configurati per questa data.';
+            button.setAttribute('data-meal-notice', unavailableNotice);
+
+            button.setAttribute('aria-disabled', 'true');
+            button.setAttribute('data-meal-unavailable', 'true');
+
+            if (button.hasAttribute('data-active')) {
+                if (options.skipSlotReset !== true) {
+                    this.clearSlotSelection({ schedule: false });
+                }
+                this.updateMealNoticeFromButton(button);
+            }
+
+            return;
+        }
+
         button.removeAttribute('aria-disabled');
         button.removeAttribute('data-meal-unavailable');
 
@@ -1957,14 +1974,14 @@ class FormApp {
             return;
         }
 
-        const validStates = ['available', 'limited', 'full'];
+        const validStates = ['available', 'limited', 'full', 'unavailable'];
         const normalized = state ? String(state).toLowerCase() : '';
 
         // Non mostriamo più i colori sui bottoni, solo lo stato di disabilitazione
         button.removeAttribute('data-availability-state');
 
-        // Se è completamente prenotato, disabilitiamo il bottone
-        if (normalized === 'full') {
+        // Se è completamente prenotato o non disponibile, disabilitiamo il bottone
+        if (normalized === 'full' || normalized === 'unavailable') {
             button.setAttribute('aria-disabled', 'true');
             button.setAttribute('data-meal-unavailable', 'true');
         } else if (validStates.indexOf(normalized) !== -1) {
@@ -1979,7 +1996,7 @@ class FormApp {
         }
 
         const normalized = summary && summary.state ? String(summary.state).toLowerCase() : '';
-        const validStates = ['available', 'limited', 'full'];
+        const validStates = ['available', 'limited', 'full', 'unavailable'];
         const mealKey = params.meal;
 
         if (!this.state.mealAvailability) {
@@ -2013,6 +2030,8 @@ class FormApp {
                     label = `Disponibilità limitata (${slots})`;
                 } else if (normalized === 'full') {
                     label = 'Completamente prenotato';
+                } else if (normalized === 'unavailable') {
+                    label = 'Non disponibile per questa data';
                 }
             }
             this.availabilityIndicator.textContent = label;
