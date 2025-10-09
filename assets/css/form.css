@@ -1761,7 +1761,14 @@
         padding-inline: 0.6rem;
     }
 
-    /* Bottoni slot orari a tutta larghezza su mobile */
+    /* Bottoni slot orari a tutta larghezza e incolonnati su mobile */
+    .fp-slots__list,
+    .fp-resv-slots__list,
+    #fp-resv-default .fp-slots__list,
+    #fp-resv-default .fp-resv-slots__list {
+        grid-template-columns: 1fr;
+    }
+    
     .fp-slots__list button,
     .fp-resv-slots__list button {
         width: 100%;
