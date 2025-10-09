@@ -1692,6 +1692,14 @@
         padding: 0.65rem 0.5rem !important;
     }
 
+    .fp-topbar .fp-resv-widget__headline {
+        text-align: center;
+    }
+
+    .fp-topbar .fp-resv-widget__subheadline {
+        text-align: center;
+    }
+
     .fp-progress {
         gap: 0.45rem;
         overflow-x: auto;

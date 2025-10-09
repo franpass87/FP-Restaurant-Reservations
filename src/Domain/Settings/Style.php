@@ -1409,6 +1409,12 @@ final class Style
     }
 }
 @media (max-width: 640px) {
+    %s .fp-resv-widget__headline {
+        text-align: center;
+    }
+    %s .fp-resv-widget__subheadline {
+        text-align: center;
+    }
     %s .fp-progress {
         gap: 0.45rem;
         overflow-x: auto;
