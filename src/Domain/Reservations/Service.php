@@ -196,6 +196,7 @@ class Service
             'customer_id'  => $customerId,
             'room_id'      => $sanitized['room_id'],
             'table_id'     => $sanitized['table_id'],
+            'request_id'   => $sanitized['request_id'],
         ];
 
         $reservationId = $this->repository->insert($reservationData);

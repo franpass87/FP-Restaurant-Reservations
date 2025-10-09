@@ -345,5 +345,66 @@ final class ServiceTest extends TestCase
         $adminCount = count(array_filter($flatRecipients, fn($email) => $email === 'admin@example.test'));
         self::assertSame(1, $adminCount, 'admin@example.test dovrebbe ricevere solo 1 email, non 2');
     }
+
+    public function testRequestIdIsStoredForIdempotency(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.42';
+
+        $options      = new Options();
+        Consent::init($options);
+
+        $language     = new Language($options);
+        $mailer       = new Mailer();
+
+        $reservations          = new ReservationsRepository($this->wpdb);
+        $customers             = new CustomersRepository($this->wpdb);
+        $paymentsRepo          = new PaymentsRepository($this->wpdb);
+        $stripe                = new StripeService($options, $paymentsRepo);
+        $notificationSettings  = new NotificationSettings($options);
+        $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
+
+        $service = new Service(
+            $reservations,
+            $options,
+            $language,
+            $mailer,
+            $customers,
+            $stripe,
+            $notificationSettings,
+            $notificationTemplates,
+            null,
+            null
+        );
+
+        $requestId = 'req_' . time() . '_test123';
+        
+        $result = $service->create([
+            'date'        => '2024-07-20',
+            'time'        => '20:30',
+            'party'       => 2,
+            'first_name'  => 'Grace',
+            'last_name'   => 'Hopper',
+            'email'       => 'grace@example.test',
+            'phone'       => '+39 055 111222',
+            'notes'       => 'Test idempotency',
+            'language'    => 'it',
+            'locale'      => 'it_IT',
+            'location'    => 'default',
+            'currency'    => 'EUR',
+            'request_id'  => $requestId,
+        ]);
+
+        self::assertArrayHasKey('id', $result);
+        $reservationId = $result['id'];
+
+        // Verifica che il request_id sia stato salvato nel database
+        $savedReservation = $reservations->find($reservationId);
+        self::assertNotNull($savedReservation);
+
+        // Verifica che findByRequestId funzioni correttamente
+        $foundByRequestId = $reservations->findByRequestId($requestId);
+        self::assertNotNull($foundByRequestId, 'La prenotazione dovrebbe essere trovata tramite request_id');
+        self::assertSame($reservationId, $foundByRequestId->id, 'Dovrebbe trovare la stessa prenotazione');
+    }
 }
 
