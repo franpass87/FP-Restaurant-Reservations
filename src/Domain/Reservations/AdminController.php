@@ -42,7 +42,7 @@ final class AdminController
             self::CAPABILITY,
             self::PAGE_SLUG,
             [$this, 'renderPage']
-        );
+        ) ?: null;
     }
 
     public function enqueueAssets(string $hook): void
