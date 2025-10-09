@@ -207,7 +207,6 @@ endif;
                     data-step="<?php echo esc_attr($stepKey); ?>"
                     data-fp-resv-section
                     data-state="<?php echo $isActive ? 'active' : 'locked'; ?>"
-                    aria-hidden="<?php echo $isActive ? 'false' : 'true'; ?>"
                     aria-expanded="<?php echo $isActive ? 'true' : 'false'; ?>"
                     <?php echo $isActive ? '' : 'hidden'; ?>
                     role="region"

@@ -5,13 +5,14 @@
 import { closestSection, firstFocusable } from '../utils/dom-helpers.js';
 
 export class FormNavigation {
-    constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState) {
+    constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState, widgetRoot) {
         this.sections = sections;
         this.stepOrder = stepOrder;
         this.state = state;
         this.updateSectionAttributes = updateSectionAttributes;
         this.updateProgressIndicators = updateProgressIndicators;
         this.updateSubmitState = updateSubmitState;
+        this.widgetRoot = widgetRoot;
     }
 
     getStepOrderIndex(target) {
@@ -61,8 +62,8 @@ export class FormNavigation {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            // Non fare scroll automatico quando si clicca su Continua per evitare salti anchor
-            // La sezione si renderà visibile tramite CSS senza bisogno di scroll
+            // Scroll all'inizio del widget quando si avanza allo step successivo
+            this.scrollIntoView(nextSection);
         }
     }
 
@@ -82,6 +83,7 @@ export class FormNavigation {
             return;
         }
 
+        // Scroll all'inizio del widget quando si torna indietro
         this.activateSectionByKey(previousKey);
     }
 
@@ -186,9 +188,14 @@ export class FormNavigation {
     }
 
     scrollIntoView(section) {
-        // Disabilitato completamente per evitare salti anchor
-        // La navigazione tra le sezioni avviene solo tramite CSS visibility/display
-        // senza bisogno di scroll automatico che causa salti indesiderati
-        return;
+        // Scroll all'inizio del widget quando si cambia step
+        const target = this.widgetRoot || section;
+        if (!target || typeof target.scrollIntoView !== 'function') {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 }

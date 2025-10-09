@@ -434,16 +434,48 @@ class FormApp {
         const today = new Date().toISOString().split('T')[0];
         this.dateField.setAttribute('min', today);
 
-        // Aggiungi validazione per date passate
+        // Ottieni i giorni disponibili dalla configurazione
+        const availableDays = this.config && this.config.available_days ? this.config.available_days : [];
+
+        // Aggiungi validazione per date passate e giorni disponibili
         this.dateField.addEventListener('change', (event) => {
             const selectedDate = event.target.value;
+            
             if (selectedDate && selectedDate < today) {
                 event.target.setCustomValidity('Non è possibile prenotare per giorni passati.');
                 event.target.setAttribute('aria-invalid', 'true');
-            } else {
-                event.target.setCustomValidity('');
-                event.target.setAttribute('aria-invalid', 'false');
+                return;
             }
+
+            // Se ci sono giorni disponibili configurati, valida la selezione
+            if (availableDays.length > 0 && selectedDate) {
+                const date = new Date(selectedDate);
+                const dayOfWeek = date.getDay().toString(); // 0 = domenica, 1 = lunedì, ecc.
+
+                if (!availableDays.includes(dayOfWeek)) {
+                    const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                    const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
+                    
+                    event.target.setCustomValidity(errorMessage);
+                    event.target.setAttribute('aria-invalid', 'true');
+                    
+                    // Mostra il messaggio di errore
+                    if (window.console && window.console.warn) {
+                        console.warn('[FP-RESV] ' + errorMessage);
+                    }
+                    
+                    // Resetta il campo
+                    setTimeout(() => {
+                        event.target.value = '';
+                    }, 100);
+                    
+                    return;
+                }
+            }
+
+            event.target.setCustomValidity('');
+            event.target.setAttribute('aria-invalid', 'false');
         });
 
         const openPicker = () => {
@@ -998,7 +1030,8 @@ class FormApp {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            // Non fare scroll automatico quando si clicca su Continua per evitare salti anchor
+            // Scroll all'inizio del widget quando si avanza allo step successivo
+            this.scrollIntoView(nextSection);
         }
     }
 
@@ -1098,7 +1131,6 @@ class FormApp {
         }
 
         const isActive = state === 'active';
-        section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         section.setAttribute('aria-expanded', isActive ? 'true' : 'false');
 
         // Force visibility control for step navigation
@@ -1525,11 +1557,18 @@ class FormApp {
                 
                 // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
                 if (response.status === 403 && !this.state.nonceRetried) {
+                    // Aspetta 500ms per dare tempo ai cookie di essere impostati correttamente
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
                     const freshNonce = await this.refreshNonce();
                     if (freshNonce) {
                         this.state.nonceRetried = true;
                         payload.fp_resv_nonce = freshNonce;
-                        // Riprova immediatamente con il nonce fresco
+                        
+                        // Aspetta altri 200ms prima di riprovare
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                        // Riprova con il nonce fresco
                         const retryResponse = await fetch(endpoint, {
                             method: 'POST',
                             headers: {
@@ -1546,6 +1585,16 @@ class FormApp {
                             this.handleSubmitSuccess(data);
                             this.state.nonceRetried = false;
                             return false;
+                        } else {
+                            // Se anche il retry fallisce, aggiungi info sul cookie al messaggio di errore
+                            const retryError = await safeJson(retryResponse);
+                            if (retryError && retryError.message) {
+                                retryError.message = retryError.message + ' Se hai appena accettato i cookie, riprova tra qualche secondo.';
+                            }
+                            throw Object.assign(new Error(retryError.message || this.copy.submitError), {
+                                status: retryResponse.status,
+                                payload: retryError,
+                            });
                         }
                     }
                 }
@@ -2033,9 +2082,15 @@ class FormApp {
     }
 
     scrollIntoView(section) {
-        // Disabilitato completamente per evitare salti anchor
-        // La navigazione tra le sezioni avviene solo tramite CSS visibility/display
-        return;
+        // Scroll all'inizio del widget quando si cambia step
+        const target = this.root || section;
+        if (!target || typeof target.scrollIntoView !== 'function') {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 
     isConsentField(element) {

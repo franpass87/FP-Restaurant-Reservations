@@ -92,7 +92,8 @@ export class FormApp {
             this.state.getState(),
             this.updateSectionAttributes.bind(this),
             this.updateProgressIndicators.bind(this),
-            this.updateSubmitState.bind(this)
+            this.updateSubmitState.bind(this),
+            this.root
         );
 
         this.copy = {
@@ -160,7 +161,6 @@ export class FormApp {
         }
 
         const isActive = state === 'active';
-        section.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         section.setAttribute('aria-expanded', isActive ? 'true' : 'false');
 
         // Force visibility control for step navigation
@@ -279,16 +279,48 @@ export class FormApp {
         const today = new Date().toISOString().split('T')[0];
         this.dateField.setAttribute('min', today);
 
-        // Aggiungi validazione per date passate
+        // Ottieni i giorni disponibili dalla configurazione
+        const availableDays = this.config && this.config.available_days ? this.config.available_days : [];
+
+        // Aggiungi validazione per date passate e giorni disponibili
         this.dateField.addEventListener('change', (event) => {
             const selectedDate = event.target.value;
+            
             if (selectedDate && selectedDate < today) {
                 event.target.setCustomValidity('Non è possibile prenotare per giorni passati.');
                 event.target.setAttribute('aria-invalid', 'true');
-            } else {
-                event.target.setCustomValidity('');
-                event.target.setAttribute('aria-invalid', 'false');
+                return;
             }
+
+            // Se ci sono giorni disponibili configurati, valida la selezione
+            if (availableDays.length > 0 && selectedDate) {
+                const date = new Date(selectedDate);
+                const dayOfWeek = date.getDay().toString(); // 0 = domenica, 1 = lunedì, ecc.
+
+                if (!availableDays.includes(dayOfWeek)) {
+                    const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                    const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
+                    
+                    event.target.setCustomValidity(errorMessage);
+                    event.target.setAttribute('aria-invalid', 'true');
+                    
+                    // Mostra il messaggio di errore
+                    if (window.console && window.console.warn) {
+                        console.warn('[FP-RESV] ' + errorMessage);
+                    }
+                    
+                    // Resetta il campo
+                    setTimeout(() => {
+                        event.target.value = '';
+                    }, 100);
+                    
+                    return;
+                }
+            }
+
+            event.target.setCustomValidity('');
+            event.target.setAttribute('aria-invalid', 'false');
         });
 
         const openPicker = () => {
