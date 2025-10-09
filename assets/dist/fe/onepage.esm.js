@@ -36,7 +36,7 @@ function ot(a) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function z(a, t) {
+function D(a, t) {
   const e = a.value, { masked: i } = ot(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
@@ -44,7 +44,7 @@ function z(a, t) {
   }
   a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", w(t));
 }
-function V(a, t) {
+function z(a, t) {
   const e = M(a.value), i = w(t);
   return {
     e164: nt(i, e),
@@ -149,13 +149,10 @@ function Y(a, t) {
   }
   return null;
 }
-function ht(a) {
-  return a ? a.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex="0"]') : null;
-}
-function ft(a, t) {
+function ht(a, t) {
   a && (t ? (a.setAttribute("aria-disabled", "true"), a.setAttribute("disabled", "disabled")) : (a.removeAttribute("disabled"), a.setAttribute("aria-disabled", "false")));
 }
-function pt(a) {
+function ft(a) {
   return a.text().then((t) => {
     if (!t)
       return {};
@@ -175,19 +172,19 @@ function H(a, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-let D = null;
+let V = null;
 const U = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
-function mt() {
-  return D || (D = Promise.resolve().then(() => wt)), D;
+function pt() {
+  return V || (V = Promise.resolve().then(() => Ct)), V;
 }
-function yt(a) {
+function mt(a) {
   return Y(a, "data-fp-resv-section");
 }
-const bt = ["service", "date", "party", "slots", "details", "confirm"];
+const yt = ["service", "date", "party", "slots", "details", "confirm"];
 class G {
   constructor(t) {
     this.root = t, this.dataset = ct(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
-    const e = Array.from(bt);
+    const e = Array.from(yt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
     this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)).forEach((s) => {
@@ -257,7 +254,7 @@ class G {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && D(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
@@ -279,7 +276,7 @@ class G {
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && D(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -326,7 +323,7 @@ class G {
       this.scheduleAvailabilityUpdate(i);
     };
     U(() => {
-      mt().then((e) => {
+      pt().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
           endpoint: this.getAvailabilityEndpoint(),
@@ -349,8 +346,8 @@ class G {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
-    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, l = yt(e);
+    this.handleFirstInteraction(), e === this.phoneField ? D(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, l = mt(e);
     if (!l) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
       return;
@@ -422,7 +419,7 @@ class G {
         const l = this.state.sectionStates[r] === "locked" ? "locked" : "completed";
         this.updateSectionAttributes(s, l, { silent: !0 });
       }
-    }), this.updateProgressIndicators(), this.scrollIntoView(e), requestAnimationFrame(() => {
+    }), this.updateProgressIndicators(), requestAnimationFrame(() => {
       const s = e.querySelector('input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
       s && typeof s.focus == "function" && s.focus({ preventScroll: !0 });
     }), this.updateSubmitState();
@@ -495,7 +492,7 @@ class G {
   }
   ensureSectionActive(t) {
     const e = t.getAttribute("data-step") || "";
-    this.state.sectionStates[e] === "locked" && (this.state.sectionStates[e] = "active", this.updateSectionAttributes(t, "active"), this.dispatchSectionUnlocked(e), this.scrollIntoView(t));
+    this.state.sectionStates[e] === "locked" && (this.state.sectionStates[e] = "active", this.updateSectionAttributes(t, "active"), this.dispatchSectionUnlocked(e));
   }
   completeSection(t, e) {
     const i = t.getAttribute("data-step") || "";
@@ -508,7 +505,7 @@ class G {
     if (!r)
       return;
     const n = r.getAttribute("data-step") || String(s + 1);
-    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(r, "active"), this.dispatchSectionUnlocked(n), this.scrollIntoView(r));
+    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(r, "active"), this.dispatchSectionUnlocked(n));
   }
   navigateToPrevious(t) {
     const e = this.sections.indexOf(t);
@@ -629,7 +626,7 @@ class G {
       }
       let n = !1, l = "";
       if (s && typeof s.checkValidity == "function" && !s.checkValidity() && (n = !0, l = e[i] || ""), i === "email" && s && s.value && s.value.trim() !== "" && s.checkValidity() && (n = !1, l = ""), i === "phone" && this.phoneField) {
-        const h = V(this.phoneField, this.getPhoneCountryCode());
+        const h = z(this.phoneField, this.getPhoneCountryCode());
         h.local && !K(h.local) && (n = !0, l = this.copy.invalidPhone);
       }
       i === "consent" && s && s.checked && (n = !1, l = ""), n ? (r.textContent = l, r.hidden = !1, s && s.setAttribute && s.setAttribute("aria-invalid", "true")) : (r.textContent = "", r.hidden = !0, s && s.removeAttribute && s.removeAttribute("aria-invalid"));
@@ -660,7 +657,7 @@ class G {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    ft(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && y("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    ht(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && y("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
@@ -727,7 +724,7 @@ class G {
         credentials: "same-origin"
       });
       if (l = Math.round(performance.now() - n), y("ui_latency", { op: "submit", ms: l }), !h.ok) {
-        const b = await pt(h), S = b && b.message || this.copy.submitError;
+        const b = await ft(h), S = b && b.message || this.copy.submitError;
         throw Object.assign(new Error(S), {
           status: h.status,
           payload: b
@@ -782,7 +779,7 @@ class G {
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
     }), this.phoneField) {
-      const i = V(this.phoneField, this.getPhoneCountryCode());
+      const i = z(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
@@ -794,13 +791,13 @@ class G {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = V(this.phoneField, this.getPhoneCountryCode());
+    const t = z(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = V(this.phoneField, this.getPhoneCountryCode());
+    const t = z(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
@@ -926,9 +923,6 @@ class G {
     y(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && y(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
-    typeof t.scrollIntoView == "function" && t.scrollIntoView({ behavior: "smooth", block: "start" });
-    const e = ht(t);
-    e && typeof e.focus == "function" && e.focus({ preventScroll: !0 });
   }
   isConsentField(t) {
     if (!t || !t.getAttribute)
@@ -1063,8 +1057,8 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   const i = t.payload || t.data || {};
   y(e, i && typeof i == "object" ? i : {});
 });
-const vt = 400, gt = 6e4, St = 3, W = 600;
-function At(a, t) {
+const bt = 400, vt = 6e4, gt = 3, W = 600;
+function St(a, t) {
   let e;
   try {
     e = new URL(a, window.location.origin);
@@ -1078,7 +1072,7 @@ function O(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
-function Ct(a) {
+function At(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
   let h = null, f = null, b = null, S = 0;
   function x(o) {
@@ -1178,12 +1172,12 @@ function Ct(a) {
       return;
     }
     const p = ++S, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
-    if (m && Date.now() - m.timestamp < gt && d === 0) {
+    if (m && Date.now() - m.timestamp < vt && d === 0) {
       j(m.payload, o, p);
       return;
     }
     B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
-    const C = At(a.endpoint, o), v = performance.now();
+    const C = St(a.endpoint, o), v = performance.now();
     fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((F) => {
       if (!c.ok) {
         const g = new Error("availability_error");
@@ -1214,7 +1208,7 @@ function Ct(a) {
         const L = Number.parseInt(g.retry_after, 10);
         Number.isFinite(L) && (P = L);
       }
-      if (d >= St - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+      if (d >= gt - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
         const L = d + 1;
         typeof a.onRetry == "function" && a.onRetry(L);
         const at = P > 0 ? Math.max(P * 1e3, W) : W * Math.pow(2, d);
@@ -1239,7 +1233,7 @@ function Ct(a) {
       }
       h = window.setTimeout(() => {
         I(u, 0);
-      }, vt);
+      }, bt);
     },
     revalidate() {
       if (!f)
@@ -1255,7 +1249,7 @@ function Ct(a) {
     }
   };
 }
-const wt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ct = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createAvailabilityController: Ct
+  createAvailabilityController: At
 }, Symbol.toStringTag, { value: "Module" }));

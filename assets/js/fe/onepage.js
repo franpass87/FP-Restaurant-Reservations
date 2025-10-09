@@ -768,7 +768,7 @@ class FormApp {
         });
 
         this.updateProgressIndicators();
-        this.scrollIntoView(targetSection);
+        // Non fare scroll automatico per evitare salti anchor
         requestAnimationFrame(() => {
             const focusTarget = targetSection.querySelector('input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
             if (focusTarget && typeof focusTarget.focus === 'function') {
@@ -965,7 +965,7 @@ class FormApp {
             this.state.sectionStates[key] = 'active';
             this.updateSectionAttributes(section, 'active');
             this.dispatchSectionUnlocked(key);
-            this.scrollIntoView(section);
+            // Non fare scroll automatico per evitare salti anchor
         }
     }
 
@@ -998,7 +998,7 @@ class FormApp {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            this.scrollIntoView(nextSection);
+            // Non fare scroll automatico quando si clicca su Continua per evitare salti anchor
         }
     }
 
@@ -1980,14 +1980,9 @@ class FormApp {
     }
 
     scrollIntoView(section) {
-        if (typeof section.scrollIntoView === 'function') {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        const focusable = firstFocusable(section);
-        if (focusable && typeof focusable.focus === 'function') {
-            focusable.focus({ preventScroll: true });
-        }
+        // Disabilitato completamente per evitare salti anchor
+        // La navigazione tra le sezioni avviene solo tramite CSS visibility/display
+        return;
     }
 
     isConsentField(element) {
