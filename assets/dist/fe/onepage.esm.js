@@ -172,10 +172,10 @@ function H(a, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-let V = null;
+let O = null;
 const U = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function pt() {
-  return V || (V = Promise.resolve().then(() => Ct)), V;
+  return O || (O = Promise.resolve().then(() => Ct)), O;
 }
 function mt(a) {
   return Y(a, "data-fp-resv-section");
@@ -663,12 +663,12 @@ class G {
     if (this.summaryTargets.length === 0)
       return;
     const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), b = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), S = this.form.querySelector('[data-fp-resv-field="pets"]');
-    let x = "";
-    s && s.value && (x = s.value.trim()), r && r.value && (x = (x + " " + r.value.trim()).trim());
-    let k = "";
-    if (n && n.value && (k = n.value.trim()), l && l.value) {
+    let _ = "";
+    s && s.value && (_ = s.value.trim()), r && r.value && (_ = (_ + " " + r.value.trim()).trim());
+    let P = "";
+    if (n && n.value && (P = n.value.trim()), l && l.value) {
       const A = this.getPhoneCountryCode(), N = (A ? "+" + A + " " : "") + l.value.trim();
-      k = k !== "" ? k + " / " + N : N;
+      P = P !== "" ? P + " / " + N : N;
     }
     const E = [];
     f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && E.push("Seggioloni: " + parseInt(f.value, 10)), b && "checked" in b && b.checked && E.push("Tavolo accessibile per sedia a rotelle"), S && "checked" in S && S.checked && E.push("Animali domestici");
@@ -685,10 +685,10 @@ class G {
           A.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          A.textContent = x;
+          A.textContent = _;
           break;
         case "contact":
-          A.textContent = k;
+          A.textContent = P;
           break;
         case "notes":
           A.textContent = h && h.value ? h.value : "";
@@ -724,7 +724,28 @@ class G {
         credentials: "same-origin"
       });
       if (l = Math.round(performance.now() - n), y("ui_latency", { op: "submit", ms: l }), !h.ok) {
-        const b = await ft(h), S = b && b.message || this.copy.submitError;
+        const b = await ft(h);
+        if (h.status === 403 && !this.state.nonceRetried) {
+          const _ = await this.refreshNonce();
+          if (_) {
+            this.state.nonceRetried = !0, s.fp_resv_nonce = _;
+            const P = await fetch(r, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-WP-Nonce": _
+              },
+              body: JSON.stringify(s),
+              credentials: "same-origin"
+            });
+            if (P.ok) {
+              const E = await P.json();
+              return this.handleSubmitSuccess(E), this.state.nonceRetried = !1, !1;
+            }
+          }
+        }
+        const S = b && b.message || this.copy.submitError;
         throw Object.assign(new Error(S), {
           status: h.status,
           payload: b
@@ -783,6 +804,24 @@ class G {
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
+  }
+  async refreshNonce() {
+    try {
+      const t = this.getReservationEndpoint().replace("/reservations", "/nonce"), e = await fetch(t, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        },
+        credentials: "same-origin"
+      });
+      if (e.ok) {
+        const i = await e.json(), s = this.form.querySelector('input[name="fp_resv_nonce"]');
+        return s && i.nonce && (s.value = i.nonce), i.nonce || null;
+      }
+    } catch (t) {
+      window.console && window.console.warn && console.warn("[fp-resv] Impossibile rigenerare il nonce", t);
+    }
+    return null;
   }
   preparePhonePayload() {
     if (!this.phoneField)
@@ -1064,14 +1103,14 @@ function St(a, t) {
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function O(a) {
+function V(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
 function At(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
   let h = null, f = null, b = null, S = 0;
-  function x(o) {
+  function _(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
@@ -1080,11 +1119,11 @@ function At(a) {
     const u = ((v) => typeof v.normalize == "function" ? v.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : v)(d), m = (v) => v.some((c) => u.startsWith(c)), C = (v) => v.some((c) => u.includes(c));
     return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
-  function k(o, d) {
+  function P(o, d) {
     const p = Array.isArray(o) ? o : [], u = p.length;
     if (u === 0)
       return { state: "full", slots: 0 };
-    const m = p.map((c) => x(c && c.status)).filter((c) => c !== "");
+    const m = p.map((c) => _(c && c.status)).filter((c) => c !== "");
     return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
   }
   function E(o, d) {
@@ -1106,7 +1145,7 @@ function At(a) {
   function A() {
     if (!i)
       return;
-    O(i);
+    V(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
       const p = document.createElement("li"), u = document.createElement("span");
@@ -1115,8 +1154,8 @@ function At(a) {
   }
   function R(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || v), _ = C && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
-    q(_, "idle"), i && O(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || v), k = C && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    q(k, "idle"), i && V(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1149,7 +1188,7 @@ function At(a) {
   function j(o, d, p) {
     if (p && p !== S || d && f && d !== f || (B(), N(), !i))
       return;
-    O(i);
+    V(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
     if (u.length === 0) {
       R(d);
@@ -1160,7 +1199,7 @@ function At(a) {
       c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", b && b.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), v.appendChild(c), i.appendChild(v);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
-    E(d, k(u, m));
+    E(d, P(u, m));
   }
   function I(o, d) {
     if (f = o, !o || !o.date || !o.party) {
@@ -1174,40 +1213,40 @@ function At(a) {
     }
     B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
     const C = St(a.endpoint, o), v = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((F) => {
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
         const g = new Error("availability_error");
-        g.status = c.status, g.payload = F;
-        const _ = c.headers.get("Retry-After");
-        if (_) {
-          const P = Number.parseInt(_, 10);
-          Number.isFinite(P) && (g.retryAfter = P);
+        g.status = c.status, g.payload = x;
+        const k = c.headers.get("Retry-After");
+        if (k) {
+          const F = Number.parseInt(k, 10);
+          Number.isFinite(F) && (g.retryAfter = F);
         }
         throw g;
       }
-      return F;
+      return x;
     })).then((c) => {
       if (p !== S)
         return;
-      const F = performance.now() - v;
-      typeof a.onLatency == "function" && a.onLatency(F), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
+      const x = performance.now() - v;
+      typeof a.onLatency == "function" && a.onLatency(x), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
     }).catch((c) => {
       if (p !== S)
         return;
-      const F = performance.now() - v;
-      typeof a.onLatency == "function" && a.onLatency(F);
-      const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, _ = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
-      let P = 0;
+      const x = performance.now() - v;
+      typeof a.onLatency == "function" && a.onLatency(x);
+      const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
+      let F = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
-        P = c.retryAfter;
+        F = c.retryAfter;
       else if (g && typeof g.retry_after < "u") {
         const L = Number.parseInt(g.retry_after, 10);
-        Number.isFinite(L) && (P = L);
+        Number.isFinite(L) && (F = L);
       }
-      if (d >= gt - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+      if (d >= gt - 1 ? !1 : k === 429 || k >= 500 && k < 600 ? !0 : k === 0) {
         const L = d + 1;
         typeof a.onRetry == "function" && a.onRetry(L);
-        const at = P > 0 ? Math.max(P * 1e3, W) : W * Math.pow(2, d);
+        const at = F > 0 ? Math.max(F * 1e3, W) : W * Math.pow(2, d);
         window.setTimeout(() => I(o, L), at);
         return;
       }

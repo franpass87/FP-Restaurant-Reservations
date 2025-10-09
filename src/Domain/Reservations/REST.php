@@ -103,6 +103,25 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/nonce',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleGetNonce'],
+                'permission_callback' => '__return_true',
+            ]
+        );
+    }
+
+    public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
+    {
+        $nonce = wp_create_nonce('fp_resv_submit');
+        
+        return new WP_REST_Response([
+            'nonce' => $nonce,
+        ], 200);
     }
 
     public function handleAvailability(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -245,12 +264,15 @@ final class REST
         }
 
         // Verifica il nonce
-        if (!is_string($nonce) || $nonce === '' || !wp_verify_nonce($nonce, 'fp_resv_submit')) {
+        $nonceValid = wp_verify_nonce($nonce, 'fp_resv_submit');
+        if (!is_string($nonce) || $nonce === '' || !$nonceValid) {
             $debugInfo = [];
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 $debugInfo = [
                     'nonce_found' => is_string($nonce) && $nonce !== '',
+                    'nonce_valid' => $nonceValid !== false,
                     'nonce_action' => 'fp_resv_submit',
+                    'nonce_value' => substr($nonce, 0, 10) . '...',
                 ];
             }
             
