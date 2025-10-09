@@ -1457,6 +1457,10 @@ final class Style
         width: 100%;
         justify-content: center;
     }
+    %s .fp-resv-widget__pdf {
+        width: 100%;
+        justify-content: center;
+    }
 }
 CSS;
 
