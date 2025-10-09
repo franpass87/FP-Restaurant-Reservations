@@ -73,7 +73,43 @@ use const INPUT_GET;
 final class AdminPages
 {
     private const CAPABILITY = Roles::MANAGE_RESERVATIONS;
-    private const DEFAULT_PHONE_PREFIX_MAP = ['+39' => 'IT'];
+    private const DEFAULT_PHONE_PREFIX_MAP = [
+        // Italia
+        '+39' => 'IT',
+        // Paesi anglofoni
+        '+1'   => 'EN', // USA e Canada
+        '+44'  => 'EN', // Regno Unito
+        '+353' => 'EN', // Irlanda
+        '+61'  => 'EN', // Australia
+        '+64'  => 'EN', // Nuova Zelanda
+        // Paesi europei principali
+        '+33'  => 'EN', // Francia
+        '+49'  => 'EN', // Germania
+        '+34'  => 'EN', // Spagna
+        '+351' => 'EN', // Portogallo
+        '+31'  => 'EN', // Paesi Bassi
+        '+32'  => 'EN', // Belgio
+        '+41'  => 'EN', // Svizzera
+        '+43'  => 'EN', // Austria
+        '+45'  => 'EN', // Danimarca
+        '+46'  => 'EN', // Svezia
+        '+47'  => 'EN', // Norvegia
+        '+48'  => 'EN', // Polonia
+        '+420' => 'EN', // Repubblica Ceca
+        '+30'  => 'EN', // Grecia
+        '+40'  => 'EN', // Romania
+        '+36'  => 'EN', // Ungheria
+        // Altri paesi comuni
+        '+7'   => 'EN', // Russia
+        '+86'  => 'EN', // Cina
+        '+81'  => 'EN', // Giappone
+        '+82'  => 'EN', // Corea del Sud
+        '+91'  => 'EN', // India
+        '+55'  => 'EN', // Brasile
+        '+52'  => 'EN', // Messico
+        '+971' => 'EN', // Emirati Arabi Uniti
+        '+966' => 'EN', // Arabia Saudita
+    ];
 
     /**
      * @var array<string, array<string, mixed>>
@@ -2038,7 +2074,7 @@ final class AdminPages
                                 'type'        => 'phone_prefix_map',
                                 'rows'        => 4,
                                 'default'     => (string) wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP),
-                                'description' => __('Usa formato +39=IT,+33=EN oppure righe separate. I valori ammessi sono IT, EN o INT.', 'fp-restaurant-reservations'),
+                                'description' => __('Mapping automatico già configurato per i prefissi principali (+39=IT, +44=EN, +1=EN, ecc.). Puoi personalizzarlo se necessario. Usa formato +39=IT,+33=EN oppure righe separate. Valori ammessi: IT, EN o INT.', 'fp-restaurant-reservations'),
                             ],
                             'brevo_list_id' => [
                                 'label'       => __('ID lista contatti (fallback)', 'fp-restaurant-reservations'),
