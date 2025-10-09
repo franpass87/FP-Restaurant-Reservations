@@ -67,7 +67,7 @@ ob_start();
                     <p class="fp-resv-widget__subheadline"><?php echo esc_html__('Scegli data, orario e completa i tuoi dati.', 'fp-restaurant-reservations'); ?></p>
                 </div>
                 <a class="fp-resv-widget__pdf fp-btn fp-btn--ghost" href="#">
-                    <?php echo esc_html__('Scarica PDF menù', 'fp-restaurant-reservations'); ?>
+                    <?php echo esc_html__('Scopri il nostro Menu', 'fp-restaurant-reservations'); ?>
                 </a>
             </div>
             <form class="fp-resv-widget__form" action="#" method="post">

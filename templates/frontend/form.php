@@ -16,7 +16,7 @@ $pdfUrl     = isset($context['pdf_url']) ? (string) $context['pdf_url'] : '';
 $pdfLabel   = isset($strings['pdf_label']) ? (string) $strings['pdf_label'] : '';
 $pdfTooltip = isset($strings['pdf_tooltip']) ? (string) $strings['pdf_tooltip'] : '';
 if ($pdfUrl !== '' && $pdfLabel === '') {
-    $pdfLabel = __('Scarica menu (PDF)', 'fp-restaurant-reservations');
+    $pdfLabel = __('Scopri il nostro Menu', 'fp-restaurant-reservations');
 }
 $dataLayer  = $context['data_layer'] ?? [];
 $events     = $dataLayer['events'] ?? [];
