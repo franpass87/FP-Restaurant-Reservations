@@ -411,6 +411,7 @@ final class Plugin
             $brevoRepository,
             $reservationsRepository,
             $mailer,
+            $languageSettings,
             $notificationsSettings
         );
         $brevoAutomation->boot();

@@ -217,19 +217,18 @@ final class Language
         $formats  = $this->getFormats($language);
 
         $normalizedTime = substr(trim($time), 0, 5);
-        $dateTime       = DateTimeImmutable::createFromFormat('Y-m-d H:i', trim($date) . ' ' . $normalizedTime);
+        
+        // Crea DateTimeImmutable con il timezone corretto fin dall'inizio
+        try {
+            $tz = new DateTimeZone($timezone !== null && $timezone !== '' ? $timezone : 'Europe/Rome');
+        } catch (\Exception $exception) {
+            $tz = new DateTimeZone('Europe/Rome');
+        }
+        
+        $dateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i', trim($date) . ' ' . $normalizedTime, $tz);
 
         if (!$dateTime instanceof DateTimeImmutable) {
             return trim($date . ' ' . $time);
-        }
-
-        if ($timezone !== null && $timezone !== '') {
-            try {
-                $tz = new DateTimeZone($timezone);
-                $dateTime = $dateTime->setTimezone($tz);
-            } catch (\Exception $exception) {
-                unset($exception);
-            }
         }
 
         return $dateTime->format($formats['datetime']);
