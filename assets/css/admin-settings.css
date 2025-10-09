@@ -177,6 +177,23 @@
     color: var(--fp-resv-admin-muted, #64748b);
 }
 
+.fp-resv-meal-plan__field-label--required::after {
+    content: '*';
+    color: #dc2626;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.fp-resv-meal-plan__field-label--optional::after {
+    content: '(opzionale)';
+    color: var(--fp-resv-admin-muted, #94a3b8);
+    font-weight: 400;
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
 .fp-resv-meal-plan__field-label > span:first-child {
     display: inline-flex;
     align-items: center;
@@ -347,6 +364,21 @@
     display: grid;
     gap: 16px;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.fp-resv-meal-plan__numeric-hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 12px;
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1e40af;
+}
+
+.fp-resv-meal-plan__numeric-hint strong {
+    font-weight: 600;
 }
 
 .fp-resv-meal-plan__add {
