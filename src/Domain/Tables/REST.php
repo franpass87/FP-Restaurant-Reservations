@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Tables;
 
+use FP\Resv\Core\Roles;
 use InvalidArgumentException;
 use WP_Error;
 use WP_REST_Request;
@@ -332,9 +333,8 @@ final class REST
 
     private function canManage(): bool
     {
-        // Verifica che l'utente abbia i permessi per gestire le opzioni
-        // o almeno i permessi per gestire le prenotazioni
-        return current_user_can('manage_options') || current_user_can('edit_posts');
+        // Verifica che l'utente abbia i permessi per gestire le prenotazioni
+        return current_user_can(Roles::MANAGE_RESERVATIONS);
     }
 
     /**

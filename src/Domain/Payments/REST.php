@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Payments;
 
 use FP\Resv\Core\Logging;
+use FP\Resv\Core\Roles;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use RuntimeException;
 use Throwable;
@@ -213,7 +214,7 @@ final class REST
 
     private function checkAdminPermission(): bool
     {
-        return current_user_can('manage_options');
+        return current_user_can(Roles::MANAGE_RESERVATIONS);
     }
 
     private function applyReservationStatus(int $reservationId, string $paymentStatus): ?string

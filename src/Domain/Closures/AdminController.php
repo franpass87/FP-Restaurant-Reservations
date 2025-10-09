@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Roles;
 use InvalidArgumentException;
 use function __;
 use function add_action;
@@ -25,7 +26,7 @@ use function wp_timezone;
 
 final class AdminController
 {
-    private const CAPABILITY = 'manage_options';
+    private const CAPABILITY = Roles::MANAGE_RESERVATIONS;
     private const PAGE_SLUG = 'fp-resv-closures-app';
 
     private ?string $pageHook = null;

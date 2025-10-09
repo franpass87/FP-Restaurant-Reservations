@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Diagnostics;
 
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Roles;
 use function __;
 use function add_action;
 use function add_submenu_page;
@@ -24,7 +25,7 @@ use function wp_strip_all_tags;
 
 final class AdminController
 {
-    private const CAPABILITY = 'manage_options';
+    private const CAPABILITY = Roles::MANAGE_RESERVATIONS;
     private const PAGE_SLUG  = 'fp-resv-diagnostics';
 
     private ?string $pageHook = null;

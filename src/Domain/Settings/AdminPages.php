@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Settings;
 
 use FP\Resv\Core\Plugin;
+use FP\Resv\Core\Roles;
 use FP\Resv\Core\ServiceContainer;
 use FP\Resv\Domain\Settings\MealPlan;
 use function __;
@@ -71,7 +72,7 @@ use const INPUT_GET;
 
 final class AdminPages
 {
-    private const CAPABILITY = 'manage_options';
+    private const CAPABILITY = Roles::MANAGE_RESERVATIONS;
     private const DEFAULT_PHONE_PREFIX_MAP = ['+39' => 'IT'];
 
     /**
