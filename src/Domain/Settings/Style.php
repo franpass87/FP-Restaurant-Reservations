@@ -612,7 +612,7 @@ final class Style
 }
 %s .fp-progress__item[data-state="active"],
 %s .fp-progress__item[data-progress-state="active"],
-%s .fp-resv-step[aria-hidden="false"] ~ .fp-progress__item,
+%s .fp-resv-step[data-state="active"] ~ .fp-progress__item,
 %s .fp-progress__item:first-child {
     color: var(--fp-resv-color-text);
 }

@@ -554,7 +554,7 @@ class G {
     const s = t.getAttribute("data-step") || "", r = i && i.silent === !0;
     console.log(`[FP-RESV] updateSectionAttributes: step=${s}, state=${e}, silent=${r}`), this.state.sectionStates[s] = e, t.setAttribute("data-state", e), e === "completed" ? t.setAttribute("data-complete-hidden", "true") : t.removeAttribute("data-complete-hidden");
     const n = e === "active";
-    t.setAttribute("aria-hidden", n ? "false" : "true"), t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style.display = "block", t.style.visibility = "visible", t.style.opacity = "1", console.log(`[FP-RESV] Step ${s} made visible`)) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style.display = "none", t.style.visibility = "hidden", t.style.opacity = "0", console.log(`[FP-RESV] Step ${s} hidden`)), r || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
+    t.setAttribute("aria-expanded", n ? "true" : "false"), n ? (t.hidden = !1, t.removeAttribute("hidden"), t.removeAttribute("inert"), t.style.display = "block", t.style.visibility = "visible", t.style.opacity = "1", console.log(`[FP-RESV] Step ${s} made visible`)) : (t.hidden = !0, t.setAttribute("hidden", ""), t.setAttribute("inert", ""), t.style.display = "none", t.style.visibility = "hidden", t.style.opacity = "0", console.log(`[FP-RESV] Step ${s} hidden`)), r || this.updateProgressIndicators(), this.updateStickyCtaVisibility();
   }
   updateProgressIndicators() {
     if (!this.progress)
@@ -565,8 +565,8 @@ class G {
     Array.prototype.forEach.call(e, function(n, l) {
       const h = n.getAttribute("data-step") || "", f = t.state.sectionStates[h] || "locked";
       n.setAttribute("data-state", f), n.setAttribute("data-progress-state", f === "completed" ? "done" : f);
-      const b = n.querySelector(".fp-progress__label");
-      b && (f === "active" ? b.removeAttribute("aria-hidden") : b.setAttribute("aria-hidden", "true"));
+      const v = n.querySelector(".fp-progress__label");
+      v && (f === "active" ? v.removeAttribute("aria-hidden") : v.setAttribute("aria-hidden", "true"));
       const S = f === "locked";
       n.tabIndex = S ? -1 : 0, S ? n.setAttribute("aria-disabled", "true") : n.removeAttribute("aria-disabled"), f === "active" ? (n.setAttribute("aria-current", "step"), i = Math.max(i, l + 0.5)) : n.removeAttribute("aria-current"), f === "completed" ? (n.setAttribute("data-completed", "true"), i = Math.max(i, l + 1)) : n.removeAttribute("data-completed");
     });
@@ -662,7 +662,7 @@ class G {
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), b = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), S = this.form.querySelector('[data-fp-resv-field="pets"]');
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), r = this.form.querySelector('[data-fp-resv-field="last_name"]'), n = this.form.querySelector('[data-fp-resv-field="email"]'), l = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), S = this.form.querySelector('[data-fp-resv-field="pets"]');
     let _ = "";
     s && s.value && (_ = s.value.trim()), r && r.value && (_ = (_ + " " + r.value.trim()).trim());
     let P = "";
@@ -671,7 +671,7 @@ class G {
       P = P !== "" ? P + " / " + N : N;
     }
     const E = [];
-    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && E.push("Seggioloni: " + parseInt(f.value, 10)), b && "checked" in b && b.checked && E.push("Tavolo accessibile per sedia a rotelle"), S && "checked" in S && S.checked && E.push("Animali domestici");
+    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && E.push("Seggioloni: " + parseInt(f.value, 10)), v && "checked" in v && v.checked && E.push("Tavolo accessibile per sedia a rotelle"), S && "checked" in S && S.checked && E.push("Animali domestici");
     const q = E.join("; ");
     this.summaryTargets.forEach(function(A) {
       switch (A.getAttribute("data-fp-resv-summary")) {
@@ -724,7 +724,7 @@ class G {
         credentials: "same-origin"
       });
       if (l = Math.round(performance.now() - n), y("ui_latency", { op: "submit", ms: l }), !h.ok) {
-        const b = await ft(h);
+        const v = await ft(h);
         if (h.status === 403 && !this.state.nonceRetried) {
           const _ = await this.refreshNonce();
           if (_) {
@@ -745,10 +745,10 @@ class G {
             }
           }
         }
-        const S = b && b.message || this.copy.submitError;
+        const S = v && v.message || this.copy.submitError;
         throw Object.assign(new Error(S), {
           status: h.status,
-          payload: b
+          payload: v
         });
       }
       const f = await h.json();
@@ -1092,7 +1092,7 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   const i = t.payload || t.data || {};
   y(e, i && typeof i == "object" ? i : {});
 });
-const bt = 400, vt = 6e4, gt = 3, W = 600;
+const vt = 400, bt = 6e4, gt = 3, W = 600;
 function St(a, t) {
   let e;
   try {
@@ -1109,14 +1109,14 @@ function V(a) {
 }
 function At(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), r = t.querySelector("[data-fp-resv-slots-boundary]"), n = r ? r.querySelector("[data-fp-resv-slots-retry]") : null, l = /* @__PURE__ */ new Map();
-  let h = null, f = null, b = null, S = 0;
+  let h = null, f = null, v = null, S = 0;
   function _(o) {
     if (typeof o != "string")
       return "";
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((v) => typeof v.normalize == "function" ? v.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : v)(d), m = (v) => v.some((c) => u.startsWith(c)), C = (v) => v.some((c) => u.includes(c));
+    const u = ((b) => typeof b.normalize == "function" ? b.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : b)(d), m = (b) => b.some((c) => u.startsWith(c)), C = (b) => b.some((c) => u.includes(c));
     return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function P(o, d) {
@@ -1154,7 +1154,7 @@ function At(a) {
   }
   function R(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || v), k = C && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, b = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || b), k = C && !b ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
     q(k, "idle"), i && V(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
   }
   function N() {
@@ -1175,10 +1175,10 @@ function At(a) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
     Array.prototype.forEach.call(p, (u) => {
       u.setAttribute("aria-pressed", u === d ? "true" : "false");
-    }), b = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
+    }), v = o, typeof a.onSlotSelected == "function" && a.onSlotSelected(o);
   }
   function tt() {
-    if (b = null, !i)
+    if (v = null, !i)
       return;
     const o = i.querySelectorAll("button[data-slot]");
     Array.prototype.forEach.call(o, (d) => {
@@ -1195,8 +1195,8 @@ function At(a) {
       return;
     }
     u.forEach((C) => {
-      const v = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", b && b.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), v.appendChild(c), i.appendChild(v);
+      const b = document.createElement("li"), c = document.createElement("button");
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", v && v.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), b.appendChild(c), i.appendChild(b);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
     E(d, P(u, m));
@@ -1207,12 +1207,12 @@ function At(a) {
       return;
     }
     const p = ++S, u = JSON.stringify([o.date, o.meal, o.party]), m = l.get(u);
-    if (m && Date.now() - m.timestamp < vt && d === 0) {
+    if (m && Date.now() - m.timestamp < bt && d === 0) {
       j(m.payload, o, p);
       return;
     }
     B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
-    const C = St(a.endpoint, o), v = performance.now();
+    const C = St(a.endpoint, o), b = performance.now();
     fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
         const g = new Error("availability_error");
@@ -1228,12 +1228,12 @@ function At(a) {
     })).then((c) => {
       if (p !== S)
         return;
-      const x = performance.now() - v;
+      const x = performance.now() - b;
       typeof a.onLatency == "function" && a.onLatency(x), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
     }).catch((c) => {
       if (p !== S)
         return;
-      const x = performance.now() - v;
+      const x = performance.now() - b;
       typeof a.onLatency == "function" && a.onLatency(x);
       const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
       let F = 0;
@@ -1268,7 +1268,7 @@ function At(a) {
       }
       h = window.setTimeout(() => {
         I(u, 0);
-      }, bt);
+      }, vt);
     },
     revalidate() {
       if (!f)
@@ -1277,7 +1277,7 @@ function At(a) {
       l.delete(o), I(f, 0);
     },
     getSelection() {
-      return b;
+      return v;
     },
     clearSelection() {
       tt();
