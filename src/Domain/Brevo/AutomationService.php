@@ -52,7 +52,8 @@ final class AutomationService
         private readonly Mapper $mapper,
         private readonly Repository $repository,
         private readonly ReservationsRepository $reservations,
-        private readonly Mailer $mailer
+        private readonly Mailer $mailer,
+        private readonly ?\FP\Resv\Domain\Notifications\Settings $notificationSettings = null
     ) {
     }
 
@@ -113,7 +114,9 @@ final class AutomationService
 
         $this->subscribeContact($reservationId, $contact, $subscriptionContext);
 
-        if ($status === 'confirmed') {
+        // Invia evento reservation_confirmed SOLO se Brevo NON sta già gestendo
+        // le email di conferma tramite email_confirmation (per evitare email duplicate)
+        if ($status === 'confirmed' && !$this->isBrevoHandlingConfirmationEmails()) {
             $attributes = $contact['attributes'] ?? [];
             $reservationDate = $this->findAttributeValue($attributes, ['RESERVATION_DATE', 'reservation_date'], $payload['date'] ?? '');
             $reservationTime = $this->findAttributeValue($attributes, ['RESERVATION_TIME', 'reservation_time'], $payload['time'] ?? '');
@@ -211,7 +214,9 @@ final class AutomationService
         $reservationTime = $this->findAttributeValue($attributes, ['RESERVATION_TIME', 'reservation_time'], isset($context['time']) ? substr((string) $context['time'], 0, 5) : '');
         $reservationParty = $this->findAttributeValue($attributes, ['RESERVATION_PARTY', 'reservation_party'], isset($context['party']) ? (int) $context['party'] : 0);
 
-        if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed') {
+        // Invia evento reservation_confirmed SOLO se Brevo NON sta già gestendo
+        // le email di conferma tramite email_confirmation (per evitare email duplicate)
+        if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed' && !$this->isBrevoHandlingConfirmationEmails()) {
             $eventProperties = $this->buildEventProperties(
                 $contact,
                 $attributes,
@@ -996,5 +1001,21 @@ final class AutomationService
         $key = $this->findAttributeKey($attributes, $possibleKeys);
         
         return $key !== null ? $attributes[$key] : $default;
+    }
+
+    /**
+     * Verifica se Brevo sta già gestendo le email di conferma.
+     * Serve per evitare di inviare sia email_confirmation che reservation_confirmed
+     * che causerebbero email duplicate.
+     * 
+     * @return bool
+     */
+    private function isBrevoHandlingConfirmationEmails(): bool
+    {
+        if ($this->notificationSettings === null) {
+            return false;
+        }
+
+        return $this->notificationSettings->shouldUseBrevo(\FP\Resv\Domain\Notifications\Settings::CHANNEL_CONFIRMATION);
     }
 }
