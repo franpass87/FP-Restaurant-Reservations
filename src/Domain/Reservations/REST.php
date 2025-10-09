@@ -354,7 +354,7 @@ final class REST
                     'reservation_id' => $existing->id,
                 ]);
                 
-                $manageUrl = $this->generateManageUrl($existing->id, $existing->customer->email ?? '');
+                $manageUrl = $this->generateManageUrl($existing->id, $existing->email);
                 
                 $payload = [
                     'reservation' => [

@@ -1,10 +1,20 @@
 # Fix: Duplicazione Notifiche Email e Eventi Brevo
 
-## ⚠️ IMPORTANTE: Bug Critico Risolto (2025-10-09)
+## ⚠️ IMPORTANTE: Bug Critici Risolti (2025-10-09)
 
+### Bug #1: `request_id` non salvato nel database ✅ RISOLTO
 Il campo `request_id` veniva **sanitizzato ma NON salvato** nel database, rendendo completamente inefficace il sistema di idempotenza. Questo causava la creazione di prenotazioni duplicate con ID sequenziali (#123, #124) anche con lo stesso `request_id`.
 
 **Fix applicato:** Aggiunto `'request_id' => $sanitized['request_id']` all'array `$reservationData` in `Service.php` (riga 199).
+
+### Bug #2: Email del customer non recuperata in risposta idempotente ✅ RISOLTO
+Quando il REST endpoint rilevava una richiesta duplicata e restituiva la prenotazione esistente, cercava di accedere a `$existing->customer->email` (che non esiste) invece di `$existing->email`. Inoltre, il metodo `findByRequestId()` non faceva JOIN con la tabella `customers`, quindi l'email rimaneva sempre vuota.
+
+**Conseguenza:** Il `manageUrl` veniva generato con email vuota → token errato → l'utente non poteva gestire la prenotazione.
+
+**Fix applicati:**
+1. Modificato `Repository.php::findByRequestId()` per fare JOIN con `customers` e recuperare l'email (righe 112-115)
+2. Corretto `REST.php` per accedere a `$existing->email` invece di `$existing->customer->email` (riga 357)
 
 ---
 
@@ -145,10 +155,17 @@ Il sistema ora:
 - Logga ogni invio per tracciabilità
 
 ### Test Request ID e Idempotenza (AGGIUNTO 2025-10-09)
-È stato aggiunto il test `testRequestIdIsStoredForIdempotency()` in `ServiceTest.php` che verifica:
+Sono stati aggiunti due test in `ServiceTest.php`:
+
+**1. `testRequestIdIsStoredForIdempotency()`** verifica:
 - Il `request_id` viene correttamente salvato nel database
 - `findByRequestId()` trova la prenotazione creata
+- L'email viene recuperata correttamente dal JOIN con customers
 - Il sistema è effettivamente idempotente
+
+**2. `testDuplicateRequestIdPreventsMultipleReservations()`** verifica:
+- Due chiamate con lo stesso `request_id` non creano prenotazioni duplicate (tramite REST.php)
+- Il controllo di idempotenza funziona correttamente nel flusso completo
 
 ---
 
@@ -176,7 +193,9 @@ Il sistema ora:
 
 ### Email e Eventi
 - ✅ `src/Domain/Reservations/Service.php` - Deduplica email + protezione eventi Brevo + **FIX request_id salvataggio (riga 199)**
-- ✅ `tests/Integration/Reservations/ServiceTest.php` - Test deduplica email + **Test idempotenza request_id**
+- ✅ `src/Domain/Reservations/Repository.php` - **FIX findByRequestId JOIN con customers (righe 112-115)**
+- ✅ `src/Domain/Reservations/REST.php` - **FIX accesso email corretto (riga 357)**
+- ✅ `tests/Integration/Reservations/ServiceTest.php` - Test deduplica email + **Test idempotenza request_id completa**
 
 ---
 

@@ -108,11 +108,14 @@ final class Repository
             return null;
         }
 
+        // JOIN con customers per recuperare l'email necessaria per il manage_url
+        $sql = 'SELECT r.*, c.email '
+            . 'FROM ' . $this->tableName() . ' r '
+            . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
+            . 'WHERE r.request_id = %s ORDER BY r.id DESC LIMIT 1';
+
         $row = $this->wpdb->get_row(
-            $this->wpdb->prepare(
-                'SELECT * FROM ' . $this->tableName() . ' WHERE request_id = %s ORDER BY id DESC LIMIT 1',
-                $requestId
-            ),
+            $this->wpdb->prepare($sql, $requestId),
             ARRAY_A
         );
 
