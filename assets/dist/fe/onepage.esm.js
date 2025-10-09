@@ -1097,7 +1097,7 @@ function Ct(a) {
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), y = (g) => g.some((c) => u.startsWith(c)), C = (g) => g.some((c) => u.includes(c));
+    const u = ((v) => typeof v.normalize == "function" ? v.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : v)(d), y = (v) => v.some((c) => u.startsWith(c)), C = (v) => v.some((c) => u.includes(c));
     return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function k(o, d) {
@@ -1135,8 +1135,8 @@ function Ct(a) {
   }
   function I(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", C = p !== "", P = C && u !== "" && (y !== "" && y !== "0"), v = C ? P && a.strings && a.strings.slotsEmpty || "" : a.strings && a.strings.selectMeal || "";
-    q(v, "idle"), i && O(i), E(o, { state: P ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", y = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (y !== "" && y !== "0") && (!C || v), P = C && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    q(P, "idle"), i && O(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1176,8 +1176,8 @@ function Ct(a) {
       return;
     }
     u.forEach((C) => {
-      const g = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", b && b.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), g.appendChild(c), i.appendChild(g);
+      const v = document.createElement("li"), c = document.createElement("button");
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", b && b.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), v.appendChild(c), i.appendChild(v);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const y = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
     E(d, k(u, y));
@@ -1193,45 +1193,45 @@ function Ct(a) {
       return;
     }
     B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
-    const C = At(a.endpoint, o), g = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((P) => {
+    const C = At(a.endpoint, o), v = performance.now();
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((F) => {
       if (!c.ok) {
-        const v = new Error("availability_error");
-        v.status = c.status, v.payload = P;
-        const _ = c.headers.get("Retry-After");
-        if (_) {
-          const F = Number.parseInt(_, 10);
-          Number.isFinite(F) && (v.retryAfter = F);
+        const g = new Error("availability_error");
+        g.status = c.status, g.payload = F;
+        const P = c.headers.get("Retry-After");
+        if (P) {
+          const _ = Number.parseInt(P, 10);
+          Number.isFinite(_) && (g.retryAfter = _);
         }
-        throw v;
+        throw g;
       }
-      return P;
+      return F;
     })).then((c) => {
       if (p !== S)
         return;
-      const P = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(P), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
+      const F = performance.now() - v;
+      typeof a.onLatency == "function" && a.onLatency(F), l.set(u, { payload: c, timestamp: Date.now() }), j(c, o, p);
     }).catch((c) => {
       if (p !== S)
         return;
-      const P = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(P);
-      const v = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, _ = typeof c.status == "number" ? c.status : v && typeof v.status == "number" ? v.status : 0;
-      let F = 0;
+      const F = performance.now() - v;
+      typeof a.onLatency == "function" && a.onLatency(F);
+      const g = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, P = typeof c.status == "number" ? c.status : g && typeof g.status == "number" ? g.status : 0;
+      let _ = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
-        F = c.retryAfter;
-      else if (v && typeof v.retry_after < "u") {
-        const R = Number.parseInt(v.retry_after, 10);
-        Number.isFinite(R) && (F = R);
+        _ = c.retryAfter;
+      else if (g && typeof g.retry_after < "u") {
+        const R = Number.parseInt(g.retry_after, 10);
+        Number.isFinite(R) && (_ = R);
       }
-      if (d >= St - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+      if (d >= St - 1 ? !1 : P === 429 || P >= 500 && P < 600 ? !0 : P === 0) {
         const R = d + 1;
         typeof a.onRetry == "function" && a.onRetry(R);
-        const at = F > 0 ? Math.max(F * 1e3, W) : W * Math.pow(2, d);
+        const at = _ > 0 ? Math.max(_ * 1e3, W) : W * Math.pow(2, d);
         window.setTimeout(() => L(o, R), at);
         return;
       }
-      const et = c && c.payload && (c.payload.message || c.payload.code) || v && v.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", it = c && c.payload || v || null, st = X(et, it);
+      const et = c && c.payload && (c.payload.message || c.payload.code) || g && g.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", it = c && c.payload || g || null, st = X(et, it);
       Q(st);
     });
   }
