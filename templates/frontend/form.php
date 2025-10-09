@@ -236,6 +236,8 @@ endif;
                                         <ul
                                             class="fp-meals__legend"
                                             aria-label="<?php echo esc_attr__('Legenda disponibilità', 'fp-restaurant-reservations'); ?>"
+                                            data-fp-resv-meals-legend
+                                            hidden
                                         >
                                             <li class="fp-meals__legend-item fp-meals__legend-item--available">
                                                 <span class="fp-meals__legend-indicator" aria-hidden="true"></span>

@@ -343,6 +343,9 @@ class FormApp {
             return;
         }
 
+        // Trova e salva il riferimento alla legenda dei pasti
+        this.mealsLegend = this.root.querySelector('[data-fp-resv-meals-legend]');
+
         this.mealButtons.forEach(function (button) {
             if (!button.hasAttribute('data-meal-default-notice')) {
                 const initialNotice = button.getAttribute('data-meal-notice') || '';
@@ -1849,6 +1852,12 @@ class FormApp {
         this.state.mealAvailability[mealKey] = normalized;
         this.applyMealAvailabilityIndicator(mealKey, normalized);
         this.applyMealAvailabilityNotice(mealKey, normalized);
+
+        // Mostra la legenda dei pasti quando ci sono informazioni sulla disponibilità
+        if (this.mealsLegend && this.mealsLegend.hidden) {
+            this.mealsLegend.hidden = false;
+            this.mealsLegend.removeAttribute('hidden');
+        }
 
         if (this.availabilityIndicator) {
             let label = '';
