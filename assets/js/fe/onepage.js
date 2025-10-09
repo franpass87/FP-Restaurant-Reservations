@@ -434,8 +434,8 @@ class FormApp {
         const today = new Date().toISOString().split('T')[0];
         this.dateField.setAttribute('min', today);
 
-        // Ottieni i giorni disponibili dalla configurazione
-        const availableDays = this.config && this.config.available_days ? this.config.available_days : [];
+        // Ottieni i giorni disponibili dalla configurazione (inizialmente tutti i giorni aggregati)
+        this.currentAvailableDays = this.config && this.config.available_days ? this.config.available_days : [];
 
         // Aggiungi validazione per date passate e giorni disponibili
         this.dateField.addEventListener('change', (event) => {
@@ -448,13 +448,13 @@ class FormApp {
             }
 
             // Se ci sono giorni disponibili configurati, valida la selezione
-            if (availableDays.length > 0 && selectedDate) {
+            if (this.currentAvailableDays.length > 0 && selectedDate) {
                 const date = new Date(selectedDate);
                 const dayOfWeek = date.getDay().toString(); // 0 = domenica, 1 = lunedì, ecc.
 
-                if (!availableDays.includes(dayOfWeek)) {
+                if (!this.currentAvailableDays.includes(dayOfWeek)) {
                     const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                    const availableDayNames = this.currentAvailableDays.map(d => dayNames[parseInt(d)]).join(', ');
                     const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
                     
                     event.target.setCustomValidity(errorMessage);
@@ -852,9 +852,58 @@ class FormApp {
             meal_label: button.getAttribute('data-meal-label') || '',
         });
 
+        // Aggiorna i giorni disponibili in base al meal selezionato
+        this.updateAvailableDaysForMeal(mealKey);
+
         // Schedula sempre l'aggiornamento della disponibilità, anche se lo stato cached è 'full'
         // perché i parametri (date, party) potrebbero essere cambiati
         this.scheduleAvailabilityUpdate({ immediate: true });
+    }
+
+    updateAvailableDaysForMeal(mealKey) {
+        if (!this.dateField || !mealKey) {
+            return;
+        }
+
+        // Trova il meal selezionato dall'array dei meals
+        const meals = this.config && this.config.meals ? this.config.meals : [];
+        const selectedMeal = meals.find(meal => meal.key === mealKey);
+
+        // Se il meal ha giorni disponibili specifici, usali
+        if (selectedMeal && selectedMeal.available_days && selectedMeal.available_days.length > 0) {
+            this.currentAvailableDays = selectedMeal.available_days;
+        } else {
+            // Altrimenti usa i giorni disponibili globali
+            this.currentAvailableDays = this.config && this.config.available_days ? this.config.available_days : [];
+        }
+
+        // Valida la data attualmente selezionata (se presente)
+        const currentDate = this.dateField.value;
+        if (currentDate && this.currentAvailableDays.length > 0) {
+            const date = new Date(currentDate);
+            const dayOfWeek = date.getDay().toString();
+
+            // Se il giorno non è più disponibile con il nuovo meal, resetta il campo
+            if (!this.currentAvailableDays.includes(dayOfWeek)) {
+                const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+                const availableDayNames = this.currentAvailableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                
+                // Mostra un messaggio informativo
+                if (window.console && window.console.warn) {
+                    console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${availableDayNames}.`);
+                }
+                
+                // Resetta il campo data
+                this.dateField.value = '';
+                this.dateField.setCustomValidity('');
+                this.dateField.setAttribute('aria-invalid', 'false');
+                
+                // Resetta anche gli slot se presenti
+                if (this.availabilityController && typeof this.availabilityController.clear === 'function') {
+                    this.availabilityController.clear();
+                }
+            }
+        }
     }
 
     updateMealNoticeFromButton(button, overrideText) {

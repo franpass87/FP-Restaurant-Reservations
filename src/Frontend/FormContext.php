@@ -1712,6 +1712,9 @@ final class FormContext
             $config['available_days'] = $availableDays;
         }
 
+        // Arricchisci ogni meal con i suoi giorni disponibili specifici
+        $meals = $this->enrichMealsWithAvailableDays($meals, $generalSettings);
+
         $dictionary  = $this->language->getStrings($languageData['language']);
         $formStrings = is_array($dictionary['form'] ?? null) ? $dictionary['form'] : [];
 
@@ -2250,6 +2253,52 @@ final class FormContext
         }
 
         return $days;
+    }
+
+    /**
+     * Arricchisce ogni meal con i giorni disponibili specifici.
+     *
+     * @param array<int, array<string, mixed>> $meals
+     * @param array<string, mixed> $generalSettings
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichMealsWithAvailableDays(array $meals, array $generalSettings): array
+    {
+        $dayMapping = [
+            'mon' => '1',
+            'tue' => '2',
+            'wed' => '3',
+            'thu' => '4',
+            'fri' => '5',
+            'sat' => '6',
+            'sun' => '0',
+        ];
+
+        foreach ($meals as $index => $meal) {
+            $days = [];
+
+            // Se il meal ha hours_definition specifico, usalo
+            if (!empty($meal['hours_definition'])) {
+                $days = $this->parseDaysFromSchedule((string) $meal['hours_definition']);
+            }
+            // Altrimenti usa service_hours_definition generale come fallback
+            elseif (!empty($generalSettings['service_hours_definition'])) {
+                $days = $this->parseDaysFromSchedule((string) $generalSettings['service_hours_definition']);
+            }
+
+            // Converti i giorni in numeri ISO
+            $dayNumbers = [];
+            foreach ($days as $day) {
+                if (isset($dayMapping[$day])) {
+                    $dayNumbers[] = $dayMapping[$day];
+                }
+            }
+
+            // Aggiungi i giorni disponibili al meal
+            $meals[$index]['available_days'] = $dayNumbers;
+        }
+
+        return $meals;
     }
 }
 
