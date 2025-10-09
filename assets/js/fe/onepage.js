@@ -1525,11 +1525,18 @@ class FormApp {
                 
                 // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
                 if (response.status === 403 && !this.state.nonceRetried) {
+                    // Aspetta 500ms per dare tempo ai cookie di essere impostati correttamente
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
                     const freshNonce = await this.refreshNonce();
                     if (freshNonce) {
                         this.state.nonceRetried = true;
                         payload.fp_resv_nonce = freshNonce;
-                        // Riprova immediatamente con il nonce fresco
+                        
+                        // Aspetta altri 200ms prima di riprovare
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                        // Riprova con il nonce fresco
                         const retryResponse = await fetch(endpoint, {
                             method: 'POST',
                             headers: {
@@ -1546,6 +1553,16 @@ class FormApp {
                             this.handleSubmitSuccess(data);
                             this.state.nonceRetried = false;
                             return false;
+                        } else {
+                            // Se anche il retry fallisce, aggiungi info sul cookie al messaggio di errore
+                            const retryError = await safeJson(retryResponse);
+                            if (retryError && retryError.message) {
+                                retryError.message = retryError.message + ' Se hai appena accettato i cookie, riprova tra qualche secondo.';
+                            }
+                            throw Object.assign(new Error(retryError.message || this.copy.submitError), {
+                                status: retryResponse.status,
+                                payload: retryError,
+                            });
                         }
                     }
                 }
