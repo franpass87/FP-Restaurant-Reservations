@@ -27,6 +27,8 @@
     let currentView = 'day'; // day, week, month, list
     let reservations = [];
     let currentModal = null;
+    let loadRequestId = 0; // Counter to prevent race conditions
+    let currentReservationId = null; // Current reservation being viewed
 
     // Initialize
     init();
@@ -42,11 +44,8 @@
         datePicker.addEventListener('change', handleDateChange);
         serviceFilter?.addEventListener('change', handleServiceChange);
 
-        // Set initial view
+        // Set initial view (this already calls loadReservations internally)
         setActiveView('day');
-
-        // Load initial data
-        loadReservations();
     }
 
     // Event Handlers
@@ -84,6 +83,10 @@
                 break;
             case 'confirm-reservation':
                 updateReservationStatus('confirmed');
+                break;
+            case 'edit-reservation':
+                // TODO: Implement edit reservation functionality
+                console.log('Edit reservation not yet implemented');
                 break;
             default:
                 if (action.startsWith('view-reservation-')) {
@@ -189,6 +192,9 @@
     function loadReservations() {
         showLoading();
 
+        // Increment request ID to detect stale responses
+        const requestId = ++loadRequestId;
+
         const { startDate, endDate } = getDateRange();
         const params = new URLSearchParams({
             date: startDate,
@@ -200,11 +206,21 @@
 
         request(`agenda?${params}`)
             .then(data => {
+                // Ignore stale responses
+                if (requestId !== loadRequestId) {
+                    return;
+                }
+                
                 reservations = Array.isArray(data) ? data : (data.reservations || []);
                 renderCurrentView();
                 updateSummary();
             })
             .catch(error => {
+                // Ignore stale responses
+                if (requestId !== loadRequestId) {
+                    return;
+                }
+                
                 console.error('Error loading reservations:', error);
                 showEmpty();
             });
@@ -272,22 +288,45 @@
     }
 
     function updateReservationStatus(status) {
-        // Implementazione placeholder
-        console.log('Update status to:', status);
-        closeModal('[data-modal="reservation-details"]');
+        if (!currentReservationId) {
+            console.error('No reservation selected');
+            return;
+        }
+
+        request(`agenda/reservations/${currentReservationId}`, {
+            method: 'PATCH',
+            data: { status }
+        })
+            .then(() => {
+                loadReservations();
+                closeModal('[data-modal="reservation-details"]');
+                currentReservationId = null;
+            })
+            .catch(error => {
+                console.error('Error updating reservation status:', error);
+                alert(error.message || 'Impossibile aggiornare lo stato della prenotazione');
+            });
     }
 
     // Rendering
     function showLoading() {
         if (loadingEl) loadingEl.hidden = false;
         if (emptyEl) emptyEl.hidden = true;
+        // Hide all views
         if (timelineEl) timelineEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
     }
 
     function showEmpty() {
         if (loadingEl) loadingEl.hidden = true;
         if (emptyEl) emptyEl.hidden = false;
+        // Hide all views
         if (timelineEl) timelineEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
     }
 
     function renderTimeline() {
@@ -300,7 +339,11 @@
             return;
         }
 
-        emptyEl.hidden = true;
+        // Hide all other views and empty state
+        if (emptyEl) emptyEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
         timelineEl.hidden = false;
 
         // Group by time slot
@@ -335,7 +378,11 @@
             return;
         }
 
-        emptyEl.hidden = true;
+        // Hide all other views and empty state
+        if (emptyEl) emptyEl.hidden = true;
+        if (timelineEl) timelineEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
         weekViewEl.hidden = false;
 
         const { startDate } = getDateRange();
@@ -386,7 +433,16 @@
 
         if (loadingEl) loadingEl.hidden = true;
 
-        emptyEl.hidden = true;
+        if (!reservations.length) {
+            showEmpty();
+            return;
+        }
+
+        // Hide all other views and empty state
+        if (emptyEl) emptyEl.hidden = true;
+        if (timelineEl) timelineEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (listViewEl) listViewEl.hidden = true;
         monthViewEl.hidden = false;
 
         const year = currentDate.getFullYear();
@@ -465,7 +521,11 @@
             return;
         }
 
-        emptyEl.hidden = true;
+        // Hide all other views and empty state
+        if (emptyEl) emptyEl.hidden = true;
+        if (timelineEl) timelineEl.hidden = true;
+        if (weekViewEl) weekViewEl.hidden = true;
+        if (monthViewEl) monthViewEl.hidden = true;
         listViewEl.hidden = false;
 
         // Sort reservations by date and time
@@ -646,6 +706,9 @@
         const resv = reservations.find(r => r.id === id);
         if (!resv) return;
 
+        // Store current reservation ID for actions
+        currentReservationId = id;
+
         const modal = document.querySelector('[data-modal="reservation-details"]');
         if (!modal) return;
 
@@ -734,6 +797,11 @@
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
         currentModal = null;
+
+        // Clear current reservation ID when closing details modal
+        if (modal.getAttribute('data-modal') === 'reservation-details') {
+            currentReservationId = null;
+        }
 
         // Restore body scroll
         document.body.style.overflow = '';
