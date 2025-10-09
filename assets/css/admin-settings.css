@@ -151,7 +151,8 @@
 .fp-resv-meal-plan__grid {
     display: grid;
     gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    max-width: 100%;
 }
 
 .fp-resv-meal-plan__field { 
@@ -247,7 +248,8 @@
 .fp-resv-meal-plan__hours-grid {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    max-width: 100%;
 }
 
 .fp-resv-meal-plan__hours-day {
@@ -258,6 +260,8 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .fp-resv-meal-plan__hours-header {
@@ -295,9 +299,10 @@
 
 .fp-resv-meal-plan__hours-range {
     display: grid;
-    gap: 12px;
-    grid-template-columns: minmax(160px, 1fr) minmax(120px, auto) auto;
+    gap: 8px;
+    grid-template-columns: 1fr auto auto;
     align-items: center;
+    width: 100%;
 }
 
 .fp-resv-meal-plan__hours-field {
@@ -315,18 +320,22 @@
 
 .fp-resv-meal-plan__hours-field input {
     width: 100%;
+    max-width: 100%;
     padding: 6px 8px;
     border-radius: 8px;
     border: 1px solid rgba(148, 163, 184, 0.55);
     background: #fff;
     font-size: 14px;
     color: #0f172a;
+    box-sizing: border-box;
 }
 
 .fp-resv-meal-plan__hours-end {
     margin: 0;
     font-size: 12px;
     color: var(--fp-resv-admin-muted, #64748b);
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
 .fp-resv-meal-plan__hours-remove {
@@ -385,6 +394,18 @@
     align-self: flex-start;
 }
 
+@media (max-width: 1200px) {
+    .fp-resv-meal-plan__hours-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .fp-resv-meal-plan__hours-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 600px) {
     .fp-resv-meal-plan__card-header {
         flex-direction: column;
@@ -402,6 +423,7 @@
     .fp-resv-meal-plan__hours-range {
         grid-template-columns: 1fr;
         align-items: stretch;
+        gap: 8px;
     }
 
     .fp-resv-meal-plan__hours-end {
@@ -410,6 +432,11 @@
 
     .fp-resv-meal-plan__hours-remove {
         order: 3;
+        justify-self: flex-start;
+    }
+    
+    .fp-resv-meal-plan__grid {
+        grid-template-columns: 1fr;
     }
 }
 
