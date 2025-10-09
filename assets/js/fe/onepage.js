@@ -155,7 +155,7 @@ function __old_firstFocusable(section) {
     return section.querySelector(selectors);
 }
 
-const STEP_ORDER = ['date', 'party', 'slots', 'details', 'confirm'];
+const STEP_ORDER = ['service', 'date', 'party', 'slots', 'details', 'confirm'];
 
 function __old_safeJson(response) {
     return response.text().then((text) => {

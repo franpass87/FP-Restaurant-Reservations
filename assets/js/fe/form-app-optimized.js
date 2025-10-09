@@ -25,7 +25,7 @@ function loadAvailabilityModule() {
     return availabilityModulePromise;
 }
 
-const STEP_ORDER = ['date', 'party', 'slots', 'details', 'confirm'];
+const STEP_ORDER = ['service', 'date', 'party', 'slots', 'details', 'confirm'];
 
 export class FormApp {
     constructor(root) {

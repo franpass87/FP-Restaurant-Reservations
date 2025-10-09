@@ -224,20 +224,11 @@ endif;
                     </header>
                     <div class="fp-resv-step__body">
                         <?php switch ($stepKey) {
-                            case 'date': ?>
-                                <div class="fp-resv-field fp-field">
-                                    <label>
-                                        <span><?php echo esc_html($strings['fields']['date'] ?? ''); ?></span>
-                                        <input class="fp-input" type="date" name="fp_resv_date" data-fp-resv-field="date" min="<?php echo esc_attr(date('Y-m-d')); ?>" required>
-                                        <?php if (!empty($hints['date'] ?? '')) : ?>
-                                            <small class="fp-hint"><?php echo esc_html($hints['date']); ?></small>
-                                        <?php endif; ?>
-                                    </label>
-                                </div>
+                            case 'service': ?>
                                 <?php if ($meals !== []) : ?>
                                     <section class="fp-meals" data-fp-resv-meals>
                                         <header class="fp-meals__header">
-                                            <h3 class="fp-meals__title"><?php echo esc_html($strings['meals']['title'] ?? ($strings['steps']['slots'] ?? '')); ?></h3>
+                                            <h3 class="fp-meals__title"><?php echo esc_html($strings['meals']['title'] ?? ($strings['steps']['service'] ?? '')); ?></h3>
                                             <?php if (!empty($strings['meals']['subtitle'] ?? '')) : ?>
                                                 <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
                                             <?php endif; ?>
@@ -310,6 +301,17 @@ endif;
                                         </p>
                                     </section>
                                 <?php endif; ?>
+                                <?php break;
+                            case 'date': ?>
+                                <div class="fp-resv-field fp-field">
+                                    <label>
+                                        <span><?php echo esc_html($strings['fields']['date'] ?? ''); ?></span>
+                                        <input class="fp-input" type="date" name="fp_resv_date" data-fp-resv-field="date" min="<?php echo esc_attr(date('Y-m-d')); ?>" required>
+                                        <?php if (!empty($hints['date'] ?? '')) : ?>
+                                            <small class="fp-hint"><?php echo esc_html($hints['date']); ?></small>
+                                        <?php endif; ?>
+                                    </label>
+                                </div>
                                 <?php break;
                             case 'party': ?>
                                 <div class="fp-resv-field fp-field">

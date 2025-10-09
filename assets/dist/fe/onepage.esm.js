@@ -183,7 +183,7 @@ function yt() {
 function mt(a) {
   return Y(a, "data-fp-resv-section");
 }
-const bt = ["date", "party", "slots", "details", "confirm"];
+const bt = ["service", "date", "party", "slots", "details", "confirm"];
 class G {
   constructor(t) {
     this.root = t, this.dataset = ct(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
