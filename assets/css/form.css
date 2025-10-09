@@ -1685,11 +1685,11 @@
 
 @media (max-width: 640px) {
     .fp-resv {
-        padding: 0.65rem 0.5rem; /* riduce padding orizzontale per massimizzare lo spazio utile su mobile */
+        padding: 0; /* rimuove padding per layout a tutto schermo su mobile */
     }
 
     #fp-resv-default.fp-resv-widget {
-        padding: 0.65rem 0.5rem !important;
+        padding: 0 !important; /* widget a tutto schermo su mobile */
     }
 
     .fp-progress {
@@ -1735,13 +1735,13 @@
     }
 
     .fp-meals__list {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 0.25rem;
+        flex-direction: column;
+        gap: 0.75rem;
     }
 
     .fp-meal-pill {
-        flex: 0 0 auto;
+        width: 100%;
+        justify-content: center;
     }
 
     /* Riduci padding orizzontale interno agli step per guadagnare spazio utile */
