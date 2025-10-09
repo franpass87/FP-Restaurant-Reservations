@@ -528,14 +528,48 @@ class Availability
         $maxParallel        = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
         $capacityLimit      = null;
 
+        // Debug logging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                '[FP-RESV] resolveMealSettings - mealKey: %s, default schedule raw: %s, default schedule map: %s',
+                $mealKey,
+                $defaultScheduleRaw,
+                wp_json_encode($scheduleMap) ?: 'empty'
+            ));
+        }
+
         if ($mealKey !== '') {
             $plan = $this->getMealPlan();
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    '[FP-RESV] resolveMealSettings - meal plan: %s',
+                    wp_json_encode($plan) ?: 'empty'
+                ));
+            }
+            
             if (isset($plan[$mealKey])) {
                 $meal = $plan[$mealKey];
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf(
+                        '[FP-RESV] resolveMealSettings - selected meal: %s',
+                        wp_json_encode($meal) ?: 'empty'
+                    ));
+                }
+                
                 if (!empty($meal['hours_definition'])) {
                     $mealSchedule = $this->parseScheduleDefinition((string) $meal['hours_definition']);
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf(
+                            '[FP-RESV] resolveMealSettings - meal schedule: %s',
+                            wp_json_encode($mealSchedule) ?: 'empty'
+                        ));
+                    }
                     if ($mealSchedule !== []) {
                         $scheduleMap = $mealSchedule;
+                    }
+                } else {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('[FP-RESV] resolveMealSettings - WARNING: meal has no hours_definition, using default schedule');
                     }
                 }
 
@@ -558,6 +592,13 @@ class Availability
                 if (!empty($meal['capacity'])) {
                     $capacityLimit = max(1, (int) $meal['capacity']);
                 }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf(
+                        '[FP-RESV] resolveMealSettings - WARNING: meal key "%s" not found in meal plan',
+                        $mealKey
+                    ));
+                }
             }
         }
 
@@ -565,7 +606,7 @@ class Availability
             $turnoverMinutes = $slotInterval;
         }
 
-        return [
+        $result = [
             'schedule'       => $scheduleMap,
             'slot_interval'  => $slotInterval,
             'turnover'       => $turnoverMinutes,
@@ -573,6 +614,15 @@ class Availability
             'max_parallel'   => $maxParallel,
             'capacity_limit' => $capacityLimit,
         ];
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                '[FP-RESV] resolveMealSettings - final result: %s',
+                wp_json_encode($result) ?: 'empty'
+            ));
+        }
+
+        return $result;
     }
 
     /**
@@ -583,8 +633,19 @@ class Availability
     private function resolveScheduleForDay(DateTimeImmutable $day, array $scheduleMap): array
     {
         $dayKey = strtolower($day->format('D'));
+        $schedule = $scheduleMap[$dayKey] ?? [];
 
-        return $scheduleMap[$dayKey] ?? [];
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                '[FP-RESV] resolveScheduleForDay - date: %s, dayKey: %s, schedule: %s, full scheduleMap: %s',
+                $day->format('Y-m-d'),
+                $dayKey,
+                wp_json_encode($schedule) ?: 'empty',
+                wp_json_encode($scheduleMap) ?: 'empty'
+            ));
+        }
+
+        return $schedule;
     }
 
     /**
