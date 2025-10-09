@@ -2,19 +2,28 @@
 
 ## 🐛 Problema Identificato
 
-Gli eventi Brevo per le automazioni email (`email_confirmation`, `email_reminder`, `email_review`) non venivano inviati correttamente a causa di un **header HTTP errato** nell'API call.
+Gli eventi Brevo per le automazioni email (`email_confirmation`, `email_reminder`, `email_review`) non venivano inviati correttamente a causa di:
+
+1. **Endpoint API obsoleto**
+2. **Formato payload non aggiornato**
 
 ### Sintomi
 - Le email di conferma/reminder/review non partivano quando Brevo era configurato come canale
-- I log di Brevo mostravano errori di autenticazione o 401/403
+- I log di Brevo mostravano errori di autenticazione o 400/401/404
 - Le automazioni in Brevo non venivano triggerate
 
 ### Causa Root
-Il metodo `Client::sendEvent()` utilizzava l'header `api-key` invece di `ma-key` per le chiamate all'endpoint di Marketing Automation di Brevo.
+Il metodo `Client::sendEvent()` utilizzava un endpoint obsoleto con formato payload non supportato:
 
-**Endpoint:** `https://in-automate.brevo.com/api/v2/trackEvent`  
-**Header richiesto:** `ma-key` (Marketing Automation Key)  
-**Header usato erroneamente:** `api-key`
+**VECCHIO (❌ OBSOLETO):**
+- Endpoint: `https://in-automate.brevo.com/api/v2/trackEvent`
+- Header: `ma-key`
+- Formato: `{ "event": "nome", "email": "...", "properties": {...} }`
+
+**NUOVO (✅ CORRETTO):**
+- Endpoint: `https://api.brevo.com/v3/events`
+- Header: `api-key`
+- Formato: `{ "event_name": "nome", "identifiers": { "email_id": "..." }, "contact_properties": {...}, "event_properties": {...} }`
 
 ---
 
@@ -23,35 +32,55 @@ Il metodo `Client::sendEvent()` utilizzava l'header `api-key` invece di `ma-key`
 ### File Modificato: `src/Domain/Brevo/Client.php`
 
 ```php
-// PRIMA (❌ ERRATO)
+// PRIMA (❌ OBSOLETO)
 public function sendEvent(string $event, array $payload): array
 {
-    // ...
+    $body = wp_json_encode(array_merge(['event' => $event], $payload));
     $response = wp_remote_post(
-        'https://in-automate.brevo.com/api/v2/trackEvent',
+        'https://in-automate.brevo.com/api/v2/trackEvent',  // ❌ Endpoint obsoleto
         [
             'headers' => [
-                'api-key' => $this->apiKey(),  // ❌ Header sbagliato
+                'ma-key' => $this->apiKey(),  // ❌ Header vecchio
                 // ...
             ],
-            // ...
+            'body' => $body,  // ❌ Formato vecchio
         ]
     );
     // ...
 }
 
-// DOPO (✅ CORRETTO)
+// DOPO (✅ CORRETTO - Nuovo formato API v3)
 public function sendEvent(string $event, array $payload): array
 {
-    // ...
+    $email = (string) ($payload['email'] ?? '');
+    $properties = $payload['properties'] ?? [];
+    
+    // Separa contact_properties da event_properties
+    $contactProperties = $properties['attributes'] ?? [];
+    $eventProperties = array_filter(
+        $properties, 
+        fn($key) => $key !== 'attributes', 
+        ARRAY_FILTER_USE_KEY
+    );
+    
+    // Formato nuovo payload
+    $brevoPayload = [
+        'event_name' => $event,  // ✅ event_name invece di event
+        'identifiers' => [
+            'email_id' => $email,  // ✅ identifiers.email_id
+        ],
+        'contact_properties' => $contactProperties,  // ✅ Attributi contatto
+        'event_properties' => $eventProperties,      // ✅ Proprietà evento
+    ];
+    
     $response = wp_remote_post(
-        'https://in-automate.brevo.com/api/v2/trackEvent',
+        'https://api.brevo.com/v3/events',  // ✅ Endpoint v3 ufficiale
         [
             'headers' => [
-                'ma-key' => $this->apiKey(),  // ✅ Header corretto
+                'api-key' => $this->apiKey(),  // ✅ Header standard
                 // ...
             ],
-            // ...
+            'body' => wp_json_encode($brevoPayload),
         ]
     );
     // ...
@@ -164,13 +193,45 @@ Lo script verificherà:
 - Eventi personalizzati
 - Trigger di automazioni
 
-### Formato Payload Corretto
+### Formato Payload Corretto (API v3)
 
+**Payload inviato al metodo sendEvent():**
+```php
+[
+  'email' => 'user@example.com',
+  'properties' => [
+    'attributes' => [
+      'FIRSTNAME' => 'Mario',
+      'LASTNAME' => 'Rossi',
+      'PHONE' => '+39123456789',
+      // ... altri attributi contatto
+    ],
+    'reservation' => [
+      'id' => 123,
+      'date' => '2025-10-15',
+      'time' => '20:00',
+      'party' => 4,
+      // ...
+    ],
+    'contact' => [...],
+    'meta' => [...],
+  ]
+]
+```
+
+**Payload trasformato per Brevo API v3:**
 ```json
 {
-  "event": "email_confirmation",
-  "email": "user@example.com",
-  "properties": {
+  "event_name": "email_confirmation",
+  "identifiers": {
+    "email_id": "user@example.com"
+  },
+  "contact_properties": {
+    "FIRSTNAME": "Mario",
+    "LASTNAME": "Rossi",
+    "PHONE": "+39123456789"
+  },
+  "event_properties": {
     "reservation": {
       "id": 123,
       "date": "2025-10-15",
@@ -187,12 +248,15 @@ Lo script verificherà:
     },
     "meta": {
       "language": "it",
-      "notes": "...",
-      // ... altri campi
+      "notes": "..."
     }
   }
 }
 ```
+
+**Risposta Brevo:**
+- Success: `204 No Content`
+- Error: `400/401/404` con messaggio JSON
 
 ---
 

@@ -59,24 +59,61 @@ final class Client
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, mixed> $payload Expected format: ['email' => '...', 'properties' => [...]]
      *
      * @return array<string, mixed>
      */
     public function sendEvent(string $event, array $payload): array
     {
-        $body = wp_json_encode(array_merge(['event' => $event], $payload));
+        // Estrai email e properties dal payload
+        $email = (string) ($payload['email'] ?? '');
+        $properties = $payload['properties'] ?? [];
+
+        // Separa le proprietà del contatto dalle proprietà dell'evento
+        $contactProperties = [];
+        $eventProperties = [];
+
+        // Se properties contiene 'attributes', quelli sono le proprietà del contatto
+        if (isset($properties['attributes']) && is_array($properties['attributes'])) {
+            $contactProperties = $properties['attributes'];
+        }
+
+        // Le altre proprietà vanno in event_properties
+        foreach ($properties as $key => $value) {
+            if ($key !== 'attributes') {
+                $eventProperties[$key] = $value;
+            }
+        }
+
+        // Costruisci il payload nel nuovo formato Brevo /v3/events
+        $brevoPayload = [
+            'event_name' => $event,
+            'identifiers' => [
+                'email_id' => $email,
+            ],
+        ];
+
+        // Aggiungi contact_properties se presenti
+        if (!empty($contactProperties)) {
+            $brevoPayload['contact_properties'] = $contactProperties;
+        }
+
+        // Aggiungi event_properties se presenti
+        if (!empty($eventProperties)) {
+            $brevoPayload['event_properties'] = $eventProperties;
+        }
+
         $response = wp_remote_post(
-            'https://in-automate.brevo.com/api/v2/trackEvent',
+            'https://api.brevo.com/v3/events',
             [
                 'method'  => 'POST',
                 'headers' => [
-                    'ma-key'       => $this->apiKey(),
+                    'api-key'      => $this->apiKey(),
                     'accept'       => 'application/json',
                     'content-type' => 'application/json',
                 ],
                 'timeout' => 10,
-                'body'    => $body,
+                'body'    => wp_json_encode($brevoPayload),
             ]
         );
 
