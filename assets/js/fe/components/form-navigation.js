@@ -27,7 +27,8 @@ export class FormNavigation {
             this.state.sectionStates[key] = 'active';
             this.updateSectionAttributes(section, 'active');
             this.dispatchSectionUnlocked(key);
-            this.scrollIntoView(section);
+            // Non fare scroll automatico quando si attiva una sezione tramite interazione con i campi
+            // this.scrollIntoView(section);
         }
     }
 
@@ -60,7 +61,10 @@ export class FormNavigation {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            this.scrollIntoView(nextSection);
+            // Scroll solo quando si usa la navigazione esplicita (pulsanti avanti/indietro)
+            if (advance) {
+                this.scrollIntoView(nextSection);
+            }
         }
     }
 
@@ -184,13 +188,18 @@ export class FormNavigation {
     }
 
     scrollIntoView(section) {
-        if (typeof section.scrollIntoView === 'function') {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll solo se la sezione non è già visibile
+        const rect = section.getBoundingClientRect();
+        const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+        
+        if (!isVisible && typeof section.scrollIntoView === 'function') {
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        const focusable = firstFocusable(section);
-        if (focusable && typeof focusable.focus === 'function') {
-            focusable.focus({ preventScroll: true });
-        }
+        // Non fare focus automatico per evitare salti
+        // const focusable = firstFocusable(section);
+        // if (focusable && typeof focusable.focus === 'function') {
+        //     focusable.focus({ preventScroll: true });
+        // }
     }
 }
