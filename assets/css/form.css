@@ -1777,6 +1777,18 @@
     .fp-resv-slots__list > li {
         width: 100% !important;
     }
+
+    /* Alert di errore su una colonna con bottone a tutta larghezza su mobile */
+    .fp-alert {
+        flex-direction: column !important;
+    }
+
+    .fp-alert .fp-btn,
+    .fp-alert .fp-resv-button {
+        align-self: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 /* === Step Visibility Control === */
