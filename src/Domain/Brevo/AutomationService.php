@@ -757,63 +757,19 @@ final class AutomationService
     }
 
     /**
-     * @return array<string, string>
+     * Determina la lingua dal numero di telefono.
+     * Logica semplice: +39 = IT, tutti gli altri = EN
      */
-    private function phonePrefixMap(): array
-    {
-        $settings = $this->options->getGroup('fp_resv_brevo', []);
-        $raw      = $settings['brevo_phone_prefix_map'] ?? '';
-        $map      = [];
-
-        if (is_string($raw) && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $prefix => $language) {
-                    if (!is_string($prefix) || !is_string($language)) {
-                        continue;
-                    }
-
-                    $normalizedPrefix = $this->normalizePhonePrefix($prefix);
-                    if ($normalizedPrefix === '') {
-                        continue;
-                    }
-
-                    $languageCode = $this->normalizeLanguage($language, true);
-                    if ($languageCode === '') {
-                        $languageCode = 'INT';
-                    }
-
-                    $map[$normalizedPrefix] = $languageCode;
-                }
-            }
-        }
-
-        if ($map === []) {
-            $map['+39'] = 'IT';
-        }
-
-        uksort($map, static function (string $a, string $b): int {
-            $lengthComparison = strlen($b) <=> strlen($a);
-
-            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
-        });
-
-        return $map;
-    }
-
-    /**
-     * @param array<string, string> $map
-     */
-    public function parsePhoneCountry(string $phone, array $map): string
+    public function parsePhoneCountry(string $phone): string
     {
         $normalized = trim($phone);
         if ($normalized === '') {
-            return 'INT';
+            return 'EN';
         }
 
         $normalized = preg_replace('/[^0-9+]/', '', $normalized);
         if (!is_string($normalized) || $normalized === '') {
-            return 'INT';
+            return 'EN';
         }
 
         if ($normalized[0] !== '+') {
@@ -824,37 +780,12 @@ final class AutomationService
             }
         }
 
-        $normalizedMap = [];
-        foreach ($map as $prefix => $language) {
-            if (!is_string($prefix) || !is_string($language)) {
-                continue;
-            }
-
-            $cleanPrefix = $this->normalizePhonePrefix($prefix);
-            if ($cleanPrefix === '') {
-                continue;
-            }
-
-            $normalizedMap[$cleanPrefix] = $this->normalizeLanguage($language, true);
+        // Logica semplificata: +39 = IT, tutto il resto = EN
+        if (strpos($normalized, '+39') === 0) {
+            return 'IT';
         }
 
-        uksort($normalizedMap, static function (string $a, string $b): int {
-            $lengthComparison = strlen($b) <=> strlen($a);
-
-            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
-        });
-
-        foreach ($normalizedMap as $prefix => $languageCode) {
-            if (strpos($normalized, $prefix) === 0) {
-                if ($languageCode === 'IT' || $languageCode === 'EN') {
-                    return $languageCode;
-                }
-
-                return 'INT';
-            }
-        }
-
-        return 'INT';
+        return 'EN';
     }
 
     /**
@@ -867,7 +798,6 @@ final class AutomationService
             return;
         }
 
-        $map          = $this->phonePrefixMap();
         $forcedLang   = $this->normalizeLanguage((string) ($context['forced_language'] ?? ''), true);
         $pageLanguage = $this->normalizeLanguage((string) ($context['page_language'] ?? ''), false);
 
@@ -876,7 +806,7 @@ final class AutomationService
             $phone = (string) $contact['attributes']['PHONE'];
         }
 
-        $phoneCountry = $this->parsePhoneCountry($phone, $map);
+        $phoneCountry = $this->parsePhoneCountry($phone);
         $targetKey    = $this->resolveListKey($forcedLang, $phoneCountry, $pageLanguage);
 
         $listId = $this->listIdForKey($targetKey);

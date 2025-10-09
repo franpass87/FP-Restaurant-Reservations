@@ -2038,7 +2038,7 @@ final class AdminPages
                                 'type'        => 'phone_prefix_map',
                                 'rows'        => 4,
                                 'default'     => (string) wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP),
-                                'description' => __('Usa formato +39=IT,+33=EN oppure righe separate. I valori ammessi sono IT, EN o INT.', 'fp-restaurant-reservations'),
+                                'description' => __('Logica automatica: +39 → Lista IT, tutti gli altri prefissi → Lista EN. Campo disponibile per configurazioni personalizzate.', 'fp-restaurant-reservations'),
                             ],
                             'brevo_list_id' => [
                                 'label'       => __('ID lista contatti (fallback)', 'fp-restaurant-reservations'),

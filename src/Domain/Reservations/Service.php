@@ -429,86 +429,21 @@ class Service
 
     private function detectLanguageFromPhone(string $phone, string $phoneCountry): ?string
     {
-        $map = $this->phonePrefixLanguageMap();
-        if ($map === []) {
-            return null;
-        }
-
+        // Normalizza il prefisso dal campo country
         $normalizedCountry = $this->normalizePhonePrefix($phoneCountry);
-        $checkedInputs     = false;
-
         if ($normalizedCountry !== '') {
-            $checkedInputs = true;
-            if (isset($map[$normalizedCountry])) {
-                return $map[$normalizedCountry];
-            }
-
-            foreach ($map as $prefix => $language) {
-                if (str_starts_with($normalizedCountry, $prefix)) {
-                    return $language;
-                }
-            }
+            // Logica semplificata: +39 = it, tutto il resto = en
+            return str_starts_with($normalizedCountry, '+39') ? 'it' : 'en';
         }
 
+        // Altrimenti normalizza il numero di telefono
         $normalizedPhone = $this->normalizePhoneNumber($phone);
         if ($normalizedPhone === '') {
-            return $checkedInputs ? 'en' : null;
+            return 'en';
         }
 
-        $checkedInputs = true;
-
-        foreach ($map as $prefix => $language) {
-            if (str_starts_with($normalizedPhone, $prefix)) {
-                return $language;
-            }
-        }
-
-        return $checkedInputs ? 'en' : null;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function phonePrefixLanguageMap(): array
-    {
-        $settings = $this->options->getGroup('fp_resv_brevo', []);
-        $raw      = $settings['brevo_phone_prefix_map'] ?? '';
-        $map      = [];
-
-        if (is_string($raw) && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $prefix => $language) {
-                    if (!is_string($prefix)) {
-                        continue;
-                    }
-
-                    $normalizedPrefix = $this->normalizePhonePrefix($prefix);
-                    if ($normalizedPrefix === '') {
-                        continue;
-                    }
-
-                    $normalizedLanguage = $this->normalizePhoneLanguage(is_string($language) ? $language : '');
-                    if ($normalizedLanguage === '') {
-                        $normalizedLanguage = 'en';
-                    }
-
-                    $map[$normalizedPrefix] = $normalizedLanguage;
-                }
-            }
-        }
-
-        if ($map === []) {
-            $map['+39'] = 'it';
-        }
-
-        uksort($map, static function (string $a, string $b): int {
-            $lengthComparison = strlen($b) <=> strlen($a);
-
-            return $lengthComparison !== 0 ? $lengthComparison : strcmp($a, $b);
-        });
-
-        return $map;
+        // Logica semplificata: +39 = it, tutto il resto = en
+        return str_starts_with($normalizedPhone, '+39') ? 'it' : 'en';
     }
 
     private function normalizePhonePrefix(string $prefix): string
