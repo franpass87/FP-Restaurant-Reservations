@@ -368,7 +368,7 @@ final class Language
                         'with_name' => 'Prenota da %s',
                     ],
                     'subheadline' => 'Completa i passaggi per inviare la tua richiesta di prenotazione.',
-                    'pdf_label'   => 'Scarica PDF',
+                    'pdf_label'   => 'Scopri il nostro Menu',
                     'pdf_tooltip' => 'Apri il menu o la brochure in una nuova scheda.',
                     'steps_labels' => [
                         'date'    => 'Data',
@@ -585,7 +585,7 @@ final class Language
                         'with_name' => 'Book at %s',
                     ],
                     'subheadline' => 'Complete the steps to send your reservation request.',
-                    'pdf_label'   => 'Download PDF',
+                    'pdf_label'   => 'Discover our Menu',
                     'pdf_tooltip' => 'Open the menu or brochure in a new tab.',
                     'steps_labels' => [
                         'date'    => 'Date',
