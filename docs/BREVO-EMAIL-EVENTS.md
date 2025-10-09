@@ -1,8 +1,94 @@
 # Eventi Brevo per Automazioni Email
 
-## Panoramica
+## 🎯 Panoramica
 
 Il sistema ora invia eventi a Brevo per attivare le automazioni email quando Brevo è configurato come canale di invio per le email ai clienti.
+
+---
+
+## ⚙️ Come Funziona: Plugin vs Brevo
+
+### 📮 CANALE = PLUGIN (Sistema Interno)
+
+```
+┌─────────────────┐
+│  Prenotazione   │
+│    Creata       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  Sistema WordPress                  │
+│                                     │
+│  ✅ Usa template dal backend        │
+│  ✅ Usa logo configurato            │
+│  ✅ Usa header/footer configurati   │
+│  ✅ Usa email mittente configurata  │
+│  ✅ Invia email direttamente        │
+└─────────────────────────────────────┘
+         │
+         ▼
+   📧 Email inviata
+```
+
+**Configurazione necessaria:**
+- ✏️ Logo in "Preferenze di invio"
+- ✏️ Header/Footer template
+- ✏️ Email mittente
+- ✏️ Nome mittente
+- ✏️ Template email nel backend
+
+---
+
+### 🚀 CANALE = BREVO (Automazioni)
+
+```
+┌─────────────────┐
+│  Prenotazione   │
+│    Creata       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  Sistema WordPress                  │
+│                                     │
+│  ❌ NON usa template backend        │
+│  ❌ NON usa logo backend            │
+│  ❌ NON usa preferenze backend      │
+│  ✅ Invia SOLO evento a Brevo       │
+└─────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  🎨 BREVO                           │
+│                                     │
+│  ✅ Riceve evento                   │
+│  ✅ Attiva automazione              │
+│  ✅ Usa template Brevo              │
+│  ✅ Usa logo Brevo                  │
+│  ✅ Usa mittente Brevo              │
+│  ✅ Invia email                     │
+└─────────────────────────────────────┘
+         │
+         ▼
+   📧 Email inviata
+```
+
+**Configurazione necessaria:**
+- ✏️ API Key Brevo nel backend WordPress
+- ✏️ Selezionare "Brevo" come canale
+- ✏️ **Template email in Brevo**
+- ✏️ **Logo in Brevo**
+- ✏️ **Mittente in Brevo**
+- ✏️ **Automazione in Brevo con trigger sull'evento**
+
+---
+
+## ⚠️ IMPORTANTE
+
+> **Quando usi Brevo, le "Preferenze di invio" WordPress NON vengono utilizzate!**
+> 
+> Tutto (logo, template, mittente) deve essere configurato in Brevo.
 
 ## Eventi Implementati
 
