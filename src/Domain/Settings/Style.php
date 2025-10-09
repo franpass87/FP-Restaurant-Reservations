@@ -1457,6 +1457,10 @@ final class Style
     %s .fp-meal-pill {
         flex: 0 0 auto;
     }
+    %s .fp-resv-widget__pdf {
+        width: 100%;
+        justify-content: center;
+    }
 }
 CSS;
 
