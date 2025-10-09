@@ -14,6 +14,7 @@ use function __;
 use function add_action;
 use function add_submenu_page;
 use function admin_url;
+use function current_user_can;
 use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
@@ -43,11 +44,19 @@ final class AdminController
 
     public function registerMenu(): void
     {
+        // Assicura che gli amministratori abbiano sempre la capability necessaria
+        Roles::ensureAdminCapabilities();
+        
+        // Determina la capability appropriata: usa manage_options per admin se manage_fp_reservations non è disponibile
+        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
+            ? 'manage_options' 
+            : self::CAPABILITY;
+        
         $this->pageHook = add_submenu_page(
             'fp-resv-settings',
             __('Chiusure & orari speciali', 'fp-restaurant-reservations'),
             __('Chiusure', 'fp-restaurant-reservations'),
-            self::CAPABILITY,
+            $capability,
             self::PAGE_SLUG,
             [$this, 'renderPage']
         ) ?: null;
