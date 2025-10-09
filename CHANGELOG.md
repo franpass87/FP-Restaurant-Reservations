@@ -1,3 +1,16 @@
+## 0.1.7 - Admin Menu Access Fix (2025-10-09)
+
+### Fixed
+- **[RISOLTO]** Accesso al menu amministratore: gli amministratori ora hanno sempre accesso completo al menu del plugin
+  - Aggiunto controllo automatico delle capability ad ogni caricamento del plugin
+  - Aggiunto metodo `Roles::ensureAdminCapabilities()` per verificare e riparare le capability
+  - Creato script di riparazione manuale `tools/fix-admin-capabilities.php`
+  - Documentazione completa in `docs/BUGFIX-ADMIN-MENU-ACCESS.md`
+
+### Added
+- Test unitari per la classe `Roles` e la gestione delle capability
+- Script di diagnostica e riparazione per le capability degli amministratori
+
 ## 0.1.6 - Security Audit Resolution & Code Quality (2025-10-07)
 
 ### Security
