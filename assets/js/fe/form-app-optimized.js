@@ -291,10 +291,7 @@ export class FormApp {
             }
         });
 
-        const openPicker = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
+        const openPicker = () => {
             // Porta il focus sull'input
             if (typeof this.dateField.focus === 'function') {
                 this.dateField.focus();
@@ -310,18 +307,8 @@ export class FormApp {
             }
         };
 
-        // Trova il container del campo
-        const dateContainer = this.dateField.closest('.fp-resv-field, .fp-field');
-        if (dateContainer) {
-            // Trova l'icona del calendario e apri il picker SOLO quando si clicca sull'icona
-            const calendarIcon = dateContainer.querySelector('.fp-icon--calendar, [class*="calendar"]');
-            if (calendarIcon) {
-                calendarIcon.style.cursor = 'pointer';
-                calendarIcon.addEventListener('click', (event) => {
-                    openPicker(event);
-                });
-            }
-        }
+        // Apri il calendario al click sull'input
+        this.dateField.addEventListener('click', openPicker);
     }
 
     initializeAvailability() {
