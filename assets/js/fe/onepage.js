@@ -587,6 +587,8 @@ class FormApp {
         if (fieldKey === 'date' || fieldKey === 'party' || fieldKey === 'slots' || fieldKey === 'time') {
             if ((fieldKey === 'date' || fieldKey === 'party') && valueChanged) {
                 this.clearSlotSelection({ schedule: false });
+                // Reset meal availability cache quando cambiano parametri critici
+                this.state.mealAvailability = {};
             }
 
             if (fieldKey !== 'date' || valueChanged || event.type === 'change') {
@@ -818,10 +820,8 @@ class FormApp {
             meal_label: button.getAttribute('data-meal-label') || '',
         });
 
-        if (storedState === 'full') {
-            return;
-        }
-
+        // Schedula sempre l'aggiornamento della disponibilità, anche se lo stato cached è 'full'
+        // perché i parametri (date, party) potrebbero essere cambiati
         this.scheduleAvailabilityUpdate({ immediate: true });
     }
 
