@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use FP\Resv\Core\Logging;
 use FP\Resv\Core\Metrics;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
@@ -158,6 +159,16 @@ class Availability
         $schedule = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
 
         if ($schedule === []) {
+            $dayKey = strtolower($dayStart->format('D'));
+            
+            // Log diagnostico per capire perché non ci sono slot
+            Logging::log('availability', 'Nessuna disponibilità - schedule vuoto', [
+                'date' => $dayStart->format('Y-m-d'),
+                'meal_key' => $criteria['meal'] ?? 'none',
+                'meal_settings_schedule' => $mealSettings['schedule'],
+                'day_key' => $dayKey,
+            ]);
+            
             return [
                 'date' => $dayStart->format('Y-m-d'),
                 'timezone' => $timezone->getName(),
@@ -166,6 +177,13 @@ class Availability
                 'meta' => [
                     'has_availability' => false,
                     'reason' => __('Nessun turno configurato per la data selezionata.', 'fp-restaurant-reservations'),
+                    'debug' => [
+                        'day_key' => $dayKey,
+                        'meal_key' => $criteria['meal'] ?? '',
+                        'schedule_map_keys' => array_keys($mealSettings['schedule']),
+                        'schedule_empty' => $mealSettings['schedule'] === [],
+                        'message' => 'Lo schedule per il giorno ' . $dayKey . ' è vuoto. Giorni configurati: ' . implode(', ', array_keys($mealSettings['schedule'])),
+                    ],
                 ],
             ];
         }
@@ -335,6 +353,16 @@ class Availability
         $mealSettings = $this->resolveMealSettings($mealKey);
         $schedule     = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
         if ($schedule === []) {
+            $dayKey = strtolower($dayStart->format('D'));
+            
+            // Log diagnostico per capire perché non ci sono slot
+            Logging::log('availability', 'Nessuna disponibilità - schedule vuoto', [
+                'date' => $dayStart->format('Y-m-d'),
+                'meal_key' => $mealKey,
+                'meal_settings_schedule' => $mealSettings['schedule'],
+                'day_key' => $dayKey,
+            ]);
+            
             return [
                 'date'      => $dayStart->format('Y-m-d'),
                 'timezone'  => $timezone->getName(),
@@ -343,6 +371,13 @@ class Availability
                 'meta'      => [
                     'has_availability' => false,
                     'reason'           => __('Nessun turno configurato per la data selezionata.', 'fp-restaurant-reservations'),
+                    'debug' => [
+                        'day_key' => $dayKey,
+                        'meal_key' => $mealKey,
+                        'schedule_map_keys' => array_keys($mealSettings['schedule']),
+                        'schedule_empty' => $mealSettings['schedule'] === [],
+                        'message' => 'Lo schedule per il giorno ' . $dayKey . ' è vuoto. Giorni configurati: ' . implode(', ', array_keys($mealSettings['schedule'])),
+                    ],
                 ],
             ];
         }
@@ -528,7 +563,14 @@ class Availability
         $maxParallel        = max(1, (int) $this->options->getField('fp_resv_general', 'max_parallel_parties', '8'));
         $capacityLimit      = null;
 
-        // Debug logging
+        // Log diagnostico sempre attivo
+        Logging::log('availability', 'resolveMealSettings chiamato', [
+            'meal_key' => $mealKey,
+            'default_schedule_raw' => $defaultScheduleRaw,
+            'default_schedule_map' => $scheduleMap,
+        ]);
+
+        // Debug logging aggiuntivo se WP_DEBUG è abilitato
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(
                 '[FP-RESV] resolveMealSettings - mealKey: %s, default schedule raw: %s, default schedule map: %s',
@@ -540,6 +582,13 @@ class Availability
 
         if ($mealKey !== '') {
             $plan = $this->getMealPlan();
+            
+            Logging::log('availability', 'Meal plan caricato', [
+                'meal_key' => $mealKey,
+                'plan_keys' => array_keys($plan),
+                'meal_exists' => isset($plan[$mealKey]),
+            ]);
+            
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log(sprintf(
                     '[FP-RESV] resolveMealSettings - meal plan: %s',
@@ -549,6 +598,13 @@ class Availability
             
             if (isset($plan[$mealKey])) {
                 $meal = $plan[$mealKey];
+                
+                Logging::log('availability', 'Meal trovato', [
+                    'meal_key' => $mealKey,
+                    'has_hours_definition' => !empty($meal['hours_definition']),
+                    'hours_definition' => $meal['hours_definition'] ?? null,
+                ]);
+                
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log(sprintf(
                         '[FP-RESV] resolveMealSettings - selected meal: %s',
@@ -558,6 +614,13 @@ class Availability
                 
                 if (!empty($meal['hours_definition'])) {
                     $mealSchedule = $this->parseScheduleDefinition((string) $meal['hours_definition']);
+                    
+                    Logging::log('availability', 'Schedule del meal parsato', [
+                        'meal_key' => $mealKey,
+                        'meal_schedule' => $mealSchedule,
+                        'is_empty' => $mealSchedule === [],
+                    ]);
+                    
                     if (defined('WP_DEBUG') && WP_DEBUG) {
                         error_log(sprintf(
                             '[FP-RESV] resolveMealSettings - meal schedule: %s',
@@ -568,6 +631,11 @@ class Availability
                         $scheduleMap = $mealSchedule;
                     }
                 } else {
+                    Logging::log('availability', 'WARNING: meal senza hours_definition', [
+                        'meal_key' => $mealKey,
+                        'using_default' => true,
+                    ]);
+                    
                     if (defined('WP_DEBUG') && WP_DEBUG) {
                         error_log('[FP-RESV] resolveMealSettings - WARNING: meal has no hours_definition, using default schedule');
                     }
@@ -593,6 +661,11 @@ class Availability
                     $capacityLimit = max(1, (int) $meal['capacity']);
                 }
             } else {
+                Logging::log('availability', 'WARNING: meal_key non trovato nel plan', [
+                    'meal_key' => $mealKey,
+                    'available_keys' => array_keys($plan),
+                ]);
+                
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log(sprintf(
                         '[FP-RESV] resolveMealSettings - WARNING: meal key "%s" not found in meal plan',
@@ -615,6 +688,13 @@ class Availability
             'capacity_limit' => $capacityLimit,
         ];
 
+        Logging::log('availability', 'resolveMealSettings risultato finale', [
+            'meal_key' => $mealKey,
+            'schedule_days' => array_keys($scheduleMap),
+            'schedule_empty' => $scheduleMap === [],
+            'result' => $result,
+        ]);
+
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(
                 '[FP-RESV] resolveMealSettings - final result: %s',
@@ -634,6 +714,14 @@ class Availability
     {
         $dayKey = strtolower($day->format('D'));
         $schedule = $scheduleMap[$dayKey] ?? [];
+
+        Logging::log('availability', 'resolveScheduleForDay', [
+            'date' => $day->format('Y-m-d'),
+            'day_key' => $dayKey,
+            'schedule_for_day' => $schedule,
+            'schedule_is_empty' => $schedule === [],
+            'available_days' => array_keys($scheduleMap),
+        ]);
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(

@@ -83,34 +83,74 @@ La sala potrebbe non avere tavoli configurati o capacità sufficiente.
 
 ## Debugging con Logs
 
-Ho aggiunto logging di debug al sistema. Per abilitarlo:
+Ho aggiunto un sistema di logging diagnostico completo che è **sempre attivo** (non richiede WP_DEBUG).
 
-### 1. Abilita WP_DEBUG
-Modifica il file `wp-config.php` e aggiungi/modifica:
+### 1. Controlla la Console del Browser (Modo più facile)
+
+Quando il sistema dice "Nessuna disponibilità", la risposta API ora include informazioni diagnostiche dettagliate:
+
+1. Apri gli Strumenti per Sviluppatori del browser (F12)
+2. Vai alla scheda "Network" / "Rete"
+3. Riproduci il problema selezionando data, pasto e numero persone
+4. Cerca la richiesta API (di solito `/wp-json/fp-resv/v1/...`)
+5. Guarda la risposta, nella sezione `meta.debug` troverai:
+   ```json
+   {
+     "meta": {
+       "has_availability": false,
+       "reason": "Nessun turno configurato...",
+       "debug": {
+         "day_key": "fri",
+         "meal_key": "cena",
+         "schedule_map_keys": ["mon", "tue", "wed"],
+         "schedule_empty": false,
+         "message": "Lo schedule per il giorno fri è vuoto. Giorni configurati: mon, tue, wed"
+       }
+     }
+   }
+   ```
+
+Questo ti dice **esattamente** quale giorno stai cercando e quali giorni sono effettivamente configurati!
+
+### 2. Controlla i Log di Sistema
+
+I log vengono automaticamente salvati usando il sistema di logging di WordPress:
+
+**Se hai WP_DEBUG abilitato:**
+- I log verranno salvati in `wp-content/debug.log`
+- Cerca le righe che iniziano con `[fp-resv][availability]`
+
+**Per abilitare WP_DEBUG** (opzionale, modifica `wp-config.php`):
 ```php
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
 define('WP_DEBUG_DISPLAY', false);
 ```
 
-### 2. Controlla i Log
-I log verranno salvati in `wp-content/debug.log`. Cerca le righe che iniziano con `[FP-RESV]`:
+### 3. Esempi di Log che Potresti Vedere
+
+I log mostrano il processo completo di risoluzione della disponibilità:
 
 ```
-[FP-RESV] resolveMealSettings - mealKey: pranzo, default schedule raw: ...
-[FP-RESV] resolveMealSettings - meal plan: {...}
-[FP-RESV] resolveMealSettings - selected meal: {...}
-[FP-RESV] resolveMealSettings - WARNING: meal has no hours_definition, using default schedule
-[FP-RESV] resolveScheduleForDay - date: 2025-10-10, dayKey: fri, schedule: ...
+[fp-resv][availability] resolveMealSettings chiamato {"meal_key":"cena","default_schedule_raw":"mon=19:00-23:00...","default_schedule_map":{...}}
+[fp-resv][availability] Meal plan caricato {"meal_key":"cena","plan_keys":["pranzo","cena"],"meal_exists":true}
+[fp-resv][availability] Meal trovato {"meal_key":"cena","has_hours_definition":true,"hours_definition":"fri=19:00-23:00\nsat=19:00-23:30"}
+[fp-resv][availability] Schedule del meal parsato {"meal_key":"cena","meal_schedule":{"fri":[...],"sat":[...]},"is_empty":false}
+[fp-resv][availability] resolveScheduleForDay {"date":"2025-10-10","day_key":"fri","schedule_for_day":[{"start":1140,"end":1380}],"schedule_is_empty":false,"available_days":["fri","sat"]}
 ```
 
-### 3. Analizza i Log
+### 4. Analizza i Log e la Risposta Debug
 
-**Se vedi:**
-- `"meal has no hours_definition"` → Il pasto non ha orari configurati, sta usando quelli di default
-- `"meal key not found in meal plan"` → La chiave del pasto non esiste nella configurazione
-- `"schedule: empty"` o `"schedule: []"` → Non ci sono orari configurati per quel giorno
-- `"full scheduleMap: {}"` → La configurazione degli orari è completamente vuota
+**Nella risposta API (`meta.debug`):**
+- `"schedule_empty": true` → La configurazione degli orari è completamente vuota
+- `"schedule_map_keys": []` → Nessun giorno configurato
+- `"day_key": "sun"` ma `"schedule_map_keys": ["mon","tue"]` → Il giorno cercato (domenica) non è tra quelli configurati
+
+**Nei log di sistema:**
+- `"meal_exists": false` → La chiave del pasto non esiste nella configurazione
+- `"has_hours_definition": false` → Il pasto non ha orari specifici configurati
+- `"meal_schedule": {}` o `"is_empty": true` → Non ci sono orari configurati per quel pasto
+- `"schedule_for_day": []` → Non ci sono orari per il giorno specifico richiesto
 
 ## Test Rapido
 
@@ -124,13 +164,15 @@ Se uno di questi test funziona, hai identificato il problema!
 
 ## Richiesta di Supporto
 
-Se il problema persiste, invia i seguenti dettagli:
+Se il problema persiste dopo aver controllato i log e la configurazione, invia:
 
-1. Log completi dal file `debug.log` (filtrati per `[FP-RESV]`)
-2. Screenshot della configurazione del pasto in **Prenotazioni > Impostazioni > Pasti**
-3. Screenshot degli orari di default in **Prenotazioni > Impostazioni > Generale**
-4. Data, ora e numero coperti che l'utente sta cercando di prenotare
-5. Nome del pasto selezionato
+1. **Screenshot della risposta API** dalla console del browser (specialmente `meta.debug`)
+2. **Screenshot della configurazione del pasto** in **Prenotazioni > Impostazioni > Pasti**
+3. **Screenshot degli orari di default** in **Prenotazioni > Impostazioni > Generale**
+4. **Parametri della ricerca**: data, ora, numero coperti e pasto selezionato
+5. **Log di sistema** se disponibili (filtrati per `[fp-resv][availability]`)
+
+La sezione `meta.debug` nella risposta API è la più importante e di solito rivela immediatamente il problema!
 
 ## Fix Temporaneo
 
@@ -147,7 +189,33 @@ Una volta identificato il problema specifico nei log, posso aiutarti a:
 2. Aggiungere migliori messaggi di errore per gli utenti
 3. Implementare validazioni più robuste nel backend
 
+## Esempio Pratico di Debugging
+
+### Scenario: "Nessuna disponibilità per il venerdì sera"
+
+1. **Apri la console del browser** (F12 → Network)
+2. **Seleziona**: Venerdì 10 Ottobre, Cena, 2 persone
+3. **Controlla la risposta API** e vedi:
+   ```json
+   {
+     "meta": {
+       "debug": {
+         "day_key": "fri",
+         "meal_key": "cena",
+         "schedule_map_keys": ["mon", "tue", "wed", "thu"],
+         "message": "Lo schedule per il giorno fri è vuoto. Giorni configurati: mon, tue, wed, thu"
+       }
+     }
+   }
+   ```
+
+4. **Soluzione**: La cena è configurata solo da lunedì a giovedì! Devi:
+   - Andare in **Prenotazioni > Impostazioni > Pasti**
+   - Modificare il pasto "Cena"
+   - Aggiungere gli orari del venerdì: `fri=19:00-23:00`
+
 ---
 
 **File modificati per il debugging:**
-- `/workspace/src/Domain/Reservations/Availability.php` - Aggiunti log nelle funzioni `resolveMealSettings()` e `resolveScheduleForDay()`
+- `/workspace/src/Domain/Reservations/Availability.php` - Aggiunti log dettagliati e informazioni debug nella risposta API
+- `/workspace/DEBUGGING-NO-SPOTS-AVAILABLE.md` - Aggiornata documentazione con nuove funzionalità di debugging

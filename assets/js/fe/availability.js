@@ -184,14 +184,15 @@ export function createAvailabilityController(options) {
         const partyValue = hasParams && typeof params.party !== 'undefined'
             ? String(params.party).trim()
             : '';
+        const requiresMeal = hasParams && Boolean(params.requiresMeal);
 
         const hasMeal = mealValue !== '';
         const hasDate = dateValue !== '';
         const hasParty = partyValue !== '' && partyValue !== '0';
-        const readyForAvailability = hasMeal && hasDate && hasParty;
+        const readyForAvailability = hasDate && hasParty && (!requiresMeal || hasMeal);
 
         const message = (() => {
-            if (!hasMeal) {
+            if (requiresMeal && !hasMeal) {
                 return (options.strings && options.strings.selectMeal) || '';
             }
 
