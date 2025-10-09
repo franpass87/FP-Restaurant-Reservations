@@ -1030,7 +1030,8 @@ class FormApp {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            // Non fare scroll automatico quando si clicca su Continua per evitare salti anchor
+            // Scroll all'inizio del widget quando si avanza allo step successivo
+            this.scrollIntoView(nextSection);
         }
     }
 
@@ -2081,9 +2082,15 @@ class FormApp {
     }
 
     scrollIntoView(section) {
-        // Disabilitato completamente per evitare salti anchor
-        // La navigazione tra le sezioni avviene solo tramite CSS visibility/display
-        return;
+        // Scroll all'inizio del widget quando si cambia step
+        const target = this.root || section;
+        if (!target || typeof target.scrollIntoView !== 'function') {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 
     isConsentField(element) {
