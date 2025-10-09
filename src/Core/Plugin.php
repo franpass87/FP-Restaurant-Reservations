@@ -399,7 +399,7 @@ final class Plugin
         $qaSeederCli = new QASeederCLI($qaSeeder);
         $qaSeederCli->register();
 
-        $brevoMapper = new BrevoMapper();
+        $brevoMapper = new BrevoMapper($options);
         $container->register(BrevoMapper::class, $brevoMapper);
         $container->register('brevo.mapper', $brevoMapper);
 
