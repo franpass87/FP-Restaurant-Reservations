@@ -225,6 +225,7 @@ class FormApp {
         this.hiddenPhoneLocal = this.form ? this.form.querySelector('input[name=\"fp_resv_phone_local\"]') : null;
         this.availabilityRoot = this.form ? this.form.querySelector('[data-fp-resv-slots]') : null;
         this.availabilityIndicator = this.form ? this.form.querySelector('[data-fp-resv-availability-indicator]') : null;
+        this.slotsLegend = this.form ? this.form.querySelector('[data-fp-resv-slots-legend]') : null;
 
         this.state = {
             started: false,
@@ -1818,12 +1819,17 @@ class FormApp {
         const validStates = ['available', 'limited', 'full'];
         const normalized = state ? String(state).toLowerCase() : '';
 
-        if (validStates.indexOf(normalized) === -1) {
-            button.removeAttribute('data-availability-state');
-            return;
-        }
+        // Non mostriamo più i colori sui bottoni, solo lo stato di disabilitazione
+        button.removeAttribute('data-availability-state');
 
-        button.setAttribute('data-availability-state', normalized);
+        // Se è completamente prenotato, disabilitiamo il bottone
+        if (normalized === 'full') {
+            button.setAttribute('aria-disabled', 'true');
+            button.setAttribute('data-meal-unavailable', 'true');
+        } else if (validStates.indexOf(normalized) !== -1) {
+            button.removeAttribute('aria-disabled');
+            button.removeAttribute('data-meal-unavailable');
+        }
     }
 
     handleMealAvailabilitySummary(summary, params) {
@@ -1849,6 +1855,12 @@ class FormApp {
         this.state.mealAvailability[mealKey] = normalized;
         this.applyMealAvailabilityIndicator(mealKey, normalized);
         this.applyMealAvailabilityNotice(mealKey, normalized);
+
+        // Mostra la legenda nello step slot quando ci sono informazioni sulla disponibilità
+        if (this.slotsLegend && this.slotsLegend.hidden) {
+            this.slotsLegend.hidden = false;
+            this.slotsLegend.removeAttribute('hidden');
+        }
 
         if (this.availabilityIndicator) {
             let label = '';
