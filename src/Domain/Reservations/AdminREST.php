@@ -590,11 +590,15 @@ final class AdminREST
      */
     private function mapAgendaReservation(array $row): array
     {
+        $date = (string) $row['date'];
+        $time = substr((string) $row['time'], 0, 5);
+        
         return [
             'id'         => (int) $row['id'],
             'status'     => (string) ($row['status'] ?? 'pending'),
-            'date'       => (string) $row['date'],
-            'time'       => substr((string) $row['time'], 0, 5),
+            'date'       => $date,
+            'time'       => $time,
+            'slot_start' => $date . ' ' . $time,
             'party'      => (int) $row['party'],
             'notes'      => (string) ($row['notes'] ?? ''),
             'allergies'  => (string) ($row['allergies'] ?? ''),

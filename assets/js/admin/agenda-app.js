@@ -153,7 +153,7 @@
             ...(currentService && { service: currentService })
         });
 
-        request(`reservations?${params}`)
+        request(`agenda?${params}`)
             .then(data => {
                 reservations = Array.isArray(data) ? data : (data.reservations || []);
                 renderTimeline();
@@ -166,7 +166,7 @@
     }
 
     function createReservation(data) {
-        return request('reservations', { method: 'POST', data })
+        return request('agenda/reservations', { method: 'POST', data })
             .then(() => {
                 loadReservations();
                 closeModal('[data-modal="new-reservation"]');
@@ -259,9 +259,10 @@
             'cancelled': 'Annullata'
         };
 
-        const name = [resv.first_name, resv.last_name].filter(Boolean).join(' ') || 'Cliente';
+        const customer = resv.customer || {};
+        const name = [customer.first_name, customer.last_name].filter(Boolean).join(' ') || 'Cliente';
         const party = resv.party || resv.guests || 2;
-        const phone = resv.phone || '';
+        const phone = customer.phone || '';
         const notes = resv.notes || '';
 
         return `
@@ -375,7 +376,8 @@
     }
 
     function renderDetails(resv) {
-        const name = [resv.first_name, resv.last_name].filter(Boolean).join(' ') || 'N/D';
+        const customer = resv.customer || {};
+        const name = [customer.first_name, customer.last_name].filter(Boolean).join(' ') || 'N/D';
         const statusLabels = {
             'pending': 'In attesa',
             'confirmed': 'Confermata',
@@ -404,16 +406,16 @@
                         <div class="fp-resv-details__label">Numero coperti</div>
                         <div class="fp-resv-details__value">${resv.party || resv.guests || 0}</div>
                     </div>
-                    ${resv.email ? `
+                    ${customer.email ? `
                     <div class="fp-resv-details__item">
                         <div class="fp-resv-details__label">Email</div>
-                        <div class="fp-resv-details__value">${escapeHtml(resv.email)}</div>
+                        <div class="fp-resv-details__value">${escapeHtml(customer.email)}</div>
                     </div>
                     ` : ''}
-                    ${resv.phone ? `
+                    ${customer.phone ? `
                     <div class="fp-resv-details__item">
                         <div class="fp-resv-details__label">Telefono</div>
-                        <div class="fp-resv-details__value">${escapeHtml(resv.phone)}</div>
+                        <div class="fp-resv-details__value">${escapeHtml(customer.phone)}</div>
                     </div>
                     ` : ''}
                 </div>
