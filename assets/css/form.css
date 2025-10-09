@@ -551,6 +551,8 @@
     gap: 0.35rem;
 }
 
+/* Colori rimossi dai bottoni meal - ora il semaforo è solo nello step slot */
+/*
 .fp-meal-pill[data-availability-state="available"] {
     --fp-meal-pill-border: rgba(34, 197, 94, 0.6);
     --fp-meal-pill-border-hover: rgba(22, 163, 74, 1);
@@ -578,6 +580,14 @@
     --fp-meal-pill-shadow: rgba(248, 113, 113, 0.38);
     opacity: 0.85;
     cursor: not-allowed;
+}
+*/
+
+/* Stile per i pasti non disponibili */
+.fp-meal-pill[data-meal-unavailable="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .fp-badge {

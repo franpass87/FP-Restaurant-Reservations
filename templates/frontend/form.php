@@ -233,31 +233,6 @@ endif;
                                                 <p class="fp-meals__subtitle fp-hint"><?php echo esc_html($strings['meals']['subtitle']); ?></p>
                                             <?php endif; ?>
                                         </header>
-                                        <ul
-                                            class="fp-meals__legend"
-                                            aria-label="<?php echo esc_attr__('Legenda disponibilità', 'fp-restaurant-reservations'); ?>"
-                                            data-fp-resv-meals-legend
-                                            hidden
-                                        >
-                                            <li class="fp-meals__legend-item fp-meals__legend-item--available">
-                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
-                                                <span class="fp-meals__legend-text">
-                                                    <?php echo esc_html__('Disponibile', 'fp-restaurant-reservations'); ?>
-                                                </span>
-                                            </li>
-                                            <li class="fp-meals__legend-item fp-meals__legend-item--limited">
-                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
-                                                <span class="fp-meals__legend-text">
-                                                    <?php echo esc_html__('Disponibilità limitata', 'fp-restaurant-reservations'); ?>
-                                                </span>
-                                            </li>
-                                            <li class="fp-meals__legend-item fp-meals__legend-item--full">
-                                                <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
-                                                <span class="fp-meals__legend-text">
-                                                    <?php echo esc_html__('Completamente prenotato', 'fp-restaurant-reservations'); ?>
-                                                </span>
-                                            </li>
-                                        </ul>
                                         <div class="fp-meals__list" role="group">
                                             <?php foreach ($meals as $meal) : ?>
                                                 <?php
@@ -334,6 +309,31 @@ endif;
                                 <?php break;
                             case 'slots': ?>
                                 <div class="fp-resv-slots fp-slots" data-fp-resv-slots>
+                                    <ul
+                                        class="fp-meals__legend"
+                                        aria-label="<?php echo esc_attr__('Legenda disponibilità', 'fp-restaurant-reservations'); ?>"
+                                        data-fp-resv-slots-legend
+                                        hidden
+                                    >
+                                        <li class="fp-meals__legend-item fp-meals__legend-item--available">
+                                            <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                            <span class="fp-meals__legend-text">
+                                                <?php echo esc_html__('Disponibile', 'fp-restaurant-reservations'); ?>
+                                            </span>
+                                        </li>
+                                        <li class="fp-meals__legend-item fp-meals__legend-item--limited">
+                                            <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                            <span class="fp-meals__legend-text">
+                                                <?php echo esc_html__('Posti limitati', 'fp-restaurant-reservations'); ?>
+                                            </span>
+                                        </li>
+                                        <li class="fp-meals__legend-item fp-meals__legend-item--full">
+                                            <span class="fp-meals__legend-indicator" aria-hidden="true"></span>
+                                            <span class="fp-meals__legend-text">
+                                                <?php echo esc_html__('Tutto prenotato', 'fp-restaurant-reservations'); ?>
+                                            </span>
+                                        </li>
+                                    </ul>
                                     <p class="fp-resv-slots__status" data-fp-resv-slots-status aria-live="polite">
                                         <?php echo esc_html($strings['messages']['slots_loading'] ?? ''); ?>
                                     </p>
