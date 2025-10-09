@@ -71,7 +71,7 @@ final class Client
             [
                 'method'  => 'POST',
                 'headers' => [
-                    'api-key'      => $this->apiKey(),
+                    'ma-key'       => $this->apiKey(),
                     'accept'       => 'application/json',
                     'content-type' => 'application/json',
                 ],
