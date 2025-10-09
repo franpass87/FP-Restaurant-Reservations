@@ -5,25 +5,11 @@ import { closestWithAttribute, firstFocusable } from './utils/dom.js';
 import { setAriaDisabled } from './utils/a11y.js';
 import { resolveEndpoint, safeJson } from './utils/net.js';
 import { pushDataLayerEvent } from './tracking/dataLayer.js';
-
-let availabilityModulePromise = null;
-const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
-    ? (callback) => window.requestIdleCallback(callback)
-    : (callback) => window.setTimeout(() => callback(Date.now()), 1);
-
-function loadAvailabilityModule() {
-    if (!availabilityModulePromise) {
-        availabilityModulePromise = import('./availability.js');
-    }
-
-    return availabilityModulePromise;
-}
+import { STEP_ORDER, idleCallback, loadAvailabilityModule } from './constants.js';
 
 function closestSection(element) {
     return closestWithAttribute(element, 'data-fp-resv-section');
 }
-
-const STEP_ORDER = ['service', 'date', 'party', 'slots', 'details', 'confirm'];
 
 class FormApp {
     constructor(root) {
