@@ -235,16 +235,29 @@ final class REST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $nonce = $request->get_param('fp_resv_nonce') ?? $request->get_param('_wpnonce');
-        if (!is_string($nonce)) {
+        // Cerca il nonce in ordine: body params, poi header
+        $nonce = $request->get_param('fp_resv_nonce');
+        if (!is_string($nonce) || $nonce === '') {
+            $nonce = $request->get_param('_wpnonce');
+        }
+        if (!is_string($nonce) || $nonce === '') {
             $nonce = $request->get_header('X-WP-Nonce');
         }
 
-        if (!is_string($nonce) || !wp_verify_nonce($nonce, 'fp_resv_submit')) {
+        // Verifica il nonce
+        if (!is_string($nonce) || $nonce === '' || !wp_verify_nonce($nonce, 'fp_resv_submit')) {
+            $debugInfo = [];
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                $debugInfo = [
+                    'nonce_found' => is_string($nonce) && $nonce !== '',
+                    'nonce_action' => 'fp_resv_submit',
+                ];
+            }
+            
             return new WP_Error(
                 'fp_resv_invalid_nonce',
-                __('Verifica di sicurezza non superata. Riprova.', 'fp-restaurant-reservations'),
-                ['status' => 403]
+                __('Verifica di sicurezza non superata. Aggiorna la pagina e riprova.', 'fp-restaurant-reservations'),
+                array_merge(['status' => 403], $debugInfo)
             );
         }
 

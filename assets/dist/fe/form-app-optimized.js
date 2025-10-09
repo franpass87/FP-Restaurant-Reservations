@@ -290,6 +290,25 @@ export class FormApp {
                 event.target.setAttribute('aria-invalid', 'false');
             }
         });
+
+        const openPicker = () => {
+            // Porta il focus sull'input
+            if (typeof this.dateField.focus === 'function') {
+                this.dateField.focus();
+            }
+
+            // Apri il picker nativo se disponibile
+            if (typeof this.dateField.showPicker === 'function') {
+                try {
+                    this.dateField.showPicker();
+                } catch (error) {
+                    // Alcuni browser (es. Safari) potrebbero non supportare showPicker. Ignora.
+                }
+            }
+        };
+
+        // Apri il calendario al click sull'input
+        this.dateField.addEventListener('click', openPicker);
     }
 
     initializeAvailability() {

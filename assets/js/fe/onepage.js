@@ -779,6 +779,13 @@ class FormApp {
     handleRetrySubmit(event) {
         event.preventDefault();
         this.clearError();
+        
+        // Ripristina il pulsante Riprova al suo stato originale
+        if (this.errorRetry) {
+            this.errorRetry.textContent = this.messages.retry_button || 'Riprova';
+            this.errorRetry.onclick = null;
+        }
+        
         this.focusFirstInvalid();
         this.updateSubmitState();
     }
@@ -1576,7 +1583,22 @@ class FormApp {
         const status = error && typeof error.status === 'number' ? error.status : 'unknown';
         const message = (error && error.message) || this.copy.submitError;
         const debugSource = error && typeof error === 'object' ? error.payload || null : null;
-        const finalMessage = formatDebugMessage(message, debugSource);
+        let finalMessage = formatDebugMessage(message, debugSource);
+
+        // Se l'errore è 403 (nonce invalido), suggerisci di ricaricare la pagina
+        if (status === 403) {
+            const reloadHint = this.messages.reload_hint || 'La sessione potrebbe essere scaduta. Ricarica la pagina e riprova.';
+            finalMessage = finalMessage + ' ' + reloadHint;
+            
+            // Aggiungi un pulsante per ricaricare la pagina
+            if (this.errorAlert && this.errorRetry) {
+                this.errorRetry.textContent = this.messages.reload_button || 'Ricarica pagina';
+                this.errorRetry.onclick = (event) => {
+                    event.preventDefault();
+                    window.location.reload();
+                };
+            }
+        }
 
         if (this.errorAlert && this.errorMessage) {
             this.errorMessage.textContent = finalMessage;
@@ -1607,6 +1629,13 @@ class FormApp {
         if (this.errorAlert) {
             this.errorAlert.hidden = true;
         }
+        
+        // Ripristina il pulsante Riprova al suo stato originale
+        if (this.errorRetry) {
+            this.errorRetry.textContent = this.messages.retry_button || 'Riprova';
+            this.errorRetry.onclick = null;
+        }
+        
         this.state.hintOverride = '';
     }
 
