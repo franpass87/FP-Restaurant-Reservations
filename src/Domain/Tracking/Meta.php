@@ -22,9 +22,22 @@ final class Meta
         return trim($id);
     }
 
+    public function accessToken(): string
+    {
+        $settings = $this->options->getGroup('fp_resv_tracking', []);
+        $token    = isset($settings['meta_access_token']) ? (string) $settings['meta_access_token'] : '';
+
+        return trim($token);
+    }
+
     public function isEnabled(): bool
     {
         return $this->pixelId() !== '';
+    }
+
+    public function isServerSideEnabled(): bool
+    {
+        return $this->pixelId() !== '' && $this->accessToken() !== '';
     }
 
     public function eventPayload(string $event, float $value, string $currency, int $reservationId = 0): ?array

@@ -939,6 +939,20 @@ final class AdminPages
                         __('Il Measurement ID GA4 deve iniziare con G- seguito da lettere maiuscole e numeri.', 'fp-restaurant-reservations')
                     );
                 }
+                if (!empty($options['ga4_api_secret']) && strlen((string) $options['ga4_api_secret']) < 20) {
+                    $this->addError(
+                        $pageKey,
+                        'invalid_ga4_api_secret',
+                        __('Il GA4 API Secret sembra non essere valido. Verifica di aver copiato correttamente il token.', 'fp-restaurant-reservations')
+                    );
+                }
+                if (!empty($options['meta_access_token']) && strlen((string) $options['meta_access_token']) < 50) {
+                    $this->addError(
+                        $pageKey,
+                        'invalid_meta_access_token',
+                        __('Il Meta Access Token sembra non essere valido. Verifica di aver copiato correttamente il token.', 'fp-restaurant-reservations')
+                    );
+                }
                 break;
         }
     }
@@ -2368,6 +2382,12 @@ final class AdminPages
                                 'type'        => 'text',
                                 'default'     => '',
                             ],
+                            'ga4_api_secret' => [
+                                'label'       => __('GA4 API Secret (per invii server-side)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => '',
+                                'description' => __('Necessario per inviare eventi tramite Measurement Protocol API', 'fp-restaurant-reservations'),
+                            ],
                             'google_ads_conversion_id' => [
                                 'label'   => __('ID conversione Google Ads', 'fp-restaurant-reservations'),
                                 'type'    => 'text',
@@ -2377,6 +2397,12 @@ final class AdminPages
                                 'label'   => __('Meta Pixel ID', 'fp-restaurant-reservations'),
                                 'type'    => 'text',
                                 'default' => '',
+                            ],
+                            'meta_access_token' => [
+                                'label'       => __('Meta Access Token (per invii server-side)', 'fp-restaurant-reservations'),
+                                'type'        => 'text',
+                                'default'     => '',
+                                'description' => __('Necessario per inviare eventi tramite Conversions API', 'fp-restaurant-reservations'),
                             ],
                             'clarity_project_id' => [
                                 'label'   => __('Microsoft Clarity Project ID', 'fp-restaurant-reservations'),

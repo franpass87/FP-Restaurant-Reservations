@@ -31,8 +31,10 @@ final class Manager
 {
     private const DEFAULTS = [
         'ga4_measurement_id'      => '',
+        'ga4_api_secret'          => '',
         'google_ads_conversion_id'=> '',
         'meta_pixel_id'           => '',
+        'meta_access_token'       => '',
         'clarity_project_id'      => '',
         'tracking_enable_debug'   => '0',
         'tracking_utm_cookie_days'=> '90',
