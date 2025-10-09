@@ -24,6 +24,8 @@ use function substr;
 use function wp_json_encode;
 use function wp_unslash;
 use function rawurlencode;
+use function strpos;
+use function uniqid;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
@@ -158,8 +160,12 @@ final class Manager
         $currency  = is_string($payload['currency'] ?? null) && $payload['currency'] !== '' ? (string) $payload['currency'] : 'EUR';
         $location  = is_string($payload['location'] ?? null) && $payload['location'] !== '' ? (string) $payload['location'] : 'default';
 
+        // Genera event_id per deduplicazione
+        $eventId = $this->generateEventId();
+
         $event = [
             'event'       => 'reservation_submit',
+            'event_id'    => $eventId,
             'reservation' => [
                 'id'       => $reservationId,
                 'status'   => $status,
@@ -179,6 +185,7 @@ final class Manager
                     'reservation_location' => $location,
                     'value'              => $value > 0 ? $value : null,
                     'currency'           => $currency,
+                    'event_id'           => $eventId,
                 ], static fn ($val) => $val !== null && $val !== ''),
             ],
         ];
@@ -193,6 +200,8 @@ final class Manager
             }
             if ($metaPayload !== null) {
                 $event['meta'] = $metaPayload;
+                // Aggiungi event_id per deduplicazione
+                $event['meta']['event_id'] = $eventId;
             }
         } elseif ($status === 'waitlist') {
             $event['ga4']['name'] = 'waitlist_joined';
@@ -201,6 +210,9 @@ final class Manager
         }
 
         DataLayer::push($event);
+
+        // Invia eventi server-side
+        $this->sendServerSideEvents($event, $reservation, $payload);
 
         $this->maybeDispatchEstimatedPurchase($payload, $reservation, $currency);
     }
@@ -216,11 +228,15 @@ final class Manager
         $value    = isset($eventData['price']) && is_numeric($eventData['price']) ? (float) $eventData['price'] * max(1, $count) : 0.0;
         $currency = is_string($eventData['currency'] ?? null) && $eventData['currency'] !== '' ? (string) $eventData['currency'] : ($payload['currency'] ?? 'EUR');
 
+        // Genera event_id per deduplicazione
+        $eventId = $this->generateEventId();
+
         $metaPayload = $this->meta->eventPayload('Purchase', $value, $currency, (int) ($reservation['id'] ?? 0));
         $adsPayload  = $this->ads->conversionPayload((int) ($reservation['id'] ?? 0), $value, $currency);
 
         $eventPayload = [
             'event'  => 'event_ticket_purchase',
+            'event_id' => $eventId,
             'event_meta' => [
                 'event_id' => $eventData['id'] ?? null,
                 'tickets'  => $count,
@@ -238,12 +254,15 @@ final class Manager
                     ],
                     'value'    => $value > 0 ? $value : null,
                     'currency' => $currency,
+                    'event_id' => $eventId,
                 ], static fn ($val) => $val !== null),
             ],
         ];
 
         if ($metaPayload !== null) {
             $eventPayload['meta'] = $metaPayload;
+            // Aggiungi event_id per deduplicazione
+            $eventPayload['meta']['event_id'] = $eventId;
         }
 
         if ($adsPayload !== null) {
@@ -251,6 +270,21 @@ final class Manager
         }
 
         DataLayer::push($eventPayload);
+
+        // Invia eventi server-side
+        $reservationModel = new ReservationModel(
+            (int) ($reservation['id'] ?? 0),
+            (string) ($reservation['customer_name'] ?? ''),
+            (string) ($reservation['customer_email'] ?? ''),
+            (string) ($reservation['customer_phone'] ?? ''),
+            (string) ($reservation['date'] ?? ''),
+            (string) ($reservation['time'] ?? ''),
+            (int) ($reservation['party'] ?? 1),
+            (string) ($reservation['status'] ?? 'pending'),
+            (string) ($reservation['notes'] ?? ''),
+            null
+        );
+        $this->sendServerSideEvents($eventPayload, $reservationModel, $payload);
     }
 
     /**
@@ -383,7 +417,12 @@ final class Manager
             w.gtag('event', evt.ads.name, adsParams);
         }
         if (evt.meta && evt.meta.name && typeof w.fbq === 'function'){
-            w.fbq('track', evt.meta.name, evt.meta.params || {});
+            var metaParams = evt.meta.params || {};
+            var metaOptions = {};
+            if (evt.event_id || evt.meta.event_id){
+                metaOptions.eventID = evt.event_id || evt.meta.event_id;
+            }
+            w.fbq('track', evt.meta.name, metaParams, metaOptions);
         }
     };
     api.pushEvent = function(name, payload){
@@ -413,6 +452,144 @@ JS;
         }
 
         return $this->settings;
+    }
+
+    /**
+     * Invia eventi server-side a GA4 e Meta
+     *
+     * @param array<string, mixed> $event
+     * @param ReservationModel $reservation
+     * @param array<string, mixed> $payload
+     */
+    private function sendServerSideEvents(array $event, ReservationModel $reservation, array $payload): void
+    {
+        $eventId = $this->generateEventId();
+        $clientId = $this->extractClientId();
+        $userData = $this->buildUserData($reservation);
+        $eventSourceUrl = home_url($_SERVER['REQUEST_URI'] ?? '/');
+
+        // Invia a GA4 se configurato
+        if ($this->ga4->isServerSideEnabled() && isset($event['ga4'])) {
+            $eventName = $event['ga4']['name'] ?? '';
+            $params = $event['ga4']['params'] ?? [];
+
+            // Aggiungi event_id per deduplicazione
+            $params['event_id'] = $eventId;
+
+            $this->ga4->sendEvent($eventName, $params, $clientId);
+        }
+
+        // Invia a Meta se configurato
+        if ($this->meta->isServerSideEnabled() && isset($event['meta'])) {
+            $eventName = $event['meta']['name'] ?? '';
+            $customData = $event['meta']['params'] ?? [];
+
+            $this->meta->sendEvent($eventName, $customData, $userData, $eventSourceUrl, $eventId);
+        }
+    }
+
+    /**
+     * Genera un ID univoco per l'evento (per deduplicazione)
+     */
+    private function generateEventId(): string
+    {
+        return uniqid('evt_', true);
+    }
+
+    /**
+     * Estrae il client_id dal cookie GA (_ga)
+     */
+    private function extractClientId(): string
+    {
+        if (!isset($_COOKIE['_ga'])) {
+            return '';
+        }
+
+        $gaCookie = (string) $_COOKIE['_ga'];
+        // Il formato del cookie _ga è: GA1.2.XXXXXXXXXX.YYYYYYYYYY
+        // Ci interessa la parte XXXXXXXXXX.YYYYYYYYYY
+        $parts = explode('.', $gaCookie);
+        if (count($parts) >= 4) {
+            return $parts[2] . '.' . $parts[3];
+        }
+
+        return '';
+    }
+
+    /**
+     * Costruisce i dati utente per Meta Conversions API
+     *
+     * @param ReservationModel $reservation
+     * @return array<string, mixed>
+     */
+    private function buildUserData(ReservationModel $reservation): array
+    {
+        $userData = [];
+
+        // Email
+        if ($reservation->customer_email !== '') {
+            $userData['email'] = $reservation->customer_email;
+        }
+
+        // Phone
+        if ($reservation->customer_phone !== '') {
+            $userData['phone'] = $reservation->customer_phone;
+        }
+
+        // IP address
+        $clientIp = $this->getClientIp();
+        if ($clientIp !== '') {
+            $userData['client_ip_address'] = $clientIp;
+        }
+
+        // User agent
+        if (isset($_SERVER['HTTP_USER_AGENT'])) {
+            $userData['client_user_agent'] = (string) $_SERVER['HTTP_USER_AGENT'];
+        }
+
+        // Cookie fbc (Facebook Click ID)
+        if (isset($_COOKIE['_fbc'])) {
+            $userData['fbc'] = (string) $_COOKIE['_fbc'];
+        }
+
+        // Cookie fbp (Facebook Pixel)
+        if (isset($_COOKIE['_fbp'])) {
+            $userData['fbp'] = (string) $_COOKIE['_fbp'];
+        }
+
+        return $userData;
+    }
+
+    /**
+     * Ottiene l'IP del client gestendo proxy e load balancer
+     */
+    private function getClientIp(): string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR',
+        ];
+
+        foreach ($headers as $header) {
+            if (!isset($_SERVER[$header])) {
+                continue;
+            }
+
+            $ip = (string) $_SERVER[$header];
+            // Se ci sono più IP, prendi il primo
+            if (strpos($ip, ',') !== false) {
+                $ips = explode(',', $ip);
+                $ip = trim($ips[0]);
+            }
+
+            if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return '';
     }
 
     /**
