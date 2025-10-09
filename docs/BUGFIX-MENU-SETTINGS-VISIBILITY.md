@@ -2,7 +2,7 @@
 
 ## Problema
 
-Il menu "Impostazioni" di FP Restaurant Reservations non era visibile nel backend di WordPress per alcuni amministratori. Questo accadeva quando la capability personalizzata `manage_fp_reservations` non veniva correttamente aggiunta al ruolo `administrator`.
+Il menu "Impostazioni" e i relativi submenu (Agenda, Sale & Tavoli, Report & Analytics, Chiusure, Diagnostica) di FP Restaurant Reservations non erano visibili nel backend di WordPress per alcuni amministratori. Questo accadeva quando la capability personalizzata `manage_fp_reservations` non veniva correttamente aggiunta al ruolo `administrator`.
 
 ## Causa
 
@@ -16,7 +16,7 @@ Tuttavia, in alcuni casi questa capability potrebbe non essere presente, causand
 
 ## Soluzione Implementata
 
-È stata implementata una **doppia protezione** nel metodo `registerMenu()` di `src/Domain/Settings/AdminPages.php`:
+È stata implementata una **doppia protezione** nel metodo `registerMenu()` di tutti i controller di amministrazione:
 
 ### 1. Chiamata Esplicita a `ensureAdminCapabilities()`
 
@@ -59,15 +59,34 @@ La stessa capability calcolata viene applicata sia al menu principale che ai sub
 
 ## File Modificati
 
+Tutti i seguenti controller sono stati aggiornati con la stessa logica di protezione:
+
 - `src/Domain/Settings/AdminPages.php`:
-  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il menu principale e i submenu delle impostazioni
+
+- `src/Domain/Reservations/AdminController.php`:
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il submenu "Agenda"
+
+- `src/Domain/Tables/AdminController.php`:
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il submenu "Sale & Tavoli"
+
+- `src/Domain/Reports/AdminController.php`:
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il submenu "Report & Analytics"
+
+- `src/Domain/Closures/AdminController.php`:
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il submenu "Chiusure"
+
+- `src/Domain/Diagnostics/AdminController.php`:
+  - Metodo `registerMenu()`: Aggiunta chiamata a `Roles::ensureAdminCapabilities()` e logica di fallback capability per il submenu "Diagnostica"
 
 ## Test
 
 Per verificare il fix:
 
-1. **Test manuale**: Accedere al backend WordPress come amministratore e verificare che il menu "FP Reservations" sia visibile
-2. **Test con Restaurant Manager**: Accedere come utente con ruolo `fp_restaurant_manager` e verificare l'accesso
+1. **Test manuale**: Accedere al backend WordPress come amministratore e verificare che:
+   - Il menu principale "FP Reservations" sia visibile
+   - Tutti i submenu siano visibili: Impostazioni, Agenda, Sale & Tavoli, Report & Analytics, Chiusure, Diagnostica
+2. **Test con Restaurant Manager**: Accedere come utente con ruolo `fp_restaurant_manager` e verificare l'accesso a tutti i menu
 3. **Test capability**: Eseguire lo script `tools/fix-admin-capabilities.php` per verificare che la capability sia presente
 
 ## Note Tecniche
@@ -78,6 +97,11 @@ Per verificare il fix:
 
 ## Link Correlati
 
-- Issue GitHub: #6737
-- Branch: `cursor/fix-wordpress-menu-settings-visibility-6737`
+- Issue GitHub: #636f
+- Branch: `cursor/fix-settings-submenu-visibility-636f`
 - Commit: [da inserire dopo il commit]
+
+## Cronologia
+
+- **v1.0**: Fix iniziale su `AdminPages.php` (branch `cursor/fix-wordpress-menu-settings-visibility-6737`)
+- **v2.0**: Estensione del fix a tutti i submenu controller (branch `cursor/fix-settings-submenu-visibility-636f`)
