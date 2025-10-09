@@ -1677,12 +1677,9 @@ final class FormContext
         ];
 
         $brevoSettings  = $this->options->getGroup('fp_resv_brevo', []);
-        $phonePrefixes  = $this->parsePhonePrefixOptions($brevoSettings['brevo_phone_prefix_map'] ?? null);
-        if ($phonePrefixes === []) {
-            $phonePrefixes = $this->defaultPhonePrefixes();
-        }
-
-        $phonePrefixes = $this->condensePhonePrefixes($phonePrefixes);
+        $customPrefixMap = $this->parsePhonePrefixMap($brevoSettings['brevo_phone_prefix_map'] ?? null);
+        $phonePrefixes   = $this->mergePhonePrefixes(self::DEFAULT_PHONE_PREFIXES, $customPrefixMap);
+        $phonePrefixes   = $this->condensePhonePrefixes($phonePrefixes);
 
         if ($phonePrefixes !== []) {
             $config['phone_prefixes'] = $phonePrefixes;
@@ -1922,9 +1919,11 @@ final class FormContext
     }
 
     /**
-     * @return array<int, array<string, string>>
+     * Estrae la mappa prefisso => lingua dalla configurazione JSON.
+     *
+     * @return array<string, string>
      */
-    private function parsePhonePrefixOptions(mixed $raw): array
+    private function parsePhonePrefixMap(mixed $raw): array
     {
         if (!is_string($raw) || $raw === '') {
             return [];
@@ -1948,45 +1947,52 @@ final class FormContext
             }
 
             $languageCode = $this->normalizePhoneLanguage(is_string($language) ? $language : '');
-            if (!array_key_exists($normalizedPrefix, $map)) {
-                $map[$normalizedPrefix] = $languageCode;
-            }
+            $map[$normalizedPrefix] = $languageCode;
         }
 
-        if ($map === []) {
-            return [];
-        }
-
-        $options = [];
-
-        foreach ($map as $prefix => $language) {
-            $digits = preg_replace('/[^0-9]/', '', substr($prefix, 1));
-            if (!is_string($digits) || $digits === '') {
-                continue;
-            }
-
-            $label = $prefix;
-            if ($language !== '') {
-                $label .= ' · ' . $language;
-            }
-
-            $options[] = [
-                'prefix'   => $prefix,
-                'value'    => $digits,
-                'language' => $language,
-                'label'    => $label,
-            ];
-        }
-
-        return $options;
+        return $map;
     }
 
     /**
+     * Integra i prefissi di default con le personalizzazioni custom.
+     *
+     * @param array<int, array<string, string>> $defaults
+     * @param array<string, string> $customMap
+     *
      * @return array<int, array<string, string>>
      */
-    private function defaultPhonePrefixes(): array
+    private function mergePhonePrefixes(array $defaults, array $customMap): array
     {
-        return $this->condensePhonePrefixes(self::DEFAULT_PHONE_PREFIXES);
+        if ($customMap === []) {
+            return $defaults;
+        }
+
+        $merged = [];
+
+        foreach ($defaults as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $prefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
+            $normalizedPrefix = $this->normalizePhonePrefix($prefix);
+
+            if ($normalizedPrefix === '' || !isset($entry['value']) || !isset($entry['label'])) {
+                continue;
+            }
+
+            // Sovrascrivi la lingua se presente nella mappa custom
+            $language = $customMap[$normalizedPrefix] ?? ($entry['language'] ?? 'INT');
+
+            $merged[] = [
+                'prefix'   => $normalizedPrefix,
+                'value'    => (string) $entry['value'],
+                'language' => $language,
+                'label'    => (string) $entry['label'],
+            ];
+        }
+
+        return $merged;
     }
 
     /**
