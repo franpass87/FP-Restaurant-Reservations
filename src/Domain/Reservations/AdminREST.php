@@ -562,7 +562,7 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        return Roles::currentUserCanManageReservations();
     }
 
     private function sanitizeDate(mixed $value): ?string

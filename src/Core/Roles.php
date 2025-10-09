@@ -60,10 +60,11 @@ final class Roles
 
     /**
      * Verifica se l'utente corrente può gestire le prenotazioni.
+     * Include un fallback per gli amministratori che potrebbero non avere ancora la capability personalizzata.
      */
     public static function currentUserCanManageReservations(): bool
     {
-        return current_user_can(self::MANAGE_RESERVATIONS);
+        return current_user_can(self::MANAGE_RESERVATIONS) || current_user_can('manage_options');
     }
 
     /**

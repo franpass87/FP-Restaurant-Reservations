@@ -40,7 +40,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [self::class, 'handleEmailTest'],
-                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
+                'permission_callback' => static fn (): bool => Roles::currentUserCanManageReservations(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',
@@ -60,7 +60,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [self::class, 'handlePrivacyExport'],
-                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
+                'permission_callback' => static fn (): bool => Roles::currentUserCanManageReservations(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',
@@ -76,7 +76,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::DELETABLE,
                 'callback'            => [self::class, 'handlePrivacyDelete'],
-                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
+                'permission_callback' => static fn (): bool => Roles::currentUserCanManageReservations(),
                 'args'                => [
                     'email' => [
                         'type'     => 'string',

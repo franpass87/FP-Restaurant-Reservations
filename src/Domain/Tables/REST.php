@@ -334,7 +334,7 @@ final class REST
     private function canManage(): bool
     {
         // Verifica che l'utente abbia i permessi per gestire le prenotazioni
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        return Roles::currentUserCanManageReservations();
     }
 
     /**

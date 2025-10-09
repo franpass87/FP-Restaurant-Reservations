@@ -22,7 +22,7 @@ final class Security
 
     public static function currentUserCanManage(): bool
     {
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        return Roles::currentUserCanManageReservations();
     }
 
     public static function enforceNoStoreHeaders(

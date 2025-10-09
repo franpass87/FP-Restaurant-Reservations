@@ -74,7 +74,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleListTickets'],
-                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
+                'permission_callback' => static fn (): bool => Roles::currentUserCanManageReservations(),
             ]
         );
 
@@ -84,7 +84,7 @@ final class REST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => [$this, 'handleExportTickets'],
-                'permission_callback' => static fn (): bool => current_user_can(Roles::MANAGE_RESERVATIONS),
+                'permission_callback' => static fn (): bool => Roles::currentUserCanManageReservations(),
             ]
         );
     }

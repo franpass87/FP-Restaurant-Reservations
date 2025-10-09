@@ -214,7 +214,7 @@ final class REST
 
     private function checkAdminPermission(): bool
     {
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        return Roles::currentUserCanManageReservations();
     }
 
     private function applyReservationStatus(int $reservationId, string $paymentStatus): ?string

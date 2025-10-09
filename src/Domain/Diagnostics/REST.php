@@ -210,7 +210,7 @@ final class REST
 
     public function checkPermissions(): bool|WP_Error
     {
-        if (!current_user_can(Roles::MANAGE_RESERVATIONS)) {
+        if (!Roles::currentUserCanManageReservations()) {
             return new WP_Error(
                 'fp_resv_forbidden',
                 __('Non hai i permessi per visualizzare questi log.', 'fp-restaurant-reservations'),
