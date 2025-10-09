@@ -8,7 +8,7 @@ const rt = /\D+/g;
 function J(a) {
   return a ? String(a).replace(rt, "") : "";
 }
-function w(a) {
+function C(a) {
   const t = J(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
@@ -16,7 +16,7 @@ function M(a) {
   return J(a);
 }
 function nt(a, t) {
-  const e = w(a), i = M(t);
+  const e = C(a), i = M(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
@@ -36,16 +36,16 @@ function ot(a) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function D(a, t) {
+function V(a, t) {
   const e = a.value, { masked: i } = ot(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", w(t));
+  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", C(t));
 }
 function z(a, t) {
-  const e = M(a.value), i = w(t);
+  const e = M(a.value), i = C(t);
   return {
     e164: nt(i, e),
     local: e,
@@ -172,10 +172,10 @@ function H(a, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-let O = null;
+let D = null;
 const U = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 function pt() {
-  return O || (O = Promise.resolve().then(() => Ct)), O;
+  return D || (D = Promise.resolve().then(() => wt)), D;
 }
 function mt(a) {
   return Y(a, "data-fp-resv-section");
@@ -254,29 +254,29 @@ class G {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && D(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && V(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
       return;
-    const t = w(this.phonePrefixField.value);
+    const t = C(this.phonePrefixField.value);
     let e = t;
     if (e === "" && this.phoneCountryCode) {
-      const i = w(this.phoneCountryCode);
+      const i = C(this.phoneCountryCode);
       i && (e = i);
     }
     if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const i = w(this.hiddenPhoneCc.value);
+      const i = C(this.hiddenPhoneCc.value);
       i && (e = i);
     }
     if (e === "") {
       const i = this.config && this.config.defaults || {};
       if (i.phone_country_code) {
-        const s = w(i.phone_country_code);
+        const s = C(i.phone_country_code);
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && D(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && V(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -346,7 +346,7 @@ class G {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? D(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    this.handleFirstInteraction(), e === this.phoneField ? V(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
     const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, l = mt(e);
     if (!l) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
@@ -505,7 +505,7 @@ class G {
     if (!r)
       return;
     const n = r.getAttribute("data-step") || String(s + 1);
-    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(r, "active"), this.dispatchSectionUnlocked(n));
+    this.state.sectionStates[n] !== "completed" && (this.state.sectionStates[n] = "active", this.updateSectionAttributes(r, "active"), this.dispatchSectionUnlocked(n), this.scrollIntoView(r));
   }
   navigateToPrevious(t) {
     const e = this.sections.indexOf(t);
@@ -800,7 +800,7 @@ class G {
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
-      const i = w(this.phonePrefixField.value);
+      const i = C(this.phonePrefixField.value);
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
@@ -958,6 +958,10 @@ class G {
     y(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && y(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
+    const e = this.root || t;
+    !e || typeof e.scrollIntoView != "function" || requestAnimationFrame(() => {
+      e.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
   isConsentField(t) {
     if (!t || !t.getAttribute)
@@ -980,23 +984,23 @@ class G {
   }
   getPhoneCountryCode() {
     if (this.phonePrefixField && this.phonePrefixField.value) {
-      const e = w(this.phonePrefixField.value);
+      const e = C(this.phonePrefixField.value);
       if (e)
         return e;
     }
     if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const e = w(this.hiddenPhoneCc.value);
+      const e = C(this.hiddenPhoneCc.value);
       if (e)
         return e;
     }
     if (this.phoneCountryCode) {
-      const e = w(this.phoneCountryCode);
+      const e = C(this.phoneCountryCode);
       if (e)
         return e;
     }
     const t = this.config && this.config.defaults || {};
     if (t.phone_country_code) {
-      const e = w(t.phone_country_code);
+      const e = C(t.phone_country_code);
       if (e)
         return e;
     }
@@ -1103,7 +1107,7 @@ function St(a, t) {
   }
   return e.searchParams.set("date", t.date), e.searchParams.set("party", String(t.party)), t.meal && e.searchParams.set("meal", t.meal), e.toString();
 }
-function V(a) {
+function O(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
@@ -1116,8 +1120,8 @@ function At(a) {
     const d = o.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((v) => typeof v.normalize == "function" ? v.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : v)(d), m = (v) => v.some((c) => u.startsWith(c)), C = (v) => v.some((c) => u.includes(c));
-    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const u = ((v) => typeof v.normalize == "function" ? v.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : v)(d), m = (v) => v.some((c) => u.startsWith(c)), w = (v) => v.some((c) => u.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || w(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function P(o, d) {
     const p = Array.isArray(o) ? o : [], u = p.length;
@@ -1145,7 +1149,7 @@ function At(a) {
   function A() {
     if (!i)
       return;
-    V(i);
+    O(i);
     const o = a.skeletonCount || 4;
     for (let d = 0; d < o; d += 1) {
       const p = document.createElement("li"), u = document.createElement("span");
@@ -1154,8 +1158,8 @@ function At(a) {
   }
   function R(o) {
     s && (s.hidden = !1);
-    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", C = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!C || v), k = C && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
-    q(k, "idle"), i && V(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
+    const d = o && typeof o == "object", p = d && typeof o.meal == "string" ? o.meal.trim() : "", u = d && typeof o.date == "string" ? o.date.trim() : "", m = d && typeof o.party < "u" ? String(o.party).trim() : "", w = d && !!o.requiresMeal, v = p !== "", g = u !== "" && (m !== "" && m !== "0") && (!w || v), k = w && !v ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    q(k, "idle"), i && O(i), E(o, { state: g ? "full" : "unknown", slots: 0 });
   }
   function N() {
     s && (s.hidden = !0);
@@ -1188,15 +1192,15 @@ function At(a) {
   function j(o, d, p) {
     if (p && p !== S || d && f && d !== f || (B(), N(), !i))
       return;
-    V(i);
+    O(i);
     const u = o && Array.isArray(o.slots) ? o.slots : [];
     if (u.length === 0) {
       R(d);
       return;
     }
-    u.forEach((C) => {
+    u.forEach((w) => {
       const v = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", b && b.start === C.start ? "true" : "false"), c.addEventListener("click", () => Z(C, c)), v.appendChild(c), i.appendChild(v);
+      c.type = "button", c.textContent = w.label || "", c.dataset.slot = w.start || "", c.dataset.slotStatus = w.status || "", c.setAttribute("aria-pressed", b && b.start === w.start ? "true" : "false"), c.addEventListener("click", () => Z(w, c)), v.appendChild(c), i.appendChild(v);
     }), q(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(o && (typeof o.has_availability < "u" && o.has_availability || o.meta && o.meta.has_availability));
     E(d, P(u, m));
@@ -1212,8 +1216,8 @@ function At(a) {
       return;
     }
     B(), A(), q(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), E(o, { state: "loading", slots: 0 });
-    const C = St(a.endpoint, o), v = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
+    const w = St(a.endpoint, o), v = performance.now();
+    fetch(w, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
         const g = new Error("availability_error");
         g.status = c.status, g.payload = x;
@@ -1284,7 +1288,7 @@ function At(a) {
     }
   };
 }
-const Ct = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const wt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   createAvailabilityController: At
 }, Symbol.toStringTag, { value: "Module" }));

@@ -92,7 +92,8 @@ export class FormApp {
             this.state.getState(),
             this.updateSectionAttributes.bind(this),
             this.updateProgressIndicators.bind(this),
-            this.updateSubmitState.bind(this)
+            this.updateSubmitState.bind(this),
+            this.root
         );
 
         this.copy = {
