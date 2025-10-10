@@ -10,6 +10,7 @@ use FP\Resv\Core\Exceptions\ConflictException;
 use FP\Resv\Core\Metrics;
 use FP\Resv\Core\PhoneHelper;
 use FP\Resv\Core\ReservationValidator;
+use FP\Resv\Domain\Reservations\ReservationStatuses;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService as StripePayments;
@@ -75,15 +76,7 @@ use const FILTER_VALIDATE_EMAIL;
 
 class Service
 {
-    public const ALLOWED_STATUSES = [
-        'pending',
-        'pending_payment',
-        'confirmed',
-        'waitlist',
-        'cancelled',
-        'no-show',
-        'visited',
-    ];
+    public const ALLOWED_STATUSES = ReservationStatuses::ALLOWED_STATUSES;
     public function __construct(
         private readonly Repository $repository,
         private readonly Options $options,

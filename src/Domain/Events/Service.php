@@ -8,6 +8,7 @@ use FP\Resv\Core\DataLayer;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
+use FP\Resv\Domain\Reservations\ReservationStatuses;
 use FP\Resv\Domain\Reservations\Service as ReservationsService;
 use InvalidArgumentException;
 use RuntimeException;
@@ -36,7 +37,7 @@ use const FILTER_VALIDATE_EMAIL;
 final class Service
 {
     /** @var array<int, string> */
-    private const ACTIVE_STATUSES = ['pending', 'pending_payment', 'confirmed', 'checked_in'];
+    private const ACTIVE_STATUSES = ReservationStatuses::ACTIVE_FOR_EVENTS;
 
     public function __construct(
         private readonly wpdb $wpdb,
