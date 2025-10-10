@@ -32,6 +32,7 @@ use function is_array;
 use function is_string;
 use function preg_match;
 use function preg_split;
+use function register_rest_route;
 use function rest_ensure_response;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
