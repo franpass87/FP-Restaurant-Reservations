@@ -223,6 +223,12 @@
                 
                 console.error('Error loading reservations:', error);
                 showEmpty();
+            })
+            .finally(() => {
+                // Ensure loading is always hidden, even if the request is stale or errors occur
+                if (requestId === loadRequestId && loadingEl) {
+                    loadingEl.hidden = true;
+                }
             });
     }
 
