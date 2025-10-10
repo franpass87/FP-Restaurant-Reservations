@@ -223,12 +223,8 @@
                     return;
                 }
                 
-                // Handle null or empty responses
-                if (!data) {
-                    reservations = [];
-                } else {
-                    reservations = Array.isArray(data) ? data : (data.reservations || []);
-                }
+                // L'API restituisce direttamente un array di prenotazioni
+                reservations = Array.isArray(data) ? data : [];
                 
                 renderCurrentView();
                 updateSummary();
@@ -240,12 +236,11 @@
                 }
                 
                 console.error('Error loading reservations:', error);
+                reservations = [];
                 showEmpty();
             })
             .finally(() => {
                 // Hide loading only if this is still the latest request
-                // renderCurrentView() and showEmpty() have their own loading cleanup
-                // This finally() is a fallback for edge cases where neither is called
                 if (requestId === loadRequestId && loadingEl) {
                     loadingEl.hidden = true;
                 }
