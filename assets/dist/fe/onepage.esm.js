@@ -12,19 +12,19 @@ function _(a) {
   const t = G(a);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function M(a) {
+function D(a) {
   return G(a);
 }
 function ot(a, t) {
-  const e = _(a), i = M(t);
+  const e = _(a), i = D(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function K(a) {
-  const t = M(a);
+  const t = D(a);
   return t.length >= 6 && t.length <= 15;
 }
 function lt(a) {
-  const t = M(a);
+  const t = D(a);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
@@ -42,10 +42,10 @@ function V(a, t) {
     const r = i.length - e.length, n = Math.max(0, s + r);
     a.setSelectionRange(n, n);
   }
-  a.setAttribute("data-phone-local", M(a.value)), a.setAttribute("data-phone-cc", _(t));
+  a.setAttribute("data-phone-local", D(a.value)), a.setAttribute("data-phone-cc", _(t));
 }
 function N(a, t) {
-  const e = M(a.value), i = _(t);
+  const e = D(a.value), i = _(t);
   return {
     e164: ot(i, e),
     local: e,
@@ -699,8 +699,8 @@ class Q {
     s && s.value && (P = s.value.trim()), r && r.value && (P = (P + " " + r.value.trim()).trim());
     let A = "";
     if (n && n.value && (A = n.value.trim()), o && o.value) {
-      const C = this.getPhoneCountryCode(), D = (C ? "+" + C + " " : "") + o.value.trim();
-      A = A !== "" ? A + " / " + D : D;
+      const C = this.getPhoneCountryCode(), I = (C ? "+" + C + " " : "") + o.value.trim();
+      A = A !== "" ? A + " / " + I : I;
     }
     const y = [];
     f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && y.push("Seggioloni: " + parseInt(f.value, 10)), b && "checked" in b && b.checked && y.push("Tavolo accessibile per sedia a rotelle"), w && "checked" in w && w.checked && y.push("Animali domestici");
@@ -732,7 +732,9 @@ class Q {
     });
   }
   async handleSubmit(t) {
-    if (t.preventDefault(), this.state.touchedFields.consent = !0, !this.form.checkValidity())
+    if (t.preventDefault(), this.state.sending)
+      return !1;
+    if (this.state.touchedFields.consent = !0, !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
     v(e, {
@@ -742,7 +744,9 @@ class Q {
       party: i.party,
       meal: i.meal
     }), this.preparePhonePayload(), this.state.sending = !0, this.updateSubmitState(), this.clearError();
-    const s = this.serializeForm(), r = this.getReservationEndpoint(), n = performance.now();
+    const s = this.serializeForm();
+    this.state.requestId || (this.state.requestId = "req_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)), s.request_id = this.state.requestId;
+    const r = this.getReservationEndpoint(), n = performance.now();
     let o = 0;
     try {
       const h = await fetch(r, {
@@ -789,7 +793,7 @@ class Q {
         });
       }
       const f = await h.json();
-      this.handleSubmitSuccess(f);
+      this.handleSubmitSuccess(f), this.state.requestId = null;
     } catch (h) {
       o || (o = Math.round(performance.now() - n), v("ui_latency", { op: "submit", ms: o })), this.handleSubmitError(h, o);
     } finally {
@@ -1175,7 +1179,7 @@ function At(a) {
       }
   }
   n && n.addEventListener("click", () => {
-    f && I(f, 0);
+    f && L(f, 0);
   });
   function x(l, d) {
     const p = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof l == "string" ? l : "";
@@ -1198,7 +1202,7 @@ function At(a) {
     const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", u = d && typeof l.date == "string" ? l.date.trim() : "", m = d && typeof l.party < "u" ? String(l.party).trim() : "", E = d && !!l.requiresMeal, g = p !== "", S = u !== "" && (m !== "" && m !== "0") && (!E || g), k = E && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
     x(k, "idle"), i && O(i), y(l, { state: S ? "unavailable" : "unknown", slots: 0 });
   }
-  function D() {
+  function I() {
     s && (s.hidden = !0);
   }
   function j() {
@@ -1227,7 +1231,7 @@ function At(a) {
     });
   }
   function B(l, d, p) {
-    if (p && p !== w || d && f && d !== f || (j(), D(), !i))
+    if (p && p !== w || d && f && d !== f || (j(), I(), !i))
       return;
     O(i);
     const u = l && Array.isArray(l.slots) ? l.slots : [];
@@ -1242,7 +1246,7 @@ function At(a) {
     const m = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
     y(d, A(u, m));
   }
-  function I(l, d) {
+  function L(l, d) {
     if (f = l, !l || !l.date || !l.party) {
       R(l);
       return;
@@ -1252,7 +1256,7 @@ function At(a) {
       B(m.payload, l, p);
       return;
     }
-    j(), C(), x(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), y(l, { state: "loading", slots: 0 });
+    j(), I(), C(), x(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), y(l, { state: "loading", slots: 0 });
     const E = St(a.endpoint, l), g = performance.now();
     fetch(E, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((q) => {
       if (!c.ok) {
@@ -1281,14 +1285,14 @@ function At(a) {
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
         F = c.retryAfter;
       else if (S && typeof S.retry_after < "u") {
-        const L = Number.parseInt(S.retry_after, 10);
-        Number.isFinite(L) && (F = L);
+        const M = Number.parseInt(S.retry_after, 10);
+        Number.isFinite(M) && (F = M);
       }
       if (d >= gt - 1 ? !1 : k === 429 || k >= 500 && k < 600 ? !0 : k === 0) {
-        const L = d + 1;
-        typeof a.onRetry == "function" && a.onRetry(L);
+        const M = d + 1;
+        typeof a.onRetry == "function" && a.onRetry(M);
         const rt = F > 0 ? Math.max(F * 1e3, J) : J * Math.pow(2, d);
-        window.setTimeout(() => I(l, L), rt);
+        window.setTimeout(() => L(l, M), rt);
         return;
       }
       const it = c && c.payload && (c.payload.message || c.payload.code) || S && S.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", st = c && c.payload || S || null, at = X(it, st);
@@ -1304,18 +1308,18 @@ function At(a) {
         return;
       }
       if (p.immediate) {
-        I(u, 0);
+        L(u, 0);
         return;
       }
       h = window.setTimeout(() => {
-        I(u, 0);
+        L(u, 0);
       }, bt);
     },
     revalidate() {
       if (!f)
         return;
       const l = JSON.stringify([f.date, f.meal, f.party]);
-      o.delete(l), I(f, 0);
+      o.delete(l), L(f, 0);
     },
     getSelection() {
       return b;

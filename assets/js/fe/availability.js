@@ -338,6 +338,7 @@ export function createAvailabilityController(options) {
         }
 
         hideBoundary();
+        hideEmpty();
         showSkeleton();
         setStatus((options.strings && options.strings.updatingSlots) || 'Aggiornamento disponibilità…', 'loading');
         notifyAvailability(params, { state: 'loading', slots: 0 });
