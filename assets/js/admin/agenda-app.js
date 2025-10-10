@@ -243,9 +243,10 @@
                 showEmpty();
             })
             .finally(() => {
-                // Always hide loading, regardless of whether the request is stale
-                // This prevents infinite loading states when requests are cancelled or superseded
-                if (loadingEl) {
+                // Hide loading only if this is still the latest request
+                // renderCurrentView() and showEmpty() have their own loading cleanup
+                // This finally() is a fallback for edge cases where neither is called
+                if (requestId === loadRequestId && loadingEl) {
                     loadingEl.hidden = true;
                 }
             });
@@ -280,19 +281,25 @@
     }
 
     function renderCurrentView() {
-        switch (currentView) {
-            case 'day':
-                renderTimeline();
-                break;
-            case 'week':
-                renderWeekView();
-                break;
-            case 'month':
-                renderMonthView();
-                break;
-            case 'list':
-                renderListView();
-                break;
+        try {
+            switch (currentView) {
+                case 'day':
+                    renderTimeline();
+                    break;
+                case 'week':
+                    renderWeekView();
+                    break;
+                case 'month':
+                    renderMonthView();
+                    break;
+                case 'list':
+                    renderListView();
+                    break;
+            }
+        } finally {
+            // Always hide loading after rendering, even if render function exits early
+            // This provides a second safety net in case DOM elements are missing
+            if (loadingEl) loadingEl.hidden = true;
         }
     }
 
