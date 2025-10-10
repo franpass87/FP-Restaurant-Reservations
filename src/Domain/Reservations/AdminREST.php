@@ -32,6 +32,7 @@ use function is_array;
 use function is_string;
 use function preg_match;
 use function preg_split;
+use function register_rest_route;
 use function rest_ensure_response;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
@@ -573,7 +574,10 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        // Permette agli amministratori di accedere anche se non hanno la capability specifica
+        // Questo allineamento con AdminController previene errori 403 quando gli admin
+        // accedono all'agenda prima che la capability sia stata assegnata
+        return current_user_can(Roles::MANAGE_RESERVATIONS) || current_user_can('manage_options');
     }
 
     private function sanitizeDate(mixed $value): ?string
