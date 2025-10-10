@@ -243,8 +243,9 @@
                 showEmpty();
             })
             .finally(() => {
-                // Ensure loading is always hidden, even if the request is stale or errors occur
-                if (requestId === loadRequestId && loadingEl) {
+                // Always hide loading, regardless of whether the request is stale
+                // This prevents infinite loading states when requests are cancelled or superseded
+                if (loadingEl) {
                     loadingEl.hidden = true;
                 }
             });
