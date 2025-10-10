@@ -143,24 +143,36 @@ Richiesta Prenotazione
 
 ## File Modificati
 
-### Repository (`src/Domain/Reservations/Repository.php`)
+### Backend
+
+#### Repository (`src/Domain/Reservations/Repository.php`)
 - ✅ Aggiunto `beginTransaction()`
 - ✅ Aggiunto `commit()`
 - ✅ Aggiunto `rollback()`
 - ✅ Aggiunto `findRecentDuplicates()` - cerca duplicati negli ultimi N secondi
 - ✅ Aggiunto `countActiveReservationsForSlot()` - conta prenotazioni con lock
 
-### Service (`src/Domain/Reservations/Service.php`)
+#### Service (`src/Domain/Reservations/Service.php`)
 - ✅ Aggiunto controllo anti-duplicati all'inizio di `create()`
 - ✅ Aggiunto metodo privato `guardAvailabilityForSlot()`
 - ✅ Wrapping di inserimento in transazione
 - ✅ Aggiunta dipendenza `Availability` nel costruttore
 
-### Plugin (`src/Core/Plugin.php`)
+#### Plugin (`src/Core/Plugin.php`)
 - ✅ Aggiunto parametro `$availability` all'istanziazione di `ReservationsService`
 
-### Test (`tests/Integration/Reservations/ServiceTest.php`)
+#### Test (`tests/Integration/Reservations/ServiceTest.php`)
 - ✅ Aggiornati tutti i test per includere dipendenza `Availability`
+
+### Frontend
+
+#### Form App Optimized (`assets/js/fe/form-app-optimized.js`)
+- ✅ Aggiunto check `isSending()` per prevenire submit multipli simultanei
+- ✅ Generazione automatica di `request_id` unico per ogni submit (idempotenza)
+- ✅ Console warning se si tenta un secondo submit mentre uno è in corso
+
+#### Form App Fallback (`assets/js/fe/form-app-fallback.js`)
+- ✅ Aggiunto check `isSending()` per prevenire submit multipli simultanei
 
 ## Metriche e Logging
 
@@ -217,12 +229,42 @@ In caso di problemi, è possibile:
 1. Rimuovere il controllo anti-duplicati commentando le righe 122-156 in `Service.php`
 2. Rimuovere le transazioni commentando le righe 175-243 in `Service.php`
 
+## Protezioni Frontend Implementate
+
+### 1. Controllo isSending()
+```javascript
+handleSubmit(event) {
+    event.preventDefault();
+    
+    // Protezione: previene submit multipli se già in corso
+    if (this.state.isSending()) {
+        console.warn('[FP Resv] Submit già in corso, richiesta ignorata');
+        return false;
+    }
+    // ... resto del codice
+}
+```
+
+### 2. Request ID Automatico
+```javascript
+// Genera un request_id unico per idempotenza
+if (!payload.request_id && !payload.fp_resv_request_id) {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    payload.request_id = `req_${timestamp}_${random}`;
+}
+```
+
+Questo garantisce che anche se per qualche motivo arrivano due richieste:
+- Il backend riconosce il `request_id` duplicato
+- Restituisce la prenotazione esistente invece di crearne una nuova
+
 ## Prossimi Passi (Opzionali)
 
-1. **Frontend**: Disabilitare il pulsante "Prenota" dopo il primo click
-2. **Rate Limiting**: Rafforzare il rate limiting per IP
-3. **Monitoraggio**: Creare dashboard per visualizzare duplicati prevenuti
-4. **Alert**: Notifica admin se vengono prevenuti molti duplicati (possibile attacco)
+1. **Monitoraggio**: Creare dashboard per visualizzare duplicati prevenuti
+2. **Alert**: Notifica admin se vengono prevenuti molti duplicati (possibile attacco)
+3. **Analisi**: Investigare la causa root dei submit multipli (se continuano)
+4. **Logs**: Analizzare i log per capire se c'è un pattern nei duplicati
 
 ---
 
