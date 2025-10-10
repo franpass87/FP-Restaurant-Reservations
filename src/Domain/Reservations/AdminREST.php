@@ -177,7 +177,7 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Semplificazione: nessun try-catch complesso, gestione errori lineare
+        // Sanitizza e valida parametri
         $dateParam = $request->get_param('date');
         $date = $this->sanitizeDate($dateParam);
         if ($date === null) {
@@ -190,13 +190,17 @@ final class AdminREST
             $rangeMode = 'day';
         }
 
-        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date);
+        $timezone = wp_timezone();
+        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
         if ($start === false) {
-            $start = new DateTimeImmutable($date);
+            $start = new DateTimeImmutable($date, $timezone);
         }
         
         // Calcola range in base alla vista
         if ($rangeMode === 'week') {
+            // Inizia dal lunedì
+            $dayOfWeek = (int)$start->format('N');
+            $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
             $end = $start->add(new DateInterval('P6D'));
         } elseif ($rangeMode === 'month') {
             $start = $start->modify('first day of this month');
@@ -213,7 +217,7 @@ final class AdminREST
             $rows = [];
         }
         
-        // Mappa le prenotazioni in formato semplice
+        // Mappa le prenotazioni
         $reservations = [];
         foreach ($rows as $row) {
             if (!is_array($row)) {
@@ -223,9 +227,20 @@ final class AdminREST
             $reservations[] = $this->mapAgendaReservation($row);
         }
 
-        // RISPOSTA SEMPLICE: solo array di prenotazioni
-        // Il frontend gestisce tutto il resto
-        return rest_ensure_response($reservations);
+        // RISPOSTA STRUTTURATA STILE THEFORK
+        $response = [
+            'meta' => [
+                'range' => $rangeMode,
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+                'current_date' => $date,
+            ],
+            'stats' => $this->calculateStats($reservations),
+            'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
+            'reservations' => $reservations, // Array piatto per compatibilità
+        ];
+
+        return rest_ensure_response($response);
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -555,7 +570,8 @@ final class AdminREST
 
         $allergies = [];
         if (!empty($row['allergies']) && is_string($row['allergies'])) {
-            $chunks = preg_split('/[\r\n,;]+/', (string) $row['allergies']) ?: [];
+            $chunks = preg_split('/[\r
+,;]+/', (string) $row['allergies']) ?: [];
             $allergies = array_values(array_filter(array_map(static function ($value) {
                 $value = trim((string) $value);
 
@@ -576,6 +592,235 @@ final class AdminREST
             'language'     => (string) ($row['customer_lang'] ?? ($row['lang'] ?? '')),
             'phone'        => isset($row['phone']) ? (string) $row['phone'] : '',
         ];
+    }
+
+    /**
+     * Calcola statistiche aggregate sulle prenotazioni
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @return array<string, mixed>
+     */
+    private function calculateStats(array $reservations): array
+    {
+        $totalReservations = count($reservations);
+        $totalGuests = 0;
+        $statusCounts = [
+            'pending' => 0,
+            'confirmed' => 0,
+            'visited' => 0,
+            'no_show' => 0,
+            'cancelled' => 0,
+        ];
+        
+        foreach ($reservations as $resv) {
+            $totalGuests += (int)($resv['party'] ?? 0);
+            $status = (string)($resv['status'] ?? 'pending');
+            if (isset($statusCounts[$status])) {
+                $statusCounts[$status]++;
+            }
+        }
+        
+        return [
+            'total_reservations' => $totalReservations,
+            'total_guests' => $totalGuests,
+            'by_status' => $statusCounts,
+            'confirmed_percentage' => $totalReservations > 0 
+                ? round(($statusCounts['confirmed'] / $totalReservations) * 100, 1) 
+                : 0,
+        ];
+    }
+
+    /**
+     * Organizza le prenotazioni in base alla vista (day/week/month)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @param string $viewMode
+     * @param DateTimeImmutable $start
+     * @param DateTimeImmutable $end
+     * @return array<string, mixed>
+     */
+    private function organizeByView(array $reservations, string $viewMode, DateTimeImmutable $start, DateTimeImmutable $end): array
+    {
+        switch ($viewMode) {
+            case 'day':
+                return $this->organizeByTimeSlots($reservations);
+            case 'week':
+                return $this->organizeByDays($reservations, $start, 7);
+            case 'month':
+                return $this->organizeByDays($reservations, $start, (int)$end->format('d'));
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Organizza le prenotazioni per slot orari (vista giornaliera)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @return array<string, mixed>
+     */
+    private function organizeByTimeSlots(array $reservations): array
+    {
+        $slots = [];
+        $timeSlots = $this->generateTimeSlots();
+        
+        // Inizializza tutti gli slot vuoti
+        foreach ($timeSlots as $slotTime) {
+            $slots[$slotTime] = [
+                'time' => $slotTime,
+                'reservations' => [],
+                'total_guests' => 0,
+                'capacity_used' => 0,
+            ];
+        }
+        
+        // Raggruppa prenotazioni per slot
+        foreach ($reservations as $resv) {
+            $time = isset($resv['time']) ? substr((string)$resv['time'], 0, 5) : '00:00';
+            
+            // Trova lo slot pi\u00f9 vicino
+            $slotTime = $this->findNearestSlot($time, $timeSlots);
+            
+            if (!isset($slots[$slotTime])) {
+                $slots[$slotTime] = [
+                    'time' => $slotTime,
+                    'reservations' => [],
+                    'total_guests' => 0,
+                    'capacity_used' => 0,
+                ];
+            }
+            
+            $slots[$slotTime]['reservations'][] = $resv;
+            $slots[$slotTime]['total_guests'] += (int)($resv['party'] ?? 0);
+        }
+        
+        // Rimuovi slot vuoti
+        $slots = array_filter($slots, static function($slot) {
+            return count($slot['reservations']) > 0;
+        });
+        
+        return [
+            'slots' => array_values($slots),
+            'timeline' => array_values($slots), // Alias per compatibilit\u00e0
+        ];
+    }
+
+    /**
+     * Organizza le prenotazioni per giorni (vista settimanale/mensile)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @param DateTimeImmutable $startDate
+     * @param int $numDays
+     * @return array<string, mixed>
+     */
+    private function organizeByDays(array $reservations, DateTimeImmutable $startDate, int $numDays): array
+    {
+        $days = [];
+        
+        // Inizializza tutti i giorni
+        for ($i = 0; $i < $numDays; $i++) {
+            $date = $startDate->add(new DateInterval('P' . $i . 'D'));
+            $dateStr = $date->format('Y-m-d');
+            
+            $days[$dateStr] = [
+                'date' => $dateStr,
+                'day_name' => $this->getDayName($date),
+                'day_number' => (int)$date->format('d'),
+                'reservations' => [],
+                'total_guests' => 0,
+                'reservation_count' => 0,
+            ];
+        }
+        
+        // Raggruppa prenotazioni per giorno
+        foreach ($reservations as $resv) {
+            $date = (string)($resv['date'] ?? '');
+            
+            if (isset($days[$date])) {
+                $days[$date]['reservations'][] = $resv;
+                $days[$date]['total_guests'] += (int)($resv['party'] ?? 0);
+                $days[$date]['reservation_count']++;
+            }
+        }
+        
+        return [
+            'days' => array_values($days),
+        ];
+    }
+
+    /**
+     * Genera slot orari standard per la vista timeline
+     * 
+     * @return array<int, string>
+     */
+    private function generateTimeSlots(): array
+    {
+        $slots = [];
+        
+        // Pranzo: 12:00 - 15:00 (ogni 15 minuti)
+        for ($hour = 12; $hour <= 15; $hour++) {
+            for ($min = 0; $min < 60; $min += 15) {
+                if ($hour === 15 && $min > 0) break;
+                $slots[] = sprintf('%02d:%02d', $hour, $min);
+            }
+        }
+        
+        // Cena: 19:00 - 23:00 (ogni 15 minuti)
+        for ($hour = 19; $hour <= 23; $hour++) {
+            for ($min = 0; $min < 60; $min += 15) {
+                if ($hour === 23 && $min > 0) break;
+                $slots[] = sprintf('%02d:%02d', $hour, $min);
+            }
+        }
+        
+        return $slots;
+    }
+
+    /**
+     * Trova lo slot pi\u00f9 vicino a un orario dato
+     * 
+     * @param string $time
+     * @param array<int, string> $slots
+     * @return string
+     */
+    private function findNearestSlot(string $time, array $slots): string
+    {
+        if (in_array($time, $slots, true)) {
+            return $time;
+        }
+        
+        // Converti in minuti
+        [$hours, $minutes] = explode(':', $time);
+        $totalMinutes = ((int)$hours * 60) + (int)$minutes;
+        
+        // Arrotonda a 15 minuti
+        $roundedMinutes = (int)(round($totalMinutes / 15) * 15);
+        $roundedHours = (int)floor($roundedMinutes / 60);
+        $roundedMins = $roundedMinutes % 60;
+        
+        return sprintf('%02d:%02d', $roundedHours, $roundedMins);
+    }
+
+    /**
+     * Ottiene il nome del giorno in italiano
+     * 
+     * @param DateTimeImmutable $date
+     * @return string
+     */
+    private function getDayName(DateTimeImmutable $date): string
+    {
+        $dayNames = [
+            'Monday' => 'Luned\u00ec',
+            'Tuesday' => 'Marted\u00ec',
+            'Wednesday' => 'Mercoled\u00ec',
+            'Thursday' => 'Gioved\u00ec',
+            'Friday' => 'Venerd\u00ec',
+            'Saturday' => 'Sabato',
+            'Sunday' => 'Domenica',
+        ];
+        
+        $englishName = $date->format('l');
+        return $dayNames[$englishName] ?? $englishName;
     }
 
     /**
