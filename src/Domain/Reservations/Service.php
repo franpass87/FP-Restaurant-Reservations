@@ -119,6 +119,42 @@ class Service
         $sanitized = $this->sanitizePayload($payload);
         $this->assertPayload($sanitized);
 
+        // Controllo anti-duplicati: previene doppi submit della stessa prenotazione
+        // Cerca prenotazioni recenti (ultimi 60 secondi) con stessa email, data e ora
+        $recentDuplicates = $this->repository->findRecentDuplicates(
+            $sanitized['email'],
+            $sanitized['date'],
+            $sanitized['time'],
+            60
+        );
+
+        if ($recentDuplicates !== []) {
+            $duplicate = $recentDuplicates[0];
+            
+            Logging::log('reservations', 'Duplicato rilevato: prenotazione già creata pochi secondi fa', [
+                'email' => $sanitized['email'],
+                'date' => $sanitized['date'],
+                'time' => $sanitized['time'],
+                'existing_id' => $duplicate['id'] ?? null,
+                'existing_created_at' => $duplicate['created_at'] ?? null,
+            ]);
+            
+            Metrics::increment('reservation.duplicate_prevented', 1, [
+                'method' => 'recent_duplicate_check',
+            ]);
+            
+            // Restituisce la prenotazione esistente invece di crearne una nuova
+            $existingId = (int) ($duplicate['id'] ?? 0);
+            $manageUrl = $this->generateManageUrl($existingId, $sanitized['email']);
+            
+            return [
+                'id'         => $existingId,
+                'status'     => (string) ($duplicate['status'] ?? 'pending'),
+                'manage_url' => $manageUrl,
+                'duplicate_prevented' => true,
+            ];
+        }
+
         $consentMeta = Consent::metadata();
         $policyVersion = $sanitized['policy_version'] !== ''
             ? $sanitized['policy_version']

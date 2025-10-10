@@ -379,4 +379,45 @@ final class Repository
         
         return $result !== null ? (int) $result : 0;
     }
+
+    /**
+     * Cerca prenotazioni duplicate recenti (create negli ultimi N secondi)
+     * con la stessa email, data e orario. Questo previene doppi submit.
+     * 
+     * @param string $email Email del cliente
+     * @param string $date Data nel formato Y-m-d
+     * @param string $time Orario nel formato H:i o H:i:s
+     * @param int $withinSeconds Cerca duplicati creati negli ultimi N secondi (default: 60)
+     * @return array<int, array<string, mixed>> Lista di prenotazioni duplicate trovate
+     */
+    public function findRecentDuplicates(string $email, string $date, string $time, int $withinSeconds = 60): array
+    {
+        $reservationsTable = $this->tableName();
+        $customersTable = $this->customersTableName();
+        
+        // Normalizza il time al formato H:i:s se necessario
+        if (strlen($time) === 5) {
+            $time .= ':00';
+        }
+        
+        // Calcola il timestamp minimo (ora - N secondi)
+        $minTimestamp = gmdate('Y-m-d H:i:s', time() - $withinSeconds);
+        
+        $sql = "SELECT r.* 
+                FROM {$reservationsTable} r
+                INNER JOIN {$customersTable} c ON r.customer_id = c.id
+                WHERE c.email = %s 
+                AND r.date = %s 
+                AND r.time = %s
+                AND r.created_at >= %s
+                AND r.status NOT IN ('cancelled')
+                ORDER BY r.created_at DESC";
+        
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, $email, $date, $time, $minTimestamp),
+            ARRAY_A
+        );
+        
+        return is_array($rows) ? $rows : [];
+    }
 }
