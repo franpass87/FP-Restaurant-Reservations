@@ -58,6 +58,18 @@ if (is_readable($autoload)) {
     require $autoload;
 }
 
+// Inizializza sistema di auto-aggiornamento da GitHub
+if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/francescopasseri/fp-restaurant-reservations/',
+        __FILE__,
+        'fp-restaurant-reservations'
+    );
+    
+    // Usa le GitHub Releases per gli aggiornamenti
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+}
+
 require_once __DIR__ . '/src/Core/Requirements.php';
 
 if (!FP\Resv\Core\Requirements::validate()) {
