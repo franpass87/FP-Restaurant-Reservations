@@ -3,28 +3,29 @@ import { test, expect } from '@playwright/test';
 test.describe('Admin agenda drag & drop', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/wp-json/fp-resv/v1/agenda**', async (route) => {
-      const json = {
-        days: [
-          {
-            date: '2024-05-20',
-            reservations: [
-              {
-                id: 101,
-                time: '19:00',
-                party: 2,
-                room_id: 1,
-                table_id: 11,
-                status: 'confirmed',
-                customer: { name: 'Ada Lovelace', phone: '+39 055 123456' },
-              },
-            ],
-          },
-        ],
-        tables: [
-          { id: 11, room_id: 1, label: 'Tavolo 11', capacity: 4 },
-          { id: 12, room_id: 1, label: 'Tavolo 12', capacity: 4 },
-        ],
-      };
+      // Nuova struttura API semplificata: array diretto di prenotazioni
+      const json = [
+        {
+          id: 101,
+          status: 'confirmed',
+          date: '2024-05-20',
+          time: '19:00',
+          slot_start: '2024-05-20 19:00',
+          party: 2,
+          notes: '',
+          allergies: '',
+          room_id: 1,
+          table_id: 11,
+          customer: {
+            id: 1,
+            first_name: 'Ada',
+            last_name: 'Lovelace',
+            email: 'ada@example.com',
+            phone: '+39 055 123456',
+            language: 'it'
+          }
+        }
+      ];
 
       await route.fulfill({ json });
     });
