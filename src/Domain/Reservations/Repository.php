@@ -323,4 +323,60 @@ final class Repository
 
         return $result === false ? 0 : (int) $result;
     }
+
+    /**
+     * Inizia una transazione database.
+     * Usato per operazioni atomiche come la verifica di disponibilità + inserimento.
+     */
+    public function beginTransaction(): void
+    {
+        $this->wpdb->query('START TRANSACTION');
+    }
+
+    /**
+     * Effettua il commit della transazione corrente.
+     */
+    public function commit(): void
+    {
+        $this->wpdb->query('COMMIT');
+    }
+
+    /**
+     * Effettua il rollback della transazione corrente.
+     */
+    public function rollback(): void
+    {
+        $this->wpdb->query('ROLLBACK');
+    }
+
+    /**
+     * Conta il numero di prenotazioni attive per una data/ora specifica.
+     * Usa FOR UPDATE per lock pessimistico durante la transazione.
+     * 
+     * @param string $date Data nel formato Y-m-d
+     * @param string $time Orario nel formato H:i:s
+     * @param array<string> $statuses Stati da considerare come attivi
+     * @param int|null $roomId Opzionale: filtra per sala specifica
+     * @return int Numero di prenotazioni attive
+     */
+    public function countActiveReservationsForSlot(string $date, string $time, array $statuses, ?int $roomId = null): int
+    {
+        $table = $this->tableName();
+        $statusList = "'" . implode("','", array_map('esc_sql', $statuses)) . "'";
+        
+        $sql = "SELECT COUNT(*) as count FROM {$table} WHERE date = %s AND time = %s AND status IN ({$statusList})";
+        $params = [$date, $time];
+        
+        if ($roomId !== null) {
+            $sql .= ' AND room_id = %d';
+            $params[] = $roomId;
+        }
+        
+        // FOR UPDATE: lock pessimistico per prevenire race conditions
+        $sql .= ' FOR UPDATE';
+        
+        $result = $this->wpdb->get_var($this->wpdb->prepare($sql, ...$params));
+        
+        return $result !== null ? (int) $result : 0;
+    }
 }

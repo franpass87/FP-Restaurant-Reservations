@@ -11,6 +11,7 @@ use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\StripeService;
+use FP\Resv\Domain\Reservations\Availability;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Reservations\Service;
 use FP\Resv\Domain\Settings\Language;

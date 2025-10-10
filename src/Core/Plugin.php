@@ -368,6 +368,7 @@ final class Plugin
 
         $reservationsService = new ReservationsService(
             $reservationsRepository,
+            $availability,
             $options,
             $languageSettings,
             $mailer,
