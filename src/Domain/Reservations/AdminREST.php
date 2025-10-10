@@ -132,6 +132,36 @@ final class AdminREST
                 ],
             ]
         );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda/stats',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleStats'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'date' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                    'range' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda/overview',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleOverview'],
+                'permission_callback' => [$this, 'checkPermissions'],
+            ]
+        );
     }
 
     public function handleArrivals(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -175,9 +205,11 @@ final class AdminREST
         ]);
     }
 
-    public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
+    /**
+     * Endpoint dedicato per statistiche dettagliate
+     */
+    public function handleStats(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Semplificazione: nessun try-catch complesso, gestione errori lineare
         $dateParam = $request->get_param('date');
         $date = $this->sanitizeDate($dateParam);
         if ($date === null) {
@@ -190,13 +222,132 @@ final class AdminREST
             $rangeMode = 'day';
         }
 
-        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date);
+        $timezone = wp_timezone();
+        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
         if ($start === false) {
-            $start = new DateTimeImmutable($date);
+            $start = new DateTimeImmutable($date, $timezone);
+        }
+        
+        // Calcola range
+        if ($rangeMode === 'week') {
+            $dayOfWeek = (int)$start->format('N');
+            $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
+            $end = $start->add(new DateInterval('P6D'));
+        } elseif ($rangeMode === 'month') {
+            $start = $start->modify('first day of this month');
+            $end = $start->modify('last day of this month');
+        } else {
+            $end = $start;
+        }
+
+        // Recupera prenotazioni
+        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+        
+        if (!is_array($rows)) {
+            $rows = [];
+        }
+        
+        $reservations = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $reservations[] = $this->mapAgendaReservation($row);
+        }
+
+        // Calcola statistiche dettagliate
+        $stats = $this->calculateDetailedStats($reservations, $rangeMode);
+
+        return rest_ensure_response([
+            'range' => [
+                'mode'  => $rangeMode,
+                'start' => $start->format('Y-m-d'),
+                'end'   => $end->format('Y-m-d'),
+            ],
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Endpoint per overview dashboard con metriche aggregate
+     */
+    public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $timezone = wp_timezone();
+        $today = new DateTimeImmutable('today', $timezone);
+        
+        // Oggi
+        $todayRows = $this->reservations->findAgendaRange(
+            $today->format('Y-m-d'),
+            $today->format('Y-m-d')
+        );
+        
+        // Questa settimana
+        $weekStart = $today->modify('-' . ((int)$today->format('N') - 1) . ' days');
+        $weekEnd = $weekStart->add(new DateInterval('P6D'));
+        $weekRows = $this->reservations->findAgendaRange(
+            $weekStart->format('Y-m-d'),
+            $weekEnd->format('Y-m-d')
+        );
+        
+        // Questo mese
+        $monthStart = $today->modify('first day of this month');
+        $monthEnd = $today->modify('last day of this month');
+        $monthRows = $this->reservations->findAgendaRange(
+            $monthStart->format('Y-m-d'),
+            $monthEnd->format('Y-m-d')
+        );
+
+        // Mappa prenotazioni
+        $todayReservations = array_map([$this, 'mapAgendaReservation'], is_array($todayRows) ? $todayRows : []);
+        $weekReservations = array_map([$this, 'mapAgendaReservation'], is_array($weekRows) ? $weekRows : []);
+        $monthReservations = array_map([$this, 'mapAgendaReservation'], is_array($monthRows) ? $monthRows : []);
+
+        return rest_ensure_response([
+            'today' => [
+                'date' => $today->format('Y-m-d'),
+                'stats' => $this->calculateStats($todayReservations),
+            ],
+            'week' => [
+                'start' => $weekStart->format('Y-m-d'),
+                'end' => $weekEnd->format('Y-m-d'),
+                'stats' => $this->calculateStats($weekReservations),
+            ],
+            'month' => [
+                'start' => $monthStart->format('Y-m-d'),
+                'end' => $monthEnd->format('Y-m-d'),
+                'stats' => $this->calculateStats($monthReservations),
+            ],
+            'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
+        ]);
+    }
+
+    public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        // Sanitizza e valida parametri
+        $dateParam = $request->get_param('date');
+        $date = $this->sanitizeDate($dateParam);
+        if ($date === null) {
+            $date = gmdate('Y-m-d');
+        }
+
+        $range = $request->get_param('range');
+        $rangeMode = is_string($range) ? strtolower($range) : 'day';
+        if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
+            $rangeMode = 'day';
+        }
+
+        $timezone = wp_timezone();
+        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
+        if ($start === false) {
+            $start = new DateTimeImmutable($date, $timezone);
         }
         
         // Calcola range in base alla vista
         if ($rangeMode === 'week') {
+            // Inizia dal lunedì
+            $dayOfWeek = (int)$start->format('N');
+            $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
             $end = $start->add(new DateInterval('P6D'));
         } elseif ($rangeMode === 'month') {
             $start = $start->modify('first day of this month');
@@ -213,7 +364,7 @@ final class AdminREST
             $rows = [];
         }
         
-        // Mappa le prenotazioni in formato semplice
+        // Mappa le prenotazioni
         $reservations = [];
         foreach ($rows as $row) {
             if (!is_array($row)) {
@@ -223,9 +374,20 @@ final class AdminREST
             $reservations[] = $this->mapAgendaReservation($row);
         }
 
-        // RISPOSTA SEMPLICE: solo array di prenotazioni
-        // Il frontend gestisce tutto il resto
-        return rest_ensure_response($reservations);
+        // RISPOSTA STRUTTURATA STILE THEFORK
+        $response = [
+            'meta' => [
+                'range' => $rangeMode,
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+                'current_date' => $date,
+            ],
+            'stats' => $this->calculateStats($reservations),
+            'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
+            'reservations' => $reservations, // Array piatto per compatibilità
+        ];
+
+        return rest_ensure_response($response);
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -555,7 +717,8 @@ final class AdminREST
 
         $allergies = [];
         if (!empty($row['allergies']) && is_string($row['allergies'])) {
-            $chunks = preg_split('/[\r\n,;]+/', (string) $row['allergies']) ?: [];
+            $chunks = preg_split('/[\r
+,;]+/', (string) $row['allergies']) ?: [];
             $allergies = array_values(array_filter(array_map(static function ($value) {
                 $value = trim((string) $value);
 
@@ -576,6 +739,397 @@ final class AdminREST
             'language'     => (string) ($row['customer_lang'] ?? ($row['lang'] ?? '')),
             'phone'        => isset($row['phone']) ? (string) $row['phone'] : '',
         ];
+    }
+
+    /**
+     * Calcola statistiche aggregate sulle prenotazioni
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @return array<string, mixed>
+     */
+    private function calculateStats(array $reservations): array
+    {
+        $totalReservations = count($reservations);
+        $totalGuests = 0;
+        $statusCounts = [
+            'pending' => 0,
+            'confirmed' => 0,
+            'visited' => 0,
+            'no_show' => 0,
+            'cancelled' => 0,
+        ];
+        
+        foreach ($reservations as $resv) {
+            $totalGuests += (int)($resv['party'] ?? 0);
+            $status = (string)($resv['status'] ?? 'pending');
+            if (isset($statusCounts[$status])) {
+                $statusCounts[$status]++;
+            }
+        }
+        
+        return [
+            'total_reservations' => $totalReservations,
+            'total_guests' => $totalGuests,
+            'by_status' => $statusCounts,
+            'confirmed_percentage' => $totalReservations > 0 
+                ? round(($statusCounts['confirmed'] / $totalReservations) * 100, 1) 
+                : 0,
+        ];
+    }
+
+    /**
+     * Calcola statistiche dettagliate con breakdown temporale
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @param string $rangeMode
+     * @return array<string, mixed>
+     */
+    private function calculateDetailedStats(array $reservations, string $rangeMode): array
+    {
+        $baseStats = $this->calculateStats($reservations);
+        
+        // Raggruppa per servizio (pranzo/cena basato su orario)
+        $byService = [
+            'lunch' => ['count' => 0, 'guests' => 0],
+            'dinner' => ['count' => 0, 'guests' => 0],
+            'other' => ['count' => 0, 'guests' => 0],
+        ];
+        
+        // Raggruppa per giorno della settimana (solo per week/month)
+        $byDayOfWeek = [];
+        if ($rangeMode !== 'day') {
+            $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            foreach ($dayNames as $day) {
+                $byDayOfWeek[$day] = ['count' => 0, 'guests' => 0];
+            }
+        }
+        
+        // Media coperti per prenotazione
+        $partySizes = [];
+        
+        foreach ($reservations as $resv) {
+            $time = isset($resv['time']) ? substr((string)$resv['time'], 0, 5) : '00:00';
+            $hour = (int)substr($time, 0, 2);
+            $party = (int)($resv['party'] ?? 0);
+            
+            // Servizio
+            if ($hour >= 12 && $hour < 17) {
+                $byService['lunch']['count']++;
+                $byService['lunch']['guests'] += $party;
+            } elseif ($hour >= 19 && $hour < 24) {
+                $byService['dinner']['count']++;
+                $byService['dinner']['guests'] += $party;
+            } else {
+                $byService['other']['count']++;
+                $byService['other']['guests'] += $party;
+            }
+            
+            // Giorno settimana
+            if ($rangeMode !== 'day' && isset($resv['date'])) {
+                $date = new DateTimeImmutable($resv['date']);
+                $dayName = $date->format('l');
+                if (isset($byDayOfWeek[$dayName])) {
+                    $byDayOfWeek[$dayName]['count']++;
+                    $byDayOfWeek[$dayName]['guests'] += $party;
+                }
+            }
+            
+            // Party sizes
+            $partySizes[] = $party;
+        }
+        
+        $result = array_merge($baseStats, [
+            'by_service' => $byService,
+            'average_party_size' => count($partySizes) > 0 
+                ? round(array_sum($partySizes) / count($partySizes), 1) 
+                : 0,
+            'median_party_size' => count($partySizes) > 0 
+                ? $this->calculateMedian($partySizes) 
+                : 0,
+        ]);
+        
+        if ($rangeMode !== 'day') {
+            $result['by_day_of_week'] = $byDayOfWeek;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Calcola trend confrontando periodi diversi
+     * 
+     * @param array<int, array<string, mixed>> $todayReservations
+     * @param array<int, array<string, mixed>> $weekReservations
+     * @param array<int, array<string, mixed>> $monthReservations
+     * @return array<string, mixed>
+     */
+    private function calculateTrends(array $todayReservations, array $weekReservations, array $monthReservations): array
+    {
+        $todayCount = count($todayReservations);
+        $weekCount = count($weekReservations);
+        $monthCount = count($monthReservations);
+        
+        $weekAverage = $weekCount > 0 ? round($weekCount / 7, 1) : 0;
+        $monthAverage = $monthCount > 0 ? round($monthCount / 30, 1) : 0;
+        
+        // Trend oggi vs media settimanale
+        $dailyTrend = 'stable';
+        if ($weekAverage > 0) {
+            $difference = (($todayCount - $weekAverage) / $weekAverage) * 100;
+            if ($difference > 10) {
+                $dailyTrend = 'up';
+            } elseif ($difference < -10) {
+                $dailyTrend = 'down';
+            }
+        }
+        
+        // Trend settimanale vs mensile
+        $weeklyTrend = 'stable';
+        if ($monthAverage > 0) {
+            $difference = (($weekAverage - $monthAverage) / $monthAverage) * 100;
+            if ($difference > 10) {
+                $weeklyTrend = 'up';
+            } elseif ($difference < -10) {
+                $weeklyTrend = 'down';
+            }
+        }
+        
+        return [
+            'daily' => [
+                'trend' => $dailyTrend,
+                'vs_week_average' => $weekAverage > 0 
+                    ? round((($todayCount - $weekAverage) / $weekAverage) * 100, 1) 
+                    : 0,
+            ],
+            'weekly' => [
+                'trend' => $weeklyTrend,
+                'average_per_day' => $weekAverage,
+                'vs_month_average' => $monthAverage > 0 
+                    ? round((($weekAverage - $monthAverage) / $monthAverage) * 100, 1) 
+                    : 0,
+            ],
+            'monthly' => [
+                'average_per_day' => $monthAverage,
+                'total' => $monthCount,
+            ],
+        ];
+    }
+
+    /**
+     * Calcola la mediana di un array di numeri
+     * 
+     * @param array<int, int> $numbers
+     * @return float
+     */
+    private function calculateMedian(array $numbers): float
+    {
+        sort($numbers);
+        $count = count($numbers);
+        
+        if ($count === 0) {
+            return 0;
+        }
+        
+        $middle = (int)floor($count / 2);
+        
+        if ($count % 2 === 0) {
+            return ($numbers[$middle - 1] + $numbers[$middle]) / 2;
+        }
+        
+        return (float)$numbers[$middle];
+    }
+
+    /**
+     * Organizza le prenotazioni in base alla vista (day/week/month)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @param string $viewMode
+     * @param DateTimeImmutable $start
+     * @param DateTimeImmutable $end
+     * @return array<string, mixed>
+     */
+    private function organizeByView(array $reservations, string $viewMode, DateTimeImmutable $start, DateTimeImmutable $end): array
+    {
+        switch ($viewMode) {
+            case 'day':
+                return $this->organizeByTimeSlots($reservations);
+            case 'week':
+                return $this->organizeByDays($reservations, $start, 7);
+            case 'month':
+                return $this->organizeByDays($reservations, $start, (int)$end->format('d'));
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Organizza le prenotazioni per slot orari (vista giornaliera)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @return array<string, mixed>
+     */
+    private function organizeByTimeSlots(array $reservations): array
+    {
+        $slots = [];
+        $timeSlots = $this->generateTimeSlots();
+        
+        // Inizializza tutti gli slot vuoti
+        foreach ($timeSlots as $slotTime) {
+            $slots[$slotTime] = [
+                'time' => $slotTime,
+                'reservations' => [],
+                'total_guests' => 0,
+                'capacity_used' => 0,
+            ];
+        }
+        
+        // Raggruppa prenotazioni per slot
+        foreach ($reservations as $resv) {
+            $time = isset($resv['time']) ? substr((string)$resv['time'], 0, 5) : '00:00';
+            
+            // Trova lo slot pi\u00f9 vicino
+            $slotTime = $this->findNearestSlot($time, $timeSlots);
+            
+            if (!isset($slots[$slotTime])) {
+                $slots[$slotTime] = [
+                    'time' => $slotTime,
+                    'reservations' => [],
+                    'total_guests' => 0,
+                    'capacity_used' => 0,
+                ];
+            }
+            
+            $slots[$slotTime]['reservations'][] = $resv;
+            $slots[$slotTime]['total_guests'] += (int)($resv['party'] ?? 0);
+        }
+        
+        // Rimuovi slot vuoti
+        $slots = array_filter($slots, static function($slot) {
+            return count($slot['reservations']) > 0;
+        });
+        
+        return [
+            'slots' => array_values($slots),
+            'timeline' => array_values($slots), // Alias per compatibilit\u00e0
+        ];
+    }
+
+    /**
+     * Organizza le prenotazioni per giorni (vista settimanale/mensile)
+     * 
+     * @param array<int, array<string, mixed>> $reservations
+     * @param DateTimeImmutable $startDate
+     * @param int $numDays
+     * @return array<string, mixed>
+     */
+    private function organizeByDays(array $reservations, DateTimeImmutable $startDate, int $numDays): array
+    {
+        $days = [];
+        
+        // Inizializza tutti i giorni
+        for ($i = 0; $i < $numDays; $i++) {
+            $date = $startDate->add(new DateInterval('P' . $i . 'D'));
+            $dateStr = $date->format('Y-m-d');
+            
+            $days[$dateStr] = [
+                'date' => $dateStr,
+                'day_name' => $this->getDayName($date),
+                'day_number' => (int)$date->format('d'),
+                'reservations' => [],
+                'total_guests' => 0,
+                'reservation_count' => 0,
+            ];
+        }
+        
+        // Raggruppa prenotazioni per giorno
+        foreach ($reservations as $resv) {
+            $date = (string)($resv['date'] ?? '');
+            
+            if (isset($days[$date])) {
+                $days[$date]['reservations'][] = $resv;
+                $days[$date]['total_guests'] += (int)($resv['party'] ?? 0);
+                $days[$date]['reservation_count']++;
+            }
+        }
+        
+        return [
+            'days' => array_values($days),
+        ];
+    }
+
+    /**
+     * Genera slot orari standard per la vista timeline
+     * 
+     * @return array<int, string>
+     */
+    private function generateTimeSlots(): array
+    {
+        $slots = [];
+        
+        // Pranzo: 12:00 - 15:00 (ogni 15 minuti)
+        for ($hour = 12; $hour <= 15; $hour++) {
+            for ($min = 0; $min < 60; $min += 15) {
+                if ($hour === 15 && $min > 0) break;
+                $slots[] = sprintf('%02d:%02d', $hour, $min);
+            }
+        }
+        
+        // Cena: 19:00 - 23:00 (ogni 15 minuti)
+        for ($hour = 19; $hour <= 23; $hour++) {
+            for ($min = 0; $min < 60; $min += 15) {
+                if ($hour === 23 && $min > 0) break;
+                $slots[] = sprintf('%02d:%02d', $hour, $min);
+            }
+        }
+        
+        return $slots;
+    }
+
+    /**
+     * Trova lo slot pi\u00f9 vicino a un orario dato
+     * 
+     * @param string $time
+     * @param array<int, string> $slots
+     * @return string
+     */
+    private function findNearestSlot(string $time, array $slots): string
+    {
+        if (in_array($time, $slots, true)) {
+            return $time;
+        }
+        
+        // Converti in minuti
+        [$hours, $minutes] = explode(':', $time);
+        $totalMinutes = ((int)$hours * 60) + (int)$minutes;
+        
+        // Arrotonda a 15 minuti
+        $roundedMinutes = (int)(round($totalMinutes / 15) * 15);
+        $roundedHours = (int)floor($roundedMinutes / 60);
+        $roundedMins = $roundedMinutes % 60;
+        
+        return sprintf('%02d:%02d', $roundedHours, $roundedMins);
+    }
+
+    /**
+     * Ottiene il nome del giorno in italiano
+     * 
+     * @param DateTimeImmutable $date
+     * @return string
+     */
+    private function getDayName(DateTimeImmutable $date): string
+    {
+        $dayNames = [
+            'Monday' => 'Luned\u00ec',
+            'Tuesday' => 'Marted\u00ec',
+            'Wednesday' => 'Mercoled\u00ec',
+            'Thursday' => 'Gioved\u00ec',
+            'Friday' => 'Venerd\u00ec',
+            'Saturday' => 'Sabato',
+            'Sunday' => 'Domenica',
+        ];
+        
+        $englishName = $date->format('l');
+        return $dayNames[$englishName] ?? $englishName;
     }
 
     /**

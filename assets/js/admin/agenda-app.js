@@ -223,8 +223,18 @@
                     return;
                 }
                 
-                // L'API restituisce direttamente un array di prenotazioni
-                reservations = Array.isArray(data) ? data : [];
+                // Nuova struttura API: {meta, stats, data, reservations}
+                if (data && typeof data === 'object') {
+                    // Mantieni compatibilità: usa reservations se presente, altrimenti l'intero array
+                    reservations = Array.isArray(data.reservations) ? data.reservations : (Array.isArray(data) ? data : []);
+                    
+                    // Salva metadata e stats per uso futuro
+                    window.fpResvAgendaMeta = data.meta || {};
+                    window.fpResvAgendaStats = data.stats || {};
+                    window.fpResvAgendaData = data.data || {};
+                } else {
+                    reservations = Array.isArray(data) ? data : [];
+                }
                 
                 renderCurrentView();
                 updateSummary();
@@ -373,21 +383,36 @@
         if (listViewEl) listViewEl.hidden = true;
         timelineEl.hidden = false;
 
-        // Group by time slot
-        const slots = groupByTimeSlot(reservations);
+        // Usa i dati già organizzati dal backend se disponibili
+        const backendData = window.fpResvAgendaData || {};
+        let slots = [];
+        
+        if (backendData.slots && Array.isArray(backendData.slots)) {
+            // Usa gli slot preorganizzati dal backend
+            slots = backendData.slots;
+        } else if (backendData.timeline && Array.isArray(backendData.timeline)) {
+            // Alias per compatibilità
+            slots = backendData.timeline;
+        } else {
+            // Fallback: raggruppa client-side
+            const slotMap = groupByTimeSlot(reservations);
+            slots = Object.keys(slotMap).sort().map(time => ({
+                time: time,
+                reservations: slotMap[time],
+                total_guests: slotMap[time].reduce((sum, r) => sum + (r.party || 0), 0)
+            }));
+        }
         
         timelineEl.innerHTML = '';
 
-        Object.keys(slots).sort().forEach(time => {
-            const slotReservations = slots[time];
-            
+        slots.forEach(slot => {
             const slotEl = document.createElement('div');
             slotEl.className = 'fp-resv-timeline__slot';
             
             slotEl.innerHTML = `
-                <div class="fp-resv-timeline__time">${time}</div>
+                <div class="fp-resv-timeline__time">${slot.time}</div>
                 <div class="fp-resv-timeline__reservations">
-                    ${slotReservations.map(renderReservationCard).join('')}
+                    ${slot.reservations.map(renderReservationCard).join('')}
                 </div>
             `;
             
@@ -412,21 +437,35 @@
         if (listViewEl) listViewEl.hidden = true;
         weekViewEl.hidden = false;
 
-        const { startDate } = getDateRange();
-        const weekStart = new Date(startDate);
-        const days = [];
+        // Usa i dati già organizzati dal backend se disponibili
+        const backendData = window.fpResvAgendaData || {};
+        let days = [];
+        
+        if (backendData.days && Array.isArray(backendData.days)) {
+            // Usa i giorni preorganizzati dal backend
+            days = backendData.days.map(day => ({
+                date: new Date(day.date),
+                dateStr: day.date,
+                reservations: day.reservations || [],
+                total_guests: day.total_guests || 0
+            }));
+        } else {
+            // Fallback: raggruppa client-side
+            const { startDate } = getDateRange();
+            const weekStart = new Date(startDate);
 
-        for (let i = 0; i < 7; i++) {
-            const day = new Date(weekStart);
-            day.setDate(weekStart.getDate() + i);
-            const dayStr = formatDate(day);
-            const dayReservations = reservations.filter(r => r.date === dayStr);
-            
-            days.push({
-                date: day,
-                dateStr: dayStr,
-                reservations: dayReservations
-            });
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
+                const dayStr = formatDate(day);
+                const dayReservations = reservations.filter(r => r.date === dayStr);
+                
+                days.push({
+                    date: day,
+                    dateStr: dayStr,
+                    reservations: dayReservations
+                });
+            }
         }
 
         weekViewEl.innerHTML = `
@@ -482,6 +521,16 @@
         const daysInMonth = lastDay.getDate();
         const gridStart = startDay === 0 ? -6 : 1 - startDay;
         
+        // Usa i dati già organizzati dal backend se disponibili
+        const backendData = window.fpResvAgendaData || {};
+        const backendDays = backendData.days || [];
+        const dayMap = {};
+        
+        // Crea una mappa per accesso rapido
+        backendDays.forEach(day => {
+            dayMap[day.date] = day;
+        });
+        
         const days = [];
         for (let i = gridStart; i <= daysInMonth; i++) {
             if (i < 1) {
@@ -489,8 +538,20 @@
             } else {
                 const day = new Date(year, month, i);
                 const dayStr = formatDate(day);
-                const dayReservations = reservations.filter(r => r.date === dayStr);
-                days.push({ date: day, dateStr: dayStr, reservations: dayReservations });
+                
+                // Usa i dati del backend se disponibili
+                if (dayMap[dayStr]) {
+                    days.push({ 
+                        date: day, 
+                        dateStr: dayStr, 
+                        reservations: dayMap[dayStr].reservations || [],
+                        total_guests: dayMap[dayStr].total_guests || 0
+                    });
+                } else {
+                    // Fallback: filtra client-side
+                    const dayReservations = reservations.filter(r => r.date === dayStr);
+                    days.push({ date: day, dateStr: dayStr, reservations: dayReservations });
+                }
             }
         }
 
@@ -673,11 +734,23 @@
         }
 
         if (statsEl) {
-            const total = reservations.length;
-            const confirmed = reservations.filter(r => r.status === 'confirmed').length;
-            const totalGuests = reservations.reduce((sum, r) => sum + (r.party || r.guests || 0), 0);
+            // Usa le stats dal backend se disponibili
+            const stats = window.fpResvAgendaStats || {};
             
-            statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
+            if (stats.total_reservations !== undefined) {
+                const total = stats.total_reservations;
+                const confirmed = stats.by_status?.confirmed || 0;
+                const totalGuests = stats.total_guests || 0;
+                
+                statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
+            } else {
+                // Fallback: calcola client-side
+                const total = reservations.length;
+                const confirmed = reservations.filter(r => r.status === 'confirmed').length;
+                const totalGuests = reservations.reduce((sum, r) => sum + (r.party || r.guests || 0), 0);
+                
+                statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
+            }
         }
     }
 
