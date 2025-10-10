@@ -6,7 +6,7 @@ Il backend dell'agenda è stato completamente riscritto in stile **TheFork** per
 
 ## Endpoint
 
-### GET `/wp-json/fp-resv/v1/agenda`
+### 1. GET `/wp-json/fp-resv/v1/agenda`
 
 Recupera le prenotazioni organizzate per la vista selezionata.
 
@@ -177,6 +177,155 @@ Array piatto di tutte le prenotazioni nel range richiesto, mantenuto per compati
 ]
 ```
 
+### 2. GET `/wp-json/fp-resv/v1/agenda/stats`
+
+Endpoint dedicato per statistiche dettagliate con breakdown temporale.
+
+#### Parametri Query
+
+| Parametro | Tipo | Obbligatorio | Default | Descrizione |
+|-----------|------|--------------|---------|-------------|
+| `date` | string | No | Oggi | Data in formato `YYYY-MM-DD` |
+| `range` | string | No | `day` | Modalità vista: `day`, `week`, `month` |
+
+#### Esempio Richiesta
+
+```http
+GET /wp-json/fp-resv/v1/agenda/stats?date=2025-10-10&range=week
+```
+
+#### Struttura Risposta
+
+```json
+{
+  "range": {
+    "mode": "week",
+    "start": "2025-10-06",
+    "end": "2025-10-12"
+  },
+  "stats": {
+    "total_reservations": 42,
+    "total_guests": 156,
+    "by_status": {
+      "pending": 8,
+      "confirmed": 30,
+      "visited": 2,
+      "no_show": 1,
+      "cancelled": 1
+    },
+    "confirmed_percentage": 71.4,
+    "by_service": {
+      "lunch": {
+        "count": 18,
+        "guests": 65
+      },
+      "dinner": {
+        "count": 22,
+        "guests": 85
+      },
+      "other": {
+        "count": 2,
+        "guests": 6
+      }
+    },
+    "average_party_size": 3.7,
+    "median_party_size": 4,
+    "by_day_of_week": {
+      "Monday": {"count": 5, "guests": 18},
+      "Tuesday": {"count": 6, "guests": 22},
+      "Wednesday": {"count": 7, "guests": 25},
+      "Thursday": {"count": 6, "guests": 21},
+      "Friday": {"count": 8, "guests": 30},
+      "Saturday": {"count": 7, "guests": 26},
+      "Sunday": {"count": 3, "guests": 14}
+    }
+  }
+}
+```
+
+#### Statistiche Calcolate
+
+- **by_service**: Breakdown per servizio (pranzo: 12:00-17:00, cena: 19:00-24:00)
+- **average_party_size**: Media coperti per prenotazione
+- **median_party_size**: Mediana coperti per prenotazione
+- **by_day_of_week**: Breakdown per giorno della settimana (solo per `week` e `month`)
+
+### 3. GET `/wp-json/fp-resv/v1/agenda/overview`
+
+Overview dashboard con metriche aggregate per oggi, settimana e mese, includendo trend.
+
+#### Parametri Query
+
+Nessun parametro richiesto. L'endpoint restituisce automaticamente dati per:
+- Oggi
+- Questa settimana (lunedì - domenica)
+- Questo mese
+
+#### Esempio Richiesta
+
+```http
+GET /wp-json/fp-resv/v1/agenda/overview
+```
+
+#### Struttura Risposta
+
+```json
+{
+  "today": {
+    "date": "2025-10-10",
+    "stats": {
+      "total_reservations": 15,
+      "total_guests": 42,
+      "by_status": {...},
+      "confirmed_percentage": 66.7
+    }
+  },
+  "week": {
+    "start": "2025-10-06",
+    "end": "2025-10-12",
+    "stats": {
+      "total_reservations": 42,
+      "total_guests": 156,
+      "by_status": {...},
+      "confirmed_percentage": 71.4
+    }
+  },
+  "month": {
+    "start": "2025-10-01",
+    "end": "2025-10-31",
+    "stats": {
+      "total_reservations": 180,
+      "total_guests": 650,
+      "by_status": {...},
+      "confirmed_percentage": 68.9
+    }
+  },
+  "trends": {
+    "daily": {
+      "trend": "up",
+      "vs_week_average": 12.5
+    },
+    "weekly": {
+      "trend": "stable",
+      "average_per_day": 6.0,
+      "vs_month_average": 3.2
+    },
+    "monthly": {
+      "average_per_day": 5.8,
+      "total": 180
+    }
+  }
+}
+```
+
+#### Trend Indicators
+
+I trend vengono calcolati confrontando periodi diversi:
+
+- **trend**: `up`, `down`, o `stable` (soglia ±10%)
+- **vs_week_average**: Percentuale differenza oggi vs media settimanale
+- **vs_month_average**: Percentuale differenza settimana vs media mensile
+
 ## Vantaggi della Nuova Struttura
 
 ### 1. **Performance**
@@ -237,25 +386,71 @@ Trova lo slot più vicino a un orario dato, arrotondando a 15 minuti.
 ### `getDayName(DateTimeImmutable $date): string`
 Restituisce il nome del giorno in italiano.
 
+## Test
+
+### Script di Test Automatici
+
+È disponibile uno script bash per testare tutti gli endpoint:
+
+```bash
+# Test su localhost
+./tests/test-agenda-endpoints.sh http://localhost:8080
+
+# Test su server remoto
+./tests/test-agenda-endpoints.sh https://tuosito.com
+```
+
+Lo script verifica:
+- Status code HTTP 200
+- Validità JSON risposta
+- Presenza chiavi richieste
+- Struttura dati corretta
+
+### Test Manuali con cURL
+
+Vedi `tests/test-agenda-api-examples.md` per esempi completi di test con cURL, validazione risposte, test errori e performance testing.
+
+Esempio rapido:
+
+```bash
+# Test endpoint agenda
+curl "http://localhost:8080/wp-json/fp-resv/v1/agenda?date=2025-10-10&range=day" | jq
+
+# Test statistiche
+curl "http://localhost:8080/wp-json/fp-resv/v1/agenda/stats?date=2025-10-10&range=week" | jq
+
+# Test overview
+curl "http://localhost:8080/wp-json/fp-resv/v1/agenda/overview" | jq
+```
+
 ## Modifiche Future Pianificate
 
-1. **Filtri aggiuntivi**
-   - Per servizio (pranzo/cena)
-   - Per sala/tavolo
-   - Per stato prenotazione
+1. **Filtri aggiuntivi** ✅ PARZIALMENTE IMPLEMENTATO
+   - ✅ Per servizio (pranzo/cena) - disponibile in stats
+   - ⏳ Filtro query parametro per sala/tavolo
+   - ⏳ Filtro per stato prenotazione
 
 2. **Capacità**
    - Integrazione con gestione tavoli
    - Calcolo capacità utilizzata per slot
+   - Alert quando si supera capacità
 
-3. **Metriche avanzate**
-   - Tasso di occupazione
-   - Trend prenotazioni
-   - Analisi no-show
+3. **Metriche avanzate** ✅ IMPLEMENTATO
+   - ✅ Breakdown per servizio
+   - ✅ Trend giornalieri/settimanali
+   - ✅ Analisi per giorno settimana
+   - ⏳ Tasso di occupazione
+   - ⏳ Analisi no-show dettagliata
 
 4. **Cache**
-   - Sistema di cache per ridurre query database
-   - Invalidazione intelligente alla modifica prenotazioni
+   - Sistema di cache Redis/Transients
+   - Invalidazione intelligente
+   - TTL configurabile
+
+5. **Export e Reporting**
+   - Export CSV/Excel statistiche
+   - Report PDF automatici
+   - Dashboard grafici interattivi
 
 ## Migrazione
 
