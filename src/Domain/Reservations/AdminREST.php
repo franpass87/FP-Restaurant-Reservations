@@ -218,7 +218,7 @@ final class AdminREST
             $days      = $this->buildAgendaDays($reservations);
             $tables    = $this->flattenAgendaTables($overview);
 
-            return rest_ensure_response([
+            $response = [
                 'range'        => [
                     'mode'  => $rangeMode,
                     'start' => $start->format('Y-m-d'),
@@ -232,7 +232,20 @@ final class AdminREST
                 'meta'         => [
                     'generated_at' => gmdate('c'),
                 ],
-            ]);
+            ];
+            
+            // Assicurati che la risposta sia JSON serializzabile
+            $jsonTest = json_encode($response);
+            if ($jsonTest === false) {
+                error_log('FP Reservations: Failed to encode response as JSON: ' . json_last_error_msg());
+                return new WP_Error(
+                    'fp_resv_json_error',
+                    __('Errore nella serializzazione dei dati.', 'fp-restaurant-reservations'),
+                    ['status' => 500]
+                );
+            }
+            
+            return rest_ensure_response($response);
         } catch (Throwable $exception) {
             error_log('FP Reservations: Error in handleAgenda - ' . $exception->getMessage());
             error_log('FP Reservations: Stack trace - ' . $exception->getTraceAsString());
