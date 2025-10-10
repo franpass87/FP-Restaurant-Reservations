@@ -573,7 +573,10 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        return current_user_can(Roles::MANAGE_RESERVATIONS);
+        // Permette agli amministratori di accedere anche se non hanno la capability specifica
+        // Questo allineamento con AdminController previene errori 403 quando gli admin
+        // accedono all'agenda prima che la capability sia stata assegnata
+        return current_user_can(Roles::MANAGE_RESERVATIONS) || current_user_can('manage_options');
     }
 
     private function sanitizeDate(mixed $value): ?string
