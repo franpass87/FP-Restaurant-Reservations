@@ -208,17 +208,29 @@ final class AdminREST
             
             // Verifica che rows sia un array valido
             if (!is_array($rows)) {
-                error_log('FP Reservations: findAgendaRange returned non-array value');
+                error_log('FP Reservations: findAgendaRange returned non-array value: ' . gettype($rows));
                 $rows = [];
+            }
+            
+            // Log per debug
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('FP Reservations: Found %d rows for range %s to %s', count($rows), $start->format('Y-m-d'), $end->format('Y-m-d')));
             }
             
             $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
 
-            $overview = $this->layout?->getOverview() ?? ['rooms' => [], 'groups' => []];
+            // Ottieni overview con gestione errori
+            try {
+                $overview = $this->layout?->getOverview() ?? ['rooms' => [], 'groups' => []];
+            } catch (\Throwable $e) {
+                error_log('FP Reservations: Error getting layout overview - ' . $e->getMessage());
+                $overview = ['rooms' => [], 'groups' => []];
+            }
+            
             $days      = $this->buildAgendaDays($reservations);
             $tables    = $this->flattenAgendaTables($overview);
 
-            return rest_ensure_response([
+            $response = [
                 'range'        => [
                     'mode'  => $rangeMode,
                     'start' => $start->format('Y-m-d'),
@@ -232,7 +244,31 @@ final class AdminREST
                 'meta'         => [
                     'generated_at' => gmdate('c'),
                 ],
-            ]);
+            ];
+            
+            // Assicurati che la risposta sia JSON serializzabile
+            $jsonTest = json_encode($response, JSON_PARTIAL_OUTPUT_ON_ERROR);
+            if ($jsonTest === false) {
+                $errorMsg = json_last_error_msg();
+                error_log('FP Reservations: Failed to encode response as JSON: ' . $errorMsg);
+                error_log('FP Reservations: Response structure - ' . $this->debugStructure($response));
+                
+                return new WP_Error(
+                    'fp_resv_json_error',
+                    __('Errore nella serializzazione dei dati.', 'fp-restaurant-reservations'),
+                    ['status' => 500, 'json_error' => $errorMsg]
+                );
+            }
+            
+            // Verifica ulteriormente la risposta in modalità debug
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('FP Reservations: Response size: %d bytes, %d reservations', 
+                    strlen($jsonTest), 
+                    count($reservations)
+                ));
+            }
+            
+            return rest_ensure_response($response);
         } catch (Throwable $exception) {
             error_log('FP Reservations: Error in handleAgenda - ' . $exception->getMessage());
             error_log('FP Reservations: Stack trace - ' . $exception->getTraceAsString());
@@ -694,13 +730,25 @@ final class AdminREST
             return '';
         }
         
-        // Converte in UTF-8 valido rimuovendo caratteri non validi
-        $sanitized = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
-        
-        // Rimuove caratteri di controllo eccetto newline, tab e carriage return
-        $sanitized = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $sanitized);
-        
-        return $sanitized !== null ? $sanitized : '';
+        try {
+            // Converte in UTF-8 valido rimuovendo caratteri non validi
+            $sanitized = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+            
+            // Rimuove caratteri di controllo eccetto newline, tab e carriage return
+            $cleaned = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $sanitized);
+            
+            // Se preg_replace fallisce, restituisce la versione sanitizzata senza rimozione caratteri di controllo
+            if ($cleaned === null) {
+                error_log('FP Reservations: preg_replace failed in sanitizeUtf8');
+                return $sanitized !== false ? $sanitized : '';
+            }
+            
+            return $cleaned;
+        } catch (\Throwable $e) {
+            error_log('FP Reservations: Error in sanitizeUtf8 - ' . $e->getMessage());
+            // Fallback: rimuove caratteri non ASCII stampabili
+            return preg_replace('/[^\x20-\x7E\x0A\x0D\x09]/u', '', $value) ?? '';
+        }
     }
 
     /**
@@ -793,5 +841,32 @@ final class AdminREST
             'language'     => (string) ($row['customer_lang'] ?? ($row['lang'] ?? '')),
             'phone'        => isset($row['phone']) ? (string) $row['phone'] : '',
         ];
+    }
+
+    /**
+     * Helper per debug: crea una rappresentazione della struttura dati senza i valori completi
+     */
+    private function debugStructure(mixed $data, int $depth = 0): string
+    {
+        if ($depth > 3) {
+            return '...';
+        }
+        
+        if (is_array($data)) {
+            $keys = array_keys($data);
+            $count = count($data);
+            $sample = array_slice($keys, 0, 5);
+            return sprintf('Array(%d)[%s]', $count, implode(', ', $sample));
+        }
+        
+        if (is_object($data)) {
+            return get_class($data);
+        }
+        
+        if (is_string($data)) {
+            return sprintf('string(%d)', strlen($data));
+        }
+        
+        return gettype($data);
     }
 }

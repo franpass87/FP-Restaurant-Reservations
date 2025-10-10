@@ -185,7 +185,19 @@
                 });
             }
             if (response.status === 204) return null;
-            return response.json();
+            
+            // Check if response has content before parsing JSON
+            return response.text().then(text => {
+                if (!text || text.trim() === '') {
+                    return null;
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Failed to parse JSON response:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            });
         });
     }
 
@@ -211,7 +223,13 @@
                     return;
                 }
                 
-                reservations = Array.isArray(data) ? data : (data.reservations || []);
+                // Handle null or empty responses
+                if (!data) {
+                    reservations = [];
+                } else {
+                    reservations = Array.isArray(data) ? data : (data.reservations || []);
+                }
+                
                 renderCurrentView();
                 updateSummary();
             })
