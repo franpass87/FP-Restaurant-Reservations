@@ -11,6 +11,7 @@ use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\StripeService;
+use FP\Resv\Domain\Reservations\Availability;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Reservations\Service;
 use FP\Resv\Domain\Settings\Language;
@@ -87,11 +88,13 @@ final class ServiceTest extends TestCase
         $customers             = new CustomersRepository($this->wpdb);
         $paymentsRepo          = new PaymentsRepository($this->wpdb);
         $stripe                = new StripeService($options, $paymentsRepo);
+        $availability          = new Availability($options, $this->wpdb);
         $notificationSettings  = new NotificationSettings($options);
         $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
+            $availability,
             $options,
             $language,
             $mailer,
@@ -190,11 +193,13 @@ final class ServiceTest extends TestCase
         $customers             = new CustomersRepository($this->wpdb);
         $paymentsRepo          = new PaymentsRepository($this->wpdb);
         $stripe                = new StripeService($options, $paymentsRepo);
+        $availability          = new Availability($options, $this->wpdb);
         $notificationSettings  = new NotificationSettings($options);
         $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
+            $availability,
             $options,
             $language,
             $mailer,
@@ -286,11 +291,13 @@ final class ServiceTest extends TestCase
         $customers             = new CustomersRepository($this->wpdb);
         $paymentsRepo          = new PaymentsRepository($this->wpdb);
         $stripe                = new StripeService($options, $paymentsRepo);
+        $availability          = new Availability($options, $this->wpdb);
         $notificationSettings  = new NotificationSettings($options);
         $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
+            $availability,
             $options,
             $language,
             $mailer,
@@ -360,11 +367,13 @@ final class ServiceTest extends TestCase
         $customers             = new CustomersRepository($this->wpdb);
         $paymentsRepo          = new PaymentsRepository($this->wpdb);
         $stripe                = new StripeService($options, $paymentsRepo);
+        $availability          = new Availability($options, $this->wpdb);
         $notificationSettings  = new NotificationSettings($options);
         $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
+            $availability,
             $options,
             $language,
             $mailer,
@@ -424,11 +433,13 @@ final class ServiceTest extends TestCase
         $customers             = new CustomersRepository($this->wpdb);
         $paymentsRepo          = new PaymentsRepository($this->wpdb);
         $stripe                = new StripeService($options, $paymentsRepo);
+        $availability          = new Availability($options, $this->wpdb);
         $notificationSettings  = new NotificationSettings($options);
         $notificationTemplates = new NotificationTemplateRenderer($notificationSettings, $language);
 
         $service = new Service(
             $reservations,
+            $availability,
             $options,
             $language,
             $mailer,

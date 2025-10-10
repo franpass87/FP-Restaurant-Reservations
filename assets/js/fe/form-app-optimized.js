@@ -511,6 +511,12 @@ export class FormApp {
     handleSubmit(event) {
         event.preventDefault();
 
+        // Protezione: previene submit multipli se già in corso
+        if (this.state.isSending()) {
+            console.warn('[FP Resv] Submit già in corso, richiesta ignorata');
+            return false;
+        }
+
         // Segna tutti i campi come toccati quando si tenta di inviare
         this.state.markFieldAsTouched('consent');
 
@@ -542,6 +548,13 @@ export class FormApp {
         const endpoint = this.getReservationEndpoint();
         const start = performance.now();
         let latency = 0;
+
+        // Genera un request_id unico per idempotenza
+        if (!payload.request_id && !payload.fp_resv_request_id) {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(2, 15);
+            payload.request_id = `req_${timestamp}_${random}`;
+        }
 
         fetch(endpoint, {
             method: 'POST',
