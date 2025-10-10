@@ -177,54 +177,72 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $dateParam = $request->get_param('date');
-        $date = $this->sanitizeDate($dateParam);
-        if ($date === null) {
-            $date = gmdate('Y-m-d');
+        try {
+            $dateParam = $request->get_param('date');
+            $date = $this->sanitizeDate($dateParam);
+            if ($date === null) {
+                $date = gmdate('Y-m-d');
+            }
+
+            $range = $request->get_param('range');
+            $rangeMode = is_string($range) ? strtolower($range) : 'day';
+            if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
+                $rangeMode = 'day';
+            }
+
+            $start = DateTimeImmutable::createFromFormat('Y-m-d', $date) ?: new DateTimeImmutable($date);
+            
+            if ($rangeMode === 'week') {
+                $end = $start->add(new DateInterval('P6D'));
+            } elseif ($rangeMode === 'month') {
+                // Get first and last day of the month
+                $firstDay = $start->modify('first day of this month');
+                $lastDay = $start->modify('last day of this month');
+                $start = $firstDay;
+                $end = $lastDay;
+            } else {
+                $end = $start;
+            }
+
+            $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            
+            // Verifica che rows sia un array valido
+            if (!is_array($rows)) {
+                error_log('FP Reservations: findAgendaRange returned non-array value');
+                $rows = [];
+            }
+            
+            $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
+
+            $overview = $this->layout?->getOverview() ?? ['rooms' => [], 'groups' => []];
+            $days      = $this->buildAgendaDays($reservations);
+            $tables    = $this->flattenAgendaTables($overview);
+
+            return rest_ensure_response([
+                'range'        => [
+                    'mode'  => $rangeMode,
+                    'start' => $start->format('Y-m-d'),
+                    'end'   => $end->format('Y-m-d'),
+                ],
+                'reservations' => $reservations,
+                'days'         => array_values($days),
+                'tables'       => $tables,
+                'rooms'        => $overview['rooms'] ?? [],
+                'groups'       => $overview['groups'] ?? [],
+                'meta'         => [
+                    'generated_at' => gmdate('c'),
+                ],
+            ]);
+        } catch (Throwable $exception) {
+            error_log('FP Reservations: Error in handleAgenda - ' . $exception->getMessage());
+            error_log('FP Reservations: Stack trace - ' . $exception->getTraceAsString());
+            
+            return new WP_Error(
+                'fp_resv_agenda_error',
+                __('Impossibile caricare le prenotazioni.', 'fp-restaurant-reservations'),
+                ['status' => 500, 'details' => $exception->getMessage()]
+            );
         }
-
-        $range = $request->get_param('range');
-        $rangeMode = is_string($range) ? strtolower($range) : 'day';
-        if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
-            $rangeMode = 'day';
-        }
-
-        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date) ?: new DateTimeImmutable($date);
-        
-        if ($rangeMode === 'week') {
-            $end = $start->add(new DateInterval('P6D'));
-        } elseif ($rangeMode === 'month') {
-            // Get first and last day of the month
-            $firstDay = $start->modify('first day of this month');
-            $lastDay = $start->modify('last day of this month');
-            $start = $firstDay;
-            $end = $lastDay;
-        } else {
-            $end = $start;
-        }
-
-        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
-        $reservations = array_map([$this, 'mapAgendaReservation'], $rows);
-
-        $overview = $this->layout?->getOverview() ?? ['rooms' => [], 'groups' => []];
-        $days      = $this->buildAgendaDays($reservations);
-        $tables    = $this->flattenAgendaTables($overview);
-
-        return rest_ensure_response([
-            'range'        => [
-                'mode'  => $rangeMode,
-                'start' => $start->format('Y-m-d'),
-                'end'   => $end->format('Y-m-d'),
-            ],
-            'reservations' => $reservations,
-            'days'         => array_values($days),
-            'tables'       => $tables,
-            'rooms'        => $overview['rooms'] ?? [],
-            'groups'       => $overview['groups'] ?? [],
-            'meta'         => [
-                'generated_at' => gmdate('c'),
-            ],
-        ]);
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -605,34 +623,84 @@ final class AdminREST
      */
     private function mapAgendaReservation(array $row): array
     {
-        $date = (string) $row['date'];
-        $time = substr((string) $row['time'], 0, 5);
+        try {
+            $date = (string) ($row['date'] ?? '');
+            $time = substr((string) ($row['time'] ?? '00:00:00'), 0, 5);
+            
+            return [
+                'id'         => (int) ($row['id'] ?? 0),
+                'status'     => (string) ($row['status'] ?? 'pending'),
+                'date'       => $date,
+                'time'       => $time,
+                'slot_start' => $date . ' ' . $time,
+                'party'      => (int) ($row['party'] ?? 0),
+                'notes'      => $this->sanitizeUtf8((string) ($row['notes'] ?? '')),
+                'allergies'  => $this->sanitizeUtf8((string) ($row['allergies'] ?? '')),
+                'room_id'    => isset($row['room_id']) && $row['room_id'] !== null ? (int) $row['room_id'] : null,
+                'table_id'   => isset($row['table_id']) && $row['table_id'] !== null ? (int) $row['table_id'] : null,
+                'customer'   => [
+                    'id'         => isset($row['customer_id']) && $row['customer_id'] !== null ? (int) $row['customer_id'] : null,
+                    'first_name' => $this->sanitizeUtf8((string) ($row['first_name'] ?? '')),
+                    'last_name'  => $this->sanitizeUtf8((string) ($row['last_name'] ?? '')),
+                    'email'      => $this->sanitizeUtf8((string) ($row['email'] ?? '')),
+                    'phone'      => $this->sanitizeUtf8((string) ($row['phone'] ?? '')),
+                    'language'   => (string) ($row['customer_lang'] ?? ''),
+                ],
+                'visited_at' => $row['visited_at'] ?? null,
+                'calendar_event_id'    => $row['calendar_event_id'] ?? null,
+                'calendar_sync_status' => $row['calendar_sync_status'] ?? null,
+                'calendar_synced_at'   => $row['calendar_synced_at'] ?? null,
+                'calendar_last_error'  => $this->sanitizeUtf8((string) ($row['calendar_last_error'] ?? '')),
+            ];
+        } catch (Throwable $exception) {
+            error_log('FP Reservations: Error mapping reservation - ' . $exception->getMessage());
+            error_log('FP Reservations: Row data - ' . print_r($row, true));
+            
+            // Restituisce un oggetto di fallback con valori minimi
+            return [
+                'id'         => (int) ($row['id'] ?? 0),
+                'status'     => 'pending',
+                'date'       => gmdate('Y-m-d'),
+                'time'       => '00:00',
+                'slot_start' => gmdate('Y-m-d') . ' 00:00',
+                'party'      => 0,
+                'notes'      => '',
+                'allergies'  => '',
+                'room_id'    => null,
+                'table_id'   => null,
+                'customer'   => [
+                    'id'         => null,
+                    'first_name' => '',
+                    'last_name'  => '',
+                    'email'      => '',
+                    'phone'      => '',
+                    'language'   => '',
+                ],
+                'visited_at' => null,
+                'calendar_event_id'    => null,
+                'calendar_sync_status' => null,
+                'calendar_synced_at'   => null,
+                'calendar_last_error'  => null,
+            ];
+        }
+    }
+
+    /**
+     * Sanitizza una stringa per assicurarsi che sia UTF-8 valida
+     */
+    private function sanitizeUtf8(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
         
-        return [
-            'id'         => (int) $row['id'],
-            'status'     => (string) ($row['status'] ?? 'pending'),
-            'date'       => $date,
-            'time'       => $time,
-            'slot_start' => $date . ' ' . $time,
-            'party'      => (int) $row['party'],
-            'notes'      => (string) ($row['notes'] ?? ''),
-            'allergies'  => (string) ($row['allergies'] ?? ''),
-            'room_id'    => isset($row['room_id']) ? (int) $row['room_id'] : null,
-            'table_id'   => isset($row['table_id']) ? (int) $row['table_id'] : null,
-            'customer'   => [
-                'id'         => isset($row['customer_id']) ? (int) $row['customer_id'] : null,
-                'first_name' => (string) ($row['first_name'] ?? ''),
-                'last_name'  => (string) ($row['last_name'] ?? ''),
-                'email'      => (string) ($row['email'] ?? ''),
-                'phone'      => (string) ($row['phone'] ?? ''),
-                'language'   => (string) ($row['customer_lang'] ?? ''),
-            ],
-            'visited_at' => $row['visited_at'] ?? null,
-            'calendar_event_id'    => $row['calendar_event_id'] ?? null,
-            'calendar_sync_status' => $row['calendar_sync_status'] ?? null,
-            'calendar_synced_at'   => $row['calendar_synced_at'] ?? null,
-            'calendar_last_error'  => $row['calendar_last_error'] ?? null,
-        ];
+        // Converte in UTF-8 valido rimuovendo caratteri non validi
+        $sanitized = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+        
+        // Rimuove caratteri di controllo eccetto newline, tab e carriage return
+        $sanitized = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $sanitized);
+        
+        return $sanitized !== null ? $sanitized : '';
     }
 
     /**
