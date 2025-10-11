@@ -228,15 +228,41 @@ class AgendaApp {
         try {
             const data = await this.apiRequest(`agenda?${params}`);
             
-            // Valida risposta
-            if (!Array.isArray(data)) {
-                throw new Error('Risposta API non valida');
+            // Log dettagliato della risposta per debugging
+            console.log('[Agenda] Tipo risposta:', typeof data);
+            console.log('[Agenda] Risposta completa:', data);
+            
+            // Gestisci diversi formati di risposta
+            let reservations = [];
+            
+            if (Array.isArray(data)) {
+                // Risposta diretta come array
+                reservations = data;
+            } else if (data && typeof data === 'object') {
+                // Risposta come oggetto - cerca proprietà comuni
+                if (Array.isArray(data.reservations)) {
+                    reservations = data.reservations;
+                } else if (Array.isArray(data.data)) {
+                    reservations = data.data;
+                } else if (Array.isArray(data.items)) {
+                    reservations = data.items;
+                } else {
+                    console.error('[Agenda] Risposta API con struttura non riconosciuta:', data);
+                    throw new Error('Risposta API non valida: formato oggetto non supportato');
+                }
+            } else if (data === null || data === undefined) {
+                // Risposta vuota - consideriamo come array vuoto
+                console.warn('[Agenda] Risposta API vuota, assumo nessuna prenotazione');
+                reservations = [];
+            } else {
+                console.error('[Agenda] Risposta API con tipo non valido:', typeof data, data);
+                throw new Error(`Risposta API non valida: ricevuto ${typeof data} invece di array`);
             }
             
-            this.state.reservations = data;
+            this.state.reservations = reservations;
             this.state.error = null;
             
-            console.log(`[Agenda] Caricate ${data.length} prenotazioni`);
+            console.log(`[Agenda] Caricate ${reservations.length} prenotazioni`);
             
             // Renderizza
             this.render();
