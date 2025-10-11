@@ -211,6 +211,7 @@ class Service
                 $sanitized['time'],
                 $sanitized['party'],
                 $sanitized['room_id'],
+                $sanitized['meal'],
                 $status
             );
 
@@ -373,6 +374,7 @@ class Service
      * @param string $time Orario nel formato H:i
      * @param int $party Numero di persone
      * @param int|null $roomId Sala richiesta (opzionale)
+     * @param string $meal Identificatore del meal plan (pranzo/cena)
      * @param string $status Lo stato della prenotazione che si sta per creare
      * @throws ConflictException Se non c'è disponibilità
      */
@@ -381,6 +383,7 @@ class Service
         string $time,
         int $party,
         ?int $roomId,
+        string $meal,
         string $status
     ): void {
         // Skip per stati che non occupano capacità
@@ -397,6 +400,10 @@ class Service
         if ($roomId !== null && $roomId > 0) {
             $criteria['room'] = $roomId;
         }
+        
+        if ($meal !== '' && $meal !== null) {
+            $criteria['meal'] = $meal;
+        }
 
         try {
             $availability = $this->availability->findSlots($criteria);
@@ -405,6 +412,7 @@ class Service
                 'date'  => $date,
                 'time'  => $time,
                 'party' => $party,
+                'meal'  => $meal,
                 'error' => $exception->getMessage(),
             ]);
             
@@ -451,6 +459,7 @@ class Service
                 'time'           => $time,
                 'requested_time' => $requestedTime,
                 'party'          => $party,
+                'meal'           => $meal,
                 'available_slots'=> count($availability['slots']),
             ]);
             
@@ -465,6 +474,7 @@ class Service
                 'date'  => $date,
                 'time'  => $time,
                 'party' => $party,
+                'meal'  => $meal,
                 'slot_found' => $slotFound,
             ]);
             
