@@ -205,6 +205,12 @@ final class Plugin
         if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
             update_option('fp_resv_last_upgrade', time(), false);
         }
+        
+        // Imposta l'opzione predefinita per mantenere i dati alla disinstallazione
+        // Solo se non è già impostata (per rispettare le preferenze esistenti)
+        if (get_option('fp_resv_keep_data_on_uninstall', null) === null) {
+            update_option('fp_resv_keep_data_on_uninstall', '1', false);
+        }
     }
 
     /**

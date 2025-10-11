@@ -57,6 +57,7 @@ use function submit_button;
 use function timezone_identifiers_list;
 use function trim;
 use function substr;
+use function update_option;
 use function wp_add_inline_style;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
@@ -742,6 +743,11 @@ final class AdminPages
             }
             if (!empty($sanitized['restaurant_timezone']) && !in_array($sanitized['restaurant_timezone'], timezone_identifiers_list(), true)) {
                 $sanitized['restaurant_timezone'] = 'Europe/Rome';
+            }
+            
+            // Salva l'opzione di conservazione dati in un'opzione separata per il file uninstall.php
+            if (isset($sanitized['keep_data_on_uninstall'])) {
+                update_option('fp_resv_keep_data_on_uninstall', $sanitized['keep_data_on_uninstall'], false);
             }
         }
 
