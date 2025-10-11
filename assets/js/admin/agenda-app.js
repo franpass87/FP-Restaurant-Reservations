@@ -343,6 +343,12 @@
     }
 
     function renderCurrentView() {
+        // ASSICURATI SEMPRE che il loading sia nascosto
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            loadingEl.style.display = 'none';
+        }
+
         try {
             switch (currentView) {
                 case 'day':
@@ -358,10 +364,17 @@
                     renderListView();
                     break;
             }
+        } catch (error) {
+            console.error('[Agenda] Error rendering view:', error);
+            // Se c'è un errore nel render, mostra empty state con messaggio di errore
+            showEmpty('Errore nella visualizzazione dell\'agenda. Ricarica la pagina.');
         } finally {
             // Always hide loading after rendering, even if render function exits early
-            // This provides a second safety net in case DOM elements are missing
-            if (loadingEl) loadingEl.hidden = true;
+            // This provides a third safety net in case DOM elements are missing
+            if (loadingEl) {
+                loadingEl.hidden = true;
+                loadingEl.style.display = 'none';
+            }
         }
     }
 
@@ -410,19 +423,28 @@
     }
 
     function showEmpty(message = null) {
-        if (loadingEl) loadingEl.hidden = true;
+        // ASSICURATI SEMPRE che il loading sia nascosto con ogni metodo possibile
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            loadingEl.style.display = 'none';
+            loadingEl.setAttribute('aria-hidden', 'true');
+        }
+        
         if (emptyEl) {
             emptyEl.hidden = false;
+            emptyEl.style.display = '';
             // Se c'è un messaggio di errore, mostralo; altrimenti ripristina il messaggio originale
             const messageEl = emptyEl.querySelector('p');
             if (messageEl) {
                 if (message) {
                     messageEl.textContent = message;
                     messageEl.style.color = '#d63638'; // Rosso WordPress
+                    messageEl.style.fontWeight = 'bold';
                 } else {
                     // Ripristina il messaggio originale
                     messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
                     messageEl.style.color = ''; // Colore predefinito
+                    messageEl.style.fontWeight = '';
                 }
             }
         }

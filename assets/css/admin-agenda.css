@@ -86,14 +86,16 @@
     position: relative;
 }
 
-/* Loading state */
-.fp-resv-agenda__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    gap: 16px;
+/* Loading state - PROTEZIONE CRITICA: sempre nascosto per evitare caricamento infinito */
+.fp-resv-agenda__loading,
+[data-role="loading"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
 }
 
 .fp-resv-spinner {
