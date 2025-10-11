@@ -53,9 +53,15 @@ jobs:
           rsync -a ./ "$OUTDIR" \
             --exclude ".git/" --exclude ".github/" --exclude "node_modules/" \
             --exclude "tests/" --exclude "docs/" --exclude "build/" \
-            --exclude "scripts/" --exclude ".gitignore" --exclude "*.zip" \
-            --exclude "*.log" --exclude "AUDIT/" --exclude "AUDIT.md" \
-            --exclude "phpstan.neon" --exclude "phpcs.xml"
+            --exclude "scripts/" --exclude "tools/" --exclude ".gitignore" \
+            --exclude "*.zip" --exclude "*.log" --exclude "AUDIT/" \
+            --exclude "*.md" --exclude ".idea/" --exclude ".vscode/" \
+            --exclude ".gitattributes" --exclude "package.json" \
+            --exclude "package-lock.json" --exclude "phpcs.xml" \
+            --exclude "phpstan.neon" --exclude "vite.config.js" \
+            --exclude ".codex-state.json" --exclude ".rebuild-state.json" \
+            --exclude "eslint.config.js" --exclude ".prettierrc.json" \
+            --exclude "docker-compose.yml" --exclude "assets/js/fe/"
           (cd build && zip -r "${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}")
           echo "ZIP creato: build/${PLUGIN_SLUG}.zip"
 
