@@ -1,8 +1,9 @@
-name: Build plugin ZIP and upload artifact
+name: Build plugin ZIP on every push
 
 on:
   push:
     branches: ["**"]
+  workflow_dispatch:  # Permetti trigger manuale
 
 permissions:
   contents: read
@@ -19,18 +20,20 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
+          tools: composer:v2
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y zip rsync
 
-      - name: Install Composer dependencies
+      - name: Install Composer dependencies (production)
         run: |
           composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
           composer dump-autoload -o --classmap-authoritative
@@ -40,20 +43,31 @@ jobs:
           npm ci
           npm run build
 
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(php -r '$pattern = "/^(\\s*\\*\\s*Version:\\s*)([^\\r\\n]+)/mi"; $file = "fp-restaurant-reservations.php"; $contents = file_get_contents($file); if (preg_match($pattern, $contents, $matches)) { echo trim($matches[2]); } else { exit(1); }')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Versione estratta: $VERSION"
+
       - name: Prepare build directory
         run: |
           SLUG="fp-restaurant-reservations"
           BUILD_ROOT="$(pwd)/build"
           TARGET_DIR="$BUILD_ROOT/$SLUG"
+          
+          echo "🏗️  Preparazione directory di build..."
           rm -rf "$TARGET_DIR"
           mkdir -p "$TARGET_DIR"
+          
+          echo "📦 Copia file con rsync..."
           rsync -a --delete \
             --exclude=.git \
             --exclude=.github \
             --exclude=tests \
             --exclude=docs \
             --exclude=node_modules \
-            --exclude=*.md \
+            --exclude='*.md' \
             --exclude=.idea \
             --exclude=.vscode \
             --exclude=build \
@@ -74,26 +88,92 @@ jobs:
             --exclude=tools \
             --exclude=docker-compose.yml \
             --exclude=AUDIT \
-            --exclude=assets/js/fe \
-            --exclude=*.zip \
-            --exclude=*.log \
+            --exclude='assets/js/fe' \
+            --exclude='*.zip' \
+            --exclude='*.log' \
             "$(pwd)/" "$TARGET_DIR/"
+          
+          echo "✅ File copiati con successo"
+
+      - name: Verify critical files
+        run: |
+          SLUG="fp-restaurant-reservations"
+          TARGET_DIR="$(pwd)/build/$SLUG"
+          
+          echo "🔍 Verifica file critici..."
+          
+          # Verifica file principale plugin
+          if [ ! -f "$TARGET_DIR/fp-restaurant-reservations.php" ]; then
+            echo "❌ ERRORE: File principale plugin non trovato!"
+            exit 1
+          fi
+          
+          # Verifica agenda-app.js
+          if [ ! -f "$TARGET_DIR/assets/js/admin/agenda-app.js" ]; then
+            echo "❌ ERRORE: agenda-app.js non trovato!"
+            exit 1
+          fi
+          
+          # Verifica che agenda-app.js contenga la versione aggiornata (ES6 class)
+          if ! grep -q "class AgendaApp" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
+            echo "⚠️  ATTENZIONE: agenda-app.js potrebbe essere una versione vecchia!"
+            echo "Il file dovrebbe contenere 'class AgendaApp' ma non è stato trovato."
+            head -20 "$TARGET_DIR/assets/js/admin/agenda-app.js"
+            exit 1
+          fi
+          
+          # Verifica vendor
+          if [ ! -d "$TARGET_DIR/vendor" ]; then
+            echo "❌ ERRORE: Directory vendor non trovata!"
+            exit 1
+          fi
+          
+          # Verifica assets/dist
+          if [ ! -d "$TARGET_DIR/assets/dist" ]; then
+            echo "❌ ERRORE: Directory assets/dist non trovata!"
+            exit 1
+          fi
+          
+          echo "✅ Tutti i file critici sono presenti"
+          echo "📊 Dimensione agenda-app.js: $(wc -l < "$TARGET_DIR/assets/js/admin/agenda-app.js") righe"
 
       - name: Create ZIP
         run: |
           SLUG="fp-restaurant-reservations"
           BUILD_ROOT="$(pwd)/build"
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          BRANCH="${GITHUB_REF##*/}"
           TIMESTAMP="$(date +%Y%m%d%H%M)"
-          ZIP_NAME="$SLUG-$TIMESTAMP.zip"
+          
+          # Nome ZIP con versione e branch
+          ZIP_NAME="$SLUG-v$VERSION-$BRANCH-$TIMESTAMP.zip"
+          
+          echo "📦 Creazione ZIP: $ZIP_NAME"
           cd "$BUILD_ROOT"
           zip -r "$ZIP_NAME" "$SLUG" > /dev/null
+          
           echo "ZIP_PATH=$BUILD_ROOT/$ZIP_NAME" >> $GITHUB_ENV
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          
+          # Mostra info ZIP
+          echo "✅ ZIP creato con successo"
+          echo "📊 Dimensione: $(ls -lh "$ZIP_NAME" | awk '{print $5}')"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-zip
+          name: plugin-zip-${{ github.ref_name }}-${{ github.sha }}
           path: ${{ env.ZIP_PATH }}
           if-no-files-found: error
+          retention-days: 30
 
-
+      - name: Summary
+        run: |
+          echo "## 🎉 Build Completata" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Versione:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${GITHUB_REF##*/}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${GITHUB_SHA:0:7}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ZIP:** \`${{ env.ZIP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tutti i file critici verificati, incluso \`agenda-app.js\` aggiornato" >> $GITHUB_STEP_SUMMARY
