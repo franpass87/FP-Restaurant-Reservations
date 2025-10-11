@@ -218,9 +218,12 @@
                 
                 // Check if response has content before parsing JSON
                 return response.text().then(text => {
+                    console.log('[API Response] Raw text length:', text ? text.length : 0);
+                    console.log('[API Response] Raw text (first 200 chars):', text ? text.substring(0, 200) : 'EMPTY');
+                    
                     if (!text || text.trim() === '') {
-                        console.log('[API Response] Empty response');
-                        return null;
+                        console.warn('[API Response] Empty response body - returning empty array');
+                        return [];
                     }
                     try {
                         const data = JSON.parse(text);
@@ -228,6 +231,7 @@
                         return data;
                     } catch (e) {
                         console.error('[API Error] Failed to parse JSON response:', text.substring(0, 200));
+                        console.error('[API Error] Parse error:', e);
                         throw new Error('Invalid JSON response from server');
                     }
                 });

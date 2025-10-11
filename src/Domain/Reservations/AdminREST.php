@@ -385,7 +385,12 @@ final class AdminREST
         
         // RISTRUTTURAZIONE SEMPLIFICATA: Restituisce direttamente l'array di prenotazioni
         // Il frontend gestisce tutta la logica di presentazione e raggruppamento
-        return rest_ensure_response($reservations);
+        
+        // Forza header JSON e restituisci sempre un array valido (anche se vuoto)
+        $response = rest_ensure_response($reservations);
+        $response->header('Content-Type', 'application/json; charset=UTF-8');
+        
+        return $response;
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
