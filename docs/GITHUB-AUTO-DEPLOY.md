@@ -97,7 +97,7 @@ Se il repository è **privato**, devi configurare un token di accesso:
 2. **Modifica il file del plugin** (`fp-restaurant-reservations.php`):
    ```php
    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-       'https://github.com/francescopasseri/fp-restaurant-reservations/',
+       'https://github.com/franpass87/FP-Restaurant-Reservations/',
        __FILE__,
        'fp-restaurant-reservations'
    );

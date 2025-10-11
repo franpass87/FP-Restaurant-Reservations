@@ -61,7 +61,7 @@ if (is_readable($autoload)) {
 // Inizializza sistema di auto-aggiornamento da GitHub
 if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
     $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-        'https://github.com/francescopasseri/fp-restaurant-reservations/',
+        'https://github.com/franpass87/FP-Restaurant-Reservations/',
         __FILE__,
         'fp-restaurant-reservations'
     );
