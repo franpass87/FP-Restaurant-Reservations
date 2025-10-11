@@ -357,7 +357,14 @@ final class AdminREST
         }
 
         // Recupera prenotazioni dal database
-        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+        $startDateStr = $start->format('Y-m-d');
+        $endDateStr = $end->format('Y-m-d');
+        
+        error_log(sprintf('[Agenda API] Loading reservations from %s to %s', $startDateStr, $endDateStr));
+        
+        $rows = $this->reservations->findAgendaRange($startDateStr, $endDateStr);
+        
+        error_log(sprintf('[Agenda API] Found %d rows from database', is_array($rows) ? count($rows) : 0));
         
         // Assicurati che sia un array
         if (!is_array($rows)) {
@@ -374,6 +381,8 @@ final class AdminREST
             $reservations[] = $this->mapAgendaReservation($row);
         }
 
+        error_log(sprintf('[Agenda API] Returning %d reservations after mapping', count($reservations)));
+        
         // RISTRUTTURAZIONE SEMPLIFICATA: Restituisce direttamente l'array di prenotazioni
         // Il frontend gestisce tutta la logica di presentazione e raggruppamento
         return rest_ensure_response($reservations);

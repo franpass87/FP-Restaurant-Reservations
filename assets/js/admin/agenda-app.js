@@ -263,11 +263,22 @@
                 }
                 
                 console.log('[Agenda] Data received:', data);
+                console.log('[Agenda] Data type:', typeof data);
                 console.log('[Agenda] Data is array:', Array.isArray(data));
+                console.log('[Agenda] Data is null:', data === null);
                 console.log('[Agenda] Data length:', Array.isArray(data) ? data.length : 'N/A');
                 
                 // L'API restituisce direttamente un array di prenotazioni
-                reservations = Array.isArray(data) ? data : [];
+                // Se null o non array, usa array vuoto
+                if (data === null || data === undefined) {
+                    console.warn('[Agenda] API returned null/undefined, using empty array');
+                    reservations = [];
+                } else if (!Array.isArray(data)) {
+                    console.error('[Agenda] API returned non-array:', data);
+                    reservations = [];
+                } else {
+                    reservations = data;
+                }
                 
                 // Nascondi sempre il loading
                 if (loadingEl) {
