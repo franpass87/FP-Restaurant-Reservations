@@ -68,7 +68,7 @@ final class AdminController
         $styleUrl  = Plugin::$url . 'assets/css/admin-agenda.css';
         $version   = Plugin::assetVersion();
 
-        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], $version, true);
+        wp_enqueue_script($scriptHandle, $scriptUrl, [], $version, true);
 
         wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
 
