@@ -789,7 +789,7 @@ final class PagesConfig
                 'default'     => '3',
                 'min'         => 1,
                 'max'         => 6,
-                'description' => __('Spessore visibile dell'anello di focus per pulsanti e campi.', 'fp-restaurant-reservations'),
+                'description' => __('Spessore visibile dell\'anello di focus per pulsanti e campi.', 'fp-restaurant-reservations'),
             ],
             'style_enable_dark_mode' => [
                 'label'          => __('Dark mode automatica', 'fp-restaurant-reservations'),
