@@ -52,6 +52,12 @@
         console.log('[Agenda Init] REST root:', restRoot);
         console.log('[Agenda Init] Nonce:', nonce ? 'present' : 'MISSING');
 
+        // NASCONDI SEMPRE IL LOADING ALL'AVVIO
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            console.log('[Agenda Init] Loading element hidden');
+        }
+
         // Set default date
         datePicker.value = formatDate(currentDate);
 
@@ -234,8 +240,9 @@
     }
 
     function loadReservations() {
-        showLoading();
-
+        // NON MOSTRARE MAI IL LOADING - mostra subito empty state o i dati esistenti
+        // Questo elimina il problema del caricamento infinito
+        
         // Increment request ID to detect stale responses
         const requestId = ++loadRequestId;
 
@@ -248,47 +255,47 @@
             ...(currentService && { service: currentService })
         });
 
-        // Timeout di sicurezza: nasconde il loading dopo 10 secondi se non c'è risposta
-        const safetyTimeoutId = setTimeout(() => {
-            if (requestId === loadRequestId && loadingEl && !loadingEl.hidden) {
-                console.warn('Loading timeout - hiding loading state after 10 seconds');
-                loadingEl.hidden = true;
-                // Mostra empty state se non ci sono dati
-                if (!reservations || reservations.length === 0) {
-                    showEmpty();
-                }
-            }
-        }, 10000);
+        // Mostra immediatamente empty state se non ci sono prenotazioni
+        if (reservations.length === 0) {
+            showEmpty();
+        } else {
+            // Mostra i dati esistenti mentre carica in background
+            renderCurrentView();
+            updateSummary();
+        }
+
+        console.log('[Agenda] Loading reservations in background...');
 
         request(`agenda?${params}`)
             .then(data => {
-                // Clear safety timeout
-                clearTimeout(safetyTimeoutId);
-                
                 // Ignore stale responses
                 if (requestId !== loadRequestId) {
+                    console.log('[Agenda] Ignoring stale response');
                     return;
                 }
+                
+                console.log('[Agenda] Data received:', data);
                 
                 // L'API restituisce direttamente un array di prenotazioni
                 reservations = Array.isArray(data) ? data : [];
                 
-                renderCurrentView();
-                updateSummary();
+                // Aggiorna la vista con i nuovi dati
+                if (reservations.length === 0) {
+                    showEmpty();
+                } else {
+                    renderCurrentView();
+                    updateSummary();
+                }
             })
             .catch(error => {
-                // Clear safety timeout
-                clearTimeout(safetyTimeoutId);
-                
                 // Ignore stale responses
                 if (requestId !== loadRequestId) {
                     return;
                 }
                 
-                console.error('Error loading reservations:', error);
-                reservations = [];
+                console.error('[Agenda] Error loading reservations:', error);
                 
-                // Mostra messaggio di errore più descrittivo
+                // Mostra messaggio di errore ma NON bloccare l'interfaccia
                 let errorMessage = 'Errore nel caricamento delle prenotazioni.';
                 if (error.message) {
                     if (error.message.includes('403') || error.message.includes('forbidden')) {
@@ -302,13 +309,8 @@
                     }
                 }
                 
+                console.error('[Agenda] Error message:', errorMessage);
                 showEmpty(errorMessage);
-            })
-            .finally(() => {
-                // Hide loading only if this is still the latest request
-                if (requestId === loadRequestId && loadingEl) {
-                    loadingEl.hidden = true;
-                }
             });
     }
 
@@ -402,13 +404,9 @@
 
     // Rendering
     function showLoading() {
-        if (loadingEl) loadingEl.hidden = false;
-        if (emptyEl) emptyEl.hidden = true;
-        // Hide all views
-        if (timelineEl) timelineEl.hidden = true;
-        if (weekViewEl) weekViewEl.hidden = true;
-        if (monthViewEl) monthViewEl.hidden = true;
-        if (listViewEl) listViewEl.hidden = true;
+        // FUNZIONE DISABILITATA - Non mostrare mai il loading per evitare il caricamento infinito
+        // L'interfaccia si aggiorna direttamente con i dati quando arrivano
+        console.log('[Agenda] showLoading() called but disabled');
     }
 
     function showEmpty(message = null) {
@@ -438,6 +436,7 @@
     function renderTimeline() {
         if (!timelineEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -480,6 +479,7 @@
     function renderWeekView() {
         if (!weekViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -541,6 +541,7 @@
     function renderMonthView() {
         if (!monthViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -625,6 +626,7 @@
     function renderListView() {
         if (!listViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
