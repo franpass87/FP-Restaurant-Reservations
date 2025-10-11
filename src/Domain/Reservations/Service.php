@@ -9,7 +9,9 @@ use DateTimeZone;
 use FP\Resv\Core\Exceptions\ConflictException;
 use FP\Resv\Core\Exceptions\ValidationException;
 use FP\Resv\Core\Metrics;
+use FP\Resv\Core\PhoneHelper;
 use FP\Resv\Core\ReservationValidator;
+use FP\Resv\Domain\Reservations\ReservationStatuses;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Payments\StripeService as StripePayments;
@@ -75,20 +77,13 @@ use const FILTER_VALIDATE_EMAIL;
 
 class Service
 {
-    public const ALLOWED_STATUSES = [
-        'pending',
-        'pending_payment',
-        'confirmed',
-        'waitlist',
-        'cancelled',
-        'no-show',
-        'visited',
-    ];
+    public const ALLOWED_STATUSES = ReservationStatuses::ALLOWED_STATUSES;
 
     /**
      * Stati considerati "attivi" che occupano capacità.
      */
-    private const ACTIVE_STATUSES = ['pending', 'confirmed', 'seated', 'pending_payment'];
+    private const ACTIVE_STATUSES = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
+
     public function __construct(
         private readonly Repository $repository,
         private readonly Availability $availability,
@@ -624,79 +619,22 @@ class Service
 
     private function detectLanguageFromPhone(string $phone, string $phoneCountry): ?string
     {
-        // Normalizza il prefisso dal campo country
-        $normalizedCountry = $this->normalizePhonePrefix($phoneCountry);
-        if ($normalizedCountry !== '') {
-            // Logica semplificata: +39 = it, tutto il resto = en
-            return str_starts_with($normalizedCountry, '+39') ? 'it' : 'en';
-        }
-
-        // Altrimenti normalizza il numero di telefono
-        $normalizedPhone = $this->normalizePhoneNumber($phone);
-        if ($normalizedPhone === '') {
-            return 'en';
-        }
-
-        // Logica semplificata: +39 = it, tutto il resto = en
-        return str_starts_with($normalizedPhone, '+39') ? 'it' : 'en';
+        return PhoneHelper::detectLanguage($phone, $phoneCountry);
     }
 
     private function normalizePhonePrefix(string $prefix): string
     {
-        $normalized = str_replace(' ', '', trim($prefix));
-        if ($normalized === '') {
-            return '';
-        }
-
-        if (str_starts_with($normalized, '00')) {
-            $normalized = '+' . substr($normalized, 2);
-        } elseif (!str_starts_with($normalized, '+')) {
-            $normalized = '+' . ltrim($normalized, '+');
-        }
-
-        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
-        if (!is_string($digits) || $digits === '') {
-            return '';
-        }
-
-        return '+' . $digits;
+        return PhoneHelper::normalizePrefix($prefix);
     }
 
     private function normalizePhoneNumber(string $phone): string
     {
-        $normalized = preg_replace('/[^0-9+]/', '', trim($phone));
-        if (!is_string($normalized) || $normalized === '') {
-            return '';
-        }
-
-        if ($normalized[0] !== '+') {
-            if (str_starts_with($normalized, '00')) {
-                $normalized = '+' . substr($normalized, 2);
-            } else {
-                $normalized = '+' . ltrim($normalized, '+');
-            }
-        }
-
-        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
-        if (!is_string($digits) || $digits === '') {
-            return '';
-        }
-
-        return '+' . $digits;
+        return PhoneHelper::normalizeNumber($phone);
     }
 
     private function normalizePhoneLanguage(string $value): string
     {
-        $upper = strtoupper(trim($value));
-        if ($upper === '') {
-            return '';
-        }
-
-        if (str_starts_with($upper, 'IT')) {
-            return 'it';
-        }
-
-        return 'en';
+        return PhoneHelper::normalizeLanguage($value);
     }
 
     /**

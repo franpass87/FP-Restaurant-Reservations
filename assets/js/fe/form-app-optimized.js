@@ -11,21 +11,7 @@ import { FormValidation } from './components/form-validation.js';
 import { FormNavigation } from './components/form-navigation.js';
 import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
 import { formatDebugMessage } from './debug.js';
-
-let availabilityModulePromise = null;
-const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
-    ? (callback) => window.requestIdleCallback(callback)
-    : (callback) => window.setTimeout(() => callback(Date.now()), 1);
-
-function loadAvailabilityModule() {
-    if (!availabilityModulePromise) {
-        availabilityModulePromise = import('./availability.js');
-    }
-
-    return availabilityModulePromise;
-}
-
-const STEP_ORDER = ['service', 'date', 'party', 'slots', 'details', 'confirm'];
+import { STEP_ORDER, idleCallback, loadAvailabilityModule } from './constants.js';
 
 export class FormApp {
     constructor(root) {

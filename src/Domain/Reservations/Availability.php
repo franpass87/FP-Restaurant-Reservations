@@ -10,6 +10,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\Metrics;
+use FP\Resv\Domain\Reservations\ReservationStatuses;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use InvalidArgumentException;
@@ -52,7 +53,7 @@ class Availability
     ];
 
     /** @var string[] */
-    private const ACTIVE_STATUSES = ['pending', 'confirmed', 'seated'];
+    private const ACTIVE_STATUSES = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
 
     /**
      * @var array<string, array<string, mixed>>|null

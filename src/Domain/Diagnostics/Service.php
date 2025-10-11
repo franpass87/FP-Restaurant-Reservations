@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Diagnostics;
 
 use DateTimeImmutable;
 use FP\Resv\Core\Helpers;
+use FP\Resv\Domain\Diagnostics\ChannelsConfig;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
@@ -45,103 +46,6 @@ final class Service
 {
     private const MAX_EXPORT_ROWS = 2000;
 
-    /**
-     * @var array<string, array<string, mixed>>
-     */
-    private const CHANNELS = [
-        'email' => [
-            'label'       => 'Email',
-            'description' => 'Log invio notifiche e ricevute.',
-            'statuses'    => [
-                'sent',
-                'failed',
-            ],
-            'columns'     => [
-                ['key' => 'created_at', 'label' => 'Registrato'],
-                ['key' => 'recipient', 'label' => 'Destinatari'],
-                ['key' => 'subject', 'label' => 'Oggetto'],
-                ['key' => 'status', 'label' => 'Stato'],
-                ['key' => 'excerpt', 'label' => 'Estratto'],
-                ['key' => 'preview', 'label' => 'Anteprima'],
-                ['key' => 'error', 'label' => 'Errore'],
-            ],
-        ],
-        'webhooks' => [
-            'label'       => 'Webhook',
-            'description' => 'Eventi Brevo, Stripe e Google Calendar.',
-            'statuses'    => [
-                'success',
-                'error',
-                'info',
-            ],
-            'columns'     => [
-                ['key' => 'created_at', 'label' => 'Registrato'],
-                ['key' => 'source', 'label' => 'Sorgente'],
-                ['key' => 'action', 'label' => 'Evento'],
-                ['key' => 'status', 'label' => 'Stato'],
-                ['key' => 'summary', 'label' => 'Dettagli'],
-                ['key' => 'error', 'label' => 'Errore'],
-            ],
-        ],
-        'stripe' => [
-            'label'       => 'Stripe',
-            'description' => 'Intenti di pagamento, capture e refund.',
-            'statuses'    => [
-                'pending',
-                'authorized',
-                'paid',
-                'refunded',
-                'void',
-                'failed',
-            ],
-            'columns'     => [
-                ['key' => 'created_at', 'label' => 'Registrato'],
-                ['key' => 'type', 'label' => 'Tipo'],
-                ['key' => 'status', 'label' => 'Stato'],
-                ['key' => 'amount', 'label' => 'Importo'],
-                ['key' => 'currency', 'label' => 'Valuta'],
-                ['key' => 'external_id', 'label' => 'Intent / Charge'],
-                ['key' => 'meta', 'label' => 'Dettagli'],
-            ],
-        ],
-        'api' => [
-            'label'       => 'API & REST',
-            'description' => 'Richieste REST e webhook API con errori 4xx/5xx.',
-            'statuses'    => [
-                'info',
-                'warning',
-                'error',
-            ],
-            'columns'     => [
-                ['key' => 'created_at', 'label' => 'Registrato'],
-                ['key' => 'action', 'label' => 'Azione'],
-                ['key' => 'status', 'label' => 'Severità'],
-                ['key' => 'entity', 'label' => 'Entità'],
-                ['key' => 'actor', 'label' => 'Ruolo'],
-                ['key' => 'ip', 'label' => 'IP'],
-                ['key' => 'details', 'label' => 'Dettagli'],
-            ],
-        ],
-        'queue' => [
-            'label'       => 'Cron & Queue',
-            'description' => 'Job pianificati e code post-visita.',
-            'statuses'    => [
-                'pending',
-                'processing',
-                'completed',
-                'failed',
-            ],
-            'columns'     => [
-                ['key' => 'updated_at', 'label' => 'Aggiornato'],
-                ['key' => 'run_at', 'label' => 'Esecuzione'],
-                ['key' => 'channel', 'label' => 'Canale'],
-                ['key' => 'status', 'label' => 'Stato'],
-                ['key' => 'reservation_id', 'label' => 'Prenotazione'],
-                ['key' => 'error', 'label' => 'Errore'],
-            ],
-        ],
-    ];
-
     public function __construct(
         private readonly wpdb $wpdb,
         private readonly PaymentsRepository $payments,
@@ -154,7 +58,7 @@ final class Service
      */
     public function getChannels(): array
     {
-        $channels = self::CHANNELS;
+        $channels = ChannelsConfig::getChannels();
         ksort($channels);
 
         return $channels;
@@ -777,7 +681,7 @@ final class Service
 
         return [
             'channel'    => 'queue',
-            'columns'    => self::CHANNELS['queue']['columns'],
+            'columns'    => ChannelsConfig::getChannels()['queue']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($total, $page, $perPage),
         ];
