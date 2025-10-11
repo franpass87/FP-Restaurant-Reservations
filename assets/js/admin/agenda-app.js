@@ -9,6 +9,15 @@
     const settings = window.fpResvAgendaSettings || {};
     const restRoot = (settings.restRoot || '/wp-json/fp-resv/v1').replace(/\/$/, '');
     const nonce = settings.nonce || '';
+    
+    // Verifica che i settings siano stati caricati correttamente
+    if (!settings.restRoot || !settings.nonce) {
+        console.error('[Agenda Error] Settings not properly loaded!', { 
+            hasSettings: !!window.fpResvAgendaSettings,
+            hasRestRoot: !!settings.restRoot,
+            hasNonce: !!settings.nonce
+        });
+    }
 
     // DOM Elements
     const datePicker = document.querySelector('[data-role="date-picker"]');
@@ -34,7 +43,14 @@
     init();
 
     function init() {
-        if (!datePicker) return;
+        if (!datePicker) {
+            console.error('Date picker element not found! Initialization aborted.');
+            return;
+        }
+
+        console.log('[Agenda Init] Starting initialization...');
+        console.log('[Agenda Init] REST root:', restRoot);
+        console.log('[Agenda Init] Nonce:', nonce ? 'present' : 'MISSING');
 
         // Set default date
         datePicker.value = formatDate(currentDate);
@@ -45,6 +61,7 @@
         serviceFilter?.addEventListener('change', handleServiceChange);
 
         // Set initial view (this already calls loadReservations internally)
+        console.log('[Agenda Init] Setting initial view to "day"');
         setActiveView('day');
     }
 
@@ -162,6 +179,8 @@
     function request(path, options = {}) {
         const url = path.startsWith('http') ? path : `${restRoot}/${path.replace(/^\//, '')}`;
         
+        console.log(`[API Request] ${options.method || 'GET'} ${url}`);
+        
         const config = {
             method: options.method || 'GET',
             headers: {
@@ -178,27 +197,40 @@
             }
         }
 
-        return fetch(url, config).then(response => {
-            if (!response.ok) {
-                return response.json().catch(() => ({})).then(payload => {
-                    throw new Error(payload.message || 'Request failed');
+        return fetch(url, config)
+            .then(response => {
+                console.log(`[API Response] Status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    return response.json().catch(() => ({})).then(payload => {
+                        const errorMsg = payload.message || `Request failed with status ${response.status}`;
+                        console.error('[API Error]', errorMsg, payload);
+                        throw new Error(errorMsg);
+                    });
+                }
+                if (response.status === 204) return null;
+                
+                // Check if response has content before parsing JSON
+                return response.text().then(text => {
+                    if (!text || text.trim() === '') {
+                        console.log('[API Response] Empty response');
+                        return null;
+                    }
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('[API Response] Data:', Array.isArray(data) ? `Array(${data.length})` : typeof data);
+                        return data;
+                    } catch (e) {
+                        console.error('[API Error] Failed to parse JSON response:', text.substring(0, 200));
+                        throw new Error('Invalid JSON response from server');
+                    }
                 });
-            }
-            if (response.status === 204) return null;
-            
-            // Check if response has content before parsing JSON
-            return response.text().then(text => {
-                if (!text || text.trim() === '') {
-                    return null;
-                }
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('Failed to parse JSON response:', text);
-                    throw new Error('Invalid JSON response from server');
-                }
+            })
+            .catch(error => {
+                // Cattura anche errori di rete
+                console.error('[API Error] Network or fetch error:', error);
+                throw error;
             });
-        });
     }
 
     function loadReservations() {
@@ -216,8 +248,23 @@
             ...(currentService && { service: currentService })
         });
 
+        // Timeout di sicurezza: nasconde il loading dopo 10 secondi se non c'è risposta
+        const safetyTimeoutId = setTimeout(() => {
+            if (requestId === loadRequestId && loadingEl && !loadingEl.hidden) {
+                console.warn('Loading timeout - hiding loading state after 10 seconds');
+                loadingEl.hidden = true;
+                // Mostra empty state se non ci sono dati
+                if (!reservations || reservations.length === 0) {
+                    showEmpty();
+                }
+            }
+        }, 10000);
+
         request(`agenda?${params}`)
             .then(data => {
+                // Clear safety timeout
+                clearTimeout(safetyTimeoutId);
+                
                 // Ignore stale responses
                 if (requestId !== loadRequestId) {
                     return;
@@ -230,6 +277,9 @@
                 updateSummary();
             })
             .catch(error => {
+                // Clear safety timeout
+                clearTimeout(safetyTimeoutId);
+                
                 // Ignore stale responses
                 if (requestId !== loadRequestId) {
                     return;
@@ -237,7 +287,22 @@
                 
                 console.error('Error loading reservations:', error);
                 reservations = [];
-                showEmpty();
+                
+                // Mostra messaggio di errore più descrittivo
+                let errorMessage = 'Errore nel caricamento delle prenotazioni.';
+                if (error.message) {
+                    if (error.message.includes('403') || error.message.includes('forbidden')) {
+                        errorMessage = 'Accesso negato. Verifica i tuoi permessi.';
+                    } else if (error.message.includes('404')) {
+                        errorMessage = 'Endpoint non trovato. Verifica la configurazione del plugin.';
+                    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        errorMessage = 'Errore di connessione. Verifica la tua connessione internet.';
+                    } else {
+                        errorMessage = `Errore: ${error.message}`;
+                    }
+                }
+                
+                showEmpty(errorMessage);
             })
             .finally(() => {
                 // Hide loading only if this is still the latest request
@@ -346,9 +411,23 @@
         if (listViewEl) listViewEl.hidden = true;
     }
 
-    function showEmpty() {
+    function showEmpty(message = null) {
         if (loadingEl) loadingEl.hidden = true;
-        if (emptyEl) emptyEl.hidden = false;
+        if (emptyEl) {
+            emptyEl.hidden = false;
+            // Se c'è un messaggio di errore, mostralo; altrimenti ripristina il messaggio originale
+            const messageEl = emptyEl.querySelector('p');
+            if (messageEl) {
+                if (message) {
+                    messageEl.textContent = message;
+                    messageEl.style.color = '#d63638'; // Rosso WordPress
+                } else {
+                    // Ripristina il messaggio originale
+                    messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
+                    messageEl.style.color = ''; // Colore predefinito
+                }
+            }
+        }
         // Hide all views
         if (timelineEl) timelineEl.hidden = true;
         if (weekViewEl) weekViewEl.hidden = true;
