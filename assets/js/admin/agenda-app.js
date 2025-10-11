@@ -26,6 +26,7 @@
     let currentService = '';
     let currentView = 'day'; // day, week, month, list
     let reservations = [];
+    let agendaStats = null;
     let currentModal = null;
     let loadRequestId = 0; // Counter to prevent race conditions
     let currentReservationId = null; // Current reservation being viewed
@@ -222,10 +223,11 @@
                 if (requestId !== loadRequestId) {
                     return;
                 }
-                
-                // L'API restituisce direttamente un array di prenotazioni
-                reservations = Array.isArray(data) ? data : [];
-                
+
+                const normalized = normalizeAgendaResponse(data);
+                reservations = Array.isArray(normalized.reservations) ? normalized.reservations : [];
+                agendaStats = normalized.stats;
+
                 renderCurrentView();
                 updateSummary();
             })
@@ -234,9 +236,10 @@
                 if (requestId !== loadRequestId) {
                     return;
                 }
-                
+
                 console.error('Error loading reservations:', error);
                 reservations = [];
+                agendaStats = null;
                 showEmpty();
             })
             .finally(() => {
@@ -678,13 +681,73 @@
         }
 
         if (statsEl) {
-            // Calcola statistiche client-side
-            const total = reservations.length;
-            const confirmed = reservations.filter(r => r.status === 'confirmed').length;
-            const totalGuests = reservations.reduce((sum, r) => sum + (r.party || r.guests || 0), 0);
-            
+            const total = typeof agendaStats?.total_reservations === 'number'
+                ? agendaStats.total_reservations
+                : reservations.length;
+
+            const confirmedFromStats = typeof agendaStats?.by_status === 'object'
+                && agendaStats.by_status !== null
+                && typeof agendaStats.by_status.confirmed === 'number'
+                ? agendaStats.by_status.confirmed
+                : null;
+
+            const confirmed = confirmedFromStats !== null
+                ? confirmedFromStats
+                : reservations.filter(r => r.status === 'confirmed').length;
+
+            const totalGuests = typeof agendaStats?.total_guests === 'number'
+                ? agendaStats.total_guests
+                : reservations.reduce((sum, r) => sum + (r.party || r.guests || 0), 0);
+
             statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
         }
+    }
+
+    function normalizeAgendaResponse(payload) {
+        const result = {
+            reservations: [],
+            stats: null,
+        };
+
+        if (Array.isArray(payload)) {
+            result.reservations = payload;
+            return result;
+        }
+
+        if (payload && typeof payload === 'object') {
+            if (Array.isArray(payload.reservations)) {
+                result.reservations = payload.reservations;
+            } else {
+                const flattened = flattenReservationCollection(payload.data);
+                if (flattened.length) {
+                    result.reservations = flattened;
+                }
+            }
+
+            if (payload.stats && typeof payload.stats === 'object') {
+                result.stats = payload.stats;
+            }
+        }
+
+        return result;
+    }
+
+    function flattenReservationCollection(collection) {
+        if (!collection || typeof collection !== 'object') {
+            return [];
+        }
+
+        const items = [];
+
+        Object.values(collection).forEach(value => {
+            if (Array.isArray(value)) {
+                items.push(...value);
+            } else if (value && typeof value === 'object') {
+                items.push(...flattenReservationCollection(value));
+            }
+        });
+
+        return items;
     }
 
     // Modals
