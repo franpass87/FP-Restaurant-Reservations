@@ -374,9 +374,22 @@ final class AdminREST
             $reservations[] = $this->mapAgendaReservation($row);
         }
 
-        // RISTRUTTURAZIONE SEMPLIFICATA: Restituisce direttamente l'array di prenotazioni
-        // Il frontend gestisce tutta la logica di presentazione e raggruppamento
-        return rest_ensure_response($reservations);
+        // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
+        // - meta: informazioni sulla richiesta
+        // - stats: statistiche aggregate calcolate server-side
+        // - data: dati organizzati per vista (slots per day, days per week/month)
+        // - reservations: array piatto per backward compatibility
+        return rest_ensure_response([
+            'meta' => [
+                'range' => $rangeMode,
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+                'current_date' => $date,
+            ],
+            'stats' => $this->calculateStats($reservations),
+            'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
+            'reservations' => $reservations,
+        ]);
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
