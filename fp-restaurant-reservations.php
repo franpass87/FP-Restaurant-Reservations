@@ -58,7 +58,9 @@ if (is_readable($autoload)) {
     require $autoload;
 }
 
-// Inizializza sistema di auto-aggiornamento da GitHub
+// Sistema di aggiornamento MANUALE da GitHub
+// L'aggiornamento automatico è disabilitato per evitare problemi sui siti dei clienti
+// Gli aggiornamenti devono essere attivati manualmente dalla pagina delle impostazioni
 if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
     $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
         'https://github.com/francescopasseri/fp-restaurant-reservations/',
@@ -68,6 +70,14 @@ if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
     
     // Usa le GitHub Releases per gli aggiornamenti
     $updateChecker->getVcsApi()->enableReleaseAssets();
+    
+    // IMPORTANTE: Disabilita il check automatico degli aggiornamenti
+    // Gli aggiornamenti verranno controllati solo quando l'utente clicca "Aggiorna ora"
+    add_filter('puc_check_now-fp-restaurant-reservations', '__return_false', 999);
+    
+    // Salva l'istanza dell'update checker globalmente per uso nella pagina admin
+    global $fp_resv_update_checker;
+    $fp_resv_update_checker = $updateChecker;
 }
 
 require_once __DIR__ . '/src/Core/Requirements.php';

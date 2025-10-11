@@ -304,6 +304,12 @@ final class Plugin
         Consent::init($options);
         Security::boot();
 
+        // Sistema di aggiornamento manuale
+        $manualUpdateManager = new ManualUpdateManager();
+        $manualUpdateManager->register();
+        $container->register(ManualUpdateManager::class, $manualUpdateManager);
+        $container->register('core.manual_update_manager', $manualUpdateManager);
+
         $mailer = new Mailer();
         $mailer->registerHooks();
         $container->register(Mailer::class, $mailer);
