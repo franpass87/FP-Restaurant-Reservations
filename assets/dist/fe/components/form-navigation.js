@@ -105,11 +105,15 @@ export class FormNavigation {
                         statusEl.textContent = this.copy.dateRequired || 'Seleziona una data per continuare.';
                         statusEl.style.color = '#dc2626';
                         statusEl.setAttribute('data-state', 'error');
+                        statusEl.hidden = false;
+                        statusEl.removeAttribute('hidden');
                         
                         setTimeout(() => {
                             statusEl.textContent = '';
                             statusEl.style.color = '';
                             statusEl.removeAttribute('data-state');
+                            statusEl.hidden = true;
+                            statusEl.setAttribute('hidden', '');
                         }, 3000);
                     }
                 }
@@ -141,11 +145,15 @@ export class FormNavigation {
                         statusEl.textContent = this.copy.slotRequired || 'Seleziona un orario per continuare.';
                         statusEl.style.color = '#dc2626';
                         statusEl.setAttribute('data-state', 'error');
+                        statusEl.hidden = false;
+                        statusEl.removeAttribute('hidden');
                         
                         setTimeout(() => {
                             statusEl.textContent = '';
                             statusEl.style.color = '';
                             statusEl.removeAttribute('data-state');
+                            statusEl.hidden = true;
+                            statusEl.setAttribute('hidden', '');
                         }, 3000);
                     }
                 }
