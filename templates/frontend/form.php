@@ -388,6 +388,7 @@ endif;
                                                 data-fp-resv-field="phone"
                                                 inputmode="tel"
                                                 autocomplete="tel"
+                                                required
                                             >
                                             <?php if ($phonePrefixes !== []) : ?>
                                                 <select

@@ -689,6 +689,22 @@ export class FormApp {
         }
 
         const isValid = this.form.checkValidity();
+        
+        // Debug: trova i campi invalidi
+        if (!isValid && window.console && window.console.log) {
+            const invalidFields = this.form.querySelectorAll(':invalid');
+            if (invalidFields.length > 0) {
+                console.log('[FP-RESV] Campi invalidi che bloccano il form:', Array.from(invalidFields).map(field => {
+                    return {
+                        name: field.name || field.getAttribute('data-fp-resv-field'),
+                        type: field.type,
+                        value: field.value,
+                        validationMessage: field.validationMessage
+                    };
+                }));
+            }
+        }
+        
         if (this.state.isSending()) {
             this.setSubmitButtonState(false, 'sending');
         } else {
