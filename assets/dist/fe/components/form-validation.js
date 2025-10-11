@@ -20,8 +20,21 @@ export class FormValidation {
             return true;
         }
 
-        // Se siamo nello step "slots" richiediamo esplicitamente che sia selezionato un orario
         const stepKey = section.getAttribute('data-step') || '';
+        
+        // Se siamo nello step "date" richiediamo esplicitamente che sia selezionata una data
+        if (stepKey === 'date') {
+            const dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null;
+            
+            // Verifica che sia stata selezionata una data
+            const hasDateSelection = dateField && dateField.value.trim() !== '';
+            
+            if (!hasDateSelection) {
+                return false;
+            }
+        }
+        
+        // Se siamo nello step "slots" richiediamo esplicitamente che sia selezionato un orario
         if (stepKey === 'slots') {
             const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
             const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;

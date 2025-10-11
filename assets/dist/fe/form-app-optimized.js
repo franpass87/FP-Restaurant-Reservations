@@ -11,21 +11,7 @@ import { FormValidation } from './components/form-validation.js';
 import { FormNavigation } from './components/form-navigation.js';
 import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
 import { formatDebugMessage } from './debug.js';
-
-let availabilityModulePromise = null;
-const idleCallback = typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
-    ? (callback) => window.requestIdleCallback(callback)
-    : (callback) => window.setTimeout(() => callback(Date.now()), 1);
-
-function loadAvailabilityModule() {
-    if (!availabilityModulePromise) {
-        availabilityModulePromise = import('./availability.js');
-    }
-
-    return availabilityModulePromise;
-}
-
-const STEP_ORDER = ['service', 'date', 'party', 'slots', 'details', 'confirm'];
+import { STEP_ORDER, idleCallback, loadAvailabilityModule } from './constants.js';
 
 export class FormApp {
     constructor(root) {
@@ -83,19 +69,7 @@ export class FormApp {
         this.availabilityRoot = this.form ? this.form.querySelector('[data-fp-resv-slots]') : null;
         this.availabilityIndicator = this.form ? this.form.querySelector('[data-fp-resv-availability-indicator]') : null;
 
-        // Inizializza i componenti modulari
-        this.state = new FormState();
-        this.formValidation = new FormValidation(this.form, this.phoneField, this.phonePrefixField, this.getPhoneCountryCode(), this.copy);
-        this.formNavigation = new FormNavigation(
-            this.sections,
-            this.stepOrder,
-            this.state.getState(),
-            this.updateSectionAttributes.bind(this),
-            this.updateProgressIndicators.bind(this),
-            this.updateSubmitState.bind(this),
-            this.root
-        );
-
+        // Definisci this.copy prima di inizializzare i componenti modulari
         this.copy = {
             ctaDisabled: this.messages.cta_complete_fields || 'Completa i campi richiesti',
             ctaEnabled: (this.messages.cta_book_now || (this.strings.actions && this.strings.actions.submit) || 'Prenota ora'),
@@ -105,6 +79,7 @@ export class FormApp {
             slotsEmpty: this.messages.slots_empty || '',
             selectMeal: this.messages.msg_select_meal || 'Seleziona un servizio per visualizzare gli orari disponibili.',
             slotsError: this.messages.msg_slots_error || 'Impossibile aggiornare la disponibilità. Riprova.',
+            dateRequired: this.messages.date_required || 'Seleziona una data per continuare.',
             slotRequired: this.messages.slot_required || 'Seleziona un orario per continuare.',
             invalidPhone: this.messages.msg_invalid_phone || 'Inserisci un numero di telefono valido (minimo 6 cifre).',
             invalidEmail: this.messages.msg_invalid_email || 'Inserisci un indirizzo email valido.',
@@ -112,6 +87,21 @@ export class FormApp {
             submitSuccess: this.messages.msg_submit_success || 'Prenotazione inviata con successo.',
             mealFullNotice: this.messages.meal_full_notice || 'Nessuna disponibilità per questo servizio. Scegli un altro giorno.',
         };
+
+        // Inizializza i componenti modulari dopo che this.copy è stato definito
+        this.state = new FormState();
+        this.formValidation = new FormValidation(this.form, this.phoneField, this.phonePrefixField, this.getPhoneCountryCode(), this.copy);
+        this.formNavigation = new FormNavigation(
+            this.sections,
+            this.stepOrder,
+            this.state.getState(),
+            this.updateSectionAttributes.bind(this),
+            this.updateProgressIndicators.bind(this),
+            this.updateSubmitState.bind(this),
+            this.root,
+            this.form,
+            this.copy
+        );
 
         this.phoneCountryCode = this.getPhoneCountryCode();
         if (this.hiddenPhoneCc && this.hiddenPhoneCc.value === '') {
@@ -699,6 +689,22 @@ export class FormApp {
         }
 
         const isValid = this.form.checkValidity();
+        
+        // Debug: trova i campi invalidi
+        if (!isValid && window.console && window.console.log) {
+            const invalidFields = this.form.querySelectorAll(':invalid');
+            if (invalidFields.length > 0) {
+                console.log('[FP-RESV] Campi invalidi che bloccano il form:', Array.from(invalidFields).map(field => {
+                    return {
+                        name: field.name || field.getAttribute('data-fp-resv-field'),
+                        type: field.type,
+                        value: field.value,
+                        validationMessage: field.validationMessage
+                    };
+                }));
+            }
+        }
+        
         if (this.state.isSending()) {
             this.setSubmitButtonState(false, 'sending');
         } else {
