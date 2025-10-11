@@ -56,6 +56,7 @@ use function submit_button;
 use function timezone_identifiers_list;
 use function trim;
 use function substr;
+use function update_option;
 use function wp_add_inline_style;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
@@ -741,6 +742,11 @@ final class AdminPages
             }
             if (!empty($sanitized['restaurant_timezone']) && !in_array($sanitized['restaurant_timezone'], timezone_identifiers_list(), true)) {
                 $sanitized['restaurant_timezone'] = 'Europe/Rome';
+            }
+            
+            // Salva l'opzione di conservazione dati in un'opzione separata per il file uninstall.php
+            if (isset($sanitized['keep_data_on_uninstall'])) {
+                update_option('fp_resv_keep_data_on_uninstall', $sanitized['keep_data_on_uninstall'], false);
             }
         }
 
@@ -1693,6 +1699,13 @@ final class AdminPages
                                 'min'         => 1,
                                 'max'         => 120,
                                 'description' => __('I dati delle prenotazioni verranno anonimizzati dopo il periodo indicato.', 'fp-restaurant-reservations'),
+                            ],
+                            'keep_data_on_uninstall' => [
+                                'label'          => __('Mantieni dati alla disinstallazione', 'fp-restaurant-reservations'),
+                                'type'           => 'checkbox',
+                                'checkbox_label' => __('Conserva tutte le impostazioni e i dati nel database quando disinstalli il plugin', 'fp-restaurant-reservations'),
+                                'default'        => '1',
+                                'description'    => __('Se attivo, i tuoi dati (prenotazioni, clienti, impostazioni) rimarranno nel database anche dopo la disinstallazione del plugin. Questo ti permette di reinstallare il plugin senza perdere configurazioni. Disabilita solo se vuoi eliminare completamente tutti i dati del plugin.', 'fp-restaurant-reservations'),
                             ],
                         ],
                     ],
