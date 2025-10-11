@@ -89,7 +89,7 @@ final class Service
             'queue'    => $this->queryQueueLogs($args, false),
             default    => [
                 'channel'    => $channel,
-                'columns'    => self::CHANNELS[$channel]['columns'],
+                'columns'    => ChannelsConfig::getChannels()[$channel]['columns'],
                 'entries'    => [],
                 'pagination' => $this->buildPagination(0, 1, 25),
             ],
@@ -122,7 +122,7 @@ final class Service
             'queue'    => $this->queryQueueLogs($args, true),
             default    => [
                 'channel' => $channel,
-                'columns' => self::CHANNELS[$channel]['columns'],
+                'columns' => ChannelsConfig::getChannels()[$channel]['columns'],
                 'entries' => [],
             ],
         };
@@ -266,7 +266,7 @@ final class Service
 
         return [
             'channel'    => 'email',
-            'columns'    => self::CHANNELS['email']['columns'],
+            'columns'    => ChannelsConfig::getChannels()['email']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($total, $page, $perPage),
         ];
@@ -354,7 +354,7 @@ final class Service
 
         return [
             'channel'    => 'webhooks',
-            'columns'    => self::CHANNELS['webhooks']['columns'],
+            'columns'    => ChannelsConfig::getChannels()['webhooks']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($total, $page, $perPage),
         ];
@@ -463,7 +463,7 @@ final class Service
 
         return [
             'channel'    => 'stripe',
-            'columns'    => self::CHANNELS['stripe']['columns'],
+            'columns'    => ChannelsConfig::getChannels()['stripe']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($total, $page, $perPage),
         ];
@@ -587,7 +587,7 @@ final class Service
 
         return [
             'channel'    => 'api',
-            'columns'    => self::CHANNELS['api']['columns'],
+            'columns'    => ChannelsConfig::getChannels()['api']['columns'],
             'entries'    => $entries,
             'pagination' => $this->buildPagination($totalEntries, $page, $perPage),
         ];
@@ -944,7 +944,8 @@ final class Service
     private function normalizeChannel(string $channel): ?string
     {
         $key = strtolower(trim($channel));
-        if ($key === '' || !isset(self::CHANNELS[$key])) {
+        $channels = ChannelsConfig::getChannels();
+        if ($key === '' || !isset($channels[$key])) {
             return null;
         }
 
@@ -1034,7 +1035,8 @@ final class Service
         }
 
         $status = strtolower(trim($args['status']));
-        if ($status === '' || !in_array($status, self::CHANNELS[$channel]['statuses'], true)) {
+        $channels = ChannelsConfig::getChannels();
+        if ($status === '' || !in_array($status, $channels[$channel]['statuses'], true)) {
             return null;
         }
 
