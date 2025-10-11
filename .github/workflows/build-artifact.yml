@@ -67,9 +67,16 @@ jobs:
             --exclude=.codex-state.json \
             --exclude=.rebuild-state.json \
             --exclude=.eslintrc.cjs \
+            --exclude=eslint.config.js \
             --exclude=.prettierrc.json \
             --exclude=build.sh \
             --exclude=scripts \
+            --exclude=tools \
+            --exclude=docker-compose.yml \
+            --exclude=AUDIT \
+            --exclude=assets/js/fe \
+            --exclude=*.zip \
+            --exclude=*.log \
             "$(pwd)/" "$TARGET_DIR/"
 
       - name: Create ZIP
