@@ -255,7 +255,22 @@ class AgendaApp {
             const data = await this.apiRequest(`agenda?${params}`);
             
             // Log dettagliato della risposta per debugging
+            console.log('[Agenda] ✓ Risposta ricevuta');
             console.log('[Agenda] Tipo risposta:', typeof data);
+            console.log('[Agenda] È array?', Array.isArray(data));
+            console.log('[Agenda] È null?', data === null);
+            console.log('[Agenda] È undefined?', data === undefined);
+            
+            // Log struttura oggetto se è un oggetto
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                console.log('[Agenda] Chiavi oggetto:', Object.keys(data));
+                console.log('[Agenda] Ha reservations?', 'reservations' in data);
+                console.log('[Agenda] Ha data?', 'data' in data);
+                console.log('[Agenda] Ha meta?', 'meta' in data);
+                console.log('[Agenda] Ha stats?', 'stats' in data);
+            }
+            
+            // Log completo (può essere grande)
             console.log('[Agenda] Risposta completa:', data);
             
             // Gestisci diversi formati di risposta
@@ -263,8 +278,11 @@ class AgendaApp {
             
             if (Array.isArray(data)) {
                 // Risposta diretta come array (vecchia API)
+                console.log('[Agenda] ✓ Formato: Array diretto');
                 reservations = data;
             } else if (data && typeof data === 'object') {
+                console.log('[Agenda] ✓ Formato: Oggetto strutturato');
+                
                 // Nuova struttura The Fork - salva meta, stats e data se disponibili
                 if (data.meta) {
                     this.state.meta = data.meta;
@@ -281,22 +299,28 @@ class AgendaApp {
                 
                 // Estrai array di prenotazioni
                 if (Array.isArray(data.reservations)) {
+                    console.log('[Agenda] ✓ Trovato data.reservations (length: ' + data.reservations.length + ')');
                     reservations = data.reservations;
                 } else if (Array.isArray(data.data)) {
+                    console.log('[Agenda] ✓ Trovato data.data come array (length: ' + data.data.length + ')');
                     reservations = data.data;
                 } else if (Array.isArray(data.items)) {
+                    console.log('[Agenda] ✓ Trovato data.items (length: ' + data.items.length + ')');
                     reservations = data.items;
                 } else {
-                    console.error('[Agenda] Risposta API con struttura non riconosciuta:', data);
-                    throw new Error('Risposta API non valida: formato oggetto non supportato');
+                    console.error('[Agenda] ✗ ERRORE: Risposta è un oggetto ma senza array di prenotazioni');
+                    console.error('[Agenda] Struttura ricevuta:', JSON.stringify(data, null, 2));
+                    throw new Error('Risposta API non valida: oggetto senza array di prenotazioni');
                 }
             } else if (data === null || data === undefined) {
                 // Risposta vuota - consideriamo come array vuoto
-                console.warn('[Agenda] Risposta API vuota, assumo nessuna prenotazione');
+                console.warn('[Agenda] ⚠ Risposta API vuota, assumo nessuna prenotazione');
                 reservations = [];
             } else {
-                console.error('[Agenda] Risposta API con tipo non valido:', typeof data, data);
-                throw new Error(`Risposta API non valida: ricevuto ${typeof data} invece di array`);
+                console.error('[Agenda] ✗ ERRORE: Tipo di dato non supportato');
+                console.error('[Agenda] Tipo ricevuto:', typeof data);
+                console.error('[Agenda] Valore:', data);
+                throw new Error(`Risposta API non valida: ricevuto ${typeof data} invece di array o oggetto`);
             }
             
             this.state.reservations = reservations;
@@ -1123,6 +1147,7 @@ class AgendaApp {
             
             const text = await response.text();
             console.log('[API] Response length:', text.length, 'bytes');
+            console.log('[API] Response preview (first 200 chars):', text.substring(0, 200));
             
             if (!text || text.trim() === '') {
                 console.log('[API] ✓ Empty response');
@@ -1132,6 +1157,9 @@ class AgendaApp {
             try {
                 const data = JSON.parse(text);
                 console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    console.log('[API] ✓ Object keys:', Object.keys(data).slice(0, 10).join(', '));
+                }
                 return data;
             } catch (e) {
                 console.error('[API] Errore parsing JSON:', e);
