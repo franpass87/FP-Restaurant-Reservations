@@ -210,7 +210,11 @@ class AgendaApp {
      * Carica prenotazioni dal server
      */
     async loadReservations() {
-        console.log('[Agenda] Caricamento prenotazioni...');
+        console.log('[Agenda] Caricamento prenotazioni...', {
+            date: this.state.currentDate,
+            view: this.state.currentView,
+            service: this.state.currentService
+        });
         
         // Nascondi loading per evitare caricamento infinito
         // Mostriamo direttamente i dati o empty state
@@ -224,6 +228,8 @@ class AgendaApp {
             ...(this.state.currentView === 'list' && { range: 'week' }),
             ...(this.state.currentService && { service: this.state.currentService })
         });
+        
+        console.log('[Agenda] Parametri richiesta:', params.toString());
         
         try {
             const data = await this.apiRequest(`agenda?${params}`);
@@ -262,15 +268,19 @@ class AgendaApp {
             this.state.reservations = reservations;
             this.state.error = null;
             
-            console.log(`[Agenda] Caricate ${reservations.length} prenotazioni`);
+            console.log(`[Agenda] ✓ Caricate ${reservations.length} prenotazioni con successo`);
             
             // Renderizza
             this.render();
             
+            return reservations;
+            
         } catch (error) {
-            console.error('[Agenda] Errore nel caricamento:', error);
+            console.error('[Agenda] ✗ Errore nel caricamento:', error);
             this.state.error = error.message;
+            this.state.reservations = [];
             this.showError(error.message);
+            throw error;
         }
     }
     
@@ -690,6 +700,34 @@ class AgendaApp {
     }
     
     /**
+     * Mostra notifica di successo
+     */
+    showSuccessNotification(message) {
+        // Crea elemento notifica
+        const notification = document.createElement('div');
+        notification.className = 'notice notice-success is-dismissible';
+        notification.style.cssText = 'position: fixed; top: 32px; right: 20px; z-index: 999999; min-width: 300px;';
+        notification.innerHTML = `<p><strong>${this.escapeHtml(message)}</strong></p>`;
+        
+        // Aggiungi al DOM
+        document.body.appendChild(notification);
+        
+        // Auto-rimuovi dopo 3 secondi
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.3s';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Rendi dismissible
+        notification.addEventListener('click', (e) => {
+            if (e.target.classList.contains('notice-dismiss')) {
+                notification.remove();
+            }
+        });
+    }
+    
+    /**
      * Apri modal nuova prenotazione
      */
     openNewReservationModal() {
@@ -723,6 +761,18 @@ class AgendaApp {
             return;
         }
         
+        // Disabilita il pulsante per evitare doppi invii
+        const submitBtn = document.querySelector('[data-action="submit-reservation"]');
+        const originalText = submitBtn?.textContent;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creazione in corso...';
+        }
+        
+        // Nascondi errori precedenti
+        const errorEl = document.querySelector('[data-role="form-error"]');
+        if (errorEl) errorEl.hidden = true;
+        
         const formData = new FormData(form);
         const data = {};
         formData.forEach((value, key) => {
@@ -736,15 +786,34 @@ class AgendaApp {
         
         data.status = 'pending';
         
+        console.log('[Agenda] Creazione prenotazione con dati:', data);
+        
         try {
-            await this.apiRequest('agenda/reservations', { method: 'POST', data });
+            const response = await this.apiRequest('agenda/reservations', { method: 'POST', data });
+            console.log('[Agenda] Prenotazione creata con successo:', response);
+            
+            // Chiudi modale
             this.closeModal('[data-modal="new-reservation"]');
-            this.loadReservations();
+            
+            // Mostra notifica di successo
+            this.showSuccessNotification('Prenotazione creata con successo!');
+            
+            // Ricarica le prenotazioni
+            await this.loadReservations();
+            
+            console.log('[Agenda] Agenda aggiornata dopo creazione');
         } catch (error) {
-            const errorEl = document.querySelector('[data-role="form-error"]');
+            console.error('[Agenda] Errore creazione prenotazione:', error);
+            
             if (errorEl) {
                 errorEl.textContent = error.message || 'Impossibile creare la prenotazione';
                 errorEl.hidden = false;
+            }
+        } finally {
+            // Riabilita il pulsante
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         }
     }
