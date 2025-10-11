@@ -5,7 +5,7 @@
 import { closestSection, firstFocusable } from '../utils/dom-helpers.js';
 
 export class FormNavigation {
-    constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState, widgetRoot) {
+    constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState, widgetRoot, form = null, copy = {}) {
         this.sections = sections;
         this.stepOrder = stepOrder;
         this.state = state;
@@ -13,6 +13,8 @@ export class FormNavigation {
         this.updateProgressIndicators = updateProgressIndicators;
         this.updateSubmitState = updateSubmitState;
         this.widgetRoot = widgetRoot;
+        this.form = form;
+        this.copy = copy;
     }
 
     getStepOrderIndex(target) {
@@ -90,8 +92,37 @@ export class FormNavigation {
     navigateToNext(section, formValidation) {
         const stepKey = section.getAttribute('data-step') || '';
         
-        // Permetti la navigazione per i primi step (date, party) senza validazione rigorosa
-        if (stepKey === 'date' || stepKey === 'party') {
+        // Per lo step date, verifica che sia stata selezionata una data
+        if (stepKey === 'date') {
+            const dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null;
+            
+            // Se non è stata selezionata una data, mostra un messaggio e BLOCCA la navigazione
+            if (!dateField || dateField.value.trim() === '') {
+                const dateSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'date');
+                if (dateSection) {
+                    const statusEl = dateSection.querySelector('[data-fp-resv-date-status]');
+                    if (statusEl) {
+                        statusEl.textContent = this.copy.dateRequired || 'Seleziona una data per continuare.';
+                        statusEl.style.color = '#dc2626';
+                        statusEl.setAttribute('data-state', 'error');
+                        
+                        setTimeout(() => {
+                            statusEl.textContent = '';
+                            statusEl.style.color = '';
+                            statusEl.removeAttribute('data-state');
+                        }, 3000);
+                    }
+                }
+                // BLOCCA la navigazione - non procedere
+                return;
+            }
+            
+            this.completeSection(section, true);
+            return;
+        }
+        
+        // Permetti la navigazione per lo step party senza validazione rigorosa
+        if (stepKey === 'party') {
             this.completeSection(section, true);
             return;
         }

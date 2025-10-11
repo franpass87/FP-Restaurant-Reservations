@@ -36,7 +36,7 @@ function lt(a) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function V(a, t) {
+function z(a, t) {
   const e = a.value, { masked: i } = lt(e), s = a.selectionStart;
   if (a.value = i, s !== null) {
     const r = i.length - e.length, n = Math.max(0, s + r);
@@ -172,19 +172,18 @@ function U(a, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-let z = null;
-const $ = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
-function pt() {
-  return z || (z = Promise.resolve().then(() => wt)), z;
+const pt = ["service", "date", "party", "slots", "details", "confirm"], $ = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
+let V = null;
+function mt() {
+  return V || (V = Promise.resolve().then(() => wt)), V;
 }
-function mt(a) {
+function yt(a) {
   return Y(a, "data-fp-resv-section");
 }
-const yt = ["service", "date", "party", "slots", "details", "confirm"];
 class Q {
   constructor(t) {
     this.root = t, this.dataset = dt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
-    const e = Array.from(yt);
+    const e = Array.from(pt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
     this.stepOrder = Array.from(new Set(e.concat(i))), this.sections.length > 1 && this.sections.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)), this.progress = this.form ? this.form.querySelector("[data-fp-resv-progress]") : null, this.progressItems = this.progress ? Array.prototype.slice.call(this.progress.querySelectorAll("[data-step]")) : [], this.progress && this.progressItems.length > 1 && this.progressItems.sort((s, r) => this.getStepOrderIndex(s) - this.getStepOrderIndex(r)).forEach((s) => {
@@ -212,6 +211,7 @@ class Q {
       slotsEmpty: this.messages.slots_empty || "",
       selectMeal: this.messages.msg_select_meal || "Seleziona un servizio per visualizzare gli orari disponibili.",
       slotsError: this.messages.msg_slots_error || "Impossibile aggiornare la disponibilità. Riprova.",
+      dateRequired: this.messages.date_required || "Seleziona una data per continuare.",
       slotRequired: this.messages.slot_required || "Seleziona un orario per continuare.",
       invalidPhone: this.messages.msg_invalid_phone || "Inserisci un numero di telefono valido (minimo 6 cifre).",
       invalidEmail: this.messages.msg_invalid_email || "Inserisci un indirizzo email valido.",
@@ -254,7 +254,7 @@ class Q {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && V(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
@@ -276,7 +276,7 @@ class Q {
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && V(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -337,7 +337,7 @@ class Q {
       this.scheduleAvailabilityUpdate(i);
     };
     $(() => {
-      pt().then((e) => {
+      mt().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
           endpoint: this.getAvailabilityEndpoint(),
@@ -360,8 +360,8 @@ class Q {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? V(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
-    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, o = mt(e);
+    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", r = i && typeof e.value == "string" ? e.value : "", n = !i || s !== r, o = yt(e);
     if (!o) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
       return;
@@ -551,7 +551,22 @@ class Q {
   }
   navigateToNext(t) {
     const e = t.getAttribute("data-step") || "";
-    if (e === "date" || e === "party") {
+    if (e === "date") {
+      const i = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null;
+      if (!i || i.value.trim() === "") {
+        const s = this.sections.find((r) => (r.getAttribute("data-step") || "") === "date");
+        if (s) {
+          const r = s.querySelector("[data-fp-resv-date-status]");
+          r && (r.textContent = this.copy.dateRequired || "Seleziona una data per continuare.", r.style.color = "#dc2626", r.setAttribute("data-state", "error"), setTimeout(() => {
+            r.textContent = "", r.style.color = "", r.removeAttribute("data-state");
+          }, 3e3));
+        }
+        return;
+      }
+      this.completeSection(t, !0);
+      return;
+    }
+    if (e === "party") {
       this.completeSection(t, !0);
       return;
     }
