@@ -84,7 +84,12 @@ RSYNC_EXCLUDES=(
     "--exclude=.prettierrc.json"
     "--exclude=build.sh"
     "--exclude=scripts"
+    "--exclude=tools"
+    "--exclude=docker-compose.yml"
+    "--exclude=AUDIT"
     "--exclude=assets/js/fe"
+    "--exclude=*.zip"
+    "--exclude=*.log"
 )
 
 rsync -a --delete "${RSYNC_EXCLUDES[@]}" "${SCRIPT_DIR}/" "${TARGET_DIR}/"
