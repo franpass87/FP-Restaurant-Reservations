@@ -290,4 +290,8 @@
     .fp-resv-tables-modal__footer {
         padding: 12px 20px;
     }
+    
+    .fp-gift-modal__dialog {
+        border-radius: var(--fp-exp-radius-base, 12px);
+    }
 }
