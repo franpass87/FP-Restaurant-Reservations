@@ -301,16 +301,15 @@ class AgendaApp {
                 if (Array.isArray(data.reservations)) {
                     console.log('[Agenda] ✓ Trovato data.reservations (length: ' + data.reservations.length + ')');
                     reservations = data.reservations;
-                } else if (Array.isArray(data.data)) {
-                    console.log('[Agenda] ✓ Trovato data.data come array (length: ' + data.data.length + ')');
-                    reservations = data.data;
                 } else if (Array.isArray(data.items)) {
                     console.log('[Agenda] ✓ Trovato data.items (length: ' + data.items.length + ')');
                     reservations = data.items;
                 } else {
-                    console.error('[Agenda] ✗ ERRORE: Risposta è un oggetto ma senza array di prenotazioni');
-                    console.error('[Agenda] Struttura ricevuta:', JSON.stringify(data, null, 2));
-                    throw new Error('Risposta API non valida: oggetto senza array di prenotazioni');
+                    // Se non troviamo un array diretto, potrebbe essere che data.data contenga
+                    // la struttura organizzata (non un array piatto)
+                    // In questo caso, assumiamo array vuoto e usiamo i dati organizzati
+                    console.warn('[Agenda] ⚠ Nessun array diretto trovato, usando dati organizzati');
+                    reservations = [];
                 }
             } else if (data === null || data === undefined) {
                 // Risposta vuota - consideriamo come array vuoto
