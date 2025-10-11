@@ -400,6 +400,13 @@ class FormApp {
 
     handleSubmit(event) {
         event.preventDefault();
+
+        // Protezione: previene submit multipli se già in corso
+        if (this.state.isSending()) {
+            console.warn('[FP Resv] Submit già in corso, richiesta ignorata');
+            return false;
+        }
+
         this.state.markFieldAsTouched('consent');
         
         if (!this.form.checkValidity()) {
