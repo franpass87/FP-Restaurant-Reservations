@@ -60,6 +60,7 @@ try {
         $sanitized['time'],
         $sanitized['party'],
         $sanitized['room_id'],
+        $sanitized['meal'],
         $status
     );
     
@@ -90,9 +91,12 @@ private function guardAvailabilityForSlot(
     string $time,
     int $party,
     ?int $roomId,
+    string $meal,
     string $status
 ): void {
     // Calcola disponibilità DENTRO la transazione
+    // Include il parametro meal per garantire che gli slot verificati
+    // corrispondano a quelli mostrati all'utente (pranzo/cena)
     $availability = $this->availability->findSlots($criteria);
     
     // Cerca lo slot specifico richiesto
