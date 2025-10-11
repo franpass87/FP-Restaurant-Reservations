@@ -193,10 +193,15 @@ if ($brevo_list_it !== '' && $brevo_list_en !== '') {
     echo "Entrambe potrebbero attivarsi per lo stesso evento.\n\n";
     
     echo "SOLUZIONE RACCOMANDATA:\n";
-    echo "In Brevo, le automazioni per 'email_confirmation' dovrebbero:\n";
-    echo "1. Avere una CONDIZIONE che filtra per lingua del contatto\n";
-    echo "2. Oppure essere associate a UNA SOLA lista (IT o EN, non entrambe)\n";
-    echo "3. Oppure usare un template multilingua con logica condizionale\n";
+    echo "In Brevo, le automazioni per 'email_confirmation' devono avere questa condizione:\n\n";
+    echo "Automazione IT:\n";
+    echo "  event_properties.meta.language IS EQUAL TO it\n\n";
+    echo "Automazione EN:\n";
+    echo "  event_properties.meta.language IS EQUAL TO en\n\n";
+    echo "Alternative:\n";
+    echo "- Usa contact.LANG IS EQUAL TO it (se il contatto è già sincronizzato)\n";
+    echo "- Oppure associa ogni automazione a UNA SOLA lista (IT o EN)\n";
+    echo "- Oppure usa un template multilingua con logica condizionale\n";
 }
 
 echo "\n";
@@ -280,14 +285,16 @@ if ($email_confirmation_success_count === 1) {
     echo "VERIFICA IN BREVO:\n";
     echo "1. Vai su Automations → Email di conferma prenotazione\n";
     echo "2. Controlla se ci sono DUE automazioni diverse per lo stesso evento\n";
-    echo "3. Verifica le condizioni di trigger:\n";
-    echo "   - Dovrebbero filtrare per lingua del contatto\n";
-    echo "   - Oppure essere associate a liste diverse\n\n";
+    echo "3. Verifica le condizioni di trigger (Entry conditions)\n\n";
     echo "SOLUZIONE:\n";
-    echo "Assicurati che ogni automazione abbia una condizione che la attiva SOLO per la lingua corretta:\n";
-    echo "- Automazione IT: Contact attribute 'LANGUAGE' = 'IT' oppure 'it'\n";
-    echo "- Automazione EN: Contact attribute 'LANGUAGE' = 'EN' oppure 'en'\n";
-    echo "Oppure usa UN SOLO template multilingua invece di due automazioni separate.\n";
+    echo "Ogni automazione deve avere una condizione che la attiva SOLO per la lingua corretta:\n\n";
+    echo "Automazione IT:\n";
+    echo "  Entry condition: event_properties.meta.language IS EQUAL TO it\n\n";
+    echo "Automazione EN:\n";
+    echo "  Entry condition: event_properties.meta.language IS EQUAL TO en\n\n";
+    echo "Alternative:\n";
+    echo "- contact.LANG IS EQUAL TO it (o contact.LINGUA IS EQUAL TO it)\n";
+    echo "- Oppure UN SOLO template multilingua invece di due automazioni separate\n";
 } elseif ($email_confirmation_success_count > 1) {
     echo "❌ PROBLEMA RILEVATO NEL PLUGIN:\n";
     echo "Il plugin ha inviato {$email_confirmation_success_count} eventi 'email_confirmation'.\n";

@@ -35,19 +35,23 @@ Modifica le automazioni in Brevo per far sì che si attivino **solo per la lingu
 
 #### Automazione IT
 1. Vai su **Automations** → Seleziona l'automazione per le email di conferma in italiano
-2. Clicca su **Edit** → **Trigger conditions**
-3. Aggiungi condizione: `Contact attribute "LANGUAGE" = "IT"` oppure `= "it"`
+2. Clicca su **Edit** → **Entry conditions** (o **Trigger conditions**)
+3. Aggiungi condizione: `event_properties.meta.language IS EQUAL TO it`
 4. Salva
 
 #### Automazione EN
 1. Vai su **Automations** → Seleziona l'automazione per le email di conferma in inglese
-2. Clicca su **Edit** → **Trigger conditions**
-3. Aggiungi condizione: `Contact attribute "LANGUAGE" = "EN"` oppure `= "en"`
+2. Clicca su **Edit** → **Entry conditions** (o **Trigger conditions**)
+3. Aggiungi condizione: `event_properties.meta.language IS EQUAL TO en`
 4. Salva
 
 In questo modo:
-- Se il contatto ha lingua IT → si attiva SOLO l'automazione IT
-- Se il contatto ha lingua EN → si attiva SOLO l'automazione EN
+- Se `meta.language = "it"` → si attiva SOLO l'automazione IT
+- Se `meta.language = "en"` → si attiva SOLO l'automazione EN
+
+**Alternative (se il contatto è già sincronizzato):**
+- Puoi anche usare: `contact.LANG IS EQUAL TO it` (o `contact.LINGUA IS EQUAL TO it`)
+- Però **raccomando** `event_properties.meta.language` perché è sempre disponibile nell'evento
 
 ---
 
@@ -131,18 +135,49 @@ Dopo aver applicato la soluzione:
 5. **Sincronizzazione contatto**: `AutomationService::onReservationCreated()` sincronizza il contatto con la lista appropriata (IT o EN)
 6. **Automazioni Brevo**: Le automazioni configurate in Brevo ricevono l'evento e inviano l'email
 
-### Attributi del Contatto Inviati a Brevo
+### Struttura dell'Evento `email_confirmation`
 
-Il plugin invia questi attributi al contatto in Brevo:
+Il plugin invia l'evento a Brevo con questa struttura:
 
-```php
-'LANGUAGE' => 'it' | 'en',  // Lingua della prenotazione
-'RESERVATION_DATE' => '2025-10-11',
-'RESERVATION_TIME' => '20:00',
-// ... altri attributi
+```json
+{
+  "event_name": "email_confirmation",
+  "identifiers": {
+    "email_id": "cliente@example.com"
+  },
+  "event_properties": {
+    "reservation": {
+      "id": 123,
+      "date": "2025-10-11",
+      "time": "20:00",
+      "party": 2,
+      "status": "confirmed",
+      "manage_url": "https://..."
+    },
+    "contact": {
+      "first_name": "Mario",
+      "last_name": "Rossi",
+      "phone": "+39..."
+    },
+    "meta": {
+      "language": "it",    ← USA QUESTO!
+      "notes": "...",
+      "marketing_consent": true,
+      "utm_source": "...",
+      ...
+    }
+  },
+  "contact_properties": {
+    "LANG": "it",
+    "LINGUA": "it",
+    "RESERVATION_DATE": "2025-10-11",
+    "RESERVATION_TIME": "20:00",
+    ...
+  }
+}
 ```
 
-L'attributo `LANGUAGE` è quello che dovresti usare nelle condizioni delle automazioni.
+**Nelle automazioni usa**: `event_properties.meta.language` (raccomandato) oppure `contact.LANG` o `contact.LINGUA` (se il contatto è già sincronizzato).
 
 ---
 
