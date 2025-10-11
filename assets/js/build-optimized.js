@@ -15,14 +15,38 @@ const config = {
     // File di input
     optimized: './assets/js/fe/form-app-optimized.js',
     fallback: './assets/js/fe/form-app-fallback.js',
-    
+
     // File di output
     output: {
         optimized: './assets/dist/fe/form-app-optimized.js',
         fallback: './assets/dist/fe/form-app-fallback.js',
         minified: './assets/dist/fe/form-app.min.js'
     },
-    
+
+    // Risorse modulari necessarie per gli import dinamici
+    modules: {
+        files: [
+            {
+                source: './assets/js/fe/availability.js',
+                destination: './assets/dist/fe/availability.js'
+            }
+        ],
+        directories: [
+            {
+                source: './assets/js/fe/components',
+                destination: './assets/dist/fe/components'
+            },
+            {
+                source: './assets/js/fe/utils',
+                destination: './assets/dist/fe/utils'
+            },
+            {
+                source: './assets/js/fe/tracking',
+                destination: './assets/dist/fe/tracking'
+            }
+        ]
+    },
+
     // Configurazione Vite
     viteConfig: './vite.config.js'
 };
@@ -41,18 +65,58 @@ function copyFile(source, destination) {
     try {
         const sourcePath = path.resolve(source);
         const destPath = path.resolve(destination);
-        
+
         // Crea la directory di destinazione se non esiste
         const destDir = path.dirname(destPath);
         if (!fs.existsSync(destDir)) {
             fs.mkdirSync(destDir, { recursive: true });
         }
-        
+
         fs.copyFileSync(sourcePath, destPath);
         console.log(`✅ Copiato: ${source} → ${destination}`);
         return true;
     } catch (error) {
         console.error(`❌ Errore copiando ${source}:`, error.message);
+        return false;
+    }
+}
+
+// Funzione per copiare directory in modo ricorsivo
+function copyDirectory(source, destination) {
+    try {
+        const sourcePath = path.resolve(source);
+        const destPath = path.resolve(destination);
+
+        if (!fs.existsSync(sourcePath)) {
+            console.warn(`⚠️  Directory non trovata: ${source}`);
+            return false;
+        }
+
+        fs.mkdirSync(destPath, { recursive: true });
+
+        const entries = fs.readdirSync(sourcePath, { withFileTypes: true });
+        let success = true;
+
+        entries.forEach((entry) => {
+            const src = path.join(sourcePath, entry.name);
+            const dest = path.join(destPath, entry.name);
+
+            if (entry.isDirectory()) {
+                success = copyDirectory(src, dest) && success;
+            } else {
+                try {
+                    fs.copyFileSync(src, dest);
+                    console.log(`✅ Copiato: ${path.relative(process.cwd(), src)} → ${path.relative(process.cwd(), dest)}`);
+                } catch (error) {
+                    console.error(`❌ Errore copiando ${src}:`, error.message);
+                    success = false;
+                }
+            }
+        });
+
+        return success;
+    } catch (error) {
+        console.error(`❌ Errore copiando directory ${source}:`, error.message);
         return false;
     }
 }
@@ -116,7 +180,17 @@ function buildOptimized() {
     if (fallbackExists) {
         success = copyFile(config.fallback, config.output.fallback) && success;
     }
-    
+
+    // Copia le dipendenze modulari necessarie per gli import dinamici
+    console.log('\n🧩 Copia moduli condivisi:');
+    config.modules.directories.forEach((entry) => {
+        success = copyDirectory(entry.source, entry.destination) && success;
+    });
+
+    config.modules.files.forEach((entry) => {
+        success = copyFile(entry.source, entry.destination) && success;
+    });
+
     // Crea file minificato (versione semplificata)
     if (success && fallbackExists) {
         console.log('\n🗜️  Creazione versione minificata:');
@@ -142,7 +216,18 @@ function buildOptimized() {
         const exists = fileExists(outputPath);
         console.log(`   ${exists ? '✅' : '❌'} ${outputPath}`);
     });
-    
+
+    console.log('\n🔎 Verifica risorse modulari:');
+    config.modules.directories.forEach((entry) => {
+        const exists = fs.existsSync(path.resolve(entry.destination));
+        console.log(`   ${exists ? '✅' : '❌'} ${entry.destination}`);
+    });
+
+    config.modules.files.forEach((entry) => {
+        const exists = fileExists(entry.destination);
+        console.log(`   ${exists ? '✅' : '❌'} ${entry.destination}`);
+    });
+
     // Riepilogo
     console.log('\n📊 Riepilogo build:');
     if (success) {
