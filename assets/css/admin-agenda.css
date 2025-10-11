@@ -557,10 +557,16 @@
     height: 18px;
 }
 
-.fp-resv-view-btn.button-primary {
+.fp-resv-view-btn.button-primary,
+.fp-resv-view-btn.is-active {
     background: #4338ca;
     border-color: #4338ca;
     color: #fff;
+}
+
+.fp-resv-view-btn.is-active:hover {
+    background: #3730a3;
+    border-color: #3730a3;
 }
 
 @media (max-width: 768px) {
