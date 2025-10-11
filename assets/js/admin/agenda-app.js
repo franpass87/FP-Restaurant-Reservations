@@ -216,6 +216,7 @@ class AgendaApp {
         this.elements.viewButtons.forEach(btn => {
             const isActive = btn.getAttribute('data-view') === view;
             btn.classList.toggle('button-primary', isActive);
+            btn.classList.toggle('is-active', isActive);
             if (!isActive) {
                 btn.classList.add('button');
             }
