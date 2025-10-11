@@ -262,10 +262,24 @@ class AgendaApp {
             let reservations = [];
             
             if (Array.isArray(data)) {
-                // Risposta diretta come array
+                // Risposta diretta come array (vecchia API)
                 reservations = data;
             } else if (data && typeof data === 'object') {
-                // Risposta come oggetto - cerca proprietà comuni
+                // Nuova struttura The Fork - salva meta, stats e data se disponibili
+                if (data.meta) {
+                    this.state.meta = data.meta;
+                    console.log('[Agenda] Meta ricevuti dal backend:', data.meta);
+                }
+                if (data.stats) {
+                    this.state.stats = data.stats;
+                    console.log('[Agenda] Stats ricevuti dal backend:', data.stats);
+                }
+                if (data.data) {
+                    this.state.organizedData = data.data;
+                    console.log('[Agenda] Dati organizzati ricevuti dal backend:', data.data);
+                }
+                
+                // Estrai array di prenotazioni
                 if (Array.isArray(data.reservations)) {
                     reservations = data.reservations;
                 } else if (Array.isArray(data.data)) {
@@ -390,13 +404,32 @@ class AgendaApp {
         if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
         if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
         
-        // Raggruppa per slot orari
-        const slots = this.groupByTimeSlot(this.state.reservations);
+        // Usa slot pre-organizzati dal backend se disponibili, altrimenti raggruppa client-side
+        let slotsData;
+        if (this.state.organizedData?.slots) {
+            // Dati dal backend (The Fork style)
+            slotsData = this.state.organizedData.slots;
+            console.log('[Agenda] Usando slots dal backend:', slotsData.length);
+        } else if (this.state.organizedData?.timeline) {
+            // Alias alternativo
+            slotsData = this.state.organizedData.timeline;
+            console.log('[Agenda] Usando timeline dal backend:', slotsData.length);
+        } else {
+            // Fallback: raggruppa client-side
+            const groupedSlots = this.groupByTimeSlot(this.state.reservations);
+            slotsData = Object.keys(groupedSlots).sort().map(time => ({
+                time: time,
+                reservations: groupedSlots[time],
+                total_guests: groupedSlots[time].reduce((sum, r) => sum + (r.party || 0), 0)
+            }));
+            console.log('[Agenda] Raggruppando slots client-side');
+        }
         
         // Genera HTML
-        const html = Object.keys(slots).sort().map(time => {
-            const reservations = slots[time];
-            const totalGuests = reservations.reduce((sum, r) => sum + (r.party || 0), 0);
+        const html = slotsData.map(slot => {
+            const time = slot.time;
+            const reservations = slot.reservations || [];
+            const totalGuests = slot.total_guests || reservations.reduce((sum, r) => sum + (r.party || 0), 0);
             
             return `
                 <div class="fp-resv-timeline__slot">
@@ -423,22 +456,35 @@ class AgendaApp {
         if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
         if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
         
-        const { startDate } = this.getDateRange();
-        const weekStart = new Date(startDate);
-        const days = [];
+        let days = [];
         
-        // Genera 7 giorni
-        for (let i = 0; i < 7; i++) {
-            const day = new Date(weekStart);
-            day.setDate(weekStart.getDate() + i);
-            const dayStr = this.formatDate(day);
-            const dayReservations = this.state.reservations.filter(r => r.date === dayStr);
+        // Usa giorni pre-organizzati dal backend se disponibili, altrimenti organizza client-side
+        if (this.state.organizedData?.days && Array.isArray(this.state.organizedData.days)) {
+            // Dati dal backend (The Fork style)
+            days = this.state.organizedData.days.map(dayData => ({
+                date: new Date(dayData.date),
+                dateStr: dayData.date,
+                reservations: dayData.reservations || []
+            }));
+            console.log('[Agenda] Usando giorni dal backend per vista settimanale:', days.length);
+        } else {
+            // Fallback: organizza client-side
+            const { startDate } = this.getDateRange();
+            const weekStart = new Date(startDate);
             
-            days.push({
-                date: day,
-                dateStr: dayStr,
-                reservations: dayReservations
-            });
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
+                const dayStr = this.formatDate(day);
+                const dayReservations = this.state.reservations.filter(r => r.date === dayStr);
+                
+                days.push({
+                    date: day,
+                    dateStr: dayStr,
+                    reservations: dayReservations
+                });
+            }
+            console.log('[Agenda] Organizzando giorni client-side per vista settimanale');
         }
         
         const html = `
@@ -491,6 +537,15 @@ class AgendaApp {
         const daysInMonth = lastDay.getDate();
         const gridStart = startDay === 0 ? -6 : 1 - startDay;
         
+        // Crea mappa dei giorni dal backend se disponibili
+        let daysMap = new Map();
+        if (this.state.organizedData?.days && Array.isArray(this.state.organizedData.days)) {
+            this.state.organizedData.days.forEach(dayData => {
+                daysMap.set(dayData.date, dayData.reservations || []);
+            });
+            console.log('[Agenda] Usando giorni dal backend per vista mensile:', daysMap.size);
+        }
+        
         const days = [];
         for (let i = gridStart; i <= daysInMonth; i++) {
             if (i < 1) {
@@ -498,9 +553,18 @@ class AgendaApp {
             } else {
                 const day = new Date(year, month, i);
                 const dayStr = this.formatDate(day);
-                const dayReservations = this.state.reservations.filter(r => r.date === dayStr);
+                
+                // Usa dati dal backend se disponibili, altrimenti filtra client-side
+                const dayReservations = daysMap.has(dayStr) 
+                    ? daysMap.get(dayStr)
+                    : this.state.reservations.filter(r => r.date === dayStr);
+                
                 days.push({ date: day, dateStr: dayStr, reservations: dayReservations });
             }
+        }
+        
+        if (!daysMap.size) {
+            console.log('[Agenda] Organizzando giorni client-side per vista mensile');
         }
         
         const html = `
@@ -670,9 +734,22 @@ class AgendaApp {
         }
         
         if (statsEl) {
-            const total = this.state.reservations.length;
-            const confirmed = this.state.reservations.filter(r => r.status === 'confirmed').length;
-            const totalGuests = this.state.reservations.reduce((sum, r) => sum + (r.party || 0), 0);
+            // Usa stats pre-calcolate dal backend se disponibili, altrimenti calcola client-side
+            let total, confirmed, totalGuests;
+            
+            if (this.state.stats) {
+                // Dati dal backend (The Fork style)
+                total = this.state.stats.total_reservations || 0;
+                confirmed = this.state.stats.by_status?.confirmed || 0;
+                totalGuests = this.state.stats.total_guests || 0;
+                console.log('[Agenda] Usando stats dal backend:', this.state.stats);
+            } else {
+                // Calcolo client-side (fallback)
+                total = this.state.reservations.length;
+                confirmed = this.state.reservations.filter(r => r.status === 'confirmed').length;
+                totalGuests = this.state.reservations.reduce((sum, r) => sum + (r.party || 0), 0);
+                console.log('[Agenda] Calcolando stats client-side');
+            }
             
             statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
         }
