@@ -1147,6 +1147,7 @@ class AgendaApp {
             
             const text = await response.text();
             console.log('[API] Response length:', text.length, 'bytes');
+            console.log('[API] Response preview (first 200 chars):', text.substring(0, 200));
             
             if (!text || text.trim() === '') {
                 console.log('[API] ✓ Empty response');
@@ -1156,6 +1157,9 @@ class AgendaApp {
             try {
                 const data = JSON.parse(text);
                 console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    console.log('[API] ✓ Object keys:', Object.keys(data).slice(0, 10).join(', '));
+                }
                 return data;
             } catch (e) {
                 console.error('[API] Errore parsing JSON:', e);
