@@ -12,6 +12,7 @@ use function array_key_exists;
 use function current_time;
 use function gmdate;
 use function is_array;
+use function wp_timezone;
 
 final class Repository
 {
@@ -82,7 +83,55 @@ final class Repository
         $reservation->time    = (string) $row['time'];
         $reservation->party   = (int) $row['party'];
         $reservation->email   = (string) ($row['email'] ?? '');
-        $reservation->created = new DateTimeImmutable((string) $row['created_at']);
+        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
+        if (array_key_exists('calendar_event_id', $row)) {
+            $reservation->calendarEventId = $row['calendar_event_id'] !== null
+                ? (string) $row['calendar_event_id']
+                : null;
+        }
+
+        if (array_key_exists('calendar_sync_status', $row)) {
+            $reservation->calendarSyncStatus = $row['calendar_sync_status'] !== null
+                ? (string) $row['calendar_sync_status']
+                : null;
+        }
+
+        if (!empty($row['calendar_synced_at'])) {
+            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at']);
+        }
+
+    return $reservation;
+    }
+
+    public function findByRequestId(string $requestId): ?Reservation
+    {
+        if ($requestId === '') {
+            return null;
+        }
+
+        // JOIN con customers per recuperare l'email necessaria per il manage_url
+        $sql = 'SELECT r.*, c.email '
+            . 'FROM ' . $this->tableName() . ' r '
+            . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
+            . 'WHERE r.request_id = %s ORDER BY r.id DESC LIMIT 1';
+
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare($sql, $requestId),
+            ARRAY_A
+        );
+
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $reservation         = new Reservation();
+        $reservation->id      = (int) $row['id'];
+        $reservation->status  = (string) $row['status'];
+        $reservation->date    = (string) $row['date'];
+        $reservation->time    = (string) $row['time'];
+        $reservation->party   = (int) $row['party'];
+        $reservation->email   = (string) ($row['email'] ?? '');
+        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
         if (array_key_exists('calendar_event_id', $row)) {
             $reservation->calendarEventId = $row['calendar_event_id'] !== null
                 ? (string) $row['calendar_event_id']
@@ -273,5 +322,102 @@ final class Repository
         $result = $this->wpdb->query($sql);
 
         return $result === false ? 0 : (int) $result;
+    }
+
+    /**
+     * Inizia una transazione database.
+     * Usato per operazioni atomiche come la verifica di disponibilità + inserimento.
+     */
+    public function beginTransaction(): void
+    {
+        $this->wpdb->query('START TRANSACTION');
+    }
+
+    /**
+     * Effettua il commit della transazione corrente.
+     */
+    public function commit(): void
+    {
+        $this->wpdb->query('COMMIT');
+    }
+
+    /**
+     * Effettua il rollback della transazione corrente.
+     */
+    public function rollback(): void
+    {
+        $this->wpdb->query('ROLLBACK');
+    }
+
+    /**
+     * Conta il numero di prenotazioni attive per una data/ora specifica.
+     * Usa FOR UPDATE per lock pessimistico durante la transazione.
+     * 
+     * @param string $date Data nel formato Y-m-d
+     * @param string $time Orario nel formato H:i:s
+     * @param array<string> $statuses Stati da considerare come attivi
+     * @param int|null $roomId Opzionale: filtra per sala specifica
+     * @return int Numero di prenotazioni attive
+     */
+    public function countActiveReservationsForSlot(string $date, string $time, array $statuses, ?int $roomId = null): int
+    {
+        $table = $this->tableName();
+        $statusList = "'" . implode("','", array_map('esc_sql', $statuses)) . "'";
+        
+        $sql = "SELECT COUNT(*) as count FROM {$table} WHERE date = %s AND time = %s AND status IN ({$statusList})";
+        $params = [$date, $time];
+        
+        if ($roomId !== null) {
+            $sql .= ' AND room_id = %d';
+            $params[] = $roomId;
+        }
+        
+        // FOR UPDATE: lock pessimistico per prevenire race conditions
+        $sql .= ' FOR UPDATE';
+        
+        $result = $this->wpdb->get_var($this->wpdb->prepare($sql, ...$params));
+        
+        return $result !== null ? (int) $result : 0;
+    }
+
+    /**
+     * Cerca prenotazioni duplicate recenti (create negli ultimi N secondi)
+     * con la stessa email, data e orario. Questo previene doppi submit.
+     * 
+     * @param string $email Email del cliente
+     * @param string $date Data nel formato Y-m-d
+     * @param string $time Orario nel formato H:i o H:i:s
+     * @param int $withinSeconds Cerca duplicati creati negli ultimi N secondi (default: 60)
+     * @return array<int, array<string, mixed>> Lista di prenotazioni duplicate trovate
+     */
+    public function findRecentDuplicates(string $email, string $date, string $time, int $withinSeconds = 60): array
+    {
+        $reservationsTable = $this->tableName();
+        $customersTable = $this->customersTableName();
+        
+        // Normalizza il time al formato H:i:s se necessario
+        if (strlen($time) === 5) {
+            $time .= ':00';
+        }
+        
+        // Calcola il timestamp minimo (ora - N secondi)
+        $minTimestamp = gmdate('Y-m-d H:i:s', time() - $withinSeconds);
+        
+        $sql = "SELECT r.* 
+                FROM {$reservationsTable} r
+                INNER JOIN {$customersTable} c ON r.customer_id = c.id
+                WHERE c.email = %s 
+                AND r.date = %s 
+                AND r.time = %s
+                AND r.created_at >= %s
+                AND r.status NOT IN ('cancelled')
+                ORDER BY r.created_at DESC";
+        
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, $email, $date, $time, $minTimestamp),
+            ARRAY_A
+        );
+        
+        return is_array($rows) ? $rows : [];
     }
 }

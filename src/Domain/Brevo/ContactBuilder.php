@@ -115,14 +115,19 @@ final class ContactBuilder
             static fn ($value): bool => $value !== null && $value !== ''
         );
 
+        // Trova i nomi degli attributi dinamicamente
+        $firstNameKey = $this->findAttributeKey($attributes, ['FIRSTNAME', 'firstname', 'first_name']);
+        $lastNameKey = $this->findAttributeKey($attributes, ['LASTNAME', 'lastname', 'last_name']);
+        $phoneKey = $this->findAttributeKey($attributes, ['PHONE', 'phone']);
+
         $properties = [
             'reservation' => $reservationPayload,
             'contact' => array_filter(
                 [
                     'email' => $contact['email'] ?? '',
-                    'first_name' => $attributes['FIRSTNAME'] ?? '',
-                    'last_name' => $attributes['LASTNAME'] ?? '',
-                    'phone' => $attributes['PHONE'] ?? '',
+                    'first_name' => $firstNameKey ? ($attributes[$firstNameKey] ?? '') : '',
+                    'last_name' => $lastNameKey ? ($attributes[$lastNameKey] ?? '') : '',
+                    'phone' => $phoneKey ? ($attributes[$phoneKey] ?? '') : '',
                 ],
                 static fn ($value): bool => $value !== null && $value !== ''
             ),
@@ -155,5 +160,23 @@ final class ContactBuilder
             'page_language' => $data['language'] ?? ($data['page_language'] ?? ($data['customer_lang'] ?? '')),
             'phone' => $data['phone'] ?? ($data['customer']['phone'] ?? ''),
         ];
+    }
+
+    /**
+     * Trova la chiave di un attributo negli attributes array provando diverse varianti.
+     * 
+     * @param array<string, mixed> $attributes
+     * @param array<int, string> $possibleKeys
+     * @return string|null
+     */
+    private function findAttributeKey(array $attributes, array $possibleKeys): ?string
+    {
+        foreach ($possibleKeys as $key) {
+            if (array_key_exists($key, $attributes)) {
+                return $key;
+            }
+        }
+        
+        return null;
     }
 }

@@ -516,6 +516,11 @@ class WP_REST_Request
         return $this->params[$key] ?? null;
     }
 
+    public function get_json_params(): ?array
+    {
+        return $this->params;
+    }
+
     public function get_header(string $key): ?string
     {
         $normalized = strtolower($key);
@@ -555,6 +560,62 @@ if (!function_exists('is_ssl')) {
     function is_ssl(): bool
     {
         return false;
+    }
+}
+
+if (!function_exists('is_user_logged_in')) {
+    function is_user_logged_in(): bool
+    {
+        return false;
+    }
+}
+
+if (!function_exists('wp_create_nonce')) {
+    function wp_create_nonce(string $action): string
+    {
+        return 'valid-nonce';
+    }
+}
+
+if (!function_exists('wp_cache_get')) {
+    function wp_cache_get(string $key, string $group = ''): mixed
+    {
+        return false;
+    }
+}
+
+if (!function_exists('wp_cache_set')) {
+    function wp_cache_set(string $key, mixed $value, string $group = '', int $expire = 0): bool
+    {
+        return true;
+    }
+}
+
+if (!function_exists('wp_rand')) {
+    function wp_rand(int $min = 0, int $max = 0): int
+    {
+        return rand($min, $max);
+    }
+}
+
+if (!function_exists('wp_cache_incr')) {
+    function wp_cache_incr(string $key, int $offset = 1, string $group = ''): int|false
+    {
+        return false; // Force fallback to optimistic lock
+    }
+}
+
+if (!function_exists('wp_cache_add')) {
+    function wp_cache_add(string $key, mixed $value, string $group = '', int $expire = 0): bool
+    {
+        return true;
+    }
+}
+
+if (!function_exists('wp_timezone')) {
+    function wp_timezone(): DateTimeZone
+    {
+        return new DateTimeZone('Europe/Rome');
     }
 }
 

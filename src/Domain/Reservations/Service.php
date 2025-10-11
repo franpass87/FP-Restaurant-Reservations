@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Reservations;
 use DateTimeImmutable;
 use DateTimeZone;
 use FP\Resv\Core\Exceptions\ConflictException;
+use FP\Resv\Core\Exceptions\ValidationException;
 use FP\Resv\Core\Metrics;
 use FP\Resv\Core\PhoneHelper;
 use FP\Resv\Core\ReservationValidator;
@@ -77,8 +78,15 @@ use const FILTER_VALIDATE_EMAIL;
 class Service
 {
     public const ALLOWED_STATUSES = ReservationStatuses::ALLOWED_STATUSES;
+
+    /**
+     * Stati considerati "attivi" che occupano capacità.
+     */
+    private const ACTIVE_STATUSES = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
+
     public function __construct(
         private readonly Repository $repository,
+        private readonly Availability $availability,
         private readonly Options $options,
         private readonly Language $language,
         private readonly Mailer $mailer,
@@ -87,7 +95,8 @@ class Service
         private readonly NotificationSettings $notificationSettings,
         private readonly NotificationTemplateRenderer $notificationTemplates,
         private readonly ?GoogleCalendarService $calendar = null,
-        private readonly ?BrevoClient $brevoClient = null
+        private readonly ?BrevoClient $brevoClient = null,
+        private readonly ?\FP\Resv\Domain\Brevo\Repository $brevoRepository = null
     ) {
     }
 
@@ -104,6 +113,42 @@ class Service
 
         $sanitized = $this->sanitizePayload($payload);
         $this->assertPayload($sanitized);
+
+        // Controllo anti-duplicati: previene doppi submit della stessa prenotazione
+        // Cerca prenotazioni recenti (ultimi 60 secondi) con stessa email, data e ora
+        $recentDuplicates = $this->repository->findRecentDuplicates(
+            $sanitized['email'],
+            $sanitized['date'],
+            $sanitized['time'],
+            60
+        );
+
+        if ($recentDuplicates !== []) {
+            $duplicate = $recentDuplicates[0];
+            
+            Logging::log('reservations', 'Duplicato rilevato: prenotazione già creata pochi secondi fa', [
+                'email' => $sanitized['email'],
+                'date' => $sanitized['date'],
+                'time' => $sanitized['time'],
+                'existing_id' => $duplicate['id'] ?? null,
+                'existing_created_at' => $duplicate['created_at'] ?? null,
+            ]);
+            
+            Metrics::increment('reservation.duplicate_prevented', 1, [
+                'method' => 'recent_duplicate_check',
+            ]);
+            
+            // Restituisce la prenotazione esistente invece di crearne una nuova
+            $existingId = (int) ($duplicate['id'] ?? 0);
+            $manageUrl = $this->generateManageUrl($existingId, $sanitized['email']);
+            
+            return [
+                'id'         => $existingId,
+                'status'     => (string) ($duplicate['status'] ?? 'pending'),
+                'manage_url' => $manageUrl,
+                'duplicate_prevented' => true,
+            ];
+        }
 
         $consentMeta = Consent::metadata();
         $policyVersion = $sanitized['policy_version'] !== ''
@@ -156,6 +201,19 @@ class Service
             'consent_version'   => $sanitized['policy_version'],
         ]);
 
+        // Verifica atomica della disponibilità dentro una transazione
+        // per prevenire race conditions quando arrivano prenotazioni simultanee
+        $this->repository->beginTransaction();
+        
+        try {
+            $this->guardAvailabilityForSlot(
+                $sanitized['date'],
+                $sanitized['time'],
+                $sanitized['party'],
+                $sanitized['room_id'],
+                $status
+            );
+
         // Append extras into notes for staff visibility
         $extrasNoteParts = [];
         if ($sanitized['high_chair_count'] > 0) {
@@ -189,13 +247,30 @@ class Service
             'customer_id'  => $customerId,
             'room_id'      => $sanitized['room_id'],
             'table_id'     => $sanitized['table_id'],
+            'request_id'   => $sanitized['request_id'],
         ];
 
-        $reservationId = $this->repository->insert($reservationData);
+            $reservationId = $this->repository->insert($reservationData);
 
-        $reservation = $this->repository->find($reservationId);
-        if ($reservation === null) {
-            throw new RuntimeException('Reservation created but could not be retrieved.');
+            $reservation = $this->repository->find($reservationId);
+            if ($reservation === null) {
+                throw new RuntimeException('Reservation created but could not be retrieved.');
+            }
+            
+            // Commit della transazione solo se tutto è andato a buon fine
+            $this->repository->commit();
+        } catch (Throwable $exception) {
+            // Rollback in caso di errore
+            $this->repository->rollback();
+            
+            Logging::log('reservations', 'Errore durante creazione prenotazione, rollback eseguito', [
+                'date' => $sanitized['date'],
+                'time' => $sanitized['time'],
+                'party' => $sanitized['party'],
+                'error' => $exception->getMessage(),
+            ]);
+            
+            throw $exception;
         }
 
         $manageUrl = $this->generateManageUrl($reservationId, $sanitized['email']);
@@ -287,6 +362,122 @@ class Service
                 ['date' => $date, 'time' => $time, 'status' => $status]
             );
         }
+    }
+
+    /**
+     * Verifica atomicamente la disponibilità per uno slot specifico.
+     * DEVE essere chiamato dentro una transazione database per garantire
+     * che il controllo e l'inserimento siano atomici.
+     *
+     * @param string $date Data nel formato Y-m-d
+     * @param string $time Orario nel formato H:i
+     * @param int $party Numero di persone
+     * @param int|null $roomId Sala richiesta (opzionale)
+     * @param string $status Lo stato della prenotazione che si sta per creare
+     * @throws ConflictException Se non c'è disponibilità
+     */
+    private function guardAvailabilityForSlot(
+        string $date,
+        string $time,
+        int $party,
+        ?int $roomId,
+        string $status
+    ): void {
+        // Skip per stati che non occupano capacità
+        if (!in_array($status, self::ACTIVE_STATUSES, true)) {
+            return;
+        }
+
+        // Calcola la disponibilità per lo slot richiesto
+        $criteria = [
+            'date'  => $date,
+            'party' => $party,
+        ];
+        
+        if ($roomId !== null && $roomId > 0) {
+            $criteria['room'] = $roomId;
+        }
+
+        try {
+            $availability = $this->availability->findSlots($criteria);
+        } catch (Throwable $exception) {
+            Logging::log('reservations', 'Errore durante calcolo disponibilità atomica', [
+                'date'  => $date,
+                'time'  => $time,
+                'party' => $party,
+                'error' => $exception->getMessage(),
+            ]);
+            
+            throw new ConflictException(
+                __('Impossibile verificare la disponibilità. Riprova tra qualche secondo.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time, 'party' => $party]
+            );
+        }
+
+        if (!isset($availability['slots']) || !is_array($availability['slots'])) {
+            throw new ConflictException(
+                __('Nessuno slot disponibile per la data selezionata.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time, 'party' => $party]
+            );
+        }
+
+        // Cerca lo slot specifico richiesto
+        $requestedTime = substr($time, 0, 5); // Assicura formato H:i
+        $slotFound = false;
+        $slotAvailable = false;
+
+        foreach ($availability['slots'] as $slot) {
+            if (!is_array($slot) || !isset($slot['label'])) {
+                continue;
+            }
+
+            // Confronta il label dello slot (formato H:i) con l'orario richiesto
+            if ($slot['label'] === $requestedTime) {
+                $slotFound = true;
+                $slotStatus = $slot['status'] ?? 'full';
+                
+                // Accetta solo slot disponibili o con disponibilità limitata
+                if (in_array($slotStatus, ['available', 'limited'], true)) {
+                    $slotAvailable = true;
+                }
+                
+                break;
+            }
+        }
+
+        if (!$slotFound) {
+            Logging::log('reservations', 'Slot non trovato durante verifica atomica', [
+                'date'           => $date,
+                'time'           => $time,
+                'requested_time' => $requestedTime,
+                'party'          => $party,
+                'available_slots'=> count($availability['slots']),
+            ]);
+            
+            throw new ConflictException(
+                __('L\'orario selezionato non è disponibile. Scegli un altro orario.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time, 'party' => $party]
+            );
+        }
+
+        if (!$slotAvailable) {
+            Logging::log('reservations', 'Slot non disponibile durante verifica atomica', [
+                'date'  => $date,
+                'time'  => $time,
+                'party' => $party,
+                'slot_found' => $slotFound,
+            ]);
+            
+            throw new ConflictException(
+                __('L\'orario selezionato è ora esaurito. Scegli un altro orario o contattaci.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time, 'party' => $party]
+            );
+        }
+
+        Metrics::increment('reservation.availability_check_passed', 1, [
+            'date' => $date,
+            'time' => $time,
+        ]);
     }
 
     /**
@@ -387,6 +578,9 @@ class Service
         if ($payload['table_id'] === 0) {
             $payload['table_id'] = null;
         }
+        $payload['request_id'] = isset($payload['request_id']) && is_string($payload['request_id'])
+            ? sanitize_text_field($payload['request_id'])
+            : null;
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;
@@ -537,6 +731,10 @@ class Service
         $webmasterRecipients = is_array($notifications['webmaster_emails'] ?? null)
             ? array_values(array_filter($notifications['webmaster_emails']))
             : [];
+
+        // Deduplica: rimuovi dai destinatari webmaster quelli già presenti in restaurant
+        // per evitare di inviare due email alla stessa persona
+        $webmasterRecipients = array_values(array_diff($webmasterRecipients, $restaurantRecipients));
 
         if ($restaurantRecipients === [] && $webmasterRecipients === []) {
             return;
@@ -1067,6 +1265,15 @@ class Service
             return;
         }
 
+        // Controlla se l'evento è già stato inviato con successo per evitare duplicati
+        if ($this->brevoRepository !== null && $this->brevoRepository->hasSuccessfulLog($reservationId, 'email_confirmation')) {
+            Logging::log('brevo', 'Evento email_confirmation già inviato, skip per evitare duplicati', [
+                'reservation_id' => $reservationId,
+                'email'          => $email,
+            ]);
+            return;
+        }
+
         $eventProperties = [
             'reservation' => array_filter([
                 'id'         => $reservationId,
@@ -1103,10 +1310,26 @@ class Service
             'properties' => $eventProperties,
         ]);
 
+        // Logga l'evento nel repository Brevo se disponibile
+        $success = $response['success'] ?? false;
+        if ($this->brevoRepository !== null) {
+            $this->brevoRepository->log(
+                $reservationId,
+                'email_confirmation',
+                [
+                    'email'      => $email,
+                    'properties' => $eventProperties,
+                    'response'   => $response,
+                ],
+                $success ? 'success' : 'error',
+                $success ? null : ($response['message'] ?? null)
+            );
+        }
+
         Logging::log('brevo', 'Evento email_confirmation inviato a Brevo', [
             'reservation_id' => $reservationId,
             'email'          => $email,
-            'success'        => $response['success'] ?? false,
+            'success'        => $success,
             'response'       => $response,
         ]);
     }

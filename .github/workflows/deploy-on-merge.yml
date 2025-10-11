@@ -1,0 +1,138 @@
+name: Deploy plugin on merge to main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip rsync
+
+      - name: Extract version from plugin file
+        id: version
+        run: |
+          VERSION=$(php -r '$pattern = "/^(\\s*\\*\\s*Version:\\s*)([^\\r\\n]+)/mi"; $file = "fp-restaurant-reservations.php"; $contents = file_get_contents($file); if (preg_match($pattern, $contents, $matches)) { echo trim($matches[2]); } else { exit(1); }')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Check if release already exists
+        id: check_release
+        run: |
+          if gh release view "v${{ steps.version.outputs.VERSION }}" &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release v${{ steps.version.outputs.VERSION }} already exists, skipping deployment"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release v${{ steps.version.outputs.VERSION }} does not exist, proceeding with deployment"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Composer dependencies
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+          composer dump-autoload -o --classmap-authoritative
+
+      - name: Install NPM dependencies and build assets
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare build directory
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          SLUG="fp-restaurant-reservations"
+          BUILD_ROOT="$(pwd)/build"
+          TARGET_DIR="$BUILD_ROOT/$SLUG"
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
+          rsync -a --delete \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=tests \
+            --exclude=docs \
+            --exclude=node_modules \
+            --exclude='*.md' \
+            --exclude=.idea \
+            --exclude=.vscode \
+            --exclude=build \
+            --exclude=.gitattributes \
+            --exclude=.gitignore \
+            --exclude=package.json \
+            --exclude=package-lock.json \
+            --exclude=phpcs.xml \
+            --exclude=phpstan.neon \
+            --exclude=vite.config.js \
+            --exclude=.codex-state.json \
+            --exclude=.rebuild-state.json \
+            --exclude=eslint.config.js \
+            --exclude=.prettierrc.json \
+            --exclude=build.sh \
+            --exclude=scripts \
+            --exclude=tools \
+            --exclude=docker-compose.yml \
+            --exclude=AUDIT \
+            --exclude=assets/js/fe \
+            "$(pwd)/" "$TARGET_DIR/"
+
+      - name: Create ZIP file
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          SLUG="fp-restaurant-reservations"
+          BUILD_ROOT="$(pwd)/build"
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          ZIP_NAME="$SLUG-$VERSION.zip"
+          cd "$BUILD_ROOT"
+          zip -r "$ZIP_NAME" "$SLUG" > /dev/null
+          echo "ZIP_PATH=$BUILD_ROOT/$ZIP_NAME" >> $GITHUB_ENV
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          gh release create "v${{ steps.version.outputs.VERSION }}" \
+            "${{ env.ZIP_PATH }}" \
+            --title "Release v${{ steps.version.outputs.VERSION }}" \
+            --notes "Release automatica del plugin FP Restaurant Reservations versione ${{ steps.version.outputs.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (for download)
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-release-${{ steps.version.outputs.VERSION }}
+          path: ${{ env.ZIP_PATH }}
+          if-no-files-found: error
+
+      - name: Deployment completed
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          echo "✅ Deployment completato con successo!"
+          echo "📦 Release: v${{ steps.version.outputs.VERSION }}"
+          echo "🔗 URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }}"

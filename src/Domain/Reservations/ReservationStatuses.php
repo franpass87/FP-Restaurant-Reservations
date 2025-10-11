@@ -28,7 +28,7 @@ final class ReservationStatuses
     /**
      * Stati considerati "attivi" per disponibilità slot.
      */
-    public const ACTIVE_FOR_AVAILABILITY = ['pending', 'confirmed', 'seated'];
+    public const ACTIVE_FOR_AVAILABILITY = ['pending', 'confirmed', 'seated', 'pending_payment'];
 
     /**
      * Stati considerati "attivi" per eventi.

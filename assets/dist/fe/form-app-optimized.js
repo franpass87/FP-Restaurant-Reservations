@@ -548,7 +548,6 @@ export class FormApp {
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-WP-Nonce': payload.fp_resv_nonce || '',
             },
             body: JSON.stringify(payload),
             credentials: 'same-origin',

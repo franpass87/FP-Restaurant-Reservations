@@ -72,7 +72,21 @@ final class REST
             return new WP_Error('fp_resv_survey_invalid_reservation', __('Prenotazione non valida.', 'fp-restaurant-reservations'), ['status' => 400]);
         }
 
-        $nonce = $request->get_param('fp_resv_survey_nonce') ?? $request->get_param('_wpnonce');
+        // Cerca il nonce in ordine: body JSON params, body params, poi header
+        $jsonParams = $request->get_json_params();
+        $nonce = null;
+        
+        // Prima prova a leggere dal body JSON
+        if (is_array($jsonParams) && isset($jsonParams['fp_resv_survey_nonce'])) {
+            $nonce = $jsonParams['fp_resv_survey_nonce'];
+        }
+        
+        // Poi dai parametri normali
+        if (!is_string($nonce) || $nonce === '') {
+            $nonce = $request->get_param('fp_resv_survey_nonce') ?? $request->get_param('_wpnonce');
+        }
+        
+        // Solo come ultimo fallback usa l'header
         if (!is_string($nonce)) {
             $nonce = $request->get_header('X-WP-Nonce');
         }

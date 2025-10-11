@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Brevo;
 
+use FP\Resv\Domain\Settings\Options;
 use function array_filter;
 use function ctype_digit;
 use function in_array;
@@ -22,6 +23,56 @@ use function trim;
 
 final class Mapper
 {
+    private const DEFAULT_ATTRIBUTES = [
+        'firstname'                => 'FIRSTNAME',
+        'lastname'                 => 'LASTNAME',
+        'email'                    => 'EMAIL',
+        'phone'                    => 'PHONE',
+        'sms'                      => 'SMS',
+        'whatsapp'                 => 'WHATSAPP',
+        'lang'                     => 'LANG',
+        'lingua'                   => 'LINGUA',
+        'reservation_date'         => 'RESERVATION_DATE',
+        'prenotazione_data'        => 'PRENOTAZIONE_DATA',
+        'reservation_time'         => 'RESERVATION_TIME',
+        'prenotazione_orario'      => 'PRENOTAZIONE_ORARIO',
+        'reservation_party'        => 'RESERVATION_PARTY',
+        'persone'                  => 'PERSONE',
+        'reservation_status'       => 'RESERVATION_STATUS',
+        'note'                     => 'NOTE',
+        'notes'                    => 'NOTES',
+        'marketing_consent'        => 'MARKETING_CONSENT',
+        'resvid'                   => 'RESVID',
+        'reservation_id'           => 'RESERVATION_ID',
+        'reservation_location'     => 'RESERVATION_LOCATION',
+        'reservation_manage_link'  => 'RESERVATION_MANAGE_LINK',
+        'utm_source'               => 'RESERVATION_UTM_SOURCE',
+        'utm_medium'               => 'RESERVATION_UTM_MEDIUM',
+        'utm_campaign'             => 'RESERVATION_UTM_CAMPAIGN',
+        'gclid'                    => 'GCLID',
+        'fbclid'                   => 'FBCLID',
+        'msclkid'                  => 'MSCLKID',
+        'ttclid'                   => 'TTCLID',
+        'amount'                   => 'AMOUNT',
+        'value'                    => 'VALUE',
+        'currency'                 => 'CURRENCY',
+    ];
+
+    public function __construct(private readonly Options $options)
+    {
+    }
+
+    /**
+     * Recupera il nome dell'attributo Brevo dalla configurazione.
+     */
+    private function getAttributeName(string $key): string
+    {
+        $options = $this->options->getGroup('fp_resv_brevo', []);
+        $configKey = 'brevo_attr_' . $key;
+        
+        return trim((string) ($options[$configKey] ?? self::DEFAULT_ATTRIBUTES[$key] ?? strtoupper($key)));
+    }
+
     /**
      * @param array<string, mixed> $reservation
      *
@@ -62,38 +113,38 @@ final class Mapper
         }
 
         $attributes = [
-            'FIRSTNAME'                => $reservation['first_name'] ?? '',
-            'LASTNAME'                 => $reservation['last_name'] ?? '',
-            'EMAIL'                    => $email,
-            'PHONE'                    => $phone,
-            'SMS'                      => $sms,
-            'WHATSAPP'                 => $whatsapp,
-            'LANG'                     => $language,
-            'LINGUA'                   => $language,
-            'RESERVATION_DATE'         => $date,
-            'PRENOTAZIONE_DATA'        => $date,
-            'RESERVATION_TIME'         => $time,
-            'PRENOTAZIONE_ORARIO'      => $timeNumber,
-            'RESERVATION_PARTY'        => $party,
-            'PERSONE'                  => $party,
-            'RESERVATION_STATUS'       => $reservation['status'] ?? '',
-            'NOTE'                     => $reservation['notes'] ?? '',
-            'NOTES'                    => $reservation['notes'] ?? '',
-            'MARKETING_CONSENT'        => $marketing,
-            'RESVID'                   => $reservationId,
-            'RESERVATION_ID'           => $reservationId,
-            'RESERVATION_LOCATION'     => $reservation['location'] ?? '',
-            'RESERVATION_MANAGE_LINK'  => $reservation['manage_url'] ?? '',
-            'RESERVATION_UTM_SOURCE'   => $reservation['utm_source'] ?? '',
-            'RESERVATION_UTM_MEDIUM'   => $reservation['utm_medium'] ?? '',
-            'RESERVATION_UTM_CAMPAIGN' => $reservation['utm_campaign'] ?? '',
-            'GCLID'                    => $reservation['gclid'] ?? '',
-            'FBCLID'                   => $reservation['fbclid'] ?? '',
-            'MSCLKID'                  => $reservation['msclkid'] ?? '',
-            'TTCLID'                   => $reservation['ttclid'] ?? '',
-            'AMOUNT'                   => $amount,
-            'VALUE'                    => $amount,
-            'CURRENCY'                 => $reservation['currency'] ?? '',
+            $this->getAttributeName('firstname')                => $reservation['first_name'] ?? '',
+            $this->getAttributeName('lastname')                 => $reservation['last_name'] ?? '',
+            $this->getAttributeName('email')                    => $email,
+            $this->getAttributeName('phone')                    => $phone,
+            $this->getAttributeName('sms')                      => $sms,
+            $this->getAttributeName('whatsapp')                 => $whatsapp,
+            $this->getAttributeName('lang')                     => $language,
+            $this->getAttributeName('lingua')                   => $language,
+            $this->getAttributeName('reservation_date')         => $date,
+            $this->getAttributeName('prenotazione_data')        => $date,
+            $this->getAttributeName('reservation_time')         => $time,
+            $this->getAttributeName('prenotazione_orario')      => $timeNumber,
+            $this->getAttributeName('reservation_party')        => $party,
+            $this->getAttributeName('persone')                  => $party,
+            $this->getAttributeName('reservation_status')       => $reservation['status'] ?? '',
+            $this->getAttributeName('note')                     => $reservation['notes'] ?? '',
+            $this->getAttributeName('notes')                    => $reservation['notes'] ?? '',
+            $this->getAttributeName('marketing_consent')        => $marketing,
+            $this->getAttributeName('resvid')                   => $reservationId,
+            $this->getAttributeName('reservation_id')           => $reservationId,
+            $this->getAttributeName('reservation_location')     => $reservation['location'] ?? '',
+            $this->getAttributeName('reservation_manage_link')  => $reservation['manage_url'] ?? '',
+            $this->getAttributeName('utm_source')               => $reservation['utm_source'] ?? '',
+            $this->getAttributeName('utm_medium')               => $reservation['utm_medium'] ?? '',
+            $this->getAttributeName('utm_campaign')             => $reservation['utm_campaign'] ?? '',
+            $this->getAttributeName('gclid')                    => $reservation['gclid'] ?? '',
+            $this->getAttributeName('fbclid')                   => $reservation['fbclid'] ?? '',
+            $this->getAttributeName('msclkid')                  => $reservation['msclkid'] ?? '',
+            $this->getAttributeName('ttclid')                   => $reservation['ttclid'] ?? '',
+            $this->getAttributeName('amount')                   => $amount,
+            $this->getAttributeName('value')                    => $amount,
+            $this->getAttributeName('currency')                 => $reservation['currency'] ?? '',
         ];
 
         return array_filter(

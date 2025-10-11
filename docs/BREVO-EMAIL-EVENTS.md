@@ -86,20 +86,43 @@ Il sistema ora invia eventi a Brevo per attivare le automazioni email quando Bre
 
 ## ⚠️ IMPORTANTE
 
-> **Quando usi Brevo, le "Preferenze di invio" WordPress NON vengono utilizzate!**
+> **Quando usi Brevo, le "Preferenze di invio" WordPress NON vengono utilizzate per le email ai clienti!**
 > 
 > Tutto (logo, template, mittente) deve essere configurato in Brevo.
+
+### 📧 Email ai Clienti vs Email Interne
+
+**Email ai CLIENTI (possono usare Brevo):**
+- ✅ Email di Conferma
+- ✅ Email di Reminder
+- ✅ Email di Review
+
+**Email INTERNE Staff/Webmaster (SEMPRE WordPress):**
+- 🔔 Notifica allo Staff (restaurant_emails)
+- 🔔 Notifica al Webmaster (webmaster_emails)
+- ❌ NON passano MAI da Brevo
+- ✅ Usano sempre i template e le impostazioni WordPress
+- ✅ Invio immediato e affidabile
 
 ## Eventi Implementati
 
 ### 1. `email_confirmation` - Email di Conferma
 **Quando viene inviato:** Quando viene creata una nuova prenotazione e Brevo è configurato per gestire le email di conferma.
 
-**Proprietà evento:**
+**Payload inviato a Brevo (API v3):**
 ```json
 {
-  "email": "cliente@example.com",
-  "properties": {
+  "event_name": "email_confirmation",
+  "identifiers": {
+    "email_id": "cliente@example.com"
+  },
+  "contact_properties": {
+    "FIRSTNAME": "Mario",
+    "LASTNAME": "Rossi",
+    "PHONE": "+39123456789",
+    "MARKETING_CONSENT": true
+  },
+  "event_properties": {
     "reservation": {
       "id": 123,
       "date": "2025-10-15",
@@ -206,16 +229,21 @@ Per ogni evento devi creare un'automazione in Brevo:
 
 #### 1. Automazione Email Conferma
 - **Trigger:** Evento "email_confirmation"
-- **Azione:** Invia email usando i dati da `properties.reservation.*` e `properties.contact.*`
-- **Variabili disponibili:**
-  - `{{params.reservation.id}}`
-  - `{{params.reservation.date}}`
-  - `{{params.reservation.time}}`
-  - `{{params.reservation.party}}`
-  - `{{params.reservation.manage_url}}`
-  - `{{params.contact.first_name}}`
-  - `{{params.contact.last_name}}`
-  - `{{params.meta.language}}`
+- **Azione:** Invia email usando le proprietà dell'evento
+- **Variabili disponibili (event_properties):**
+  - `{{event.reservation.id}}`
+  - `{{event.reservation.date}}`
+  - `{{event.reservation.time}}`
+  - `{{event.reservation.party}}`
+  - `{{event.reservation.manage_url}}`
+  - `{{event.contact.first_name}}`
+  - `{{event.contact.last_name}}`
+  - `{{event.meta.language}}`
+- **Proprietà contatto aggiornate automaticamente:**
+  - `{{contact.FIRSTNAME}}`
+  - `{{contact.LASTNAME}}`
+  - `{{contact.PHONE}}`
+  - `{{contact.MARKETING_CONSENT}}`
 
 #### 2. Automazione Email Reminder
 - **Trigger:** Evento "email_reminder"
@@ -226,7 +254,7 @@ Per ogni evento devi creare un'automazione in Brevo:
 - **Trigger:** Evento "email_review"
 - **Azione:** Invia email di richiesta recensione
 - **Variabili aggiuntive:**
-  - `{{params.meta.review_url}}` - URL della pagina recensioni (es. Google)
+  - `{{event.meta.review_url}}` - URL della pagina recensioni (es. Google)
 
 ## Logging
 
@@ -255,19 +283,35 @@ Puoi verificare l'invio degli eventi controllando i log nel backend.
 
 Gli eventi email (`email_confirmation`, `email_reminder`, `email_review`) sono **diversi** dagli eventi di stato esistenti:
 
-- `reservation_confirmed` - Inviato quando lo stato diventa "confirmed" (sempre)
+- `reservation_confirmed` - Inviato quando lo stato diventa "confirmed" (SOLO se Brevo NON gestisce già le email di conferma)
 - `reservation_visited` - Inviato quando lo stato diventa "visited" (sempre)
 - `email_confirmation` - Inviato SOLO quando Brevo deve gestire l'email di conferma
 - `email_reminder` - Inviato SOLO quando Brevo deve gestire l'email di reminder
 - `email_review` - Inviato SOLO quando Brevo deve gestire l'email di review
 
+### ⚠️ Protezione Duplicati Email
+
+Il sistema previene automaticamente l'invio di email duplicate:
+
+- Se Brevo gestisce le email di conferma tramite `email_confirmation`, l'evento `reservation_confirmed` NON viene inviato
+- Questo evita che entrambi gli eventi attivino automazioni email in Brevo
+- La logica è gestita automaticamente dal sistema
+
 Questo permette di:
 - Separare la logica di stato dalla logica di invio email
 - Usare Brevo per le email ma altri sistemi per gli eventi di stato
 - Avere maggiore controllo su quando e come vengono inviate le email
+- **Evitare automaticamente email duplicate**
 
 ## File Modificati
 
+- `src/Domain/Brevo/Client.php` - **Aggiornato endpoint a `/v3/events` con nuovo formato payload**
 - `src/Domain/Reservations/Service.php` - Aggiunto supporto eventi email_confirmation
 - `src/Domain/Notifications/Manager.php` - Aggiunto supporto eventi email_reminder e email_review
 - `src/Core/Plugin.php` - Iniettato BrevoClient nei servizi
+
+## API Reference
+
+**Endpoint:** `POST https://api.brevo.com/v3/events`  
+**Header:** `api-key: YOUR_API_KEY`  
+**Documentazione:** [Brevo Events API](https://developers.brevo.com/reference/createevent)

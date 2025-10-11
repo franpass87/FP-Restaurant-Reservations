@@ -368,6 +368,7 @@ final class Plugin
 
         $reservationsService = new ReservationsService(
             $reservationsRepository,
+            $availability,
             $options,
             $languageSettings,
             $mailer,
@@ -376,7 +377,8 @@ final class Plugin
             $notificationsSettings,
             $notificationsTemplates,
             $googleCalendar,
-            $brevoClient
+            $brevoClient,
+            $brevoRepository
         );
         $container->register(ReservationsService::class, $reservationsService);
         $container->register('reservations.service', $reservationsService);
@@ -399,7 +401,7 @@ final class Plugin
         $qaSeederCli = new QASeederCLI($qaSeeder);
         $qaSeederCli->register();
 
-        $brevoMapper = new BrevoMapper();
+        $brevoMapper = new BrevoMapper($options);
         $container->register(BrevoMapper::class, $brevoMapper);
         $container->register('brevo.mapper', $brevoMapper);
 
@@ -409,7 +411,9 @@ final class Plugin
             $brevoMapper,
             $brevoRepository,
             $reservationsRepository,
-            $mailer
+            $mailer,
+            $languageSettings,
+            $notificationsSettings
         );
         $brevoAutomation->boot();
         $container->register(BrevoAutomation::class, $brevoAutomation);
@@ -494,7 +498,7 @@ final class Plugin
 
         I18n::init();
 
-        $reservationsRest = new ReservationsREST($availability, $reservationsService);
+        $reservationsRest = new ReservationsREST($availability, $reservationsService, $reservationsRepository);
         $reservationsRest->register();
         $container->register(ReservationsREST::class, $reservationsRest);
         $container->register('reservations.rest', $reservationsRest);
