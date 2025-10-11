@@ -31,13 +31,18 @@ class AgendaApp {
      * Inizializza l'applicazione
      */
     init() {
-        console.log('[Agenda] Inizializzazione...');
+        console.log('[Agenda] Inizializzazione...', {
+            settings: this.settings,
+            restRoot: this.restRoot,
+            hasNonce: !!this.nonce
+        });
         
         // Verifica settings
         if (!this.restRoot || !this.nonce) {
             console.error('[Agenda] Errore: Configurazione mancante!', {
                 hasRestRoot: !!this.restRoot,
-                hasNonce: !!this.nonce
+                hasNonce: !!this.nonce,
+                settings: this.settings
             });
             this.showError('Errore di configurazione. Ricarica la pagina.');
             return;
@@ -49,8 +54,16 @@ class AgendaApp {
         // Verifica che gli elementi esistano
         if (!this.elements.datePicker) {
             console.error('[Agenda] Errore: Elementi DOM non trovati!');
+            this.showError('Errore: Elementi pagina non trovati. Ricarica la pagina.');
             return;
         }
+        
+        console.log('[Agenda] Elementi DOM caricati:', {
+            datePicker: !!this.elements.datePicker,
+            serviceFilter: !!this.elements.serviceFilter,
+            timeline: !!this.elements.timelineEl,
+            viewButtons: this.elements.viewButtons.length
+        });
         
         // Setup event listeners
         this.setupEventListeners();
@@ -58,8 +71,8 @@ class AgendaApp {
         // Imposta data iniziale
         this.elements.datePicker.value = this.formatDate(this.state.currentDate);
         
-        // Carica i dati iniziali
-        this.loadReservations();
+        // Inizializza vista di default (day) con pulsante attivo
+        this.setView('day');
         
         console.log('[Agenda] Inizializzazione completata');
     }
@@ -195,11 +208,17 @@ class AgendaApp {
      * Cambia vista (giorno/settimana/mese/lista)
      */
     setView(view) {
+        console.log('[Agenda] Cambio vista:', view);
+        
         this.state.currentView = view;
         
         // Aggiorna pulsanti
         this.elements.viewButtons.forEach(btn => {
-            btn.classList.toggle('button-primary', btn.getAttribute('data-view') === view);
+            const isActive = btn.getAttribute('data-view') === view;
+            btn.classList.toggle('button-primary', isActive);
+            if (!isActive) {
+                btn.classList.add('button');
+            }
         });
         
         // Ricarica dati
@@ -319,6 +338,8 @@ class AgendaApp {
      * Renderizza la vista corrente
      */
     render() {
+        console.log('[Agenda] Rendering vista:', this.state.currentView, 'con', this.state.reservations.length, 'prenotazioni');
+        
         this.hideLoading();
         
         if (this.state.reservations.length === 0) {
@@ -345,10 +366,15 @@ class AgendaApp {
             case 'list':
                 this.renderListView();
                 break;
+            default:
+                console.warn('[Agenda] Vista non riconosciuta:', this.state.currentView);
+                this.renderDayView();
         }
         
         // Aggiorna summary
         this.updateSummary();
+        
+        console.log('[Agenda] ✓ Rendering completato');
     }
     
     /**
@@ -672,16 +698,25 @@ class AgendaApp {
      * Mostra empty state
      */
     showEmpty(message = null) {
+        console.log('[Agenda] Mostrando empty state:', message);
+        
         this.hideLoading();
         
         if (this.elements.emptyEl) {
             this.elements.emptyEl.hidden = false;
             
             const messageEl = this.elements.emptyEl.querySelector('p');
-            if (messageEl && message) {
-                messageEl.textContent = message;
-                messageEl.style.color = '#d63638';
-                messageEl.style.fontWeight = 'bold';
+            if (messageEl) {
+                if (message) {
+                    messageEl.textContent = message;
+                    messageEl.style.color = '#d63638';
+                    messageEl.style.fontWeight = 'bold';
+                } else {
+                    // Ripristina il messaggio di default
+                    messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
+                    messageEl.style.color = '';
+                    messageEl.style.fontWeight = '';
+                }
             }
         }
         
@@ -959,7 +994,7 @@ class AgendaApp {
     async apiRequest(path, options = {}) {
         const url = path.startsWith('http') ? path : `${this.restRoot}/${path.replace(/^\//, '')}`;
         
-        console.log(`[API] ${options.method || 'GET'} ${url}`);
+        console.log(`[API] ${options.method || 'GET'} ${url}`, options.data ? { data: options.data } : '');
         
         const config = {
             method: options.method || 'GET',
@@ -972,33 +1007,68 @@ class AgendaApp {
         
         if (options.data) {
             config.body = JSON.stringify(options.data);
+            console.log('[API] Request body:', config.body);
             if (!config.method || config.method === 'GET') {
                 config.method = 'POST';
             }
         }
         
-        const response = await fetch(url, config);
-        
-        console.log(`[API] Status: ${response.status}`);
-        
-        if (!response.ok) {
-            const payload = await response.json().catch(() => ({}));
-            const errorMsg = payload.message || `Richiesta fallita con status ${response.status}`;
-            throw new Error(errorMsg);
-        }
-        
-        if (response.status === 204) return null;
-        
-        const text = await response.text();
-        if (!text || text.trim() === '') {
-            return null;
-        }
-        
         try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error('[API] Errore parsing JSON:', text.substring(0, 200));
-            throw new Error('Risposta JSON non valida dal server');
+            const response = await fetch(url, config);
+            
+            console.log(`[API] Status: ${response.status} ${response.statusText}`);
+            
+            if (!response.ok) {
+                let errorMsg = `Richiesta fallita con status ${response.status}`;
+                
+                try {
+                    const payload = await response.json();
+                    console.error('[API] Error payload:', payload);
+                    errorMsg = payload.message || payload.error || errorMsg;
+                    
+                    // Se c'è un errore di permessi, logga più dettagli
+                    if (response.status === 403) {
+                        console.error('[API] Errore permessi! Nonce:', this.nonce);
+                        console.error('[API] Headers:', Object.fromEntries(response.headers.entries()));
+                    }
+                } catch (e) {
+                    console.error('[API] Non posso fare parse dell\'errore:', e);
+                }
+                
+                throw new Error(errorMsg);
+            }
+            
+            if (response.status === 204) {
+                console.log('[API] ✓ 204 No Content');
+                return null;
+            }
+            
+            const text = await response.text();
+            console.log('[API] Response length:', text.length, 'bytes');
+            
+            if (!text || text.trim() === '') {
+                console.log('[API] ✓ Empty response');
+                return null;
+            }
+            
+            try {
+                const data = JSON.parse(text);
+                console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
+                return data;
+            } catch (e) {
+                console.error('[API] Errore parsing JSON:', e);
+                console.error('[API] Response preview:', text.substring(0, 500));
+                throw new Error('Risposta JSON non valida dal server');
+            }
+        } catch (error) {
+            // Se è un errore di rete
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                console.error('[API] Errore di rete:', error);
+                throw new Error('Impossibile contattare il server. Controlla la connessione.');
+            }
+            
+            // Rilancia l'errore
+            throw error;
         }
     }
     
