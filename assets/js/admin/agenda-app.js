@@ -9,6 +9,15 @@
     const settings = window.fpResvAgendaSettings || {};
     const restRoot = (settings.restRoot || '/wp-json/fp-resv/v1').replace(/\/$/, '');
     const nonce = settings.nonce || '';
+    
+    // Verifica che i settings siano stati caricati correttamente
+    if (!settings.restRoot || !settings.nonce) {
+        console.error('[Agenda Error] Settings not properly loaded!', { 
+            hasSettings: !!window.fpResvAgendaSettings,
+            hasRestRoot: !!settings.restRoot,
+            hasNonce: !!settings.nonce
+        });
+    }
 
     // DOM Elements
     const datePicker = document.querySelector('[data-role="date-picker"]');
@@ -34,7 +43,20 @@
     init();
 
     function init() {
-        if (!datePicker) return;
+        if (!datePicker) {
+            console.error('Date picker element not found! Initialization aborted.');
+            return;
+        }
+
+        console.log('[Agenda Init] Starting initialization...');
+        console.log('[Agenda Init] REST root:', restRoot);
+        console.log('[Agenda Init] Nonce:', nonce ? 'present' : 'MISSING');
+
+        // NASCONDI SEMPRE IL LOADING ALL'AVVIO
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            console.log('[Agenda Init] Loading element hidden');
+        }
 
         // Set default date
         datePicker.value = formatDate(currentDate);
@@ -45,6 +67,7 @@
         serviceFilter?.addEventListener('change', handleServiceChange);
 
         // Set initial view (this already calls loadReservations internally)
+        console.log('[Agenda Init] Setting initial view to "day"');
         setActiveView('day');
     }
 
@@ -162,6 +185,8 @@
     function request(path, options = {}) {
         const url = path.startsWith('http') ? path : `${restRoot}/${path.replace(/^\//, '')}`;
         
+        console.log(`[API Request] ${options.method || 'GET'} ${url}`);
+        
         const config = {
             method: options.method || 'GET',
             headers: {
@@ -178,32 +203,46 @@
             }
         }
 
-        return fetch(url, config).then(response => {
-            if (!response.ok) {
-                return response.json().catch(() => ({})).then(payload => {
-                    throw new Error(payload.message || 'Request failed');
+        return fetch(url, config)
+            .then(response => {
+                console.log(`[API Response] Status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    return response.json().catch(() => ({})).then(payload => {
+                        const errorMsg = payload.message || `Request failed with status ${response.status}`;
+                        console.error('[API Error]', errorMsg, payload);
+                        throw new Error(errorMsg);
+                    });
+                }
+                if (response.status === 204) return null;
+                
+                // Check if response has content before parsing JSON
+                return response.text().then(text => {
+                    if (!text || text.trim() === '') {
+                        console.log('[API Response] Empty response');
+                        return null;
+                    }
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('[API Response] Data:', Array.isArray(data) ? `Array(${data.length})` : typeof data);
+                        return data;
+                    } catch (e) {
+                        console.error('[API Error] Failed to parse JSON response:', text.substring(0, 200));
+                        throw new Error('Invalid JSON response from server');
+                    }
                 });
-            }
-            if (response.status === 204) return null;
-            
-            // Check if response has content before parsing JSON
-            return response.text().then(text => {
-                if (!text || text.trim() === '') {
-                    return null;
-                }
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('Failed to parse JSON response:', text);
-                    throw new Error('Invalid JSON response from server');
-                }
+            })
+            .catch(error => {
+                // Cattura anche errori di rete
+                console.error('[API Error] Network or fetch error:', error);
+                throw error;
             });
-        });
     }
 
     function loadReservations() {
-        showLoading();
-
+        // NON MOSTRARE MAI IL LOADING - mostra subito empty state o i dati esistenti
+        // Questo elimina il problema del caricamento infinito
+        
         // Increment request ID to detect stale responses
         const requestId = ++loadRequestId;
 
@@ -216,18 +255,37 @@
             ...(currentService && { service: currentService })
         });
 
+        // Mostra immediatamente empty state se non ci sono prenotazioni
+        if (reservations.length === 0) {
+            showEmpty();
+        } else {
+            // Mostra i dati esistenti mentre carica in background
+            renderCurrentView();
+            updateSummary();
+        }
+
+        console.log('[Agenda] Loading reservations in background...');
+
         request(`agenda?${params}`)
             .then(data => {
                 // Ignore stale responses
                 if (requestId !== loadRequestId) {
+                    console.log('[Agenda] Ignoring stale response');
                     return;
                 }
+                
+                console.log('[Agenda] Data received:', data);
                 
                 // L'API restituisce direttamente un array di prenotazioni
                 reservations = Array.isArray(data) ? data : [];
                 
-                renderCurrentView();
-                updateSummary();
+                // Aggiorna la vista con i nuovi dati
+                if (reservations.length === 0) {
+                    showEmpty();
+                } else {
+                    renderCurrentView();
+                    updateSummary();
+                }
             })
             .catch(error => {
                 // Ignore stale responses
@@ -235,15 +293,24 @@
                     return;
                 }
                 
-                console.error('Error loading reservations:', error);
-                reservations = [];
-                showEmpty();
-            })
-            .finally(() => {
-                // Hide loading only if this is still the latest request
-                if (requestId === loadRequestId && loadingEl) {
-                    loadingEl.hidden = true;
+                console.error('[Agenda] Error loading reservations:', error);
+                
+                // Mostra messaggio di errore ma NON bloccare l'interfaccia
+                let errorMessage = 'Errore nel caricamento delle prenotazioni.';
+                if (error.message) {
+                    if (error.message.includes('403') || error.message.includes('forbidden')) {
+                        errorMessage = 'Accesso negato. Verifica i tuoi permessi.';
+                    } else if (error.message.includes('404')) {
+                        errorMessage = 'Endpoint non trovato. Verifica la configurazione del plugin.';
+                    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        errorMessage = 'Errore di connessione. Verifica la tua connessione internet.';
+                    } else {
+                        errorMessage = `Errore: ${error.message}`;
+                    }
                 }
+                
+                console.error('[Agenda] Error message:', errorMessage);
+                showEmpty(errorMessage);
             });
     }
 
@@ -276,6 +343,12 @@
     }
 
     function renderCurrentView() {
+        // ASSICURATI SEMPRE che il loading sia nascosto
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            loadingEl.style.display = 'none';
+        }
+
         try {
             switch (currentView) {
                 case 'day':
@@ -291,10 +364,17 @@
                     renderListView();
                     break;
             }
+        } catch (error) {
+            console.error('[Agenda] Error rendering view:', error);
+            // Se c'è un errore nel render, mostra empty state con messaggio di errore
+            showEmpty('Errore nella visualizzazione dell\'agenda. Ricarica la pagina.');
         } finally {
             // Always hide loading after rendering, even if render function exits early
-            // This provides a second safety net in case DOM elements are missing
-            if (loadingEl) loadingEl.hidden = true;
+            // This provides a third safety net in case DOM elements are missing
+            if (loadingEl) {
+                loadingEl.hidden = true;
+                loadingEl.style.display = 'none';
+            }
         }
     }
 
@@ -337,18 +417,37 @@
 
     // Rendering
     function showLoading() {
-        if (loadingEl) loadingEl.hidden = false;
-        if (emptyEl) emptyEl.hidden = true;
-        // Hide all views
-        if (timelineEl) timelineEl.hidden = true;
-        if (weekViewEl) weekViewEl.hidden = true;
-        if (monthViewEl) monthViewEl.hidden = true;
-        if (listViewEl) listViewEl.hidden = true;
+        // FUNZIONE DISABILITATA - Non mostrare mai il loading per evitare il caricamento infinito
+        // L'interfaccia si aggiorna direttamente con i dati quando arrivano
+        console.log('[Agenda] showLoading() called but disabled');
     }
 
-    function showEmpty() {
-        if (loadingEl) loadingEl.hidden = true;
-        if (emptyEl) emptyEl.hidden = false;
+    function showEmpty(message = null) {
+        // ASSICURATI SEMPRE che il loading sia nascosto con ogni metodo possibile
+        if (loadingEl) {
+            loadingEl.hidden = true;
+            loadingEl.style.display = 'none';
+            loadingEl.setAttribute('aria-hidden', 'true');
+        }
+        
+        if (emptyEl) {
+            emptyEl.hidden = false;
+            emptyEl.style.display = '';
+            // Se c'è un messaggio di errore, mostralo; altrimenti ripristina il messaggio originale
+            const messageEl = emptyEl.querySelector('p');
+            if (messageEl) {
+                if (message) {
+                    messageEl.textContent = message;
+                    messageEl.style.color = '#d63638'; // Rosso WordPress
+                    messageEl.style.fontWeight = 'bold';
+                } else {
+                    // Ripristina il messaggio originale
+                    messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
+                    messageEl.style.color = ''; // Colore predefinito
+                    messageEl.style.fontWeight = '';
+                }
+            }
+        }
         // Hide all views
         if (timelineEl) timelineEl.hidden = true;
         if (weekViewEl) weekViewEl.hidden = true;
@@ -359,6 +458,7 @@
     function renderTimeline() {
         if (!timelineEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -401,6 +501,7 @@
     function renderWeekView() {
         if (!weekViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -462,6 +563,7 @@
     function renderMonthView() {
         if (!monthViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
@@ -546,6 +648,7 @@
     function renderListView() {
         if (!listViewEl) return;
 
+        // Assicurati sempre che il loading sia nascosto
         if (loadingEl) loadingEl.hidden = true;
 
         if (!reservations.length) {
