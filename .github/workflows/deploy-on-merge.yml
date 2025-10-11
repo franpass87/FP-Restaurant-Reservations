@@ -20,11 +20,13 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
+          tools: composer:v2
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install system dependencies
         run: |
@@ -36,17 +38,17 @@ jobs:
         run: |
           VERSION=$(php -r '$pattern = "/^(\\s*\\*\\s*Version:\\s*)([^\\r\\n]+)/mi"; $file = "fp-restaurant-reservations.php"; $contents = file_get_contents($file); if (preg_match($pattern, $contents, $matches)) { echo trim($matches[2]); } else { exit(1); }')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "Versione estratta: $VERSION"
 
       - name: Check if release already exists
         id: check_release
         run: |
           if gh release view "v${{ steps.version.outputs.VERSION }}" &>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.version.outputs.VERSION }} already exists, skipping deployment"
+            echo "⚠️  Release v${{ steps.version.outputs.VERSION }} già esistente, skip deployment"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.version.outputs.VERSION }} does not exist, proceeding with deployment"
+            echo "✅ Release v${{ steps.version.outputs.VERSION }} non esiste, procedo con deployment"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,8 +71,11 @@ jobs:
           SLUG="fp-restaurant-reservations"
           BUILD_ROOT="$(pwd)/build"
           TARGET_DIR="$BUILD_ROOT/$SLUG"
+          
+          echo "🏗️  Preparazione build per release..."
           rm -rf "$TARGET_DIR"
           mkdir -p "$TARGET_DIR"
+          
           rsync -a --delete \
             --exclude=.git \
             --exclude=.github \
@@ -97,8 +102,32 @@ jobs:
             --exclude=tools \
             --exclude=docker-compose.yml \
             --exclude=AUDIT \
-            --exclude=assets/js/fe \
+            --exclude='assets/js/fe' \
+            --exclude='*.zip' \
+            --exclude='*.log' \
             "$(pwd)/" "$TARGET_DIR/"
+
+      - name: Verify release build
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          SLUG="fp-restaurant-reservations"
+          TARGET_DIR="$(pwd)/build/$SLUG"
+          
+          echo "🔍 Verifica build per release..."
+          
+          # Verifica file critici
+          [ -f "$TARGET_DIR/fp-restaurant-reservations.php" ] || { echo "❌ File principale mancante"; exit 1; }
+          [ -f "$TARGET_DIR/assets/js/admin/agenda-app.js" ] || { echo "❌ agenda-app.js mancante"; exit 1; }
+          [ -d "$TARGET_DIR/vendor" ] || { echo "❌ vendor mancante"; exit 1; }
+          [ -d "$TARGET_DIR/assets/dist" ] || { echo "❌ assets/dist mancante"; exit 1; }
+          
+          # Verifica versione agenda aggiornata
+          if ! grep -q "class AgendaApp" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
+            echo "⚠️  ATTENZIONE: agenda-app.js sembra essere una versione vecchia!"
+            exit 1
+          fi
+          
+          echo "✅ Build verificata e pronta per release"
 
       - name: Create ZIP file
         if: steps.check_release.outputs.exists == 'false'
@@ -107,10 +136,15 @@ jobs:
           BUILD_ROOT="$(pwd)/build"
           VERSION="${{ steps.version.outputs.VERSION }}"
           ZIP_NAME="$SLUG-$VERSION.zip"
+          
+          echo "📦 Creazione ZIP per release: $ZIP_NAME"
           cd "$BUILD_ROOT"
           zip -r "$ZIP_NAME" "$SLUG" > /dev/null
+          
           echo "ZIP_PATH=$BUILD_ROOT/$ZIP_NAME" >> $GITHUB_ENV
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          
+          echo "✅ ZIP creato: $(ls -lh "$ZIP_NAME" | awk '{print $5}')"
 
       - name: Create GitHub Release
         if: steps.check_release.outputs.exists == 'false'
@@ -118,21 +152,41 @@ jobs:
           gh release create "v${{ steps.version.outputs.VERSION }}" \
             "${{ env.ZIP_PATH }}" \
             --title "Release v${{ steps.version.outputs.VERSION }}" \
-            --notes "Release automatica del plugin FP Restaurant Reservations versione ${{ steps.version.outputs.VERSION }}"
+            --notes "Release automatica del plugin FP Restaurant Reservations versione ${{ steps.version.outputs.VERSION }}
+
+**Contenuto Verificato:**
+✅ File principale plugin
+✅ agenda-app.js aggiornato (versione ES6 class)
+✅ Dipendenze Composer (production)
+✅ Assets compilati
+
+**Download:**
+Scarica il file ZIP allegato per installare il plugin su WordPress.
+
+**Installazione:**
+1. Scarica \`${{ env.ZIP_NAME }}\`
+2. Vai su WordPress → Plugin → Aggiungi nuovo → Carica plugin
+3. Carica il file ZIP
+4. Attiva il plugin"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifact (for download)
+      - name: Upload artifact
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: plugin-release-${{ steps.version.outputs.VERSION }}
           path: ${{ env.ZIP_PATH }}
           if-no-files-found: error
+          retention-days: 90
 
       - name: Deployment completed
         if: steps.check_release.outputs.exists == 'false'
         run: |
-          echo "✅ Deployment completato con successo!"
-          echo "📦 Release: v${{ steps.version.outputs.VERSION }}"
-          echo "🔗 URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }}"
+          echo "## 🎉 Deployment Completato" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ZIP:** \`${{ env.ZIP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Plugin verificato e pubblicato su GitHub Releases" >> $GITHUB_STEP_SUMMARY
