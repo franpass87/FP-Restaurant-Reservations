@@ -557,8 +557,8 @@ class Q {
         const s = this.sections.find((r) => (r.getAttribute("data-step") || "") === "date");
         if (s) {
           const r = s.querySelector("[data-fp-resv-date-status]");
-          r && (r.textContent = this.copy.dateRequired || "Seleziona una data per continuare.", r.style.color = "#dc2626", r.setAttribute("data-state", "error"), setTimeout(() => {
-            r.textContent = "", r.style.color = "", r.removeAttribute("data-state");
+          r && (r.textContent = this.copy.dateRequired || "Seleziona una data per continuare.", r.style.color = "#dc2626", r.setAttribute("data-state", "error"), r.hidden = !1, r.removeAttribute("hidden"), setTimeout(() => {
+            r.textContent = "", r.style.color = "", r.removeAttribute("data-state"), r.hidden = !0, r.setAttribute("hidden", "");
           }, 3e3));
         }
         return;
@@ -576,8 +576,8 @@ class Q {
         const r = this.sections.find((n) => (n.getAttribute("data-step") || "") === "slots");
         if (r) {
           const n = r.querySelector("[data-fp-resv-slots-status]");
-          n && (n.textContent = this.copy.slotRequired || "Seleziona un orario per continuare.", n.style.color = "#dc2626", n.setAttribute("data-state", "error"), setTimeout(() => {
-            n.textContent = "", n.style.color = "", n.removeAttribute("data-state");
+          n && (n.textContent = this.copy.slotRequired || "Seleziona un orario per continuare.", n.style.color = "#dc2626", n.setAttribute("data-state", "error"), n.hidden = !1, n.removeAttribute("hidden"), setTimeout(() => {
+            n.textContent = "", n.style.color = "", n.removeAttribute("data-state"), n.hidden = !0, n.setAttribute("hidden", "");
           }, 3e3));
         }
         return;
