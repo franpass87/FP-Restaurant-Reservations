@@ -31,13 +31,18 @@ class AgendaApp {
      * Inizializza l'applicazione
      */
     init() {
-        console.log('[Agenda] Inizializzazione...');
+        console.log('[Agenda] Inizializzazione...', {
+            settings: this.settings,
+            restRoot: this.restRoot,
+            hasNonce: !!this.nonce
+        });
         
         // Verifica settings
         if (!this.restRoot || !this.nonce) {
             console.error('[Agenda] Errore: Configurazione mancante!', {
                 hasRestRoot: !!this.restRoot,
-                hasNonce: !!this.nonce
+                hasNonce: !!this.nonce,
+                settings: this.settings
             });
             this.showError('Errore di configurazione. Ricarica la pagina.');
             return;
@@ -49,8 +54,16 @@ class AgendaApp {
         // Verifica che gli elementi esistano
         if (!this.elements.datePicker) {
             console.error('[Agenda] Errore: Elementi DOM non trovati!');
+            this.showError('Errore: Elementi pagina non trovati. Ricarica la pagina.');
             return;
         }
+        
+        console.log('[Agenda] Elementi DOM caricati:', {
+            datePicker: !!this.elements.datePicker,
+            serviceFilter: !!this.elements.serviceFilter,
+            timeline: !!this.elements.timelineEl,
+            viewButtons: this.elements.viewButtons.length
+        });
         
         // Setup event listeners
         this.setupEventListeners();
@@ -58,8 +71,8 @@ class AgendaApp {
         // Imposta data iniziale
         this.elements.datePicker.value = this.formatDate(this.state.currentDate);
         
-        // Carica i dati iniziali
-        this.loadReservations();
+        // Inizializza vista di default (day) con pulsante attivo
+        this.setView('day');
         
         console.log('[Agenda] Inizializzazione completata');
     }
@@ -195,11 +208,17 @@ class AgendaApp {
      * Cambia vista (giorno/settimana/mese/lista)
      */
     setView(view) {
+        console.log('[Agenda] Cambio vista:', view);
+        
         this.state.currentView = view;
         
         // Aggiorna pulsanti
         this.elements.viewButtons.forEach(btn => {
-            btn.classList.toggle('button-primary', btn.getAttribute('data-view') === view);
+            const isActive = btn.getAttribute('data-view') === view;
+            btn.classList.toggle('button-primary', isActive);
+            if (!isActive) {
+                btn.classList.add('button');
+            }
         });
         
         // Ricarica dati
@@ -210,7 +229,11 @@ class AgendaApp {
      * Carica prenotazioni dal server
      */
     async loadReservations() {
-        console.log('[Agenda] Caricamento prenotazioni...');
+        console.log('[Agenda] Caricamento prenotazioni...', {
+            date: this.state.currentDate,
+            view: this.state.currentView,
+            service: this.state.currentService
+        });
         
         // Nascondi loading per evitare caricamento infinito
         // Mostriamo direttamente i dati o empty state
@@ -224,6 +247,8 @@ class AgendaApp {
             ...(this.state.currentView === 'list' && { range: 'week' }),
             ...(this.state.currentService && { service: this.state.currentService })
         });
+        
+        console.log('[Agenda] Parametri richiesta:', params.toString());
         
         try {
             const data = await this.apiRequest(`agenda?${params}`);
@@ -262,15 +287,19 @@ class AgendaApp {
             this.state.reservations = reservations;
             this.state.error = null;
             
-            console.log(`[Agenda] Caricate ${reservations.length} prenotazioni`);
+            console.log(`[Agenda] ✓ Caricate ${reservations.length} prenotazioni con successo`);
             
             // Renderizza
             this.render();
             
+            return reservations;
+            
         } catch (error) {
-            console.error('[Agenda] Errore nel caricamento:', error);
+            console.error('[Agenda] ✗ Errore nel caricamento:', error);
             this.state.error = error.message;
+            this.state.reservations = [];
             this.showError(error.message);
+            throw error;
         }
     }
     
@@ -309,6 +338,8 @@ class AgendaApp {
      * Renderizza la vista corrente
      */
     render() {
+        console.log('[Agenda] Rendering vista:', this.state.currentView, 'con', this.state.reservations.length, 'prenotazioni');
+        
         this.hideLoading();
         
         if (this.state.reservations.length === 0) {
@@ -335,10 +366,15 @@ class AgendaApp {
             case 'list':
                 this.renderListView();
                 break;
+            default:
+                console.warn('[Agenda] Vista non riconosciuta:', this.state.currentView);
+                this.renderDayView();
         }
         
         // Aggiorna summary
         this.updateSummary();
+        
+        console.log('[Agenda] ✓ Rendering completato');
     }
     
     /**
@@ -662,16 +698,25 @@ class AgendaApp {
      * Mostra empty state
      */
     showEmpty(message = null) {
+        console.log('[Agenda] Mostrando empty state:', message);
+        
         this.hideLoading();
         
         if (this.elements.emptyEl) {
             this.elements.emptyEl.hidden = false;
             
             const messageEl = this.elements.emptyEl.querySelector('p');
-            if (messageEl && message) {
-                messageEl.textContent = message;
-                messageEl.style.color = '#d63638';
-                messageEl.style.fontWeight = 'bold';
+            if (messageEl) {
+                if (message) {
+                    messageEl.textContent = message;
+                    messageEl.style.color = '#d63638';
+                    messageEl.style.fontWeight = 'bold';
+                } else {
+                    // Ripristina il messaggio di default
+                    messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
+                    messageEl.style.color = '';
+                    messageEl.style.fontWeight = '';
+                }
             }
         }
         
@@ -687,6 +732,34 @@ class AgendaApp {
      */
     showError(message) {
         this.showEmpty(`Errore: ${message}`);
+    }
+    
+    /**
+     * Mostra notifica di successo
+     */
+    showSuccessNotification(message) {
+        // Crea elemento notifica
+        const notification = document.createElement('div');
+        notification.className = 'notice notice-success is-dismissible';
+        notification.style.cssText = 'position: fixed; top: 32px; right: 20px; z-index: 999999; min-width: 300px;';
+        notification.innerHTML = `<p><strong>${this.escapeHtml(message)}</strong></p>`;
+        
+        // Aggiungi al DOM
+        document.body.appendChild(notification);
+        
+        // Auto-rimuovi dopo 3 secondi
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.3s';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Rendi dismissible
+        notification.addEventListener('click', (e) => {
+            if (e.target.classList.contains('notice-dismiss')) {
+                notification.remove();
+            }
+        });
     }
     
     /**
@@ -723,6 +796,18 @@ class AgendaApp {
             return;
         }
         
+        // Disabilita il pulsante per evitare doppi invii
+        const submitBtn = document.querySelector('[data-action="submit-reservation"]');
+        const originalText = submitBtn?.textContent;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creazione in corso...';
+        }
+        
+        // Nascondi errori precedenti
+        const errorEl = document.querySelector('[data-role="form-error"]');
+        if (errorEl) errorEl.hidden = true;
+        
         const formData = new FormData(form);
         const data = {};
         formData.forEach((value, key) => {
@@ -736,15 +821,34 @@ class AgendaApp {
         
         data.status = 'pending';
         
+        console.log('[Agenda] Creazione prenotazione con dati:', data);
+        
         try {
-            await this.apiRequest('agenda/reservations', { method: 'POST', data });
+            const response = await this.apiRequest('agenda/reservations', { method: 'POST', data });
+            console.log('[Agenda] Prenotazione creata con successo:', response);
+            
+            // Chiudi modale
             this.closeModal('[data-modal="new-reservation"]');
-            this.loadReservations();
+            
+            // Mostra notifica di successo
+            this.showSuccessNotification('Prenotazione creata con successo!');
+            
+            // Ricarica le prenotazioni
+            await this.loadReservations();
+            
+            console.log('[Agenda] Agenda aggiornata dopo creazione');
         } catch (error) {
-            const errorEl = document.querySelector('[data-role="form-error"]');
+            console.error('[Agenda] Errore creazione prenotazione:', error);
+            
             if (errorEl) {
                 errorEl.textContent = error.message || 'Impossibile creare la prenotazione';
                 errorEl.hidden = false;
+            }
+        } finally {
+            // Riabilita il pulsante
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         }
     }
@@ -890,7 +994,7 @@ class AgendaApp {
     async apiRequest(path, options = {}) {
         const url = path.startsWith('http') ? path : `${this.restRoot}/${path.replace(/^\//, '')}`;
         
-        console.log(`[API] ${options.method || 'GET'} ${url}`);
+        console.log(`[API] ${options.method || 'GET'} ${url}`, options.data ? { data: options.data } : '');
         
         const config = {
             method: options.method || 'GET',
@@ -903,33 +1007,68 @@ class AgendaApp {
         
         if (options.data) {
             config.body = JSON.stringify(options.data);
+            console.log('[API] Request body:', config.body);
             if (!config.method || config.method === 'GET') {
                 config.method = 'POST';
             }
         }
         
-        const response = await fetch(url, config);
-        
-        console.log(`[API] Status: ${response.status}`);
-        
-        if (!response.ok) {
-            const payload = await response.json().catch(() => ({}));
-            const errorMsg = payload.message || `Richiesta fallita con status ${response.status}`;
-            throw new Error(errorMsg);
-        }
-        
-        if (response.status === 204) return null;
-        
-        const text = await response.text();
-        if (!text || text.trim() === '') {
-            return null;
-        }
-        
         try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error('[API] Errore parsing JSON:', text.substring(0, 200));
-            throw new Error('Risposta JSON non valida dal server');
+            const response = await fetch(url, config);
+            
+            console.log(`[API] Status: ${response.status} ${response.statusText}`);
+            
+            if (!response.ok) {
+                let errorMsg = `Richiesta fallita con status ${response.status}`;
+                
+                try {
+                    const payload = await response.json();
+                    console.error('[API] Error payload:', payload);
+                    errorMsg = payload.message || payload.error || errorMsg;
+                    
+                    // Se c'è un errore di permessi, logga più dettagli
+                    if (response.status === 403) {
+                        console.error('[API] Errore permessi! Nonce:', this.nonce);
+                        console.error('[API] Headers:', Object.fromEntries(response.headers.entries()));
+                    }
+                } catch (e) {
+                    console.error('[API] Non posso fare parse dell\'errore:', e);
+                }
+                
+                throw new Error(errorMsg);
+            }
+            
+            if (response.status === 204) {
+                console.log('[API] ✓ 204 No Content');
+                return null;
+            }
+            
+            const text = await response.text();
+            console.log('[API] Response length:', text.length, 'bytes');
+            
+            if (!text || text.trim() === '') {
+                console.log('[API] ✓ Empty response');
+                return null;
+            }
+            
+            try {
+                const data = JSON.parse(text);
+                console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
+                return data;
+            } catch (e) {
+                console.error('[API] Errore parsing JSON:', e);
+                console.error('[API] Response preview:', text.substring(0, 500));
+                throw new Error('Risposta JSON non valida dal server');
+            }
+        } catch (error) {
+            // Se è un errore di rete
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                console.error('[API] Errore di rete:', error);
+                throw new Error('Impossibile contattare il server. Controlla la connessione.');
+            }
+            
+            // Rilancia l'errore
+            throw error;
         }
     }
     
