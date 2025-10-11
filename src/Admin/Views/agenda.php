@@ -83,14 +83,14 @@ $headingId   = 'fp-resv-agenda-title';
 
             <!-- Contenitore Agenda -->
             <div class="fp-resv-agenda__container" id="fp-resv-agenda-timeline">
-                <!-- Loading State - SEMPRE NASCOSTO PER EVITARE CARICAMENTO INFINITO -->
-                <div class="fp-resv-agenda__loading" data-role="loading" hidden style="display: none !important;">
+                <!-- Loading State -->
+                <div class="fp-resv-agenda__loading" data-role="loading" hidden>
                     <div class="fp-resv-spinner"></div>
                     <p><?php esc_html_e('Caricamento prenotazioni...', 'fp-restaurant-reservations'); ?></p>
                 </div>
 
-                <!-- Empty State - VISIBILE DI DEFAULT -->
-                <div class="fp-resv-agenda__empty" data-role="empty">
+                <!-- Empty State - Nascosto di default, mostrato solo se non ci sono dati -->
+                <div class="fp-resv-agenda__empty" data-role="empty" hidden>
                     <span class="dashicons dashicons-calendar-alt"></span>
                     <h3><?php esc_html_e('Nessuna prenotazione', 'fp-restaurant-reservations'); ?></h3>
                     <p><?php esc_html_e('Non ci sono prenotazioni per questo periodo', 'fp-restaurant-reservations'); ?></p>

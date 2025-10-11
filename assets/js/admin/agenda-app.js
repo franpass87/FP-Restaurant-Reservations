@@ -240,9 +240,6 @@
     }
 
     function loadReservations() {
-        // NON MOSTRARE MAI IL LOADING - mostra subito empty state o i dati esistenti
-        // Questo elimina il problema del caricamento infinito
-        
         // Increment request ID to detect stale responses
         const requestId = ++loadRequestId;
 
@@ -255,16 +252,7 @@
             ...(currentService && { service: currentService })
         });
 
-        // Mostra immediatamente empty state se non ci sono prenotazioni
-        if (reservations.length === 0) {
-            showEmpty();
-        } else {
-            // Mostra i dati esistenti mentre carica in background
-            renderCurrentView();
-            updateSummary();
-        }
-
-        console.log('[Agenda] Loading reservations in background...');
+        console.log('[Agenda] Loading reservations for date:', startDate);
 
         request(`agenda?${params}`)
             .then(data => {
@@ -275,14 +263,24 @@
                 }
                 
                 console.log('[Agenda] Data received:', data);
+                console.log('[Agenda] Data is array:', Array.isArray(data));
+                console.log('[Agenda] Data length:', Array.isArray(data) ? data.length : 'N/A');
                 
                 // L'API restituisce direttamente un array di prenotazioni
                 reservations = Array.isArray(data) ? data : [];
                 
+                // Nascondi sempre il loading
+                if (loadingEl) {
+                    loadingEl.hidden = true;
+                    loadingEl.style.display = 'none';
+                }
+                
                 // Aggiorna la vista con i nuovi dati
                 if (reservations.length === 0) {
+                    console.log('[Agenda] No reservations, showing empty state');
                     showEmpty();
                 } else {
+                    console.log('[Agenda] Showing', reservations.length, 'reservations');
                     renderCurrentView();
                     updateSummary();
                 }
@@ -295,7 +293,13 @@
                 
                 console.error('[Agenda] Error loading reservations:', error);
                 
-                // Mostra messaggio di errore ma NON bloccare l'interfaccia
+                // Nascondi sempre il loading anche in caso di errore
+                if (loadingEl) {
+                    loadingEl.hidden = true;
+                    loadingEl.style.display = 'none';
+                }
+                
+                // Mostra messaggio di errore
                 let errorMessage = 'Errore nel caricamento delle prenotazioni.';
                 if (error.message) {
                     if (error.message.includes('403') || error.message.includes('forbidden')) {
