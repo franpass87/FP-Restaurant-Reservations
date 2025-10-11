@@ -1377,6 +1377,28 @@
     margin-top: 1rem;
 }
 
+.fp-resv-sticky-cta__price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--fp-resv-color-primary);
+}
+
+.fp-resv-sticky-cta__price-label {
+    font-size: 0.85em;
+    font-weight: 400;
+    color: var(--fp-resv-color-muted);
+}
+
+.fp-resv-sticky-cta__price-value {
+    font-size: 1.35em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
 @media (min-width: 768px) {
     .fp-resv-sticky-cta {
         position: static;
@@ -1384,6 +1406,11 @@
         background: none;
         border: 0;
         box-shadow: none;
+    }
+
+    .fp-resv-sticky-cta__price {
+        font-size: 1.3em;
+        margin-bottom: 1rem;
     }
 }
 

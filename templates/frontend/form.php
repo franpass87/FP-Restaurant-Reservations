@@ -555,6 +555,10 @@ endif;
             $submitTooltip = $strings['messages']['submit_tooltip'] ?? __('Completa i campi obbligatori per abilitare la prenotazione.', 'fp-restaurant-reservations');
             $submitHintId = $formId . '-submit-hint';
             ?>
+            <div class="fp-resv-sticky-cta__price" data-fp-resv-sticky-price aria-live="polite">
+                <span class="fp-resv-sticky-cta__price-label"><?php echo esc_html__('Da', 'fp-restaurant-reservations'); ?></span>
+                <span class="fp-resv-sticky-cta__price-value" data-fp-resv-sticky-price-value><?php echo esc_html($defaultMealPrice ? '€' . $defaultMealPrice : ''); ?></span>
+            </div>
             <button
                 type="submit"
                 class="fp-resv-button fp-resv-button--submit fp-btn fp-btn--primary"

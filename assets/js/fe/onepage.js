@@ -44,6 +44,9 @@ class FormApp {
         this.submitSpinner = this.submitButton ? this.submitButton.querySelector('[data-fp-resv-submit-spinner]') : null;
         this.submitHint = this.form ? this.form.querySelector('[data-fp-resv-submit-hint]') : null;
         this.stickyCta = this.form ? this.form.querySelector('[data-fp-resv-sticky-cta]') : null;
+        this.stickyPriceContainer = this.form ? this.form.querySelector('[data-fp-resv-sticky-price]') : null;
+        this.stickyPriceLabel = this.stickyPriceContainer ? this.stickyPriceContainer.querySelector('.fp-resv-sticky-cta__price-label') : null;
+        this.stickyPriceValue = this.stickyPriceContainer ? this.stickyPriceContainer.querySelector('[data-fp-resv-sticky-price-value]') : null;
         this.successAlert = this.form ? this.form.querySelector('[data-fp-resv-success]') : null;
         this.errorAlert = this.form ? this.form.querySelector('[data-fp-resv-error]') : null;
         this.errorMessage = this.form ? this.form.querySelector('[data-fp-resv-error-message]') : null;
@@ -843,6 +846,9 @@ class FormApp {
         this.clearSlotSelection({ schedule: false });
         this.updateMealNoticeFromButton(button);
 
+        // Aggiorna il prezzo nella sticky bar quando cambia il meal
+        this.updateStickyPrice();
+
         this.updateSubmitState();
     }
 
@@ -1408,6 +1414,44 @@ class FormApp {
                     break;
             }
         });
+
+        // Aggiorna anche il prezzo nella sticky bar
+        this.updateStickyPrice();
+    }
+
+    updateStickyPrice() {
+        if (!this.stickyPriceContainer || !this.stickyPriceValue) {
+            return;
+        }
+
+        // Ottieni il prezzo base per persona dal campo nascosto
+        const pricePerPerson = this.hiddenPrice && this.hiddenPrice.value ? parseFloat(this.hiddenPrice.value) : 0;
+        
+        // Ottieni il numero di persone
+        const partySize = this.partyField && this.partyField.value ? parseInt(this.partyField.value, 10) : 0;
+
+        // Se non c'è prezzo, nascondi il container
+        if (pricePerPerson <= 0) {
+            this.stickyPriceContainer.style.display = 'none';
+            return;
+        }
+
+        this.stickyPriceContainer.style.display = '';
+
+        // Se non c'è party size o è 0, mostra "Da €[prezzo_base]"
+        if (partySize <= 0) {
+            if (this.stickyPriceLabel) {
+                this.stickyPriceLabel.textContent = 'Da';
+            }
+            this.stickyPriceValue.textContent = '€' + pricePerPerson.toFixed(2).replace('.', ',');
+        } else {
+            // Altrimenti calcola e mostra il prezzo totale
+            const totalPrice = pricePerPerson * partySize;
+            if (this.stickyPriceLabel) {
+                this.stickyPriceLabel.textContent = '';
+            }
+            this.stickyPriceValue.textContent = '€' + totalPrice.toFixed(2).replace('.', ',');
+        }
     }
 
     async handleSubmit(event) {
