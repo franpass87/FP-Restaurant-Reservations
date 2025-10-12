@@ -519,8 +519,11 @@ final class Plugin
         $container->register(PaymentsREST::class, $paymentsRest);
         $container->register('payments.rest', $paymentsRest);
 
+        error_log('[FP Resv Plugin] Inizializzazione AdminREST...');
         $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar, $tablesLayout);
+        error_log('[FP Resv Plugin] Chiamata register() su AdminREST...');
         $adminRest->register();
+        error_log('[FP Resv Plugin] AdminREST registrato con successo');
         $container->register(ReservationsAdminREST::class, $adminRest);
         $container->register('reservations.admin_rest', $adminRest);
 
