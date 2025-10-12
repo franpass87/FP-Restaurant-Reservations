@@ -33,7 +33,10 @@ final class Shortcodes
         error_log('[FP-RESV] Shortcode render() chiamato');
         error_log('[FP-RESV] Attributes: ' . print_r($atts, true));
         error_log('[FP-RESV] Current URL: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
-        error_log('[FP-RESV] Is main query: ' . (is_main_query() ? 'YES' : 'NO'));
+        error_log('[FP-RESV] Is main query: ' . (function_exists('is_main_query') ? (is_main_query() ? 'YES' : 'NO') : 'N/A'));
+        
+        // Test immediato: restituisce qualcosa anche se fallisce tutto
+        $debugMode = defined('WP_DEBUG') && WP_DEBUG;
         
         try {
             $atts = shortcode_atts(
@@ -49,8 +52,10 @@ final class Shortcodes
             $container = ServiceContainer::getInstance();
             if (!$container) {
                 error_log('[FP-RESV] CRITICAL: ServiceContainer not available');
-                return self::renderError('ServiceContainer non disponibile');
+                $errorMsg = 'ServiceContainer non disponibile. Il plugin potrebbe non essere completamente inizializzato.';
+                return self::renderError($errorMsg);
             }
+            error_log('[FP-RESV] ServiceContainer OK');
             
             $options = $container->get(Options::class);
             if (!$options instanceof Options) {
@@ -125,12 +130,17 @@ final class Shortcodes
             return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode
+            error_log('[FP-RESV] ========================================');
+            error_log('[FP-RESV] EXCEPTION CAUGHT!');
             error_log('[FP-RESV] Error rendering form: ' . $e->getMessage());
             error_log('[FP-RESV] Stack trace: ' . $e->getTraceAsString());
             error_log('[FP-RESV] File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            error_log('[FP-RESV] ========================================');
             
-            // Return visible error in debug mode
-            return self::renderError('Errore: ' . $e->getMessage());
+            // Return visible error ALWAYS when there's an exception
+            $errorMsg = 'Errore nel rendering del form: ' . $e->getMessage();
+            $errorMsg .= '<br>File: ' . basename($e->getFile()) . ' Linea: ' . $e->getLine();
+            return self::renderError($errorMsg);
         }
     }
     
@@ -141,18 +151,15 @@ final class Shortcodes
     {
         error_log('[FP-RESV] Rendering error: ' . $message);
         
-        // In debug mode, show visible error
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            $html = '<div class="fp-resv-error" style="background: #fee; border: 2px solid #c33; padding: 20px; margin: 20px 0; border-radius: 8px; font-family: sans-serif;">';
-            $html .= '<h3 style="margin: 0 0 10px; color: #c33;">⚠️ FP Restaurant Reservations - Errore</h3>';
-            $html .= '<p style="margin: 0;"><strong>Messaggio:</strong> ' . esc_html($message) . '</p>';
-            $html .= '<p style="margin: 10px 0 0; font-size: 0.9em; color: #666;">Controlla i log PHP per maggiori dettagli. Per nascondere questo messaggio, disattiva WP_DEBUG.</p>';
-            $html .= '</div>';
-            return $html;
-        }
-        
-        // In production, return HTML comment only
-        return '<!-- FP-RESV Error: ' . esc_html($message) . ' -->';
+        // ALWAYS show visible error (temporarily for debugging)
+        // This ensures we can see what's wrong even if WP_DEBUG is off
+        $html = '<div class="fp-resv-error" style="background: #fee; border: 2px solid #c33; padding: 20px; margin: 20px 0; border-radius: 8px; font-family: sans-serif; max-width: 800px;">';
+        $html .= '<h3 style="margin: 0 0 10px; color: #c33;">⚠️ FP Restaurant Reservations - Errore</h3>';
+        $html .= '<p style="margin: 0;"><strong>Messaggio:</strong> ' . wp_kses_post($message) . '</p>';
+        $html .= '<p style="margin: 10px 0 0; font-size: 0.9em; color: #666;">Controlla i log PHP (wp-content/debug.log) per maggiori dettagli.</p>';
+        $html .= '<p style="margin: 10px 0 0; font-size: 0.85em; color: #999;">Se il problema persiste, contatta il supporto con questo messaggio.</p>';
+        $html .= '</div>';
+        return $html;
     }
 
     /**

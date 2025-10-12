@@ -45,6 +45,10 @@ final class WidgetController
         // Force WPBakery to process our shortcode in text blocks
         add_filter('the_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
         
+        // WPBakery specific hooks
+        add_filter('vc_shortcode_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
+        add_filter('vc_raw_html_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
+        
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
         

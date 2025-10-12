@@ -14,6 +14,7 @@ use function current_user_can;
 use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
+use function get_option;
 use function rest_url;
 use function sanitize_key;
 use function wp_create_nonce;
@@ -71,12 +72,18 @@ final class AdminController
         wp_enqueue_style($styleHandle, $styleUrl, [], $version);
 
         // Carica meal plans configurati
-        $container = Plugin::container();
-        $options = $container->get(\FP\Resv\Domain\Settings\Options::class);
-        if ($options instanceof \FP\Resv\Domain\Settings\Options) {
-            $mealsDefinition = $options->getField('fp_resv_frontend', 'frontend_meals', '');
-            $meals = \FP\Resv\Domain\Settings\MealPlan::parse(is_string($mealsDefinition) ? $mealsDefinition : '');
-        } else {
+        $meals = [];
+        try {
+            $generalOptions = get_option('fp_resv_general', []);
+            $mealsDefinition = is_array($generalOptions) && isset($generalOptions['frontend_meals']) 
+                ? $generalOptions['frontend_meals'] 
+                : '';
+            
+            if (is_string($mealsDefinition) && $mealsDefinition !== '') {
+                $meals = \FP\Resv\Domain\Settings\MealPlan::parse($mealsDefinition);
+            }
+        } catch (\Exception $e) {
+            // Fallback silenzioso a array vuoto
             $meals = [];
         }
 
