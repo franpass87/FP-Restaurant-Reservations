@@ -388,11 +388,13 @@ final class REST
             $nonce = $request->get_header('X-WP-Nonce');
         }
 
-        // Verifica il nonce
+        // Verifica il nonce (accetta anche -1 per nonce "vecchi" ma ancora validi)
         $nonceValid = wp_verify_nonce($nonce, 'fp_resv_submit');
         
         // SEMPRE includi info di debug in caso di fallimento (non solo con WP_DEBUG)
-        if (!is_string($nonce) || $nonce === '' || !$nonceValid) {
+        // Nonce valido può essere: 1 (corrente) o 2 (vecchio ma accettato)
+        // false = completamente invalido
+        if (!is_string($nonce) || $nonce === '' || $nonceValid === false) {
             $debugInfo = [
                 'nonce_found' => is_string($nonce) && $nonce !== '',
                 'nonce_valid' => $nonceValid !== false,
