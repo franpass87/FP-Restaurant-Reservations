@@ -165,11 +165,23 @@ final class AdminController
             $meals = [];
         }
 
+        // Leggi opzione debug mode (opzionale, default false)
+        $debugOptions = get_option('fp_resv_debug', []);
+        $debugMode = is_array($debugOptions) && isset($debugOptions['manager_debug_panel']) 
+            ? (bool) $debugOptions['manager_debug_panel'] 
+            : false;
+        
+        // Fallback: attiva automaticamente se WP_DEBUG è true
+        if (!$debugMode && defined('WP_DEBUG') && WP_DEBUG) {
+            $debugMode = true;
+        }
+        
         wp_localize_script($scriptHandle, 'fpResvManagerSettings', [
             'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),
             'nonce'     => wp_create_nonce('wp_rest'),
             'publicNonce' => wp_create_nonce('fp_resv_submit'), // Nonce per l'endpoint pubblico
-            'meals'     => $meals, // Aggiunto!
+            'meals'     => $meals,
+            'debugMode' => $debugMode, // Attiva/disattiva debug panel
             'links'     => [
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
                 'manager'  => esc_url_raw(admin_url('admin.php?page=fp-resv-manager')),

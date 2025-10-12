@@ -577,7 +577,7 @@ final class Plugin
         $container->register('surveys.rest', $surveysRest);
 
         $reportsRest = new ReportsREST($reportsService);
-        $reportsRest->register();
+        $reportsRest->register(); // ← Registra gli endpoint REST
         $container->register(ReportsREST::class, $reportsRest);
         $container->register('reports.rest', $reportsRest);
 

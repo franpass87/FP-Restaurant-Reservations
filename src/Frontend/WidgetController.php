@@ -195,53 +195,90 @@ final class WidgetController
             #fp-resv-default {
                 padding: 0px !important;
             }
-            /* RIDUCI SPAZI VERTICALI SU MOBILE */
+            /* RIDUCI SPAZI VERTICALI SU MOBILE - ULTRA COMPATTO */
             .fp-resv-widget .fp-resv-step,
             #fp-resv-default .fp-resv-step {
-                padding: 1rem !important;
-                margin-bottom: 0.5rem !important;
+                padding: 0.5rem !important;
+                margin-bottom: 0 !important;
             }
             .fp-resv-widget .fp-section,
             #fp-resv-default .fp-section {
-                margin-bottom: 0.75rem !important;
-                padding: 0.75rem !important;
+                margin-bottom: 0.5rem !important;
+                padding: 0.5rem !important;
             }
             .fp-resv-widget .fp-resv-field,
             .fp-resv-widget .fp-field,
             #fp-resv-default .fp-resv-field,
             #fp-resv-default .fp-field {
-                margin-bottom: 0.75rem !important;
+                margin-bottom: 0.5rem !important;
             }
             .fp-resv-widget .fp-resv-step__header,
             #fp-resv-default .fp-resv-step__header {
-                margin-bottom: 0.75rem !important;
+                margin-bottom: 0.5rem !important;
             }
             .fp-resv-widget .fp-hint,
             .fp-resv-widget .fp-resv-meal-notice,
             #fp-resv-default .fp-hint,
             #fp-resv-default .fp-resv-meal-notice {
-                margin-top: 0.5rem !important;
-                margin-bottom: 0.5rem !important;
-                padding: 0.5rem 0.75rem !important;
+                margin-top: 0.25rem !important;
+                margin-bottom: 0.25rem !important;
+                padding: 0.4rem 0.5rem !important;
             }
             .fp-resv-widget .fp-topbar,
             #fp-resv-default .fp-topbar {
-                padding: 1rem !important;
-                margin-bottom: 0.75rem !important;
+                padding: 0.75rem !important;
+                margin-bottom: 0.5rem !important;
             }
             .fp-resv-widget .fp-resv-widget__headline,
             #fp-resv-default .fp-resv-widget__headline {
-                margin-bottom: 0.25rem !important;
+                margin-bottom: 0.15rem !important;
             }
             .fp-resv-widget .fp-resv-step__footer,
             #fp-resv-default .fp-resv-step__footer {
-                margin-top: 1rem !important;
-                gap: 0.5rem !important;
+                margin-top: 0.75rem !important;
+                gap: 0.4rem !important;
             }
             .fp-resv-widget .fp-resv-sticky-cta,
             #fp-resv-default .fp-resv-sticky-cta {
-                padding: 0.5rem 1rem !important;
-                margin-top: 0.5rem !important;
+                padding: 0.4rem 0.75rem !important;
+                margin-top: 0.25rem !important;
+            }
+            /* Riduci spazi tra pills e slots */
+            .fp-resv-widget .fp-meals,
+            .fp-resv-widget .fp-slots,
+            #fp-resv-default .fp-meals,
+            #fp-resv-default .fp-slots {
+                padding: 0.5rem !important;
+                gap: 0.4rem !important;
+            }
+            .fp-resv-widget .fp-pills-list,
+            .fp-resv-widget .fp-slots__list,
+            #fp-resv-default .fp-pills-list,
+            #fp-resv-default .fp-slots__list {
+                gap: 0.4rem !important;
+            }
+            .fp-resv-widget .fp-pill,
+            .fp-resv-widget .fp-meal-pill,
+            #fp-resv-default .fp-pill,
+            #fp-resv-default .fp-meal-pill {
+                padding: 0.4rem 0.75rem !important;
+                min-height: 2.25rem !important;
+            }
+            /* Riduci padding input */
+            .fp-resv-widget .fp-input,
+            .fp-resv-widget .fp-select,
+            .fp-resv-widget .fp-textarea,
+            #fp-resv-default .fp-input,
+            #fp-resv-default .fp-select,
+            #fp-resv-default .fp-textarea {
+                padding: 0.5rem 0.75rem !important;
+            }
+            /* Riduci margini label */
+            .fp-resv-widget .fp-field__label,
+            .fp-resv-widget .fp-resv-step__label,
+            #fp-resv-default .fp-field__label,
+            #fp-resv-default .fp-resv-step__label {
+                margin-bottom: 0.25rem !important;
             }
         }
         .fp-resv-widget .fp-resv-step,
@@ -406,7 +443,12 @@ final class WidgetController
             #fp-resv-default .fp-progress {
                 margin-top: 0 !important;
                 margin-bottom: 0 !important;
-                padding: 0.75rem 1rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+            .fp-resv-widget .fp-progress__item,
+            #fp-resv-default .fp-progress__item {
+                padding: 0.5rem 0.85rem !important;
+                min-height: 2.25rem !important;
             }
         }
         /* Progress bar pseudo-elementi - più chiari e meno invadenti */

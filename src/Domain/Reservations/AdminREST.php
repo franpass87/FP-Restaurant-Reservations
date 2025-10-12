@@ -466,12 +466,7 @@ final class AdminREST
             $startDate = $start->format('Y-m-d');
             $endDate = $end->format('Y-m-d');
             
-            error_log("=== CERCANDO PRENOTAZIONI: da {$startDate} a {$endDate} ===");
-            
-            // 🚨 TEMPORANEO: Cerca TUTTE le prenotazioni (range molto ampio) per debug
-            $rows = $this->reservations->findAgendaRange('2020-01-01', '2030-12-31');
-            
-            error_log("=== QUERY FATTA! Risultati trovati: " . (is_array($rows) ? count($rows) : 'NULL') . " ===");
+            $rows = $this->reservations->findAgendaRange($startDate, $endDate);
             
             // STEP 8: Mappa prenotazioni
             $step = 8;

@@ -54,12 +54,17 @@
 
   function bindEvents() {
     if (reloadButton) {
+      console.log('[Analytics] Bottone Aggiorna trovato e binding event listener');
       reloadButton.addEventListener('click', function () {
+        console.log('[Analytics] Bottone Aggiorna cliccato!');
         state.start = startInput ? startInput.value : state.start;
         state.end = endInput ? endInput.value : state.end;
         state.location = locationSelect ? locationSelect.value : state.location;
+        console.log('[Analytics] State aggiornato:', state);
         fetchAnalytics();
       });
+    } else {
+      console.error('[Analytics] Bottone Aggiorna NON trovato! Selettore: [data-action="reload"]');
     }
 
     if (exportButton) {
@@ -152,10 +157,18 @@
   }
 
   function fetchAnalytics() {
+    console.log('[Analytics] fetchAnalytics chiamata');
     if (isLoading) {
+      console.log('[Analytics] Già in loading, skip');
       return;
     }
 
+    console.log('[Analytics] Inizio caricamento analytics con parametri:', {
+      start: state.start,
+      end: state.end,
+      location: state.location
+    });
+    
     setLoading(true);
     toggleEmpty(false);
 
@@ -165,6 +178,7 @@
       location: state.location,
     })
       .then(function (response) {
+        console.log('[Analytics] Risposta ricevuta:', response);
         var analytics = response && response.analytics ? response.analytics : null;
         if (!analytics) {
           toggleEmpty(true);
@@ -202,12 +216,14 @@
 
         speak(settings.i18n ? settings.i18n.title : '');
       })
-      .catch(function () {
+      .catch(function (error) {
+        console.error('[Analytics] Errore nel caricamento:', error);
         toggleEmpty(true);
         resetSummary();
         destroyCharts();
         clearTable();
         speak(settings.i18n ? settings.i18n.downloadFailed : '');
+        alert('Errore nel caricamento degli analytics: ' + error.message);
       })
       .finally(function () {
         setLoading(false);

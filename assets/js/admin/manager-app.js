@@ -13,6 +13,7 @@ class ReservationManager {
             nonce: window.fpResvManagerSettings?.nonce || '',
             strings: window.fpResvManagerSettings?.strings || {},
             meals: window.fpResvManagerSettings?.meals || [],
+            debugMode: window.fpResvManagerSettings?.debugMode || false,
         };
 
         // State management
@@ -562,7 +563,7 @@ class ReservationManager {
             
             clearTimeout(timeoutId);
 
-            // 🚨 DEBUG PANEL - Mostra info dettagliate
+            // Debug panel (se abilitato nelle impostazioni)
             this.showDebugPanel({
                 url: url,
                 status: response.status,
@@ -608,7 +609,7 @@ class ReservationManager {
             // Aggiorna statistiche nelle card
             this.updateStats(data.stats, data.meta);
             
-            // Aggiorna debug panel con successo
+            // Debug panel con successo
             this.showDebugPanel({
                 success: true,
                 reservationsCount: this.state.reservations.length,
@@ -1042,12 +1043,21 @@ class ReservationManager {
         
         // Raggruppa prenotazioni per data
         const reservationsByDate = {};
+        
+        // Filtra solo prenotazioni della settimana corrente
+        const weekStart = monday.toISOString().split('T')[0];
+        const weekEnd = sunday.toISOString().split('T')[0];
+        
         this.state.reservations.forEach(resv => {
             const date = resv.date;
-            if (!reservationsByDate[date]) {
-                reservationsByDate[date] = [];
+            
+            // Verifica che la data sia nella settimana
+            if (date >= weekStart && date <= weekEnd) {
+                if (!reservationsByDate[date]) {
+                    reservationsByDate[date] = [];
+                }
+                reservationsByDate[date].push(resv);
             }
-            reservationsByDate[date].push(resv);
         });
         
         // Nome giorni
@@ -1058,22 +1068,22 @@ class ReservationManager {
         const sundayStr = this.formatItalianDate(sunday);
         
         let html = `
-            <div class="fp-week-header">
-                <h2>Settimana ${mondayStr} - ${sundayStr}</h2>
-                <div class="fp-week-nav">
-                    <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente">
+            <div class="fp-week-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Settimana ${mondayStr} - ${sundayStr}</h2>
+                <div class="fp-week-nav" style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
                     </button>
-                    <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week">
+                    <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week" style="padding: 8px 16px; border: 1px solid #0073aa; background: white; color: #0073aa; border-radius: 4px; cursor: pointer; font-weight: 500;">
                         Questa Settimana
                     </button>
-                    <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva">
+                    <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-right-alt2"></span>
                     </button>
                 </div>
             </div>
 
-            <div class="fp-week-grid">
+            <div class="fp-week-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
         `;
         
         // Giorni della settimana
@@ -1103,19 +1113,23 @@ class ReservationManager {
                 byMeal[meal] = (byMeal[meal] || 0) + 1;
             });
             
+            const baseStyle = 'background: white; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); min-height: 200px;';
+            const todayStyle = isToday ? 'border: 2px solid #0073aa;' : '';
+            const selectedStyle = isSelected ? 'background: #f0f9ff;' : '';
+            
             html += `
-                <div class="${dayClass}" data-date="${dateStr}">
-                    <div class="fp-week-day__header">
-                        <div class="fp-week-day__name">${dayNames[i]}</div>
-                        <div class="fp-week-day__number">${dayNumber}</div>
+                <div class="${dayClass}" data-date="${dateStr}" style="${baseStyle} ${todayStyle} ${selectedStyle}">
+                    <div class="fp-week-day__header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;">
+                        <div class="fp-week-day__name" style="font-weight: 600; color: #4b5563; font-size: 12px; text-transform: uppercase;">${dayNames[i]}</div>
+                        <div class="fp-week-day__number" style="font-size: 18px; font-weight: 700; color: ${isToday ? '#0073aa' : '#1f2937'};">${dayNumber}</div>
                     </div>
                     ${reservations.length > 0 ? `
-                        <div class="fp-week-day__stats">
-                            <div class="fp-week-day__count">${reservations.length} pren.</div>
-                            <div class="fp-week-day__guests">${totalGuests} coperti</div>
+                        <div class="fp-week-day__stats" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <div class="fp-week-day__count" style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 12px; font-weight: 600;">${reservations.length} pren.</div>
+                            <div class="fp-week-day__guests" style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 12px; font-weight: 600;">${totalGuests} coperti</div>
                         </div>
-                        <div class="fp-week-day__reservations">
-                            ${reservations.slice(0, 3).map(resv => {
+                        <div class="fp-week-day__reservations" style="display: flex; flex-direction: column; gap: 6px;">
+                            ${reservations.slice(0, 5).map(resv => {
                                 const statusColors = {
                                     confirmed: '#10b981',
                                     pending: '#f59e0b',
@@ -1128,23 +1142,29 @@ class ReservationManager {
                                 const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
                                 
                                 return `
-                                    <div class="fp-week-reservation" data-id="${resv.id}" data-action="view-reservation">
-                                        <div class="fp-week-reservation__time">${resv.time}</div>
-                                        <div class="fp-week-reservation__name">${this.escapeHtml(guestName)}</div>
-                                        <div class="fp-week-reservation__party" style="border-left: 3px solid ${statusColor}">
-                                            ${resv.party}
+                                    <div class="fp-week-reservation" data-id="${resv.id}" data-action="view-reservation" 
+                                         style="background: #f9fafb; padding: 8px; border-radius: 6px; cursor: pointer; border-left: 3px solid ${statusColor}; transition: all 0.2s;"
+                                         onmouseover="this.style.background='#e5e7eb'" 
+                                         onmouseout="this.style.background='#f9fafb'">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div class="fp-week-reservation__time" style="font-weight: 600; color: #374151; font-size: 13px;">${resv.time}</div>
+                                            <div class="fp-week-reservation__party" style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 4px;">
+                                                <span class="dashicons dashicons-groups" style="font-size: 14px;"></span>
+                                                ${resv.party}
+                                            </div>
                                         </div>
+                                        <div class="fp-week-reservation__name" style="font-size: 12px; color: #6b7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHtml(guestName)}</div>
                                     </div>
                                 `;
                             }).join('')}
-                            ${reservations.length > 3 ? `
-                                <div class="fp-week-day__more">
-                                    +${reservations.length - 3} altre
+                            ${reservations.length > 5 ? `
+                                <div class="fp-week-day__more" style="text-align: center; font-size: 11px; color: #6b7280; font-weight: 600; padding: 6px;">
+                                    +${reservations.length - 5} altre
                                 </div>
                             ` : ''}
                         </div>
                     ` : `
-                        <div class="fp-week-day__empty">Nessuna prenotazione</div>
+                        <div class="fp-week-day__empty" style="text-align: center; color: #9ca3af; font-size: 13px; padding: 40px 10px;">Nessuna prenotazione</div>
                     `}
                 </div>
             `;
@@ -1267,6 +1287,7 @@ class ReservationManager {
     }
 
     renderReservationDetails(resv) {
+        const customer = this.getCustomerData(resv);
         const statusLabels = {
             confirmed: 'Confermato',
             pending: 'In attesa',
@@ -1274,9 +1295,22 @@ class ReservationManager {
             no_show: 'No-show',
             cancelled: 'Cancellato',
         };
+        
+        const statusColors = {
+            confirmed: '#10b981',
+            pending: '#f59e0b',
+            visited: '#3b82f6',
+            no_show: '#ef4444',
+            cancelled: '#6b7280',
+        };
 
         return `
             <div class="fp-reservation-details">
+                <div class="fp-detail-group">
+                    <label>ID Prenotazione</label>
+                    <div class="fp-detail-value"><strong>#${resv.id}</strong></div>
+                </div>
+                
                 <div class="fp-detail-group">
                     <label>Data e Ora</label>
                     <div class="fp-detail-value">${resv.date} - ${resv.time}</div>
@@ -1284,15 +1318,18 @@ class ReservationManager {
                 
                 <div class="fp-detail-group">
                     <label>Numero Coperti</label>
-                    <div class="fp-detail-value">${resv.party}</div>
+                    <div class="fp-detail-value">
+                        <input type="number" class="fp-form-control" data-field="party" 
+                               value="${resv.party}" min="1" max="50" style="max-width: 100px;">
+                    </div>
                 </div>
                 
                 <div class="fp-detail-group">
                     <label>Stato</label>
                     <div class="fp-detail-value">
-                        <select class="fp-detail-select" data-field="status">
+                        <select class="fp-detail-select" data-field="status" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                             ${Object.entries(statusLabels).map(([value, label]) => 
-                                `<option value="${value}" ${resv.status === value ? 'selected' : ''}>${label}</option>`
+                                `<option value="${value}" ${resv.status === value ? 'selected' : ''} style="color: ${statusColors[value] || '#000'}">${label}</option>`
                             ).join('')}
                         </select>
                     </div>
@@ -1301,35 +1338,49 @@ class ReservationManager {
                 <div class="fp-detail-group">
                     <label>Cliente</label>
                     <div class="fp-detail-value">
-                        <div>${this.escapeHtml(customer.first_name)} ${this.escapeHtml(customer.last_name)}</div>
-                        ${customer.email ? `<div class="fp-detail-meta">${this.escapeHtml(customer.email)}</div>` : ''}
-                        ${customer.phone ? `<div class="fp-detail-meta">${this.escapeHtml(customer.phone)}</div>` : ''}
+                        <div><strong>${this.escapeHtml(customer.first_name)} ${this.escapeHtml(customer.last_name)}</strong></div>
+                        ${customer.email ? `<div class="fp-detail-meta">📧 ${this.escapeHtml(customer.email)}</div>` : ''}
+                        ${customer.phone ? `<div class="fp-detail-meta">📞 ${this.escapeHtml(customer.phone)}</div>` : ''}
                     </div>
                 </div>
                 
-                ${resv.notes ? `
                 <div class="fp-detail-group">
                     <label>Note</label>
-                    <div class="fp-detail-value">${this.escapeHtml(resv.notes)}</div>
+                    <div class="fp-detail-value">
+                        <textarea class="fp-form-control" data-field="notes" rows="3" 
+                                  style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${this.escapeHtml(resv.notes || '')}</textarea>
+                    </div>
                 </div>
-                ` : ''}
                 
-                ${resv.allergies ? `
                 <div class="fp-detail-group">
-                    <label>Allergie</label>
-                    <div class="fp-detail-value fp-detail-value--alert">${this.escapeHtml(resv.allergies)}</div>
+                    <label>Allergie / Intolleranze</label>
+                    <div class="fp-detail-value">
+                        <textarea class="fp-form-control" data-field="allergies" rows="2" 
+                                  style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; ${resv.allergies ? 'background: #fef3c7; border-color: #f59e0b;' : ''}">${this.escapeHtml(resv.allergies || '')}</textarea>
+                    </div>
                 </div>
-                ` : ''}
                 
-                <div class="fp-modal-actions">
-                    <button type="button" class="fp-btn fp-btn--primary" data-modal-action="save">
+                <div class="fp-modal-actions" style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                    <button type="button" class="fp-btn fp-btn--primary" data-modal-action="save" style="flex: 1;">
+                        <span class="dashicons dashicons-yes"></span>
                         Salva Modifiche
                     </button>
-                    <button type="button" class="fp-btn fp-btn--secondary" data-modal-action="cancel">
-                        Annulla
+                    <button type="button" class="fp-btn fp-btn--secondary" data-modal-action="close" style="flex: 1;">
+                        <span class="dashicons dashicons-no-alt"></span>
+                        Chiudi
                     </button>
-                    <button type="button" class="fp-btn fp-btn--danger" data-modal-action="delete">
-                        Elimina
+                </div>
+                
+                <div class="fp-modal-actions" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                    ${resv.status !== 'cancelled' ? `
+                    <button type="button" class="fp-btn fp-btn--warning" data-modal-action="cancel-reservation" style="flex: 1; background: #f59e0b; border-color: #f59e0b;">
+                        <span class="dashicons dashicons-dismiss"></span>
+                        Annulla Prenotazione
+                    </button>
+                    ` : ''}
+                    <button type="button" class="fp-btn fp-btn--danger" data-modal-action="delete" style="flex: 1;">
+                        <span class="dashicons dashicons-trash"></span>
+                        Elimina Definitivamente
                     </button>
                 </div>
             </div>
@@ -1996,6 +2047,11 @@ class ReservationManager {
     }
 
     showDebugPanel(info) {
+        // Solo se debug mode è attivo nelle impostazioni
+        if (!this.config.debugMode) {
+            return;
+        }
+        
         // Trova o crea il pannello di debug
         let panel = document.getElementById('fp-resv-debug-panel');
         if (!panel) {
