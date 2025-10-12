@@ -19,7 +19,9 @@ final class Shortcodes
 {
     public static function register(): void
     {
+        error_log('[FP-RESV-SHORTCODE] register() method called');
         add_shortcode('fp_reservations', [self::class, 'render']);
+        error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_reservations") executed');
     }
 
     /**
@@ -27,8 +29,11 @@ final class Shortcodes
      */
     public static function render(array $atts = []): string
     {
+        error_log('[FP-RESV] ========================================');
         error_log('[FP-RESV] Shortcode render() chiamato');
         error_log('[FP-RESV] Attributes: ' . print_r($atts, true));
+        error_log('[FP-RESV] Current URL: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+        error_log('[FP-RESV] Is main query: ' . (is_main_query() ? 'YES' : 'NO'));
         
         try {
             $atts = shortcode_atts(
@@ -114,6 +119,9 @@ final class Shortcodes
             }
 
             error_log('[FP-RESV] Form renderizzato correttamente, lunghezza output: ' . strlen($output));
+            error_log('[FP-RESV] Output contiene fp-resv-widget: ' . (strpos($output, 'fp-resv-widget') !== false ? 'SI' : 'NO'));
+            error_log('[FP-RESV] Output contiene data-fp-resv-app: ' . (strpos($output, 'data-fp-resv-app') !== false ? 'SI' : 'NO'));
+            error_log('[FP-RESV] ========================================');
             return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode

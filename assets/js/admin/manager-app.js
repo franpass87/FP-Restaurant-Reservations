@@ -36,6 +36,16 @@ class ReservationManager {
 
     async init() {
         console.log('[Manager] 🚀 Inizializzazione...');
+        console.log('[Manager] Config:', this.config);
+        console.log('[Manager] REST Root:', this.config.restRoot);
+        console.log('[Manager] Nonce:', this.config.nonce ? 'Present' : 'MISSING');
+        
+        // Verifica che la configurazione sia presente
+        if (!this.config.restRoot || !this.config.nonce) {
+            console.error('[Manager] ❌ Configuration missing! Check that fpResvManagerSettings is loaded.');
+            this.showError('Configurazione mancante. Ricarica la pagina.');
+            return;
+        }
         
         // Cache elementi DOM
         this.cacheDom();
@@ -248,13 +258,31 @@ class ReservationManager {
                 },
             });
 
-            if (!response.ok) throw new Error('Failed to load overview');
+            console.log('[Manager] Overview response status:', response.status);
 
-            const data = await response.json();
+            if (!response.ok) {
+                console.error('[Manager] Overview response not OK:', response.status, response.statusText);
+                throw new Error(`Failed to load overview: ${response.status} ${response.statusText}`);
+            }
+
+            // Check if response has content
+            const text = await response.text();
+            console.log('[Manager] Overview response text length:', text.length);
+            
+            if (!text || text.trim() === '') {
+                console.warn('[Manager] Overview response is empty');
+                return;
+            }
+
+            // Parse JSON
+            const data = JSON.parse(text);
+            console.log('[Manager] Overview data loaded:', data);
+            
             this.state.overview = data;
             this.renderStats();
         } catch (error) {
             console.error('[Manager] Error loading overview:', error);
+            // Non mostrare errore all'utente per le stats, sono opzionali
         }
     }
 
@@ -263,15 +291,42 @@ class ReservationManager {
 
         try {
             const dateStr = this.formatDate(this.state.currentDate);
-            const response = await fetch(`${this.config.restRoot}/agenda?date=${dateStr}&range=day`, {
+            const url = `${this.config.restRoot}/agenda?date=${dateStr}&range=day`;
+            
+            console.log('[Manager] Loading reservations from:', url);
+            
+            const response = await fetch(url, {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
             });
 
-            if (!response.ok) throw new Error('Failed to load reservations');
+            console.log('[Manager] Reservations response status:', response.status);
 
-            const data = await response.json();
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[Manager] Reservations response error:', response.status, errorText);
+                throw new Error(`Failed to load reservations: ${response.status} ${response.statusText}`);
+            }
+
+            // Get response text first
+            const text = await response.text();
+            console.log('[Manager] Reservations response text length:', text.length);
+            console.log('[Manager] Reservations response preview:', text.substring(0, 200));
+
+            if (!text || text.trim() === '') {
+                console.warn('[Manager] Reservations response is empty');
+                this.state.reservations = [];
+                this.state.error = null;
+                this.hideLoading();
+                this.renderCurrentView();
+                return;
+            }
+
+            // Parse JSON
+            const data = JSON.parse(text);
+            console.log('[Manager] Reservations data loaded:', data);
+            
             this.state.reservations = data.reservations || [];
             this.state.error = null;
 

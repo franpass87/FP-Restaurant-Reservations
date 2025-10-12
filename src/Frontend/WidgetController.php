@@ -37,7 +37,7 @@ final class WidgetController
 
     public function boot(): void
     {
-        // Shortcodes are now registered directly in Plugin::onPluginsLoaded() for better reliability
+        // Shortcodes are now registered in Plugin::onPluginsLoaded() via init hook
         add_action('init', [Gutenberg::class, 'register']);
 
         Elementor::register();
@@ -102,10 +102,12 @@ final class WidgetController
     public function enqueueAssets(): void
     {
         if (!$this->shouldEnqueueAssets()) {
+            error_log('[FP-RESV-ASSETS] shouldEnqueueAssets() returned FALSE - assets NOT loaded');
             return;
         }
 
         $version = Plugin::assetVersion();
+        error_log('[FP-RESV-ASSETS] Enqueuing assets with version: ' . $version);
 
         wp_register_style(
             'fp-resv-form',
@@ -127,7 +129,11 @@ final class WidgetController
 
         // Load both module and legacy scripts for proper browser support
         // Modern browsers load the module version, older browsers load the legacy version
+        error_log('[FP-RESV-ASSETS] Module exists: ' . ($moduleExists ? 'YES' : 'NO'));
+        error_log('[FP-RESV-ASSETS] Legacy exists: ' . ($legacyExists ? 'YES' : 'NO'));
+        
         if ($moduleExists && $legacyExists) {
+            error_log('[FP-RESV-ASSETS] Enqueueing BOTH module and legacy scripts');
             // Register and enqueue ES module version for modern browsers
             wp_register_script(
                 self::HANDLE_MODULE,

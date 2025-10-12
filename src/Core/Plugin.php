@@ -72,7 +72,7 @@ final class Plugin
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '0.1.10';
+    const VERSION = '0.1.11';
 
     /**
      * @var string|null
@@ -576,8 +576,20 @@ final class Plugin
             $container->register(\FP\Resv\Frontend\DashboardWidget::class, $dashboardWidget);
         }
 
-        // Register shortcodes
-        \FP\Resv\Frontend\Shortcodes::register();
+        // Register shortcodes on init hook (WordPress best practice)
+        add_action('init', static function(): void {
+            error_log('[FP-RESV-INIT] Registering shortcode fp_reservations...');
+            \FP\Resv\Frontend\Shortcodes::register();
+            error_log('[FP-RESV-INIT] Shortcode registered successfully');
+            
+            // Verifica che sia registrato
+            global $shortcode_tags;
+            if (isset($shortcode_tags['fp_reservations'])) {
+                error_log('[FP-RESV-INIT] Shortcode fp_reservations CONFIRMED in global $shortcode_tags');
+            } else {
+                error_log('[FP-RESV-INIT] ERROR: Shortcode fp_reservations NOT found in $shortcode_tags!');
+            }
+        }, 5); // Priorità 5 per eseguire prima di altri shortcode
 
         $manage = new ManageController();
         $manage->boot();
