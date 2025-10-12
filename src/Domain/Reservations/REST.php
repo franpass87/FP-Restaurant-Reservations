@@ -363,8 +363,8 @@ final class REST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Cattura eventuali output indesiderati
-        ob_start();
+        // NON usiamo più ob_start() perché con output diretto interferisce
+        // ob_start();
         
         // Cerca il nonce in ordine: body JSON params, body params, poi header
         $jsonParams = $request->get_json_params();
@@ -595,21 +595,13 @@ final class REST
             'reservation_id' => $payload['reservation']['id'] ?? null,
         ]);
 
-        // Pulisce output buffer e verifica se c'era contenuto indesiderato
-        $unwantedOutput = ob_get_clean();
-        if (!empty($unwantedOutput)) {
-            Logging::log('api', '⚠️ OUTPUT INDESIDERATO CATTURATO', [
-                'output' => $unwantedOutput,
-                'length' => strlen($unwantedOutput),
-            ]);
+        // Flush di TUTTI i buffer esistenti (da altri plugin/WordPress)
+        // ma SENZA cancellare il contenuto
+        while (ob_get_level()) {
+            ob_end_flush();
         }
         
         Logging::log('api', '>>> OUTPUT DIRETTO invece di WP_REST_Response');
-        
-        // Forza flush di tutti i buffer prima dell'output
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
         
         $json = wp_json_encode($payload);
         
