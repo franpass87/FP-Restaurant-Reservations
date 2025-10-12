@@ -63,7 +63,11 @@ final class AdminREST
         error_log('[FP Resv AdminREST] === REGISTERING ROUTES ===');
         error_log('[FP Resv AdminREST] Registering /fp-resv/v1/agenda endpoint');
         
-        register_rest_route(
+        // Log su file
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - registerRoutes chiamato, registrazione endpoint /agenda' . PHP_EOL, FILE_APPEND);
+        
+        $routeRegistered = register_rest_route(
             'fp-resv/v1',
             '/agenda',
             [
@@ -83,7 +87,29 @@ final class AdminREST
             ]
         );
         
-        error_log('[FP Resv AdminREST] /fp-resv/v1/agenda registered successfully');
+        error_log('[FP Resv AdminREST] /fp-resv/v1/agenda registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED'));
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Endpoint registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED') . PHP_EOL, FILE_APPEND);
+
+        // TEST: Endpoint diagnostico semplificato
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda-test',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => function() {
+                    $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+                    @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - TEST endpoint chiamato!' . PHP_EOL, FILE_APPEND);
+                    
+                    return rest_ensure_response([
+                        'success' => true,
+                        'message' => 'Endpoint test funziona!',
+                        'timestamp' => current_time('mysql'),
+                        'user_id' => get_current_user_id(),
+                    ]);
+                },
+                'permission_callback' => '__return_true', // Nessuna auth richiesta
+            ]
+        );
 
         register_rest_route(
             'fp-resv/v1',
@@ -214,15 +240,27 @@ final class AdminREST
                 'reservations' => $reservations,
             ];
             
-            // Pulisci output inatteso
-            $unexpectedOutput = ob_get_clean();
-            if (!empty(trim($unexpectedOutput))) {
-                error_log('[FP Resv Arrivals] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            // Pulisci output inatteso SENZA chiudere il buffer
+            if (ob_get_level() > 0) {
+                $unexpectedOutput = ob_get_contents();
+                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
+                    error_log('[FP Resv Arrivals] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+                }
+                ob_clean();
             }
             
-            return rest_ensure_response($responseData);
+            $response = rest_ensure_response($responseData);
+            
+            // Chiudi il buffer solo dopo aver creato la risposta
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            return $response;
         } catch (Throwable $e) {
-            ob_end_clean();
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_arrivals_error',
@@ -303,15 +341,27 @@ final class AdminREST
                 'stats' => $stats,
             ];
             
-            // Pulisci output inatteso
-            $unexpectedOutput = ob_get_clean();
-            if (!empty(trim($unexpectedOutput))) {
-                error_log('[FP Resv Stats] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            // Pulisci output inatteso SENZA chiudere il buffer
+            if (ob_get_level() > 0) {
+                $unexpectedOutput = ob_get_contents();
+                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
+                    error_log('[FP Resv Stats] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+                }
+                ob_clean();
             }
             
-            return rest_ensure_response($responseData);
+            $response = rest_ensure_response($responseData);
+            
+            // Chiudi il buffer solo dopo aver creato la risposta
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            return $response;
         } catch (Throwable $e) {
-            ob_end_clean();
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_stats_error',
@@ -378,15 +428,27 @@ final class AdminREST
                 'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
             ];
             
-            // Pulisci output inatteso
-            $unexpectedOutput = ob_get_clean();
-            if (!empty(trim($unexpectedOutput))) {
-                error_log('[FP Resv Overview] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            // Pulisci output inatteso SENZA chiudere il buffer
+            if (ob_get_level() > 0) {
+                $unexpectedOutput = ob_get_contents();
+                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
+                    error_log('[FP Resv Overview] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+                }
+                ob_clean();
             }
             
-            return rest_ensure_response($responseData);
+            $response = rest_ensure_response($responseData);
+            
+            // Chiudi il buffer solo dopo aver creato la risposta
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            return $response;
         } catch (Throwable $e) {
-            ob_end_clean();
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_overview_error',
@@ -398,6 +460,10 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // CRITICAL: Log con file_put_contents per assicurarsi che venga scritto
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - handleAgenda CHIAMATO' . PHP_EOL, FILE_APPEND);
+        
         // Log iniziale per debug
         error_log('[FP Resv Agenda] === INIZIO handleAgenda ===');
         error_log('[FP Resv Agenda] Request method: ' . $request->get_method());
@@ -527,12 +593,27 @@ final class AdminREST
                 error_log('[FP Resv Agenda] Response data JSON length: ' . strlen($jsonEncoded));
             }
             
-            // Pulisci qualsiasi output inatteso prima di restituire la risposta
-            $unexpectedOutput = ob_get_clean();
-            if (!empty(trim($unexpectedOutput))) {
-                error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
+            // Cattura qualsiasi output inatteso SENZA chiudere il buffer
+            // Questo è importante perché WordPress REST API potrebbe aspettarsi un buffer attivo
+            $unexpectedOutput = '';
+            $bufferLevel = ob_get_level();
+            if ($bufferLevel > 0) {
+                $unexpectedOutput = ob_get_contents();
+                if ($unexpectedOutput === false) {
+                    $unexpectedOutput = '';
+                }
+                // Pulisci il buffer ma NON chiuderlo ancora
+                ob_clean();
             }
             
+            if (!empty(trim($unexpectedOutput))) {
+                error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
+                // Log anche su file
+                $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Output inatteso: ' . substr($unexpectedOutput, 0, 500) . PHP_EOL, FILE_APPEND);
+            }
+            
+            error_log('[FP Resv Agenda] Buffer level prima di response: ' . ob_get_level());
             error_log('[FP Resv Agenda] Chiamata rest_ensure_response...');
             
             // Assicurati che la risposta sia sempre valida
@@ -562,6 +643,10 @@ final class AdminREST
                 ];
             }
             
+            // Log su file per debugging
+            $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+            @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Creazione risposta con ' . count($reservations) . ' prenotazioni' . PHP_EOL, FILE_APPEND);
+            
             $response = rest_ensure_response($responseData);
             error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
             error_log('[FP Resv Agenda] Response status: ' . $response->get_status());
@@ -577,12 +662,24 @@ final class AdminREST
                 error_log('[FP Resv Agenda] WARNING: Response data non è un array! È: ' . var_export($responseContent, true));
             }
             
+            // Log finale su file
+            @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Risposta creata con successo, status: ' . $response->get_status() . PHP_EOL, FILE_APPEND);
+            
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
+            error_log('[FP Resv Agenda] Buffer level alla fine: ' . ob_get_level());
+            
+            // IMPORTANTE: Chiudi il buffer solo DOPO aver creato la risposta
+            // WordPress REST API gestirà l'output della risposta
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             
             return $response;
         } catch (Throwable $e) {
             // Pulisci output buffer in caso di errore
-            ob_end_clean();
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             
             // Log l'errore completo per debugging
             error_log('[FP Resv Agenda] === ERRORE CRITICO ===');
@@ -803,10 +900,24 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+        
         // Permette agli amministratori di accedere anche se non hanno la capability specifica
         // Questo allineamento con AdminController previene errori 403 quando gli admin
         // accedono all'agenda prima che la capability sia stata assegnata
-        return current_user_can(Roles::MANAGE_RESERVATIONS) || current_user_can('manage_options');
+        $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
+        $canManageOptions = current_user_can('manage_options');
+        $hasPermission = $canManage || $canManageOptions;
+        
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - checkPermissions chiamato: ' . 
+            'canManage=' . ($canManage ? 'true' : 'false') . ', ' .
+            'canManageOptions=' . ($canManageOptions ? 'true' : 'false') . ', ' .
+            'result=' . ($hasPermission ? 'true' : 'false') . ', ' .
+            'user_id=' . get_current_user_id() . PHP_EOL, FILE_APPEND);
+        
+        error_log('[FP Resv AdminREST] checkPermissions: ' . ($hasPermission ? 'ALLOWED' : 'DENIED') . ' for user ' . get_current_user_id());
+        
+        return $hasPermission;
     }
 
     private function sanitizeDate(mixed $value): ?string
