@@ -440,6 +440,37 @@ form[data-fp-resv-form] {
     box-shadow: 0 8px 18px -10px rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.45);
 }
 
+/* Stili per elementi progress bar attivi (aria-current="step") */
+.fp-resv-widget .fp-progress__item[aria-current="step"], 
+.fp-resv-widget .fp-progress__item[aria-current="step"]::before, 
+.fp-resv-widget .fp-progress__item[aria-current="step"]::after, 
+.fp-resv-widget .fp-progress__item[aria-current="step"] *, 
+.fp-resv-widget .fp-progress__item[aria-current="step"] span, 
+.fp-resv-widget .fp-progress__item[aria-current="step"] strong, 
+.fp-resv-widget .fp-progress__item[aria-current="step"] em, 
+.fp-resv-widget .fp-progress__item[aria-current="step"] div, 
+#fp-resv-default .fp-progress__item[aria-current="step"], 
+#fp-resv-default .fp-progress__item[aria-current="step"]::before, 
+#fp-resv-default .fp-progress__item[aria-current="step"]::after, 
+#fp-resv-default .fp-progress__item[aria-current="step"] *, 
+#fp-resv-default .fp-progress__item[aria-current="step"] span, 
+#fp-resv-default .fp-progress__item[aria-current="step"] strong, 
+#fp-resv-default .fp-progress__item[aria-current="step"] em, 
+#fp-resv-default .fp-progress__item[aria-current="step"] div {
+    color: #ffffff !important;
+    background: transparent;
+}
+
+/* Stili per elementi progress bar non attivi */
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]), 
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]) *, 
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]) span, 
+#fp-resv-default .fp-progress__item:not([aria-current="step"]), 
+#fp-resv-default .fp-progress__item:not([aria-current="step"]) *, 
+#fp-resv-default .fp-progress__item:not([aria-current="step"]) span {
+    color: white;
+}
+
 .fp-meals {
     border: 1.5px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.28));
     border-radius: calc(var(--fp-resv-radius-lg) * 0.85);

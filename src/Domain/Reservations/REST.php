@@ -122,6 +122,23 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        
+        // DEBUG ENDPOINT
+        register_rest_route(
+            'fp-resv/v1',
+            '/test',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => function() {
+                    return new WP_REST_Response([
+                        'success' => true,
+                        'message' => 'REST API funziona!',
+                        'timestamp' => time(),
+                    ], 200);
+                },
+                'permission_callback' => '__return_true',
+            ]
+        );
     }
 
     public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
