@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Brevo;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
+use FP\Resv\Core\EmailList;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\Mailer;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
@@ -699,32 +700,7 @@ final class AutomationService
      */
     private function parseEmails(string|array $list): array
     {
-        if (is_array($list)) {
-            $candidates = array_map(static fn ($email): string => trim((string) $email), $list);
-        } else {
-            if ($list === '') {
-                return [];
-            }
-
-            $candidates = array_map('trim', preg_split('/[,;\n]/', $list) ?: []);
-        }
-
-        $valid = [];
-
-        foreach ($candidates as $email) {
-            if ($email === '') {
-                continue;
-            }
-
-            $sanitized = sanitize_email($email);
-            if ($sanitized === '' || !is_email($sanitized)) {
-                continue;
-            }
-
-            $valid[] = $sanitized;
-        }
-
-        return array_values(array_unique($valid));
+        return EmailList::parse($list);
     }
 
     private function defaultListIds(): array
