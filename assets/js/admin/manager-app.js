@@ -375,10 +375,24 @@ class ReservationManager {
     // DATE NAVIGATION
     // ============================================
 
-    navigateDate(days) {
-        const newDate = new Date(this.state.currentDate);
-        newDate.setDate(newDate.getDate() + days);
-        this.setDate(newDate);
+    navigateDate(direction) {
+        // Navigazione intelligente basata sulla vista corrente
+        switch (this.state.currentView) {
+            case 'month':
+                this.navigateMonth(direction);
+                break;
+            case 'week':
+                this.navigateWeek(direction);
+                break;
+            case 'day':
+            case 'list':
+            default:
+                // Naviga per giorni
+                const newDate = new Date(this.state.currentDate);
+                newDate.setDate(newDate.getDate() + direction);
+                this.setDate(newDate);
+                break;
+        }
     }
 
     goToToday() {
@@ -420,6 +434,9 @@ class ReservationManager {
             }
         });
 
+        // Aggiorna il testo del pulsante "Oggi" in base alla vista
+        this.updateTodayButtonText();
+        
         // Se passiamo tra viste che richiedono range diversi, ricarica i dati
         const viewsRequiringReload = ['week', 'month'];
         const previousNeedsRange = viewsRequiringReload.includes(previousView);
@@ -431,6 +448,21 @@ class ReservationManager {
             // Altrimenti, semplicemente re-render
             this.renderCurrentView();
         }
+    }
+    
+    updateTodayButtonText() {
+        const todayButtons = document.querySelectorAll('[data-action="today"]');
+        const labels = {
+            month: 'Questo Mese',
+            week: 'Questa Settimana',
+            day: 'Oggi',
+            list: 'Oggi'
+        };
+        
+        const label = labels[this.state.currentView] || 'Oggi';
+        todayButtons.forEach(btn => {
+            btn.textContent = label;
+        });
     }
 
     // ============================================
@@ -573,6 +605,9 @@ class ReservationManager {
             this.state.reservations = data.reservations || [];
             this.state.error = null;
             
+            // Aggiorna statistiche nelle card
+            this.updateStats(data.stats, data.meta);
+            
             // Aggiorna debug panel con successo
             this.showDebugPanel({
                 success: true,
@@ -630,9 +665,10 @@ class ReservationManager {
         if (this.state.filters.search) {
             const searchLower = this.state.filters.search.toLowerCase();
             filtered = filtered.filter(r => {
-                const name = `${r.customer.first_name || ''} ${r.customer.last_name || ''}`.toLowerCase();
-                const email = (r.customer.email || '').toLowerCase();
-                const phone = (r.customer.phone || '').toLowerCase();
+                const customer = this.getCustomerData(r);
+                const name = `${customer.first_name || ''} ${customer.last_name || ''}`.toLowerCase();
+                const email = (customer.email || '').toLowerCase();
+                const phone = (customer.phone || '').toLowerCase();
                 return name.includes(searchLower) || email.includes(searchLower) || phone.includes(searchLower);
             });
         }
@@ -754,7 +790,8 @@ class ReservationManager {
 
         slot.reservations.forEach(resv => {
             const statusColor = statusColors[resv.status] || '#6b7280';
-            const guestName = `${resv.customer.first_name} ${resv.customer.last_name}`.trim() || resv.customer.email;
+            const customer = this.getCustomerData(resv);
+            const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
             
             html += `
                 <div class="fp-reservation-card" data-id="${resv.id}" data-action="view-reservation">
@@ -768,7 +805,7 @@ class ReservationManager {
                     </div>
                     <div class="fp-reservation-card__body">
                         <div class="fp-reservation-card__name">${this.escapeHtml(guestName)}</div>
-                        ${resv.customer.phone ? `<div class="fp-reservation-card__phone">${this.escapeHtml(resv.customer.phone)}</div>` : ''}
+                        ${customer.phone ? `<div class="fp-reservation-card__phone">${this.escapeHtml(customer.phone)}</div>` : ''}
                         ${resv.notes ? `<div class="fp-reservation-card__notes">${this.escapeHtml(resv.notes)}</div>` : ''}
                     </div>
                 </div>
@@ -813,7 +850,8 @@ class ReservationManager {
             cancelled: 'status--cancelled',
         };
 
-        const guestName = `${resv.customer.first_name} ${resv.customer.last_name}`.trim() || resv.customer.email;
+        const customer = this.getCustomerData(resv);
+        const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
 
         return `
             <div class="fp-list-card" data-id="${resv.id}" data-action="view-reservation">
@@ -830,8 +868,8 @@ class ReservationManager {
                             <span>•</span>
                             <span><span class="dashicons dashicons-groups"></span> ${resv.party}</span>
                         </div>
-                        ${resv.customer.phone ? `<div class="fp-list-card__contact">${this.escapeHtml(resv.customer.phone)}</div>` : ''}
-                        ${resv.customer.email ? `<div class="fp-list-card__contact">${this.escapeHtml(resv.customer.email)}</div>` : ''}
+                        ${customer.phone ? `<div class="fp-list-card__contact">${this.escapeHtml(customer.phone)}</div>` : ''}
+                        ${customer.email ? `<div class="fp-list-card__contact">${this.escapeHtml(customer.email)}</div>` : ''}
                     </div>
                 </div>
                 <div class="fp-list-card__status">
@@ -1086,7 +1124,8 @@ class ReservationManager {
                                     cancelled: '#6b7280',
                                 };
                                 const statusColor = statusColors[resv.status] || '#6b7280';
-                                const guestName = `${resv.customer.first_name} ${resv.customer.last_name}`.trim() || resv.customer.email;
+                                const customer = this.getCustomerData(resv);
+                                const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
                                 
                                 return `
                                     <div class="fp-week-reservation" data-id="${resv.id}" data-action="view-reservation">
@@ -1216,7 +1255,8 @@ class ReservationManager {
         const resv = this.state.reservations.find(r => r.id === id);
         if (!resv) return;
 
-        const guestName = `${resv.customer.first_name} ${resv.customer.last_name}`.trim() || resv.customer.email;
+        const customer = this.getCustomerData(resv);
+        const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
 
         this.dom.modalTitle.textContent = guestName;
         this.dom.modalBody.innerHTML = this.renderReservationDetails(resv);
@@ -1261,9 +1301,9 @@ class ReservationManager {
                 <div class="fp-detail-group">
                     <label>Cliente</label>
                     <div class="fp-detail-value">
-                        <div>${this.escapeHtml(resv.customer.first_name)} ${this.escapeHtml(resv.customer.last_name)}</div>
-                        ${resv.customer.email ? `<div class="fp-detail-meta">${this.escapeHtml(resv.customer.email)}</div>` : ''}
-                        ${resv.customer.phone ? `<div class="fp-detail-meta">${this.escapeHtml(resv.customer.phone)}</div>` : ''}
+                        <div>${this.escapeHtml(customer.first_name)} ${this.escapeHtml(customer.last_name)}</div>
+                        ${customer.email ? `<div class="fp-detail-meta">${this.escapeHtml(customer.email)}</div>` : ''}
+                        ${customer.phone ? `<div class="fp-detail-meta">${this.escapeHtml(customer.phone)}</div>` : ''}
                     </div>
                 </div>
                 
@@ -1834,10 +1874,10 @@ class ReservationManager {
             resv.status,
             resv.party,
             resv.meal || '',
-            this.escapeCsv(resv.customer.first_name),
-            this.escapeCsv(resv.customer.last_name),
-            this.escapeCsv(resv.customer.email),
-            this.escapeCsv(resv.customer.phone),
+            this.escapeCsv(this.getCustomerData(resv).first_name),
+            this.escapeCsv(this.getCustomerData(resv).last_name),
+            this.escapeCsv(this.getCustomerData(resv).email),
+            this.escapeCsv(this.getCustomerData(resv).phone),
             this.escapeCsv(resv.notes),
             this.escapeCsv(resv.allergies)
         ]);
@@ -1900,6 +1940,59 @@ class ReservationManager {
         if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
         if (this.dom.errorState) this.dom.errorState.style.display = 'flex';
         if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
+    }
+
+    updateStats(stats, meta) {
+        if (!stats) return;
+        
+        // Calcola statistiche per oggi, settimana e mese
+        const today = new Date().toISOString().split('T')[0];
+        const todayReservations = this.state.reservations.filter(r => r.date === today);
+        const todayGuests = todayReservations.reduce((sum, r) => sum + r.party, 0);
+        
+        // Settimana corrente
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay() + 1); // Lunedì
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6); // Domenica
+        
+        const weekReservations = this.state.reservations.filter(r => {
+            const d = new Date(r.date);
+            return d >= weekStart && d <= weekEnd;
+        });
+        const weekGuests = weekReservations.reduce((sum, r) => sum + r.party, 0);
+        
+        // Mese corrente  
+        const monthReservations = this.state.reservations.filter(r => {
+            const d = new Date(r.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        const monthGuests = monthReservations.reduce((sum, r) => sum + r.party, 0);
+        
+        // Confermati
+        const confirmedCount = stats.by_status?.confirmed || 0;
+        const confirmedPercentage = stats.confirmed_percentage || 0;
+        
+        // Aggiorna card
+        this.updateStatCard('today-count', todayReservations.length);
+        this.updateStatCard('today-guests', `${todayGuests} coperti`);
+        
+        this.updateStatCard('confirmed-count', confirmedCount);
+        this.updateStatCard('confirmed-percentage', `${confirmedPercentage}%`);
+        
+        this.updateStatCard('week-count', weekReservations.length);
+        this.updateStatCard('week-guests', `${weekGuests} coperti`);
+        
+        this.updateStatCard('month-count', monthReservations.length);
+        this.updateStatCard('month-guests', `${monthGuests} coperti`);
+    }
+    
+    updateStatCard(statKey, value) {
+        const el = document.querySelector(`[data-stat="${statKey}"]`);
+        if (el) {
+            el.textContent = value;
+        }
     }
 
     showDebugPanel(info) {
@@ -1987,6 +2080,23 @@ class ReservationManager {
     // ============================================
     // UTILITIES
     // ============================================
+    
+    /**
+     * Estrae i dati cliente da una prenotazione
+     * Supporta sia formato vecchio (flat) che nuovo (oggetto customer)
+     */
+    getCustomerData(reservation) {
+        if (reservation.customer) {
+            return reservation.customer;
+        }
+        // Fallback al formato piatto (retrocompatibilità)
+        return {
+            first_name: reservation.first_name || '',
+            last_name: reservation.last_name || '',
+            email: reservation.email || '',
+            phone: reservation.phone || ''
+        };
+    }
 
     escapeHtml(text) {
         const div = document.createElement('div');

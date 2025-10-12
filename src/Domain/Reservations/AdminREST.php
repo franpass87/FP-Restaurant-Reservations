@@ -487,13 +487,15 @@ final class AdminREST
                         'time' => substr((string)($row['time'] ?? ''), 0, 5),
                         'party' => (int)($row['party'] ?? 0),
                         'meal' => $row['meal'] ?? null,
-                        'first_name' => (string)($row['first_name'] ?? ''),
-                        'last_name' => (string)($row['last_name'] ?? ''),
-                        'email' => (string)($row['email'] ?? ''),
-                        'phone' => (string)($row['phone'] ?? ''),
                         'notes' => (string)($row['notes'] ?? ''),
                         'allergies' => (string)($row['allergies'] ?? ''),
                         'created_at' => (string)($row['created_at'] ?? ''),
+                        'customer' => [
+                            'first_name' => (string)($row['first_name'] ?? ''),
+                            'last_name' => (string)($row['last_name'] ?? ''),
+                            'email' => (string)($row['email'] ?? ''),
+                            'phone' => (string)($row['phone'] ?? ''),
+                        ],
                     ];
                 }
             }
