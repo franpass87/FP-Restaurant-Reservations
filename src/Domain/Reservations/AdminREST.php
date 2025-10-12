@@ -394,6 +394,18 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // BYPASS TOTALE - Restituisce risposta immediata
+        // Se vedi questo, il metodo viene chiamato correttamente
+        return new WP_REST_Response([
+            'success' => true,
+            'version' => '2025-10-12-V3-BYPASS',
+            'message' => 'Metodo chiamato con successo!',
+            'timestamp' => time(),
+            'debug' => 'Questo bypass evita TUTTO il codice per isolare il problema'
+        ], 200);
+        
+        // CODICE ORIGINALE (temporaneamente disabilitato per test)
+        /*
         // DEBUG: Log immediato all'inizio
         error_log('[FP Resv Agenda] ========================================');
         error_log('[FP Resv Agenda] 🚀 FILE MODIFICATO VERSIONE 2025-10-12-V2 🚀');
@@ -555,8 +567,11 @@ final class AdminREST
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
             
             return $response;
-        } catch (Throwable $e) {
-            
+        */ // Fine commento temporaneo
+        
+        // QUESTO CODICE NON VERRÀ MAI ESEGUITO (per ora)
+        // catch (Throwable $e) {
+            /*
             // Log l'errore completo per debugging
             error_log('[FP Resv Agenda] === ERRORE CRITICO ===');
             error_log('[FP Resv Agenda] Errore critico in handleAgenda: ' . $e->getMessage());
@@ -577,7 +592,8 @@ final class AdminREST
             error_log('[FP Resv Agenda] Ritorno WP_Error: ' . json_encode($error));
             
             return $error;
-        }
+            */
+        // }
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error

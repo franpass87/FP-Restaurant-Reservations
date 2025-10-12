@@ -55,6 +55,20 @@ button.fp-resv-button {
   border: 2px solid #333333 !important;
 }
 
+/* FOCUS BOTTONI - NESSUN BORDINO BLU, USA NERO */
+.fp-btn:focus,
+.fp-btn:focus-visible,
+.fp-resv-button:focus,
+.fp-resv-button:focus-visible,
+button.fp-btn:focus,
+button.fp-resv-button:focus,
+button.fp-btn:focus-visible,
+button.fp-resv-button:focus-visible {
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
+}
+
 /* ==================== INPUT - BIANCO CON TESTO NERO ==================== */
 
 .fp-input,
@@ -74,6 +88,17 @@ textarea.fp-textarea {
   background: #ffffff !important;
   color: #000000 !important;
   border-color: #000000 !important;
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.fp-input:focus-visible,
+.fp-select:focus-visible,
+.fp-textarea:focus-visible {
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 .fp-input::placeholder,
@@ -108,6 +133,20 @@ textarea.fp-textarea {
   border-color: #000000 !important;
 }
 
+/* FOCUS - RIMUOVI BORDINO BLU, USA NERO */
+.fp-pill:focus,
+.fp-pill:focus-visible,
+.fp-meal-pill:focus,
+.fp-meal-pill:focus-visible,
+button.fp-pill:focus,
+button.fp-meal-pill:focus,
+button.fp-pill:focus-visible,
+button.fp-meal-pill:focus-visible {
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
+}
+
 /* ==================== SLOT ORARI ==================== */
 
 .fp-slots__list button,
@@ -130,6 +169,16 @@ textarea.fp-textarea {
   background: #000000 !important;
   color: #ffffff !important;
   border-color: #000000 !important;
+}
+
+/* FOCUS SLOT - NESSUN BORDINO BLU */
+.fp-slots__list button:focus,
+.fp-slots__list button:focus-visible,
+.fp-resv-slots__list button:focus,
+.fp-resv-slots__list button:focus-visible {
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* ==================== TESTO GENERALE ==================== */
