@@ -334,10 +334,12 @@ class AgendaApp {
             
         } catch (error) {
             console.error('[Agenda] ✗ Errore nel caricamento:', error);
+            console.error('[Agenda] ✗ Stack trace:', error.stack);
             this.state.error = error.message;
             this.state.reservations = [];
             this.showError(error.message);
-            throw error;
+            // NON rilancia l'errore per evitare che blocchi l'interfaccia
+            return [];
         }
     }
     
@@ -1154,16 +1156,50 @@ class AgendaApp {
             }
             
             try {
+                // Verifica se la risposta inizia con caratteri non-JSON (es. HTML o PHP errors)
+                const trimmedText = text.trim();
+                if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
+                    console.error('[API] ✗ Risposta non sembra JSON valido');
+                    console.error('[API] Inizio risposta:', trimmedText.substring(0, 500));
+                    
+                    // Se contiene HTML o errori PHP
+                    if (trimmedText.includes('<!DOCTYPE') || trimmedText.includes('<html') || 
+                        trimmedText.includes('Fatal error') || trimmedText.includes('Warning:') ||
+                        trimmedText.includes('Notice:')) {
+                        throw new Error('Il server ha ritornato un errore HTML/PHP invece di JSON. Controlla i log del server per errori PHP.');
+                    }
+                    
+                    throw new Error('Risposta del server non è in formato JSON valido');
+                }
+                
                 const data = JSON.parse(text);
                 console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
+                
+                // Gestisci WP_Error - WordPress ritorna errori in questo formato
+                if (data && typeof data === 'object' && data.code && data.message) {
+                    console.error('[API] ✗ WP_Error ricevuto:', data);
+                    const errorMessage = data.message || 'Errore sconosciuto dal server';
+                    const errorDetails = data.data?.debug_trace ? `\n\nDettagli: ${data.data.debug_trace}` : '';
+                    throw new Error(errorMessage + errorDetails);
+                }
+                
                 if (data && typeof data === 'object' && !Array.isArray(data)) {
                     console.log('[API] ✓ Object keys:', Object.keys(data).slice(0, 10).join(', '));
                 }
                 return data;
             } catch (e) {
-                console.error('[API] Errore parsing JSON:', e);
-                console.error('[API] Response preview:', text.substring(0, 500));
-                throw new Error('Risposta JSON non valida dal server');
+                console.error('[API] ✗ Errore parsing JSON:', e);
+                console.error('[API] ✗ Response type:', typeof text);
+                console.error('[API] ✗ Response length:', text.length);
+                console.error('[API] ✗ First 500 chars:', text.substring(0, 500));
+                console.error('[API] ✗ Last 200 chars:', text.substring(Math.max(0, text.length - 200)));
+                
+                // Se l'errore è già quello che abbiamo creato, rilancialo
+                if (e.message.includes('HTML/PHP') || e.message.includes('non è in formato JSON')) {
+                    throw e;
+                }
+                
+                throw new Error(`Risposta JSON non valida dal server: ${e.message}`);
             }
         } catch (error) {
             // Se è un errore di rete
