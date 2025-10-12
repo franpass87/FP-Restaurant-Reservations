@@ -569,11 +569,11 @@ final class Plugin
         $container->register(WidgetController::class, $widgets);
         $container->register('frontend.widgets', $widgets);
         
-        // Register shortcode debug page (admin only)
+        // Register dashboard widget (admin only)
         if (is_admin()) {
-            $shortcodeDebug = new \FP\Resv\Frontend\ShortcodeDebug();
-            $shortcodeDebug->register();
-            $container->register(\FP\Resv\Frontend\ShortcodeDebug::class, $shortcodeDebug);
+            $dashboardWidget = new \FP\Resv\Frontend\DashboardWidget();
+            $dashboardWidget->register();
+            $container->register(\FP\Resv\Frontend\DashboardWidget::class, $dashboardWidget);
         }
 
         $manage = new ManageController();
