@@ -415,26 +415,7 @@ final class AdminREST
         // 🚨 LOG IMMEDIATO
         error_log('=== HANDLEAGENDAV2 CHIAMATO! Timestamp: ' . time() . ' ===');
         
-        // 🚨 BYPASS TOTALE V2 - METODO RINOMINATO PER FORZARE REFRESH
-        $response = new WP_REST_Response([
-            'bypass' => true,
-            'message' => 'FILE AGGIORNATO 2025-10-12 V4 - METODO RINOMINATO',
-            'timestamp' => time(),
-            'reservations' => [],
-            'debug' => [
-                'method' => 'handleAgendaV2',
-                'file_version' => 'V4',
-                'php_version' => PHP_VERSION
-            ]
-        ], 200);
-        
-        $response->header('X-FP-Debug', 'HandleAgendaV2-Called');
-        
-        error_log('=== HANDLEAGENDAV2 RISPOSTA CREATA, sto per ritornare ===');
-        
-        return $response;
-        
-        // TEST STEP BY STEP
+        // LOGICA VERA - BYPASS RIMOSSO
         try {
             // STEP 1: Test base
             $step = 1;
@@ -482,7 +463,15 @@ final class AdminREST
             }
             
             $step = 7;
-            $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            $startDate = $start->format('Y-m-d');
+            $endDate = $end->format('Y-m-d');
+            
+            error_log("=== CERCANDO PRENOTAZIONI: da {$startDate} a {$endDate} ===");
+            
+            // 🚨 TEMPORANEO: Cerca TUTTE le prenotazioni (range molto ampio) per debug
+            $rows = $this->reservations->findAgendaRange('2020-01-01', '2030-12-31');
+            
+            error_log("=== QUERY FATTA! Risultati trovati: " . (is_array($rows) ? count($rows) : 'NULL') . " ===");
             
             // STEP 8: Mappa prenotazioni
             $step = 8;
@@ -531,6 +520,9 @@ final class AdminREST
             
             // STEP 10: Risposta
             $step = 10;
+            
+            error_log("=== TROVATE {$totalReservations} PRENOTAZIONI ===");
+            
             return new WP_REST_Response([
                 'meta' => [
                     'range' => $rangeMode,
