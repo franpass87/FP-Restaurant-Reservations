@@ -777,11 +777,6 @@ final class AdminREST
     {
         error_log('[FP Resv] === ELIMINAZIONE PRENOTAZIONE START ===');
         
-        // Forza pulizia output buffer per evitare interferenze
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-        
         $id = absint((string) $request->get_param('id'));
         error_log('[FP Resv] ID da eliminare: ' . $id);
         
@@ -813,7 +808,7 @@ final class AdminREST
 
             error_log('[FP Resv] Prenotazione eliminata dal DB, triggering action...');
             
-            // Trigger action per eventuali integrazioni (ma cattura qualsiasi output)
+            // Trigger action per eventuali integrazioni - cattura output indesiderato
             ob_start();
             do_action('fp_resv_reservation_deleted', $id, $entry);
             $hookOutput = ob_get_clean();

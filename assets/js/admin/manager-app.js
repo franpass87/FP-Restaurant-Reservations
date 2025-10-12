@@ -1400,8 +1400,14 @@ class ReservationManager {
             this.closeModal();
         });
 
+        this.dom.modalBody.querySelector('[data-modal-action="cancel-reservation"]')?.addEventListener('click', async () => {
+            if (confirm('Sei sicuro di voler annullare questa prenotazione?')) {
+                await this.cancelReservation(resv.id);
+            }
+        });
+
         this.dom.modalBody.querySelector('[data-modal-action="delete"]')?.addEventListener('click', async () => {
-            if (confirm('Sei sicuro di voler eliminare questa prenotazione?')) {
+            if (confirm('Sei sicuro di voler eliminare definitivamente questa prenotazione?')) {
                 await this.deleteReservation(resv.id);
             }
         });
@@ -1428,6 +1434,33 @@ class ReservationManager {
         } catch (error) {
             console.error('[Manager] Error saving reservation:', error);
             alert('Errore nel salvataggio della prenotazione');
+        }
+    }
+
+    async cancelReservation(id) {
+        try {
+            const response = await fetch(this.buildRestUrl(`agenda/reservations/${id}`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce,
+                },
+                body: JSON.stringify({ status: 'cancelled' }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Errore nell\'annullamento della prenotazione');
+            }
+
+            this.closeModal();
+            await this.loadReservations();
+            await this.loadOverview();
+            
+            alert('Prenotazione annullata con successo');
+        } catch (error) {
+            console.error('[Manager] Error cancelling reservation:', error);
+            alert('Errore nell\'annullamento della prenotazione: ' + error.message);
         }
     }
 
