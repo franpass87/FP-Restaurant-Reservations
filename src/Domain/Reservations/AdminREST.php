@@ -412,6 +412,14 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // 🚨 BYPASS TOTALE - SE NON FUNZIONA QUESTO, IL PROBLEMA È ALTROVE
+        return new WP_REST_Response([
+            'bypass' => true,
+            'message' => 'FILE AGGIORNATO 2025-10-12 V3',
+            'timestamp' => time(),
+            'reservations' => []
+        ], 200);
+        
         // TEST STEP BY STEP
         try {
             // STEP 1: Test base

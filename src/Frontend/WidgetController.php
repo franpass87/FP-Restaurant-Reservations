@@ -195,6 +195,54 @@ final class WidgetController
             #fp-resv-default {
                 padding: 0px !important;
             }
+            /* RIDUCI SPAZI VERTICALI SU MOBILE */
+            .fp-resv-widget .fp-resv-step,
+            #fp-resv-default .fp-resv-step {
+                padding: 1rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .fp-resv-widget .fp-section,
+            #fp-resv-default .fp-section {
+                margin-bottom: 0.75rem !important;
+                padding: 0.75rem !important;
+            }
+            .fp-resv-widget .fp-resv-field,
+            .fp-resv-widget .fp-field,
+            #fp-resv-default .fp-resv-field,
+            #fp-resv-default .fp-field {
+                margin-bottom: 0.75rem !important;
+            }
+            .fp-resv-widget .fp-resv-step__header,
+            #fp-resv-default .fp-resv-step__header {
+                margin-bottom: 0.75rem !important;
+            }
+            .fp-resv-widget .fp-hint,
+            .fp-resv-widget .fp-resv-meal-notice,
+            #fp-resv-default .fp-hint,
+            #fp-resv-default .fp-resv-meal-notice {
+                margin-top: 0.5rem !important;
+                margin-bottom: 0.5rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+            .fp-resv-widget .fp-topbar,
+            #fp-resv-default .fp-topbar {
+                padding: 1rem !important;
+                margin-bottom: 0.75rem !important;
+            }
+            .fp-resv-widget .fp-resv-widget__headline,
+            #fp-resv-default .fp-resv-widget__headline {
+                margin-bottom: 0.25rem !important;
+            }
+            .fp-resv-widget .fp-resv-step__footer,
+            #fp-resv-default .fp-resv-step__footer {
+                margin-top: 1rem !important;
+                gap: 0.5rem !important;
+            }
+            .fp-resv-widget .fp-resv-sticky-cta,
+            #fp-resv-default .fp-resv-sticky-cta {
+                padding: 0.5rem 1rem !important;
+                margin-top: 0.5rem !important;
+            }
         }
         .fp-resv-widget .fp-resv-step,
         #fp-resv-default .fp-resv-step {
@@ -349,6 +397,17 @@ final class WidgetController
             position: relative !important;
             z-index: 1 !important;
             background: transparent !important;
+        }
+        /* Mobile: rimuovi margin top e bottom */
+        @media (max-width: 640px) {
+            .fp-resv-widget .fp-resv-progress,
+            .fp-resv-widget .fp-progress,
+            #fp-resv-default .fp-resv-progress,
+            #fp-resv-default .fp-progress {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding: 0.75rem 1rem !important;
+            }
         }
         /* Progress bar pseudo-elementi - più chiari e meno invadenti */
         .fp-resv-widget .fp-progress::before,
