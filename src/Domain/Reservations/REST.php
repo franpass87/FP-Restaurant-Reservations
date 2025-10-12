@@ -163,6 +163,47 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+
+        // Test endpoint con die() invece di exit()
+        register_rest_route(
+            'fp-resv/v1',
+            '/test-die',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => function(WP_REST_Request $request) {
+                    $data = [
+                        'success' => true,
+                        'message' => 'Test die() funziona!',
+                        'timestamp' => time(),
+                        'method' => 'die()',
+                    ];
+                    header('Content-Type: application/json');
+                    http_response_code(200);
+                    echo wp_json_encode($data);
+                    die(); // Forza terminazione
+                },
+                'permission_callback' => '__return_true',
+            ]
+        );
+
+        // Test endpoint che bypassa completamente WordPress
+        register_rest_route(
+            'fp-resv/v1',
+            '/test-raw',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => function(WP_REST_Request $request) {
+                    // Bypassa completamente WordPress
+                    if (!headers_sent()) {
+                        header('Content-Type: application/json');
+                        http_response_code(200);
+                    }
+                    echo '{"success":true,"message":"Raw output","timestamp":' . time() . '}';
+                    die();
+                },
+                'permission_callback' => '__return_true',
+            ]
+        );
     }
 
     public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
