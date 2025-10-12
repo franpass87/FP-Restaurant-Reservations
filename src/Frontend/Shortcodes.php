@@ -27,6 +27,7 @@ final class Shortcodes
      */
     public static function render(array $atts = []): string
     {
+        error_log('[FP-RESV] Shortcode render() chiamato');
         try {
             $atts = shortcode_atts(
                 [
@@ -41,11 +42,10 @@ final class Shortcodes
             $container = ServiceContainer::getInstance();
             $options   = $container->get(Options::class);
             if (!$options instanceof Options) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('[FP-RESV] CRITICAL: Options instance not available');
-                }
+                error_log('[FP-RESV] CRITICAL: Options instance not available');
                 return '<!-- FP-RESV: Options not available -->';
             }
+            error_log('[FP-RESV] Options caricati correttamente');
 
             $language = $container->get(Language::class);
             if (!$language instanceof Language) {
@@ -59,6 +59,7 @@ final class Shortcodes
             ]);
 
             $context = $contextBuilder->toArray();
+            error_log('[FP-RESV] Context creato, keys: ' . implode(', ', array_keys($context)));
 
             /**
              * Allow third parties to adjust the frontend context before rendering.
@@ -70,11 +71,10 @@ final class Shortcodes
 
             $template = Plugin::$dir . 'templates/frontend/form.php';
             if (!file_exists($template)) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('[FP-RESV] CRITICAL: Template not found at: ' . $template);
-                }
+                error_log('[FP-RESV] CRITICAL: Template not found at: ' . $template);
                 return '<!-- FP-RESV: Template not found -->';
             }
+            error_log('[FP-RESV] Template trovato: ' . $template);
 
             ob_start();
             /** @var array<string, mixed> $context */
@@ -85,16 +85,16 @@ final class Shortcodes
             
             // Ensure output is not empty
             if (empty(trim($output))) {
+                error_log('[FP-RESV] CRITICAL: Form rendering produced empty output');
                 return '<!-- FP-RESV: Form rendering produced empty output. Check if context data is properly configured. -->';
             }
 
+            error_log('[FP-RESV] Form renderizzato correttamente, lunghezza output: ' . strlen($output));
             return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] Error rendering form: ' . $e->getMessage());
-                error_log('[FP-RESV] Stack trace: ' . $e->getTraceAsString());
-            }
+            error_log('[FP-RESV] Error rendering form: ' . $e->getMessage());
+            error_log('[FP-RESV] Stack trace: ' . $e->getTraceAsString());
             
             // Return HTML comment to help debugging
             return '<!-- FP-RESV: Error rendering form: ' . esc_html($e->getMessage()) . ' -->';
