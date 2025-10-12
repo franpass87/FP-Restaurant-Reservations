@@ -102,7 +102,7 @@ final class AdminController
             ],
             'locations' => $this->service->listLocations(),
             'links' => [
-                'agenda'   => esc_url_raw(admin_url('admin.php?page=fp-resv-agenda')),
+                'manager'  => esc_url_raw(admin_url('admin.php?page=fp-resv-manager')),
                 'tables'   => esc_url_raw(admin_url('admin.php?page=fp-resv-layout')),
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
             ],

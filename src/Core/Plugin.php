@@ -576,6 +576,9 @@ final class Plugin
             $container->register(\FP\Resv\Frontend\DashboardWidget::class, $dashboardWidget);
         }
 
+        // Register shortcodes
+        \FP\Resv\Frontend\Shortcodes::register();
+
         $manage = new ManageController();
         $manage->boot();
         $container->register(ManageController::class, $manage);

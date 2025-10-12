@@ -37,7 +37,7 @@ final class WidgetController
 
     public function boot(): void
     {
-        add_action('init', [Shortcodes::class, 'register']);
+        // Shortcodes are now registered directly in Plugin::onPluginsLoaded() for better reliability
         add_action('init', [Gutenberg::class, 'register']);
 
         Elementor::register();
