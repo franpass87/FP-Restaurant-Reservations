@@ -123,14 +123,19 @@ final class WidgetController
         
         // Inline critical CSS per evitare FOUC e conflitti con WPBakery
         $inlineCss = '
-        /* Main widget container */
-        .fp-resv-widget { 
-            display: block !important; 
-            visibility: visible !important; 
+        /* Reset WPBakery/Theme styles - highest specificity */
+        .vc_row .wpb_column .wpb_wrapper .fp-resv-widget,
+        .vc_column_container .fp-resv-widget,
+        .wpb_text_column .fp-resv-widget,
+        .wpb_wrapper .fp-resv-widget,
+        div.fp-resv-widget {
+            all: initial !important;
+            display: block !important;
+            visibility: visible !important;
             opacity: 1 !important;
             max-width: 100% !important;
             width: 100% !important;
-            margin: 0 !important;
+            margin: 20px auto !important;
             padding: 0 !important;
             background: transparent !important;
             border: none !important;
@@ -139,31 +144,57 @@ final class WidgetController
             position: relative !important;
             float: none !important;
             text-align: left !important;
+            line-height: normal !important;
+            font-size: 16px !important;
+            color: #000 !important;
         }
+        /* Ensure box-sizing for all elements */
+        .fp-resv-widget,
         .fp-resv-widget *,
         .fp-resv-widget *::before,
         .fp-resv-widget *::after {
             box-sizing: border-box !important;
         }
-        /* Reset buttons and form elements */
+        /* Reset all direct children */
+        .fp-resv-widget > * {
+            all: revert;
+        }
+        /* Buttons */
         .fp-resv-widget button,
-        .fp-resv-widget input,
-        .fp-resv-widget select,
-        .fp-resv-widget textarea {
+        .fp-resv-widget input[type="submit"],
+        .fp-resv-widget input[type="button"] {
             font-family: inherit !important;
             margin: 0 !important;
-        }
-        .fp-resv-widget button {
+            padding: 0.75rem 1.5rem !important;
             text-align: center !important;
+            cursor: pointer !important;
+            border: none !important;
+            background: var(--fp-resv-primary, #007bff) !important;
+            color: white !important;
+            border-radius: 8px !important;
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
+            display: inline-block !important;
+            text-decoration: none !important;
         }
-        /* Reset WPBakery/VC styles */
-        .vc_row .fp-resv-widget,
-        .vc_column_container .fp-resv-widget,
-        .wpb_text_column .fp-resv-widget,
-        .wpb_wrapper .fp-resv-widget {
-            margin: 0 !important;
-            padding: 0 !important;
+        /* Form elements */
+        .fp-resv-widget input[type="text"],
+        .fp-resv-widget input[type="email"],
+        .fp-resv-widget input[type="tel"],
+        .fp-resv-widget input[type="date"],
+        .fp-resv-widget input[type="number"],
+        .fp-resv-widget select,
+        .fp-resv-widget textarea {
             width: 100% !important;
+            padding: 0.75rem !important;
+            border: 1px solid #ddd !important;
+            border-radius: 8px !important;
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
+            font-family: inherit !important;
+            background: white !important;
+            color: #000 !important;
+            margin: 0 !important;
         }
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
