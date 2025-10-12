@@ -343,6 +343,24 @@ final class REST
         return $response;
     }
 
+    /**
+     * Helper per output diretto di errori JSON (bypassa WP_REST_Response)
+     */
+    private function outputError(string $code, string $message, array $data = []): void
+    {
+        $status = $data['status'] ?? 400;
+        unset($data['status']);
+        
+        header('Content-Type: application/json; charset=UTF-8');
+        http_response_code($status);
+        echo wp_json_encode([
+            'code' => $code,
+            'message' => $message,
+            'data' => array_merge(['status' => $status], $data),
+        ]);
+        exit;
+    }
+
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         // Cattura eventuali output indesiderati
@@ -386,7 +404,7 @@ final class REST
                 'user_logged_in' => is_user_logged_in(),
             ];
             
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_invalid_nonce',
                 __('Errore di sicurezza. Ricarica la pagina e riprova.', 'fp-restaurant-reservations'),
                 array_merge(['status' => 403], $debugInfo)
@@ -395,7 +413,7 @@ final class REST
 
         $ip = Helpers::clientIp();
         if (!RateLimiter::allow('reservation:' . $ip, 5, 300)) {
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_rate_limited',
                 __('Hai effettuato troppe richieste. Attendi qualche minuto e riprova.', 'fp-restaurant-reservations'),
                 ['status' => 429]
@@ -404,7 +422,7 @@ final class REST
 
         $honeypot = $this->param($request, ['fp_resv_hp']);
         if ($honeypot !== null && $honeypot !== '') {
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_bot_detected',
                 __('Non è stato possibile elaborare la richiesta.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -413,7 +431,7 @@ final class REST
 
         $captchaPassed = apply_filters('fp_resv_validate_captcha', true, $request);
         if ($captchaPassed === false) {
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_captcha_failed',
                 __('Verifica anti-spam non superata.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -421,7 +439,7 @@ final class REST
         }
 
         if (!$this->consentGiven($request)) {
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_missing_consent',
                 __('Per confermare la prenotazione è necessario accettare il trattamento dati.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -450,15 +468,12 @@ final class REST
                     'message'     => __('Prenotazione già registrata.', 'fp-restaurant-reservations'),
                 ];
 
-                $response = rest_ensure_response($payload);
-                if ($response instanceof WP_REST_Response) {
-                    $response->set_status(200);
-                    $response->set_headers([
-                        'X-FP-Resv-Idempotent' => 'true',
-                    ]);
-                }
-
-                return $response;
+                // Output diretto anche per idempotenza
+                header('Content-Type: application/json; charset=UTF-8');
+                header('X-FP-Resv-Idempotent: true');
+                http_response_code(200);
+                echo wp_json_encode($payload);
+                exit;
             }
         }
 
@@ -540,7 +555,7 @@ final class REST
                 'meal' => $payload['meal'] ?? null,
             ]);
             
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_invalid_reservation',
                 $exception->getMessage(),
                 ['status' => 400]
@@ -554,7 +569,7 @@ final class REST
                 'line' => $exception->getLine(),
             ]);
             
-            return new WP_Error(
+            $this->outputError(
                 'fp_resv_reservation_error',
                 __('Si è verificato un errore durante la creazione della prenotazione.', 'fp-restaurant-reservations'),
                 [
