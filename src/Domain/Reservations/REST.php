@@ -606,11 +606,31 @@ final class REST
         
         Logging::log('api', '>>> OUTPUT DIRETTO invece di WP_REST_Response');
         
+        // Forza flush di tutti i buffer prima dell'output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        $json = wp_json_encode($payload);
+        
+        Logging::log('api', '>>> JSON PRONTO PER OUTPUT', [
+            'json_length' => strlen($json),
+            'json_preview' => substr($json, 0, 100),
+            'ob_level' => ob_get_level(),
+            'headers_sent' => headers_sent(),
+        ]);
+        
         // Output diretto per evitare interferenze di WordPress
-        header('Content-Type: application/json; charset=UTF-8');
-        http_response_code(201);
-        echo wp_json_encode($payload);
-        exit;
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=UTF-8');
+            http_response_code(201);
+        }
+        
+        echo $json;
+        
+        Logging::log('api', '>>> ECHO ESEGUITO, chiamo die()');
+        
+        die(); // Usa die() invece di exit() per forzare terminazione
     }
 
     private function consentGiven(WP_REST_Request $request): bool
