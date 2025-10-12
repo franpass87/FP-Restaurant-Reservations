@@ -115,9 +115,9 @@ jobs:
           fi
           
           # Verifica che agenda-app.js contenga la versione aggiornata (ES6 class)
-          if ! grep -q "class AgendaApp" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
+          if ! grep -q "class ReservationManager" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
             echo "⚠️  ATTENZIONE: agenda-app.js potrebbe essere una versione vecchia!"
-            echo "Il file dovrebbe contenere 'class AgendaApp' ma non è stato trovato."
+            echo "Il file dovrebbe contenere 'class ReservationManager' ma non è stato trovato."
             head -20 "$TARGET_DIR/assets/js/admin/agenda-app.js"
             exit 1
           fi
@@ -176,4 +176,4 @@ jobs:
           echo "- **Commit:** ${GITHUB_SHA:0:7}" >> $GITHUB_STEP_SUMMARY
           echo "- **ZIP:** \`${{ env.ZIP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Tutti i file critici verificati, incluso \`agenda-app.js\` aggiornato" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tutti i file critici verificati, incluso \`agenda-app.js\` con ReservationManager" >> $GITHUB_STEP_SUMMARY

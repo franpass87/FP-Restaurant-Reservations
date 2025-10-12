@@ -122,7 +122,7 @@ jobs:
           [ -d "$TARGET_DIR/assets/dist" ] || { echo "❌ assets/dist mancante"; exit 1; }
           
           # Verifica versione agenda aggiornata
-          if ! grep -q "class AgendaApp" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
+          if ! grep -q "class ReservationManager" "$TARGET_DIR/assets/js/admin/agenda-app.js"; then
             echo "⚠️  ATTENZIONE: agenda-app.js sembra essere una versione vecchia!"
             exit 1
           fi
@@ -156,7 +156,7 @@ jobs:
 
 **Contenuto Verificato:**
 ✅ File principale plugin
-✅ agenda-app.js aggiornato (versione ES6 class)
+✅ agenda-app.js aggiornato (ReservationManager class)
 ✅ Dipendenze Composer (production)
 ✅ Assets compilati
 
