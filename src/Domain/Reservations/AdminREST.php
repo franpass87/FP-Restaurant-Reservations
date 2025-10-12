@@ -166,43 +166,64 @@ final class AdminREST
 
     public function handleArrivals(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $range = strtolower((string) $request->get_param('range'));
-        if (!in_array($range, ['today', 'week'], true)) {
-            $range = 'today';
+        // Inizia output buffering per prevenire output inattesi
+        ob_start();
+        
+        try {
+            $range = strtolower((string) $request->get_param('range'));
+            if (!in_array($range, ['today', 'week'], true)) {
+                $range = 'today';
+            }
+
+            $timezone = wp_timezone();
+            $start    = new DateTimeImmutable('today', $timezone);
+            $end      = $range === 'week' ? $start->add(new DateInterval('P6D')) : $start;
+
+            $filters = [];
+
+            $room = $request->get_param('room');
+            if ($room !== null && $room !== '') {
+                $filters['room'] = (string) $room;
+            }
+
+            $status = $request->get_param('status');
+            if ($status !== null && $status !== '') {
+                $filters['status'] = sanitize_text_field((string) $status);
+            }
+
+            $rows = $this->reservations->findArrivals(
+                $start->format('Y-m-d'),
+                $end->format('Y-m-d'),
+                $filters
+            );
+
+            $reservations = array_map([$this, 'mapArrivalReservation'], $rows);
+
+            $responseData = [
+                'range'        => [
+                    'mode'  => $range,
+                    'start' => $start->format('Y-m-d'),
+                    'end'   => $end->format('Y-m-d'),
+                ],
+                'reservations' => $reservations,
+            ];
+            
+            // Pulisci output inatteso
+            $unexpectedOutput = ob_get_clean();
+            if (!empty(trim($unexpectedOutput))) {
+                error_log('[FP Resv Arrivals] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            }
+            
+            return rest_ensure_response($responseData);
+        } catch (Throwable $e) {
+            ob_end_clean();
+            error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
+            return new WP_Error(
+                'fp_resv_arrivals_error',
+                sprintf(__('Errore nel caricamento degli arrivi: %s', 'fp-restaurant-reservations'), $e->getMessage()),
+                ['status' => 500]
+            );
         }
-
-        $timezone = wp_timezone();
-        $start    = new DateTimeImmutable('today', $timezone);
-        $end      = $range === 'week' ? $start->add(new DateInterval('P6D')) : $start;
-
-        $filters = [];
-
-        $room = $request->get_param('room');
-        if ($room !== null && $room !== '') {
-            $filters['room'] = (string) $room;
-        }
-
-        $status = $request->get_param('status');
-        if ($status !== null && $status !== '') {
-            $filters['status'] = sanitize_text_field((string) $status);
-        }
-
-        $rows = $this->reservations->findArrivals(
-            $start->format('Y-m-d'),
-            $end->format('Y-m-d'),
-            $filters
-        );
-
-        $reservations = array_map([$this, 'mapArrivalReservation'], $rows);
-
-        return rest_ensure_response([
-            'range'        => [
-                'mode'  => $range,
-                'start' => $start->format('Y-m-d'),
-                'end'   => $end->format('Y-m-d'),
-            ],
-            'reservations' => $reservations,
-        ]);
     }
 
     /**
@@ -210,6 +231,9 @@ final class AdminREST
      */
     public function handleStats(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Inizia output buffering per prevenire output inattesi
+        ob_start();
+        
         try {
             $dateParam = $request->get_param('date');
             $date = $this->sanitizeDate($dateParam);
@@ -264,15 +288,24 @@ final class AdminREST
             // Calcola statistiche dettagliate
             $stats = $this->calculateDetailedStats($reservations, $rangeMode);
 
-            return rest_ensure_response([
+            $responseData = [
                 'range' => [
                     'mode'  => $rangeMode,
                     'start' => $start->format('Y-m-d'),
                     'end'   => $end->format('Y-m-d'),
                 ],
                 'stats' => $stats,
-            ]);
+            ];
+            
+            // Pulisci output inatteso
+            $unexpectedOutput = ob_get_clean();
+            if (!empty(trim($unexpectedOutput))) {
+                error_log('[FP Resv Stats] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            }
+            
+            return rest_ensure_response($responseData);
         } catch (Throwable $e) {
+            ob_end_clean();
             error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_stats_error',
@@ -287,6 +320,9 @@ final class AdminREST
      */
     public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Inizia output buffering per prevenire output inattesi
+        ob_start();
+        
         try {
             $timezone = wp_timezone();
             $today = new DateTimeImmutable('today', $timezone);
@@ -318,7 +354,7 @@ final class AdminREST
         $weekReservations = array_map([$this, 'mapAgendaReservation'], is_array($weekRows) ? $weekRows : []);
         $monthReservations = array_map([$this, 'mapAgendaReservation'], is_array($monthRows) ? $monthRows : []);
 
-            return rest_ensure_response([
+            $responseData = [
                 'today' => [
                     'date' => $today->format('Y-m-d'),
                     'stats' => $this->calculateStats($todayReservations),
@@ -334,8 +370,17 @@ final class AdminREST
                     'stats' => $this->calculateStats($monthReservations),
                 ],
                 'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
-            ]);
+            ];
+            
+            // Pulisci output inatteso
+            $unexpectedOutput = ob_get_clean();
+            if (!empty(trim($unexpectedOutput))) {
+                error_log('[FP Resv Overview] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+            }
+            
+            return rest_ensure_response($responseData);
         } catch (Throwable $e) {
+            ob_end_clean();
             error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_overview_error',
@@ -347,6 +392,9 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Inizia output buffering per prevenire qualsiasi output inatteso che corromperebbe il JSON
+        ob_start();
+        
         try {
             // Sanitizza e valida parametri
             $dateParam = $request->get_param('date');
@@ -385,6 +433,7 @@ final class AdminREST
             
             // Assicurati che sia un array
             if (!is_array($rows)) {
+                error_log('[FP Resv Agenda] WARNING: findAgendaRange non ha ritornato un array, tipo: ' . gettype($rows));
                 $rows = [];
             }
             
@@ -392,6 +441,7 @@ final class AdminREST
             $reservations = [];
             foreach ($rows as $row) {
                 if (!is_array($row)) {
+                    error_log('[FP Resv Agenda] WARNING: Row non è un array, tipo: ' . gettype($row));
                     continue;
                 }
                 
@@ -409,7 +459,7 @@ final class AdminREST
             // - stats: statistiche aggregate calcolate server-side
             // - data: dati organizzati per vista (slots per day, days per week/month)
             // - reservations: array piatto per backward compatibility
-            return rest_ensure_response([
+            $responseData = [
                 'meta' => [
                     'range' => $rangeMode,
                     'start_date' => $start->format('Y-m-d'),
@@ -419,8 +469,19 @@ final class AdminREST
                 'stats' => $this->calculateStats($reservations),
                 'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
                 'reservations' => $reservations,
-            ]);
+            ];
+            
+            // Pulisci qualsiasi output inatteso prima di restituire la risposta
+            $unexpectedOutput = ob_get_clean();
+            if (!empty(trim($unexpectedOutput))) {
+                error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
+            }
+            
+            return rest_ensure_response($responseData);
         } catch (Throwable $e) {
+            // Pulisci output buffer in caso di errore
+            ob_end_clean();
+            
             // Log l'errore completo per debugging
             error_log('[FP Resv Agenda] Errore critico in handleAgenda: ' . $e->getMessage());
             error_log('[FP Resv Agenda] Stack trace: ' . $e->getTraceAsString());
