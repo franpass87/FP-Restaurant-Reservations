@@ -776,6 +776,11 @@ final class AdminREST
     {
         error_log('[FP Resv] === ELIMINAZIONE PRENOTAZIONE START ===');
         
+        // Forza pulizia output buffer per evitare interferenze
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
         $id = absint((string) $request->get_param('id'));
         error_log('[FP Resv] ID da eliminare: ' . $id);
         
@@ -805,16 +810,28 @@ final class AdminREST
                 throw new RuntimeException('Impossibile eliminare la prenotazione.');
             }
 
-            // Trigger action per eventuali integrazioni
+            error_log('[FP Resv] Prenotazione eliminata dal DB, triggering action...');
+            
+            // Trigger action per eventuali integrazioni (ma cattura qualsiasi output)
+            ob_start();
             do_action('fp_resv_reservation_deleted', $id, $entry);
+            $hookOutput = ob_get_clean();
+            
+            if ($hookOutput) {
+                error_log('[FP Resv] ATTENZIONE: Hook ha generato output: ' . $hookOutput);
+            }
 
             error_log('[FP Resv] === ELIMINAZIONE COMPLETATA CON SUCCESSO ===');
             
-            return rest_ensure_response([
+            $response = [
                 'success' => true,
                 'id'      => $id,
                 'message' => __('Prenotazione eliminata con successo.', 'fp-restaurant-reservations'),
-            ]);
+            ];
+            
+            error_log('[FP Resv] Restituisco risposta: ' . json_encode($response));
+            
+            return rest_ensure_response($response);
         } catch (Throwable $exception) {
             error_log('[FP Resv] ERRORE ELIMINAZIONE: ' . $exception->getMessage());
             error_log('[FP Resv] Stack trace: ' . $exception->getTraceAsString());

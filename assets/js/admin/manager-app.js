@@ -726,8 +726,12 @@ class ReservationManager {
         if (this.dom.errorState) this.dom.errorState.style.display = 'none';
         if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
 
-        if (filtered.length === 0) {
-            // Mostra empty state
+        // Per viste MESE e SETTIMANA, mostra SEMPRE il calendario anche se vuoto
+        // Solo la vista GIORNO mostra "nessuna prenotazione"
+        const shouldShowEmptyState = filtered.length === 0 && this.state.currentView === 'day';
+
+        if (shouldShowEmptyState) {
+            // Mostra empty state solo per vista giorno
             if (this.dom.emptyState) this.dom.emptyState.style.display = 'flex';
             
             // Nascondi tutte le viste
