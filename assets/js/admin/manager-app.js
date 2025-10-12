@@ -259,17 +259,27 @@ class ReservationManager {
 
     async loadOverview() {
         try {
+            console.log('[Manager] Loading overview from:', `${this.config.restRoot}/agenda/overview`);
+            
+            // Aggiungi timeout di 10 secondi
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
             const response = await fetch(`${this.config.restRoot}/agenda/overview`, {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
+                signal: controller.signal,
             });
+            
+            clearTimeout(timeoutId);
 
             console.log('[Manager] Overview response status:', response.status);
 
             if (!response.ok) {
                 console.error('[Manager] Overview response not OK:', response.status, response.statusText);
-                throw new Error(`Failed to load overview: ${response.status} ${response.statusText}`);
+                // Non bloccare il caricamento per overview
+                return;
             }
 
             // Check if response has content
@@ -288,7 +298,11 @@ class ReservationManager {
             this.state.overview = data;
             this.renderStats();
         } catch (error) {
-            console.error('[Manager] Error loading overview:', error);
+            if (error.name === 'AbortError') {
+                console.warn('[Manager] Overview request timeout (10s)');
+            } else {
+                console.error('[Manager] Error loading overview:', error);
+            }
             // Non mostrare errore all'utente per le stats, sono opzionali
         }
     }
@@ -323,18 +337,25 @@ class ReservationManager {
             console.log('[Manager] Loading reservations from:', url);
             console.log('[Manager] Date range:', startDate, 'to', endDate);
             
+            // Aggiungi timeout di 15 secondi
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            
             const response = await fetch(url, {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
+                signal: controller.signal,
             });
+            
+            clearTimeout(timeoutId);
 
             console.log('[Manager] Reservations response status:', response.status);
 
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('[Manager] Reservations response error:', response.status, errorText);
-                throw new Error(`Failed to load reservations: ${response.status} ${response.statusText}`);
+                throw new Error(`Errore ${response.status}: ${response.statusText}`);
             }
 
             // Get response text first
@@ -362,7 +383,13 @@ class ReservationManager {
             this.renderCurrentView();
         } catch (error) {
             console.error('[Manager] Error loading reservations:', error);
-            this.showError(error.message);
+            this.hideLoading(); // IMPORTANTE: nascondi il loader anche in caso di errore
+            
+            if (error.name === 'AbortError') {
+                this.showError('Timeout: il server impiega troppo tempo a rispondere.');
+            } else {
+                this.showError(error.message || 'Errore nel caricamento delle prenotazioni');
+            }
         }
     }
 

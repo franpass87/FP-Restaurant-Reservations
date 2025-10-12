@@ -151,15 +151,18 @@ final class Shortcodes
     {
         error_log('[FP-RESV] Rendering error: ' . $message);
         
-        // ALWAYS show visible error (temporarily for debugging)
-        // This ensures we can see what's wrong even if WP_DEBUG is off
-        $html = '<div class="fp-resv-error" style="background: #fee; border: 2px solid #c33; padding: 20px; margin: 20px 0; border-radius: 8px; font-family: sans-serif; max-width: 800px;">';
-        $html .= '<h3 style="margin: 0 0 10px; color: #c33;">⚠️ FP Restaurant Reservations - Errore</h3>';
-        $html .= '<p style="margin: 0;"><strong>Messaggio:</strong> ' . wp_kses_post($message) . '</p>';
-        $html .= '<p style="margin: 10px 0 0; font-size: 0.9em; color: #666;">Controlla i log PHP (wp-content/debug.log) per maggiori dettagli.</p>';
-        $html .= '<p style="margin: 10px 0 0; font-size: 0.85em; color: #999;">Se il problema persiste, contatta il supporto con questo messaggio.</p>';
-        $html .= '</div>';
-        return $html;
+        // Show visible error only in debug mode
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $html = '<div class="fp-resv-error" style="background: #fee; border: 2px solid #c33; padding: 20px; margin: 20px 0; border-radius: 8px; font-family: sans-serif; max-width: 800px;">';
+            $html .= '<h3 style="margin: 0 0 10px; color: #c33;">⚠️ FP Restaurant Reservations - Errore</h3>';
+            $html .= '<p style="margin: 0;"><strong>Messaggio:</strong> ' . esc_html($message) . '</p>';
+            $html .= '<p style="margin: 10px 0 0; font-size: 0.9em; color: #666;">Controlla i log PHP per maggiori dettagli. Per nascondere questo messaggio, disattiva WP_DEBUG.</p>';
+            $html .= '</div>';
+            return $html;
+        }
+        
+        // In production, return HTML comment only
+        return '<!-- FP-RESV Error: ' . esc_html($message) . ' -->';
     }
 
     /**

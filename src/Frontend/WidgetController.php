@@ -97,13 +97,6 @@ final class WidgetController
             error_log('[FP-RESV] DEBUG: Page "' . $post->post_title . '" (ID: ' . $post->ID . ') contains shortcode');
             error_log('[FP-RESV] DEBUG: Post type: ' . $post->post_type);
             error_log('[FP-RESV] DEBUG: Checking if form was rendered...');
-            
-            // In debug mode, add visible indicator
-            if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-                echo '<!-- [FP-RESV] DEBUG: This page should contain the reservation form -->';
-                echo '<!-- [FP-RESV] DEBUG: Shortcode found in content: YES -->';
-                echo '<!-- [FP-RESV] DEBUG: Check console for "[FP-RESV] Found widgets" message -->';
-            }
         }
     }
 
@@ -121,10 +114,58 @@ final class WidgetController
             'fp-resv-form',
             Plugin::$url . 'assets/css/form.css',
             [],
-            $version
+            $version,
+            'all'
         );
 
         wp_enqueue_style('fp-resv-form');
+        
+        // Inline critical CSS per evitare FOUC e conflitti con WPBakery
+        $inlineCss = '
+        /* Main widget container */
+        .fp-resv-widget { 
+            display: block !important; 
+            visibility: visible !important; 
+            opacity: 1 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            clear: both !important;
+            position: relative !important;
+            float: none !important;
+            text-align: left !important;
+        }
+        .fp-resv-widget *,
+        .fp-resv-widget *::before,
+        .fp-resv-widget *::after {
+            box-sizing: border-box !important;
+        }
+        /* Reset buttons and form elements */
+        .fp-resv-widget button,
+        .fp-resv-widget input,
+        .fp-resv-widget select,
+        .fp-resv-widget textarea {
+            font-family: inherit !important;
+            margin: 0 !important;
+        }
+        .fp-resv-widget button {
+            text-align: center !important;
+        }
+        /* Reset WPBakery/VC styles */
+        .vc_row .fp-resv-widget,
+        .vc_column_container .fp-resv-widget,
+        .wpb_text_column .fp-resv-widget,
+        .wpb_wrapper .fp-resv-widget {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        ';
+        wp_add_inline_style('fp-resv-form', $inlineCss);
 
         $modulePath = Plugin::$dir . 'assets/dist/fe/onepage.esm.js';
         $legacyPath = Plugin::$dir . 'assets/dist/fe/onepage.iife.js';
