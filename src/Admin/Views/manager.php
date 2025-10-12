@@ -125,10 +125,6 @@ $headingId = 'fp-resv-manager-title';
                         <span class="dashicons dashicons-calendar-alt"></span>
                         <span><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button type="button" class="fp-view-btn" data-view="list" data-action="set-view">
-                        <span class="dashicons dashicons-list-view"></span>
-                        <span><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
-                    </button>
                 </div>
             </div>
 
@@ -207,13 +203,6 @@ $headingId = 'fp-resv-manager-title';
             <div class="fp-view fp-view--month" id="fp-view-month" style="display: none;">
                 <div class="fp-month-calendar" id="fp-month-calendar">
                     <!-- Month calendar will be rendered here by JavaScript -->
-                </div>
-            </div>
-
-            <!-- List View -->
-            <div class="fp-view fp-view--list" id="fp-view-list" style="display: none;">
-                <div class="fp-reservations-list" id="fp-reservations-list">
-                    <!-- Reservation cards will be rendered here by JavaScript -->
                 </div>
             </div>
         </div>

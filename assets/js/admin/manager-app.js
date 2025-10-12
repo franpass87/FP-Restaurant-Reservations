@@ -85,7 +85,6 @@ class ReservationManager {
             viewDay: document.getElementById('fp-view-day'),
             viewWeek: document.getElementById('fp-view-week'),
             viewMonth: document.getElementById('fp-view-month'),
-            viewList: document.getElementById('fp-view-list'),
             
             // States
             loadingState: document.getElementById('fp-loading-state'),
@@ -97,7 +96,6 @@ class ReservationManager {
             timeline: document.getElementById('fp-timeline'),
             weekCalendar: document.getElementById('fp-week-calendar'),
             monthCalendar: document.getElementById('fp-month-calendar'),
-            reservationsList: document.getElementById('fp-reservations-list'),
             
             // Modal
             modal: document.getElementById('fp-reservation-modal'),
@@ -722,7 +720,6 @@ class ReservationManager {
             if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
             if (this.dom.viewWeek) this.dom.viewWeek.style.display = 'none';
             if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
-            if (this.dom.viewList) this.dom.viewList.style.display = 'none';
             return;
         }
         
@@ -733,7 +730,6 @@ class ReservationManager {
         if (this.dom.viewDay) this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
         if (this.dom.viewWeek) this.dom.viewWeek.style.display = this.state.currentView === 'week' ? 'block' : 'none';
         if (this.dom.viewMonth) this.dom.viewMonth.style.display = this.state.currentView === 'month' ? 'block' : 'none';
-        if (this.dom.viewList) this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
         
         // Render della vista attiva
         switch (this.state.currentView) {
@@ -745,9 +741,6 @@ class ReservationManager {
                 break;
             case 'month':
                 this.renderMonthView();
-                break;
-            case 'list':
-                this.renderListView(filtered);
                 break;
         }
     }
@@ -819,65 +812,6 @@ class ReservationManager {
         `;
 
         return html;
-    }
-
-    renderListView(reservations) {
-        let html = '<div class="fp-list-grid">';
-
-        reservations.forEach(resv => {
-            html += this.renderListCard(resv);
-        });
-
-        html += '</div>';
-
-        this.dom.reservationsList.innerHTML = html;
-        this.bindReservationCards();
-    }
-
-    renderListCard(resv) {
-        const statusLabels = {
-            confirmed: 'Confermato',
-            pending: 'In attesa',
-            visited: 'Visitato',
-            no_show: 'No-show',
-            cancelled: 'Cancellato',
-        };
-
-        const statusClasses = {
-            confirmed: 'status--confirmed',
-            pending: 'status--pending',
-            visited: 'status--visited',
-            no_show: 'status--no-show',
-            cancelled: 'status--cancelled',
-        };
-
-        const customer = this.getCustomerData(resv);
-        const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
-
-        return `
-            <div class="fp-list-card" data-id="${resv.id}" data-action="view-reservation">
-                <div class="fp-list-card__main">
-                    <div class="fp-list-card__avatar">
-                        <span class="dashicons dashicons-admin-users"></span>
-                    </div>
-                    <div class="fp-list-card__info">
-                        <div class="fp-list-card__name">${this.escapeHtml(guestName)}</div>
-                        <div class="fp-list-card__meta">
-                            <span>${resv.date}</span>
-                            <span>•</span>
-                            <span>${resv.time}</span>
-                            <span>•</span>
-                            <span><span class="dashicons dashicons-groups"></span> ${resv.party}</span>
-                        </div>
-                        ${customer.phone ? `<div class="fp-list-card__contact">${this.escapeHtml(customer.phone)}</div>` : ''}
-                        ${customer.email ? `<div class="fp-list-card__contact">${this.escapeHtml(customer.email)}</div>` : ''}
-                    </div>
-                </div>
-                <div class="fp-list-card__status">
-                    <span class="fp-status-badge ${statusClasses[resv.status] || ''}">${statusLabels[resv.status] || resv.status}</span>
-                </div>
-            </div>
-        `;
     }
 
     renderMonthView() {
@@ -1428,18 +1362,31 @@ class ReservationManager {
     }
 
     async deleteReservation(id) {
+        console.log('[Manager] Inizio eliminazione prenotazione ID:', id);
+        
         try {
-            const response = await fetch(this.buildRestUrl(`agenda/reservations/${id}`), {
+            const url = this.buildRestUrl(`agenda/reservations/${id}`);
+            console.log('[Manager] URL DELETE:', url);
+            console.log('[Manager] Nonce:', this.config.nonce);
+            
+            const response = await fetch(url, {
                 method: 'DELETE',
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
             });
 
+            console.log('[Manager] DELETE Response Status:', response.status);
+            console.log('[Manager] DELETE Response OK:', response.ok);
+
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('[Manager] DELETE Error Data:', errorData);
                 throw new Error(errorData.message || 'Errore nell\'eliminazione della prenotazione');
             }
+
+            const result = await response.json();
+            console.log('[Manager] DELETE Success:', result);
 
             this.closeModal();
             await this.loadReservations();
@@ -1448,6 +1395,7 @@ class ReservationManager {
             // Mostra messaggio di successo
             alert('Prenotazione eliminata con successo');
         } catch (error) {
+            console.error('[Manager] DELETE Error:', error);
             alert('Errore nell\'eliminazione della prenotazione: ' + error.message);
         }
     }
@@ -1980,7 +1928,6 @@ class ReservationManager {
         if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
         if (this.dom.viewWeek) this.dom.viewWeek.style.display = 'none';
         if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
-        if (this.dom.viewList) this.dom.viewList.style.display = 'none';
     }
 
     hideLoading() {

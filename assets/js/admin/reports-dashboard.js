@@ -102,12 +102,16 @@
   }
 
   function request(path, data) {
+    console.log('[Analytics] request() chiamata con path:', path, 'data:', data);
+    
     var headers = {};
     if (settings.nonce) {
       headers['X-WP-Nonce'] = settings.nonce;
+      console.log('[Analytics] Nonce aggiunto:', settings.nonce);
     }
 
     if (window.wp && window.wp.apiFetch) {
+      console.log('[Analytics] Usando wp.apiFetch');
       return window.wp.apiFetch({
         path: path,
         method: 'GET',
@@ -117,6 +121,8 @@
     }
 
     var base = (settings.restRoot || '').replace(/\/$/, '');
+    console.log('[Analytics] REST Root:', base);
+    
     var url = path.indexOf('http') === 0 ? path : base + '/' + path.replace(/^\//, '');
     if (data) {
       var query = new URLSearchParams();
@@ -130,16 +136,23 @@
         url += (url.indexOf('?') === -1 ? '?' : '&') + query.toString();
       }
     }
+    
+    console.log('[Analytics] URL finale:', url);
+    console.log('[Analytics] Headers:', headers);
 
     return fetch(url, {
       method: 'GET',
       headers: headers,
       credentials: 'same-origin',
     }).then(function (response) {
+      console.log('[Analytics] Response status:', response.status, 'OK:', response.ok);
       if (!response.ok) {
         throw new Error('Request failed: ' + response.status);
       }
       return response.json();
+    }).catch(function (error) {
+      console.error('[Analytics] Errore nella richiesta:', error);
+      throw error;
     });
   }
 

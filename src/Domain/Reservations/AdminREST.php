@@ -774,20 +774,32 @@ final class AdminREST
 
     public function handleDeleteReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        error_log('[FP Resv] === ELIMINAZIONE PRENOTAZIONE START ===');
+        
         $id = absint((string) $request->get_param('id'));
+        error_log('[FP Resv] ID da eliminare: ' . $id);
+        
         if ($id <= 0) {
+            error_log('[FP Resv] ID non valido');
             return new WP_Error('fp_resv_invalid_reservation_id', __('ID prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
         }
 
         // Verifica che la prenotazione esista
         $entry = $this->reservations->findAgendaEntry($id);
+        error_log('[FP Resv] Prenotazione trovata: ' . ($entry ? 'SI' : 'NO'));
+        
         if ($entry === null) {
+            error_log('[FP Resv] Prenotazione non trovata nel database');
             return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
         }
 
         try {
+            error_log('[FP Resv] Chiamo delete() sul repository');
+            
             // Elimina la prenotazione dal database
             $deleted = $this->reservations->delete($id);
+            
+            error_log('[FP Resv] Risultato delete(): ' . ($deleted ? 'TRUE' : 'FALSE'));
             
             if (!$deleted) {
                 throw new RuntimeException('Impossibile eliminare la prenotazione.');
@@ -796,12 +808,17 @@ final class AdminREST
             // Trigger action per eventuali integrazioni
             do_action('fp_resv_reservation_deleted', $id, $entry);
 
+            error_log('[FP Resv] === ELIMINAZIONE COMPLETATA CON SUCCESSO ===');
+            
             return rest_ensure_response([
                 'success' => true,
                 'id'      => $id,
                 'message' => __('Prenotazione eliminata con successo.', 'fp-restaurant-reservations'),
             ]);
         } catch (Throwable $exception) {
+            error_log('[FP Resv] ERRORE ELIMINAZIONE: ' . $exception->getMessage());
+            error_log('[FP Resv] Stack trace: ' . $exception->getTraceAsString());
+            
             return new WP_Error(
                 'fp_resv_delete_failed',
                 sprintf(__('Impossibile eliminare la prenotazione: %s', 'fp-restaurant-reservations'), $exception->getMessage()),

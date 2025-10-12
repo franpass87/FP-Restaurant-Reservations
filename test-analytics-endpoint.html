@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Analytics Endpoint</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 2px solid #0073aa; padding-bottom: 10px; }
+        .test-section { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #0073aa; }
+        .test-section h3 { margin-top: 0; color: #0073aa; }
+        button { background: #0073aa; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 5px; }
+        button:hover { background: #005a87; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        pre { background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .success { color: #46b450; font-weight: bold; }
+        .error { color: #dc3232; font-weight: bold; }
+        .loading { color: #0073aa; }
+        input[type="date"] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Analytics REST Endpoint</h1>
+        
+        <div class="test-section">
+            <h3>1. Verifica Namespace</h3>
+            <p>Controlla se <code>fp-resv/v1</code> è registrato in WordPress:</p>
+            <button onclick="testNamespace()">Test Namespace</button>
+            <div id="namespace-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Verifica Endpoint Analytics</h3>
+            <p>Controlla se <code>/fp-resv/v1/reports/analytics</code> è disponibile:</p>
+            <label>Start Date: <input type="date" id="start-date" value="2024-10-01"></label>
+            <label>End Date: <input type="date" id="end-date" value="2025-12-31"></label>
+            <br>
+            <button onclick="testAnalyticsEndpoint()">Test Analytics Endpoint</button>
+            <div id="analytics-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Completo (come fa il frontend)</h3>
+            <p>Simula la richiesta esatta del frontend:</p>
+            <button onclick="testFullRequest()">Test Full Request</button>
+            <div id="full-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Log Console</h3>
+            <p>Apri la Console del Browser (F12) per vedere i log dettagliati</p>
+        </div>
+    </div>
+
+    <script>
+        const SITE_URL = window.location.origin;
+        const REST_URL = SITE_URL + '/wp-json';
+
+        async function testNamespace() {
+            const resultDiv = document.getElementById('namespace-result');
+            resultDiv.innerHTML = '<p class="loading">⏳ Caricamento...</p>';
+            
+            try {
+                console.log('[Test] Controllo namespace su:', REST_URL);
+                const response = await fetch(REST_URL);
+                const data = await response.json();
+                
+                console.log('[Test] Namespaces disponibili:', data.namespaces);
+                
+                if (data.namespaces && data.namespaces.includes('fp-resv/v1')) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Namespace "fp-resv/v1" trovato!</p>
+                        <pre>${JSON.stringify(data.namespaces, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Namespace "fp-resv/v1" NON trovato!</p>
+                        <p>Namespaces disponibili:</p>
+                        <pre>${JSON.stringify(data.namespaces, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('[Test] Errore:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Errore: ${error.message}</p>`;
+            }
+        }
+
+        async function testAnalyticsEndpoint() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<p class="loading">⏳ Caricamento...</p>';
+            
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            const url = `${REST_URL}/fp-resv/v1/reports/analytics?start=${startDate}&end=${endDate}`;
+            
+            try {
+                console.log('[Test] Chiamata endpoint:', url);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                console.log('[Test] Status:', response.status);
+                console.log('[Test] Headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('[Test] Errore response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('[Test] Dati ricevuti:', data);
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Endpoint funzionante!</p>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Dati ricevuti:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('[Test] Errore:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Errore: ${error.message}</p>
+                    <p>URL tentato: <code>${url}</code></p>
+                `;
+            }
+        }
+
+        async function testFullRequest() {
+            const resultDiv = document.getElementById('full-result');
+            resultDiv.innerHTML = '<p class="loading">⏳ Caricamento...</p>';
+            
+            // Simula la richiesta del frontend
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            const start = thirtyDaysAgo.toISOString().split('T')[0];
+            const end = today.toISOString().split('T')[0];
+            
+            const path = '/fp-resv/v1/reports/analytics';
+            const params = new URLSearchParams({
+                start: start,
+                end: end,
+                location: ''
+            });
+            
+            const url = `${REST_URL}${path}?${params.toString()}`;
+            
+            try {
+                console.log('[Test Full] URL:', url);
+                console.log('[Test Full] Parametri:', { start, end });
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                });
+                
+                console.log('[Test Full] Response:', response);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('[Test Full] Result:', result);
+                
+                const analytics = result.analytics || result;
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Richiesta completata!</p>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Range:</strong> ${start} → ${end}</p>
+                    ${analytics.summary ? `
+                        <p><strong>Prenotazioni:</strong> ${analytics.summary.reservations || 0}</p>
+                        <p><strong>Coperti:</strong> ${analytics.summary.covers || 0}</p>
+                    ` : ''}
+                    <details>
+                        <summary>Dati completi (clicca per espandere)</summary>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                console.error('[Test Full] Errore:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Errore: ${error.message}</p>
+                    <p>Questo è lo stesso errore che vedrebbe il frontend.</p>
+                    <p>URL: <code>${url}</code></p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+
