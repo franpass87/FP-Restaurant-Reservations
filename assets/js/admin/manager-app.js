@@ -10,6 +10,7 @@ class ReservationManager {
             restRoot: window.fpResvManagerSettings?.restRoot || '/wp-json/fp-resv/v1',
             nonce: window.fpResvManagerSettings?.nonce || '',
             strings: window.fpResvManagerSettings?.strings || {},
+            meals: window.fpResvManagerSettings?.meals || [],
         };
 
         // State management
@@ -81,7 +82,7 @@ class ReservationManager {
             // Views
             viewDay: document.getElementById('fp-view-day'),
             viewList: document.getElementById('fp-view-list'),
-            viewCalendar: document.getElementById('fp-view-calendar'),
+            viewMonth: document.getElementById('fp-view-month'),
             
             // States
             loadingState: document.getElementById('fp-loading-state'),
@@ -92,7 +93,7 @@ class ReservationManager {
             // Content containers
             timeline: document.getElementById('fp-timeline'),
             reservationsList: document.getElementById('fp-reservations-list'),
-            calendarGrid: document.getElementById('fp-calendar-grid'),
+            monthCalendar: document.getElementById('fp-month-calendar'),
             
             // Modal
             modal: document.getElementById('fp-reservation-modal'),
@@ -227,6 +228,8 @@ class ReservationManager {
 
     setView(view) {
         console.log('[Manager] Switching view to:', view);
+        
+        const previousView = this.state.currentView;
         this.state.currentView = view;
 
         // Update buttons
@@ -240,8 +243,14 @@ class ReservationManager {
             }
         });
 
-        // Render current view (che gestirà la visibilità)
-        this.renderCurrentView();
+        // Se passiamo da/a vista mese, ricarica i dati con il range corretto
+        if ((previousView === 'month' && view !== 'month') || (previousView !== 'month' && view === 'month')) {
+            console.log('[Manager] View change requires data reload');
+            this.loadReservations();
+        } else {
+            // Altrimenti, semplicemente re-render
+            this.renderCurrentView();
+        }
     }
 
     // ============================================
@@ -289,9 +298,30 @@ class ReservationManager {
 
         try {
             const dateStr = this.formatDate(this.state.currentDate);
-            const url = `${this.config.restRoot}/agenda?date=${dateStr}&range=day`;
+            
+            // Determina il range in base alla vista corrente
+            let range = 'day';
+            let startDate = dateStr;
+            let endDate = dateStr;
+            
+            if (this.state.currentView === 'month') {
+                // Per la vista mese, carica tutto il mese
+                const currentDate = this.state.currentDate;
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                
+                startDate = this.formatDate(firstDay);
+                endDate = this.formatDate(lastDay);
+                range = 'month';
+            }
+            
+            const url = `${this.config.restRoot}/agenda?date=${startDate}&range=${range}`;
             
             console.log('[Manager] Loading reservations from:', url);
+            console.log('[Manager] Date range:', startDate, 'to', endDate);
             
             const response = await fetch(url, {
                 headers: {
@@ -386,7 +416,7 @@ class ReservationManager {
             // Nascondi tutte le viste
             this.dom.viewDay.style.display = 'none';
             this.dom.viewList.style.display = 'none';
-            this.dom.viewCalendar.style.display = 'none';
+            this.dom.viewMonth.style.display = 'none';
             return;
         }
 
@@ -396,7 +426,7 @@ class ReservationManager {
         // Mostra la vista corrente e nascondi le altre
         this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
         this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
-        this.dom.viewCalendar.style.display = this.state.currentView === 'calendar' ? 'block' : 'none';
+        this.dom.viewMonth.style.display = this.state.currentView === 'month' ? 'block' : 'none';
 
         // Render della vista attiva
         switch (this.state.currentView) {
@@ -406,8 +436,8 @@ class ReservationManager {
             case 'list':
                 this.renderListView(filtered);
                 break;
-            case 'calendar':
-                this.renderCalendarView(filtered);
+            case 'month':
+                this.renderMonthView();
                 break;
         }
 
@@ -540,9 +570,153 @@ class ReservationManager {
         `;
     }
 
-    renderCalendarView(reservations) {
-        // Simplified calendar view - can be enhanced later
-        this.dom.calendarGrid.innerHTML = '<div class="fp-calendar-placeholder">Vista calendario in fase di sviluppo</div>';
+    renderMonthView() {
+        const currentDate = this.state.currentDate;
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Get first day of month and last day
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        
+        // Get day of week for first day (0 = Sunday, 1 = Monday, etc)
+        let startDay = firstDay.getDay();
+        // Convert to Monday = 0
+        startDay = startDay === 0 ? 6 : startDay - 1;
+        
+        // Month name
+        const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                           'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+        const monthName = monthNames[month];
+        
+        // Raggruppa prenotazioni per data
+        const reservationsByDate = {};
+        this.state.reservations.forEach(resv => {
+            const date = resv.date;
+            if (!reservationsByDate[date]) {
+                reservationsByDate[date] = [];
+            }
+            reservationsByDate[date].push(resv);
+        });
+        
+        // Header
+        let html = `
+            <div class="fp-month-header">
+                <h2>${monthName} ${year}</h2>
+                <div class="fp-month-nav">
+                    <button type="button" class="fp-btn-icon" data-action="prev-month" title="Mese precedente">
+                        <span class="dashicons dashicons-arrow-left-alt2"></span>
+                    </button>
+                    <button type="button" class="fp-btn fp-btn--secondary" data-action="this-month">
+                        Questo Mese
+                    </button>
+                    <button type="button" class="fp-btn-icon" data-action="next-month" title="Mese successivo">
+                        <span class="dashicons dashicons-arrow-right-alt2"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="fp-calendar-grid">
+                <div class="fp-calendar-header">
+                    <div class="fp-calendar-day-name">Lun</div>
+                    <div class="fp-calendar-day-name">Mar</div>
+                    <div class="fp-calendar-day-name">Mer</div>
+                    <div class="fp-calendar-day-name">Gio</div>
+                    <div class="fp-calendar-day-name">Ven</div>
+                    <div class="fp-calendar-day-name">Sab</div>
+                    <div class="fp-calendar-day-name">Dom</div>
+                </div>
+                <div class="fp-calendar-days">
+        `;
+        
+        // Empty cells before first day
+        for (let i = 0; i < startDay; i++) {
+            html += '<div class="fp-calendar-day fp-calendar-day--empty"></div>';
+        }
+        
+        // Days of month
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = date.toISOString().split('T')[0];
+            const reservations = reservationsByDate[dateStr] || [];
+            const count = reservations.length;
+            const guests = reservations.reduce((sum, r) => sum + (r.party || 0), 0);
+            
+            const isToday = dateStr === todayStr;
+            const isSelected = dateStr === this.formatDate(this.state.currentDate);
+            
+            let dayClass = 'fp-calendar-day';
+            if (isToday) dayClass += ' fp-calendar-day--today';
+            if (isSelected) dayClass += ' fp-calendar-day--selected';
+            if (count > 0) dayClass += ' fp-calendar-day--has-reservations';
+            
+            html += `
+                <div class="${dayClass}" data-date="${dateStr}" data-action="select-day">
+                    <div class="fp-calendar-day__number">${day}</div>
+                    ${count > 0 ? `
+                        <div class="fp-calendar-day__info">
+                            <div class="fp-calendar-day__count">${count} pren.</div>
+                            <div class="fp-calendar-day__guests">${guests} coperti</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Empty cells after last day to complete the grid
+        const totalCells = startDay + daysInMonth;
+        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let i = 0; i < remainingCells; i++) {
+            html += '<div class="fp-calendar-day fp-calendar-day--empty"></div>';
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+        
+        this.dom.monthCalendar.innerHTML = html;
+        
+        // Bind eventi
+        this.bindMonthViewEvents();
+    }
+
+    bindMonthViewEvents() {
+        // Click su giorno
+        this.dom.monthCalendar.querySelectorAll('[data-action="select-day"]').forEach(day => {
+            day.addEventListener('click', () => {
+                const dateStr = day.dataset.date;
+                this.setDate(new Date(dateStr + 'T12:00:00'));
+                this.setView('day'); // Torna alla vista giorno
+            });
+        });
+
+        // Navigazione mese
+        this.dom.monthCalendar.querySelector('[data-action="prev-month"]')?.addEventListener('click', () => {
+            this.navigateMonth(-1);
+        });
+
+        this.dom.monthCalendar.querySelector('[data-action="next-month"]')?.addEventListener('click', () => {
+            this.navigateMonth(1);
+        });
+
+        this.dom.monthCalendar.querySelector('[data-action="this-month"]')?.addEventListener('click', () => {
+            this.setDate(new Date());
+        });
+    }
+
+    navigateMonth(months) {
+        const newDate = new Date(this.state.currentDate);
+        newDate.setMonth(newDate.getMonth() + months);
+        this.state.currentDate = newDate;
+        this.updateDatePicker();
+        
+        // Ricarica le prenotazioni per il nuovo mese
+        this.loadReservations();
     }
 
     // ============================================
@@ -761,6 +935,23 @@ class ReservationManager {
     renderNewReservationStep1() {
         const today = new Date().toISOString().split('T')[0];
         
+        // Genera opzioni meal dinamicamente
+        let mealOptions = '<option value="">Seleziona servizio...</option>';
+        
+        if (this.config.meals && this.config.meals.length > 0) {
+            this.config.meals.forEach(meal => {
+                const key = meal.key || '';
+                const label = meal.label || key;
+                mealOptions += `<option value="${this.escapeHtml(key)}">${this.escapeHtml(label)}</option>`;
+            });
+        } else {
+            // Fallback se non ci sono meal configurati
+            mealOptions += `
+                <option value="lunch">Pranzo</option>
+                <option value="dinner">Cena</option>
+            `;
+        }
+        
         return `
             <div class="fp-new-reservation">
                 <div class="fp-step-indicator">
@@ -773,9 +964,7 @@ class ReservationManager {
                     <div class="fp-form-group">
                         <label for="new-meal">Servizio *</label>
                         <select id="new-meal" class="fp-form-control" required>
-                            <option value="">Seleziona servizio...</option>
-                            <option value="lunch">Pranzo</option>
-                            <option value="dinner">Cena</option>
+                            ${mealOptions}
                         </select>
                     </div>
 
@@ -881,6 +1070,15 @@ class ReservationManager {
     renderNewReservationStep2(slots) {
         const { meal, date, party } = this.newReservationData;
         
+        // Trova il label del meal selezionato
+        let mealLabel = meal;
+        if (this.config.meals && this.config.meals.length > 0) {
+            const mealConfig = this.config.meals.find(m => m.key === meal);
+            if (mealConfig) {
+                mealLabel = mealConfig.label || meal;
+            }
+        }
+        
         // Filtra solo slot available
         const availableSlots = slots.filter(slot => slot.status === 'available');
 
@@ -909,7 +1107,7 @@ class ReservationManager {
                 </div>
 
                 <div class="fp-selection-summary">
-                    <strong>Servizio:</strong> ${meal === 'lunch' ? 'Pranzo' : 'Cena'} | 
+                    <strong>Servizio:</strong> ${this.escapeHtml(mealLabel)} | 
                     <strong>Data:</strong> ${date} | 
                     <strong>Coperti:</strong> ${party}
                 </div>
@@ -966,6 +1164,15 @@ class ReservationManager {
         const { meal, date, time, party } = this.newReservationData;
         const timeFormatted = time.substring(0, 5);
 
+        // Trova il label del meal selezionato
+        let mealLabel = meal;
+        if (this.config.meals && this.config.meals.length > 0) {
+            const mealConfig = this.config.meals.find(m => m.key === meal);
+            if (mealConfig) {
+                mealLabel = mealConfig.label || meal;
+            }
+        }
+
         return `
             <div class="fp-new-reservation">
                 <div class="fp-step-indicator">
@@ -975,7 +1182,7 @@ class ReservationManager {
                 </div>
 
                 <div class="fp-selection-summary">
-                    <strong>Servizio:</strong> ${meal === 'lunch' ? 'Pranzo' : 'Cena'} | 
+                    <strong>Servizio:</strong> ${this.escapeHtml(mealLabel)} | 
                     <strong>Data:</strong> ${date} ${timeFormatted} | 
                     <strong>Coperti:</strong> ${party}
                 </div>

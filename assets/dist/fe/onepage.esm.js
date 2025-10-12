@@ -1,4 +1,4 @@
-function v(a, t) {
+function b(a, t) {
   if (!a)
     return null;
   const e = Object.assign({ event: a }, t || {});
@@ -19,7 +19,7 @@ function ht(a, t) {
   const e = P(a), i = N(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
-function W(a) {
+function K(a) {
   const t = N(a);
   return t.length >= 6 && t.length <= 15;
 }
@@ -44,7 +44,7 @@ function z(a, t) {
   }
   a.setAttribute("data-phone-local", N(a.value)), a.setAttribute("data-phone-cc", P(t));
 }
-function D(a, t) {
+function T(a, t) {
   const e = N(a.value), i = P(t);
   return {
     e164: ht(i, e),
@@ -128,7 +128,7 @@ function mt(a, t) {
   }
   return {};
 }
-function bt(a) {
+function vt(a) {
   if (a == null)
     return null;
   if (typeof a == "number")
@@ -149,7 +149,7 @@ function et(a, t) {
   }
   return null;
 }
-function vt(a, t) {
+function bt(a, t) {
   a && (t ? (a.setAttribute("aria-disabled", "true"), a.setAttribute("disabled", "disabled")) : (a.removeAttribute("disabled"), a.setAttribute("aria-disabled", "false")));
 }
 function U(a) {
@@ -452,7 +452,7 @@ class it {
     }
     this.applyMealSelection(t), this.applyMealAvailabilityNotice(e, i, { skipSlotReset: !0 });
     const s = this.events.meal_selected || "meal_selected";
-    v(s, {
+    b(s, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
     }), this.updateAvailableDaysForMeal(e), this.scheduleAvailabilityUpdate({ immediate: !0 });
@@ -466,8 +466,8 @@ class it {
     if (s && this.currentAvailableDays.length > 0) {
       const r = new Date(s).getDay().toString();
       if (!this.currentAvailableDays.includes(r)) {
-        const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], h = this.currentAvailableDays.map((f) => o[parseInt(f)]).join(", ");
-        window.console && window.console.warn && console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${h}.`), this.dateField.value = "", this.dateField.setCustomValidity(""), this.dateField.setAttribute("aria-invalid", "false"), this.availabilityController && typeof this.availabilityController.clear == "function" && this.availabilityController.clear();
+        const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], u = this.currentAvailableDays.map((f) => o[parseInt(f)]).join(", ");
+        window.console && window.console.warn && console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${u}.`), this.dateField.value = "", this.dateField.setCustomValidity(""), this.dateField.setAttribute("aria-invalid", "false"), this.availabilityController && typeof this.availabilityController.clear == "function" && this.availabilityController.clear();
       }
     }
   }
@@ -496,7 +496,7 @@ class it {
   applyMealSelection(t) {
     const e = t.getAttribute("data-fp-resv-meal") || "";
     this.hiddenMeal && (this.hiddenMeal.value = e);
-    const i = bt(t.getAttribute("data-meal-price"));
+    const i = vt(t.getAttribute("data-meal-price"));
     this.hiddenPrice && (this.hiddenPrice.value = i !== null ? String(i) : ""), this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(t), this.updateSubmitState();
   }
   clearSlotSelection(t = {}) {
@@ -515,8 +515,8 @@ class it {
       const r = this.sections.indexOf(i);
       if (r !== -1)
         for (let o = r + 1; o < this.sections.length; o += 1) {
-          const h = this.sections[o];
-          this.updateSectionAttributes(h, "locked", { silent: !0 });
+          const u = this.sections[o];
+          this.updateSectionAttributes(u, "locked", { silent: !0 });
         }
       this.updateProgressIndicators(), (t.forceRewind && s || n === "completed" || n === "active") && this.activateSectionByKey(s);
     }
@@ -595,7 +595,7 @@ class it {
       return;
     this.state.unlocked[t] = !0;
     const e = this.events.section_unlocked || "section_unlocked";
-    v(e, { section: t });
+    b(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
     const s = t.getAttribute("data-step") || "", n = i && i.silent === !0;
@@ -610,7 +610,7 @@ class it {
     let i = 0;
     const s = e.length || 1;
     Array.prototype.forEach.call(e, function(r, o) {
-      const h = r.getAttribute("data-step") || "", f = t.state.sectionStates[h] || "locked";
+      const u = r.getAttribute("data-step") || "", f = t.state.sectionStates[u] || "locked";
       r.setAttribute("data-state", f), r.setAttribute("data-progress-state", f === "completed" ? "done" : f);
       const y = r.querySelector(".fp-progress__label");
       y && (f === "active" ? y.removeAttribute("aria-hidden") : y.setAttribute("aria-hidden", "true"));
@@ -625,8 +625,8 @@ class it {
     if (e.length === 0)
       return !0;
     if ((t.getAttribute("data-step") || "") === "slots") {
-      const n = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null, r = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, o = n && n.value.trim() !== "", h = r && r.value.trim() !== "";
-      if (!o || !h)
+      const n = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null, r = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, o = n && n.value.trim() !== "", u = r && r.value.trim() !== "";
+      if (!o || !u)
         return !1;
     }
     let s = !0;
@@ -644,7 +644,7 @@ class it {
     }
     if (t && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
-      v(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
+      b(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
   }
   updateInlineErrors() {
@@ -673,8 +673,8 @@ class it {
       }
       let r = !1, o = "";
       if (s && typeof s.checkValidity == "function" && !s.checkValidity() && (r = !0, o = e[i] || ""), i === "email" && s && s.value && s.value.trim() !== "" && s.checkValidity() && (r = !1, o = ""), i === "phone" && this.phoneField) {
-        const h = D(this.phoneField, this.getPhoneCountryCode());
-        h.local && !W(h.local) && (r = !0, o = this.copy.invalidPhone);
+        const u = T(this.phoneField, this.getPhoneCountryCode());
+        u.local && !K(u.local) && (r = !0, o = this.copy.invalidPhone);
       }
       i === "consent" && s && s.checked && (r = !1, o = ""), r ? (n.textContent = o, n.hidden = !1, s && s.setAttribute && s.setAttribute("aria-invalid", "true")) : (n.textContent = "", n.hidden = !0, s && s.removeAttribute && s.removeAttribute("aria-invalid"));
     });
@@ -704,44 +704,44 @@ class it {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    vt(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && v("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    bt(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && b("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), h = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), y = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), A = this.form.querySelector('[data-fp-resv-field="pets"]');
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), u = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), y = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), A = this.form.querySelector('[data-fp-resv-field="pets"]');
     let F = "";
     s && s.value && (F = s.value.trim()), n && n.value && (F = (F + " " + n.value.trim()).trim());
     let w = "";
     if (r && r.value && (w = r.value.trim()), o && o.value) {
-      const C = this.getPhoneCountryCode(), I = (C ? "+" + C + " " : "") + o.value.trim();
+      const E = this.getPhoneCountryCode(), I = (E ? "+" + E + " " : "") + o.value.trim();
       w = w !== "" ? w + " / " + I : I;
     }
-    const b = [];
-    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && b.push("Seggioloni: " + parseInt(f.value, 10)), y && "checked" in y && y.checked && b.push("Tavolo accessibile per sedia a rotelle"), A && "checked" in A && A.checked && b.push("Animali domestici");
-    const R = b.join("; ");
-    this.summaryTargets.forEach(function(C) {
-      switch (C.getAttribute("data-fp-resv-summary")) {
+    const v = [];
+    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && v.push("Seggioloni: " + parseInt(f.value, 10)), y && "checked" in y && y.checked && v.push("Tavolo accessibile per sedia a rotelle"), A && "checked" in A && A.checked && v.push("Animali domestici");
+    const M = v.join("; ");
+    this.summaryTargets.forEach(function(E) {
+      switch (E.getAttribute("data-fp-resv-summary")) {
         case "date":
-          C.textContent = t && t.value ? t.value : "";
+          E.textContent = t && t.value ? t.value : "";
           break;
         case "time":
-          C.textContent = e && e.value ? e.value : "";
+          E.textContent = e && e.value ? e.value : "";
           break;
         case "party":
-          C.textContent = i && i.value ? i.value : "";
+          E.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          C.textContent = F;
+          E.textContent = F;
           break;
         case "contact":
-          C.textContent = w;
+          E.textContent = w;
           break;
         case "notes":
-          C.textContent = h && h.value ? h.value : "";
+          E.textContent = u && u.value ? u.value : "";
           break;
         case "extras":
-          C.textContent = R;
+          E.textContent = M;
           break;
       }
     });
@@ -752,7 +752,7 @@ class it {
     if (this.state.touchedFields.consent = !0, !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
-    v(e, {
+    b(e, {
       source: "form",
       form_id: this.form && this.form.id ? this.form.id : this.root.id || "",
       date: i.date,
@@ -764,7 +764,7 @@ class it {
     const n = this.getReservationEndpoint(), r = performance.now();
     let o = 0;
     try {
-      const h = await fetch(n, {
+      const u = await fetch(n, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -773,13 +773,13 @@ class it {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (o = Math.round(performance.now() - r), v("ui_latency", { op: "submit", ms: o }), !h.ok) {
-        const y = await U(h);
-        if (h.status === 403 && !this.state.nonceRetried) {
+      if (o = Math.round(performance.now() - r), b("ui_latency", { op: "submit", ms: o }), !u.ok) {
+        const y = await U(u);
+        if (u.status === 403 && !this.state.nonceRetried) {
           await new Promise((w) => setTimeout(w, 500));
           const F = await this.refreshNonce();
           if (F) {
-            this.state.nonceRetried = !0, s.fp_resv_nonce = F, await new Promise((b) => setTimeout(b, 200));
+            this.state.nonceRetried = !0, s.fp_resv_nonce = F, await new Promise((v) => setTimeout(v, 200));
             const w = await fetch(n, {
               method: "POST",
               headers: {
@@ -790,27 +790,27 @@ class it {
               credentials: "same-origin"
             });
             if (w.ok) {
-              const b = await w.json();
-              return this.handleSubmitSuccess(b), this.state.nonceRetried = !1, !1;
+              const v = await w.json();
+              return this.handleSubmitSuccess(v), this.state.nonceRetried = !1, !1;
             } else {
-              const b = await U(w);
-              throw b && b.message && (b.message = b.message + " Se hai appena accettato i cookie, riprova tra qualche secondo."), Object.assign(new Error(b.message || this.copy.submitError), {
+              const v = await U(w);
+              throw v && v.message && (v.message = v.message + " Se hai appena accettato i cookie, riprova tra qualche secondo."), Object.assign(new Error(v.message || this.copy.submitError), {
                 status: w.status,
-                payload: b
+                payload: v
               });
             }
           }
         }
         const A = y && y.message || this.copy.submitError;
         throw Object.assign(new Error(A), {
-          status: h.status,
+          status: u.status,
           payload: y
         });
       }
-      const f = await h.json();
+      const f = await u.json();
       this.handleSubmitSuccess(f), this.state.requestId = null;
-    } catch (h) {
-      o || (o = Math.round(performance.now() - r), v("ui_latency", { op: "submit", ms: o })), this.handleSubmitError(h, o);
+    } catch (u) {
+      o || (o = Math.round(performance.now() - r), b("ui_latency", { op: "submit", ms: o })), this.handleSubmitError(u, o);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -830,19 +830,19 @@ class it {
       });
     }
     t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
-      i && i.event && v(i.event, i);
+      i && i.event && b(i.event, i);
     });
   }
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, n = t && typeof t == "object" && t.payload || null;
     let r = tt(s, n);
-    i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (h) => {
-      h.preventDefault(), window.location.reload();
+    i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (u) => {
+      u.preventDefault(), window.location.reload();
     }), this.errorAlert && this.errorMessage && (this.errorMessage.textContent = r, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
       typeof this.errorAlert.scrollIntoView == "function" && this.errorAlert.scrollIntoView({ behavior: "smooth", block: "center" }), typeof this.errorAlert.focus == "function" && (this.errorAlert.setAttribute("tabindex", "-1"), this.errorAlert.focus({ preventScroll: !0 }));
     })), this.state.hintOverride = r, this.updateSubmitState();
     const o = this.events.submit_error || "submit_error";
-    v(o, { code: i, latency: e });
+    b(o, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.errorRetry && (this.errorRetry.textContent = this.messages.retry_button || "Riprova", this.errorRetry.onclick = null), this.state.hintOverride = "";
@@ -852,7 +852,7 @@ class it {
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
     }), this.phoneField) {
-      const i = D(this.phoneField, this.getPhoneCountryCode());
+      const i = T(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
@@ -882,18 +882,18 @@ class it {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = T(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = T(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    W(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), v("phone_validation_error", { field: "phone" }), v("ui_validation_error", { field: "phone" }));
+    K(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), b("phone_validation_error", { field: "phone" }), b("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (typeof t.value == "string") {
@@ -904,7 +904,7 @@ class it {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), v("ui_validation_error", { field: "email" }));
+    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), b("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -976,10 +976,10 @@ class it {
     this.updateSummary(), this.updateSubmitState();
   }
   handleAvailabilityLatency(t) {
-    v("ui_latency", { op: "availability", ms: Math.round(t) });
+    b("ui_latency", { op: "availability", ms: Math.round(t) });
   }
   handleAvailabilityRetry(t) {
-    v("availability_retry", { attempt: t });
+    b("availability_retry", { attempt: t });
   }
   handleWindowFocus() {
     this.availabilityController && typeof this.availabilityController.revalidate == "function" && this.availabilityController.revalidate();
@@ -988,7 +988,7 @@ class it {
     if (this.state.started)
       return;
     const t = this.events.start || "reservation_start";
-    v(t, { source: "form" }), this.state.started = !0;
+    b(t, { source: "form" }), this.state.started = !0;
   }
   handleDelegatedTrackingEvent(t) {
     const e = t.target instanceof HTMLElement ? t.target : null;
@@ -1005,13 +1005,13 @@ class it {
       const r = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
       r && (n.label = r.trim());
     }
-    v(s, n);
+    b(s, n);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
       return;
     const e = t.detail || {}, i = this.events.confirmed || "reservation_confirmed";
-    v(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && v(this.events.purchase || "purchase", e.purchase);
+    b(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && b(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
     const e = this.root || t;
@@ -1081,8 +1081,8 @@ class it {
     return new Promise((s) => {
       const n = () => {
         if (typeof e == "function") {
-          const h = e();
-          s(h || null);
+          const u = e();
+          s(u || null);
           return;
         }
         s(null);
@@ -1090,9 +1090,9 @@ class it {
       let r = document.querySelector(`script[src="${t}"]`);
       if (!r && i && (r = document.querySelector(`script[${i}]`)), r) {
         if (typeof e == "function") {
-          const h = e();
-          if (h) {
-            s(h);
+          const u = e();
+          if (u) {
+            s(u);
             return;
           }
         }
@@ -1147,32 +1147,38 @@ function G() {
     }), (a >= t || !s) && (clearInterval(e), a >= t && console.log("[FP-RESV] Visibility auto-check completed after " + a + " checks"));
   }, 1e3);
 }
-const L = /* @__PURE__ */ new Set();
-function T() {
+const R = /* @__PURE__ */ new Set();
+function x() {
   console.log("[FP-RESV] Plugin v0.1.11 loaded - Complete form functionality active"), console.log("[FP-RESV] Current readyState:", document.readyState), console.log("[FP-RESV] Body innerHTML length:", document.body ? document.body.innerHTML.length : 0);
   const a = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]");
   console.log("[FP-RESV] Found widgets:", a.length);
   const t = document.querySelectorAll("[data-fp-resv]"), e = document.querySelectorAll(".fp-resv-widget"), i = document.querySelectorAll("[data-fp-resv-app]");
-  if (console.log("[FP-RESV] Debug - Found by [data-fp-resv]:", t.length), console.log("[FP-RESV] Debug - Found by .fp-resv-widget:", e.length), console.log("[FP-RESV] Debug - Found by [data-fp-resv-app]:", i.length), document.body && document.body.innerHTML.indexOf("fp-resv") !== -1 ? console.log('[FP-RESV] Debug - "fp-resv" text found in body HTML') : console.log('[FP-RESV] Debug - "fp-resv" text NOT found in body HTML'), a.length === 0) {
+  if (console.log("[FP-RESV] Debug - Found by [data-fp-resv]:", t.length), console.log("[FP-RESV] Debug - Found by .fp-resv-widget:", e.length), console.log("[FP-RESV] Debug - Found by [data-fp-resv-app]:", i.length), document.body && document.body.innerHTML.indexOf("fp-resv") !== -1) {
+    console.log('[FP-RESV] Debug - "fp-resv" text found in body HTML');
+    const s = document.body.innerHTML, n = s.indexOf("fp-resv"), r = Math.max(0, n - 200), o = Math.min(s.length, n + 200), u = s.substring(r, o);
+    console.log('[FP-RESV] Debug - Context around "fp-resv":', u);
+  } else
+    console.log('[FP-RESV] Debug - "fp-resv" text NOT found in body HTML');
+  if (a.length === 0) {
     console.warn("[FP-RESV] No widgets found on page. Expected shortcode [fp_reservations] or Gutenberg block."), console.log("[FP-RESV] Searching for potential widget containers...");
     const s = document.querySelector(".entry-content, .post-content, .page-content, main, article");
     s ? (console.log("[FP-RESV] Found content container:", s.className || "unnamed"), console.log("[FP-RESV] Content container innerHTML length:", s.innerHTML.length), s.innerHTML.includes("fp-resv") && console.log("[FP-RESV] Found fp-resv string in content, but no valid widget element")) : console.log("[FP-RESV] No standard content container found");
     return;
   }
   Array.prototype.forEach.call(a, function(s) {
-    if (L.has(s)) {
+    if (R.has(s)) {
       console.log("[FP-RESV] Widget already initialized, skipping:", s.id || "unnamed");
       return;
     }
     try {
-      L.add(s), st(s), console.log("[FP-RESV] Initializing widget:", s.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", s.querySelectorAll("[data-fp-resv-section]").length);
+      R.add(s), st(s), console.log("[FP-RESV] Initializing widget:", s.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", s.querySelectorAll("[data-fp-resv-section]").length);
       const n = new it(s);
-      console.log("[FP-RESV] Widget initialized successfully:", s.id || "unnamed"), (n.sections || []).forEach(function(o, h) {
+      console.log("[FP-RESV] Widget initialized successfully:", s.id || "unnamed"), (n.sections || []).forEach(function(o, u) {
         const f = o.getAttribute("data-step"), y = o.getAttribute("data-state"), A = o.hasAttribute("hidden");
-        console.log(`[FP-RESV] Step ${h + 1} (${f}): state=${y}, hidden=${A}`);
+        console.log(`[FP-RESV] Step ${u + 1} (${f}): state=${y}, hidden=${A}`);
       });
     } catch (n) {
-      console.error("[FP-RESV] Error initializing widget:", n), L.delete(s);
+      console.error("[FP-RESV] Error initializing widget:", n), R.delete(s);
     }
   });
 }
@@ -1187,7 +1193,7 @@ function X() {
       i.addedNodes && i.addedNodes.length > 0 && Array.prototype.forEach.call(i.addedNodes, function(s) {
         s.nodeType === 1 && (s.matches && (s.matches("[data-fp-resv]") || s.matches(".fp-resv-widget") || s.matches("[data-fp-resv-app]")) || s.querySelector && s.querySelector("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]")) && (e = !0);
       });
-    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), T());
+    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), x());
   }).observe(document.body, {
     childList: !0,
     subtree: !0
@@ -1197,13 +1203,24 @@ function Y() {
   [500, 1e3, 2e3, 3e3].forEach(function(t) {
     setTimeout(function() {
       const e = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length;
-      e > L.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + L.size + " initialized"), T());
+      e > R.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + R.size + " initialized"), x());
     }, t);
   });
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", function() {
-  T(), setTimeout(G, 500), X(), Y();
-}) : (T(), setTimeout(G, 500), X(), Y());
+  x(), setTimeout(G, 500), X(), Y();
+}) : (x(), setTimeout(G, 500), X(), Y());
+(typeof window.vc_js < "u" || document.querySelector("[data-vc-full-width]") || document.querySelector(".vc_row")) && (console.log("[FP-RESV] WPBakery detected - adding compatibility listeners"), document.addEventListener("vc-full-content-loaded", function() {
+  console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(x, 100);
+}), window.addEventListener("load", function() {
+  setTimeout(function() {
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > R.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), x());
+  }, 1e3);
+}), [1500, 3e3, 5e3, 1e4].forEach(function(a) {
+  setTimeout(function() {
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > R.size && (console.log("[FP-RESV] WPBakery extended retry (" + a + "ms) - initializing..."), x());
+  }, a);
+}));
 document.addEventListener("fp-resv:tracking:push", function(a) {
   if (!a || !a.detail)
     return;
@@ -1211,9 +1228,9 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   if (!e)
     return;
   const i = t.payload || t.data || {};
-  v(e, i && typeof i == "object" ? i : {});
+  b(e, i && typeof i == "object" ? i : {});
 });
-const wt = 400, Ct = 6e4, Et = 3, Q = 600;
+const wt = 400, Et = 6e4, Ct = 3, Q = 600;
 function Pt(a, t) {
   let e;
   try {
@@ -1230,24 +1247,24 @@ function B(a) {
 }
 function Ft(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), r = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, o = /* @__PURE__ */ new Map();
-  let h = null, f = null, y = null, A = 0;
+  let u = null, f = null, y = null, A = 0;
   function F(l) {
     if (typeof l != "string")
       return "";
     const d = l.trim().toLowerCase();
     if (d === "")
       return "";
-    const u = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), m = (g) => g.some((c) => u.startsWith(c)), E = (g) => g.some((c) => u.includes(c));
-    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || E(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const h = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), m = (g) => g.some((c) => h.startsWith(c)), C = (g) => g.some((c) => h.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function w(l, d) {
-    const p = Array.isArray(l) ? l : [], u = p.length;
-    if (u === 0)
+    const p = Array.isArray(l) ? l : [], h = p.length;
+    if (h === 0)
       return d === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
     const m = p.map((c) => F(c && c.status)).filter((c) => c !== "");
-    return m.some((c) => c === "limited") ? { state: "limited", slots: u } : m.some((c) => c === "available") ? { state: "available", slots: u } : d ? { state: "available", slots: u } : m.length === 0 ? { state: "available", slots: u } : { state: "full", slots: u };
+    return m.some((c) => c === "limited") ? { state: "limited", slots: h } : m.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : m.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
   }
-  function b(l, d) {
+  function v(l, d) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
         a.onAvailabilitySummary(d, l || f || {});
@@ -1255,28 +1272,28 @@ function Ft(a) {
       }
   }
   r && r.addEventListener("click", () => {
-    f && M(f, 0);
+    f && L(f, 0);
   });
-  function R(l, d) {
-    const p = typeof d == "string" ? d : d ? "loading" : "idle", u = typeof l == "string" ? l : "";
-    e && (e.textContent = u, e.setAttribute("data-state", p));
+  function M(l, d) {
+    const p = typeof d == "string" ? d : d ? "loading" : "idle", h = typeof l == "string" ? l : "";
+    e && (e.textContent = h, e.setAttribute("data-state", p));
     const m = p === "loading";
     t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
-  function C() {
+  function E() {
     if (!i)
       return;
     B(i);
     const l = a.skeletonCount || 4;
     for (let d = 0; d < l; d += 1) {
-      const p = document.createElement("li"), u = document.createElement("span");
-      u.className = "fp-skeleton", p.appendChild(u), i.appendChild(p);
+      const p = document.createElement("li"), h = document.createElement("span");
+      h.className = "fp-skeleton", p.appendChild(h), i.appendChild(p);
     }
   }
-  function x(l) {
+  function V(l) {
     s && (s.hidden = !1);
-    const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", u = d && typeof l.date == "string" ? l.date.trim() : "", m = d && typeof l.party < "u" ? String(l.party).trim() : "", E = d && !!l.requiresMeal, g = p !== "", S = u !== "" && (m !== "" && m !== "0") && (!E || g), _ = E && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
-    R(_, "idle"), i && B(i), b(l, { state: S ? "unavailable" : "unknown", slots: 0 });
+    const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", h = d && typeof l.date == "string" ? l.date.trim() : "", m = d && typeof l.party < "u" ? String(l.party).trim() : "", C = d && !!l.requiresMeal, g = p !== "", S = h !== "" && (m !== "" && m !== "0") && (!C || g), _ = C && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
+    M(_, "idle"), i && B(i), v(l, { state: S ? "unavailable" : "unknown", slots: 0 });
   }
   function I() {
     s && (s.hidden = !0);
@@ -1290,12 +1307,12 @@ function Ft(a) {
       const p = n.querySelector("[data-fp-resv-slots-boundary-message]");
       p && (p.textContent = l || d), n.hidden = !1;
     }
-    R(l || d, "error"), b(f, { state: "error", slots: 0 });
+    M(l || d, "error"), v(f, { state: "error", slots: 0 });
   }
   function nt(l, d) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(p, (u) => {
-      u.setAttribute("aria-pressed", u === d ? "true" : "false");
+    Array.prototype.forEach.call(p, (h) => {
+      h.setAttribute("aria-pressed", h === d ? "true" : "false");
     }), y = l, typeof a.onSlotSelected == "function" && a.onSlotSelected(l);
   }
   function rt() {
@@ -1306,35 +1323,35 @@ function Ft(a) {
       d.setAttribute("aria-pressed", "false");
     });
   }
-  function K(l, d, p) {
+  function W(l, d, p) {
     if (p && p !== A || d && f && d !== f || (H(), I(), !i))
       return;
     B(i);
-    const u = l && Array.isArray(l.slots) ? l.slots : [];
-    if (u.length === 0) {
-      x(d);
+    const h = l && Array.isArray(l.slots) ? l.slots : [];
+    if (h.length === 0) {
+      V(d);
       return;
     }
-    u.forEach((E) => {
+    h.forEach((C) => {
       const g = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = E.label || "", c.dataset.slot = E.start || "", c.dataset.slotStatus = E.status || "", c.setAttribute("aria-pressed", y && y.start === E.start ? "true" : "false"), c.addEventListener("click", () => nt(E, c)), g.appendChild(c), i.appendChild(g);
-    }), R(a.strings && a.strings.slotsUpdated || "", !1);
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", y && y.start === C.start ? "true" : "false"), c.addEventListener("click", () => nt(C, c)), g.appendChild(c), i.appendChild(g);
+    }), M(a.strings && a.strings.slotsUpdated || "", !1);
     const m = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
-    b(d, w(u, m));
+    v(d, w(h, m));
   }
-  function M(l, d) {
+  function L(l, d) {
     if (f = l, !l || !l.date || !l.party) {
-      x(l);
+      V(l);
       return;
     }
-    const p = ++A, u = JSON.stringify([l.date, l.meal, l.party]), m = o.get(u);
-    if (m && Date.now() - m.timestamp < Ct && d === 0) {
-      K(m.payload, l, p);
+    const p = ++A, h = JSON.stringify([l.date, l.meal, l.party]), m = o.get(h);
+    if (m && Date.now() - m.timestamp < Et && d === 0) {
+      W(m.payload, l, p);
       return;
     }
-    H(), I(), C(), R(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), b(l, { state: "loading", slots: 0 });
-    const E = Pt(a.endpoint, l), g = performance.now();
-    fetch(E, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((q) => {
+    H(), I(), E(), M(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), v(l, { state: "loading", slots: 0 });
+    const C = Pt(a.endpoint, l), g = performance.now();
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((q) => {
       if (!c.ok) {
         const S = new Error("availability_error");
         S.status = c.status, S.payload = q;
@@ -1350,7 +1367,7 @@ function Ft(a) {
       if (p !== A)
         return;
       const q = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(q), o.set(u, { payload: c, timestamp: Date.now() }), K(c, l, p);
+      typeof a.onLatency == "function" && a.onLatency(q), o.set(h, { payload: c, timestamp: Date.now() }), W(c, l, p);
     }).catch((c) => {
       if (p !== A)
         return;
@@ -1361,14 +1378,14 @@ function Ft(a) {
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
         k = c.retryAfter;
       else if (S && typeof S.retry_after < "u") {
-        const V = Number.parseInt(S.retry_after, 10);
-        Number.isFinite(V) && (k = V);
+        const D = Number.parseInt(S.retry_after, 10);
+        Number.isFinite(D) && (k = D);
       }
-      if (d >= Et - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
-        const V = d + 1;
-        typeof a.onRetry == "function" && a.onRetry(V);
+      if (d >= Ct - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+        const D = d + 1;
+        typeof a.onRetry == "function" && a.onRetry(D);
         const dt = k > 0 ? Math.max(k * 1e3, Q) : Q * Math.pow(2, d);
-        window.setTimeout(() => M(l, V), dt);
+        window.setTimeout(() => L(l, D), dt);
         return;
       }
       const ot = c && c.payload && (c.payload.message || c.payload.code) || S && S.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", lt = c && c.payload || S || null, ct = tt(ot, lt);
@@ -1377,25 +1394,25 @@ function Ft(a) {
   }
   return {
     schedule(l, d = {}) {
-      h && window.clearTimeout(h);
-      const p = d && typeof d == "object" ? d : {}, u = l || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(u && u.requiresMeal);
-      if (!u || !u.date || !u.party || m && !u.meal) {
-        f = u, x(u || {});
+      u && window.clearTimeout(u);
+      const p = d && typeof d == "object" ? d : {}, h = l || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(h && h.requiresMeal);
+      if (!h || !h.date || !h.party || m && !h.meal) {
+        f = h, V(h || {});
         return;
       }
       if (p.immediate) {
-        M(u, 0);
+        L(h, 0);
         return;
       }
-      h = window.setTimeout(() => {
-        M(u, 0);
+      u = window.setTimeout(() => {
+        L(h, 0);
       }, wt);
     },
     revalidate() {
       if (!f)
         return;
       const l = JSON.stringify([f.date, f.meal, f.party]);
-      o.delete(l), M(f, 0);
+      o.delete(l), L(f, 0);
     },
     getSelection() {
       return y;

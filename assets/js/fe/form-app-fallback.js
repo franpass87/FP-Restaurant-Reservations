@@ -736,6 +736,43 @@ if (document.readyState === 'loading') {
     retryInitialization();
 }
 
+// WPBakery Page Builder compatibility
+// WPBakery loads content asynchronously, so we need to re-check after it's done
+if (typeof window.vc_js !== 'undefined' || document.querySelector('[data-vc-full-width]') || document.querySelector('.vc_row')) {
+    console.log('[FP-RESV] WPBakery detected - adding compatibility listeners');
+    
+    // Listen for WPBakery-specific events
+    document.addEventListener('vc-full-content-loaded', function() {
+        console.log('[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing...');
+        setTimeout(initializeFPResv, 100);
+    });
+    
+    // Additional check after window load (WPBakery often loads late)
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            var currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+            if (currentWidgets.length > initializedWidgets.length) {
+                console.log('[FP-RESV] WPBakery late load - found new widgets, initializing...');
+                initializeFPResv();
+            }
+        }, 1000);
+    });
+    
+    // Extended retry for WPBakery (up to 10 seconds)
+    var wpbDelays = [1500, 3000, 5000, 10000];
+    for (var i = 0; i < wpbDelays.length; i++) {
+        (function(delay) {
+            setTimeout(function() {
+                var currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+                if (currentWidgets.length > initializedWidgets.length) {
+                    console.log('[FP-RESV] WPBakery extended retry (' + delay + 'ms) - initializing...');
+                    initializeFPResv();
+                }
+            }, delay);
+        })(wpbDelays[i]);
+    }
+}
+
 // Event listener per tracking
 document.addEventListener('fp-resv:tracking:push', function (event) {
     if (!event || !event.detail) {

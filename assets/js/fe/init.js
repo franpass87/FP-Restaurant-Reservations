@@ -88,6 +88,14 @@ function initializeFPResv() {
     // Cerca se c'è testo "fp-resv" nel body
     if (document.body && document.body.innerHTML.indexOf('fp-resv') !== -1) {
         console.log('[FP-RESV] Debug - "fp-resv" text found in body HTML');
+        
+        // Estrai e mostra il contesto dove appare "fp-resv"
+        const bodyHTML = document.body.innerHTML;
+        const index = bodyHTML.indexOf('fp-resv');
+        const start = Math.max(0, index - 200);
+        const end = Math.min(bodyHTML.length, index + 200);
+        const context = bodyHTML.substring(start, end);
+        console.log('[FP-RESV] Debug - Context around "fp-resv":', context);
     } else {
         console.log('[FP-RESV] Debug - "fp-resv" text NOT found in body HTML');
     }
@@ -226,6 +234,40 @@ if (document.readyState === 'loading') {
     setupWidgetObserver();
     // Retry in case widgets load late
     retryInitialization();
+}
+
+// WPBakery Page Builder compatibility
+// WPBakery loads content asynchronously, so we need to re-check after it's done
+if (typeof window.vc_js !== 'undefined' || document.querySelector('[data-vc-full-width]') || document.querySelector('.vc_row')) {
+    console.log('[FP-RESV] WPBakery detected - adding compatibility listeners');
+    
+    // Listen for WPBakery-specific events
+    document.addEventListener('vc-full-content-loaded', function() {
+        console.log('[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing...');
+        setTimeout(initializeFPResv, 100);
+    });
+    
+    // Additional check after window load (WPBakery often loads late)
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            const currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+            if (currentWidgets.length > initializedWidgets.size) {
+                console.log('[FP-RESV] WPBakery late load - found new widgets, initializing...');
+                initializeFPResv();
+            }
+        }, 1000);
+    });
+    
+    // Extended retry for WPBakery (up to 10 seconds)
+    [1500, 3000, 5000, 10000].forEach(function(delay) {
+        setTimeout(function() {
+            const currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+            if (currentWidgets.length > initializedWidgets.size) {
+                console.log('[FP-RESV] WPBakery extended retry (' + delay + 'ms) - initializing...');
+                initializeFPResv();
+            }
+        }, delay);
+    });
 }
 
 document.addEventListener('fp-resv:tracking:push', function (event) {
