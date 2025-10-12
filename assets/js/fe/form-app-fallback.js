@@ -558,7 +558,7 @@ function isWidgetInitialized(widget) {
 }
 
 function initializeFPResv() {
-    console.log('[FP-RESV] Plugin v0.1.5 loaded - Fallback form functionality active');
+    console.log('[FP-RESV] Plugin v0.1.11 loaded - Fallback form functionality active');
     console.log('[FP-RESV] Current readyState:', document.readyState);
     console.log('[FP-RESV] Body innerHTML length:', document.body ? document.body.innerHTML.length : 0);
     

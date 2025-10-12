@@ -226,23 +226,21 @@ class ReservationManager {
     // ============================================
 
     setView(view) {
+        console.log('[Manager] Switching view to:', view);
         this.state.currentView = view;
 
         // Update buttons
         this.dom.viewBtns.forEach(btn => {
             if (btn.dataset.view === view) {
                 btn.classList.add('is-active');
+                btn.setAttribute('aria-pressed', 'true');
             } else {
                 btn.classList.remove('is-active');
+                btn.setAttribute('aria-pressed', 'false');
             }
         });
 
-        // Show/hide views
-        this.dom.viewDay.style.display = view === 'day' ? 'block' : 'none';
-        this.dom.viewList.style.display = view === 'list' ? 'block' : 'none';
-        this.dom.viewCalendar.style.display = view === 'calendar' ? 'block' : 'none';
-
-        // Render current view
+        // Render current view (che gestirà la visibilità)
         this.renderCurrentView();
     }
 
@@ -372,15 +370,35 @@ class ReservationManager {
     }
 
     renderCurrentView() {
+        console.log('[Manager] Rendering view:', this.state.currentView);
         const filtered = this.getFilteredReservations();
+        console.log('[Manager] Filtered reservations:', filtered.length);
+
+        // Nascondi tutti gli stati
+        this.dom.loadingState.style.display = 'none';
+        this.dom.errorState.style.display = 'none';
+        this.dom.emptyState.style.display = 'none';
 
         if (filtered.length === 0) {
-            this.showEmpty();
+            // Mostra empty state ma lascia visibile il container della vista corrente
+            this.dom.emptyState.style.display = 'flex';
+            
+            // Nascondi tutte le viste
+            this.dom.viewDay.style.display = 'none';
+            this.dom.viewList.style.display = 'none';
+            this.dom.viewCalendar.style.display = 'none';
             return;
         }
 
-        this.hideEmpty();
+        // Nascondi empty state
+        this.dom.emptyState.style.display = 'none';
 
+        // Mostra la vista corrente e nascondi le altre
+        this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
+        this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
+        this.dom.viewCalendar.style.display = this.state.currentView === 'calendar' ? 'block' : 'none';
+
+        // Render della vista attiva
         switch (this.state.currentView) {
             case 'day':
                 this.renderDayView(filtered);
@@ -392,6 +410,8 @@ class ReservationManager {
                 this.renderCalendarView(filtered);
                 break;
         }
+
+        console.log('[Manager] View rendered successfully');
     }
 
     renderDayView(reservations) {
@@ -728,8 +748,359 @@ class ReservationManager {
         alert('Funzione di eliminazione in fase di sviluppo');
     }
 
-    openNewReservationModal() {
-        alert('Funzione di creazione nuova prenotazione in fase di sviluppo');
+    async openNewReservationModal() {
+        // Carica il modal con il form di selezione meal/date/party
+        this.dom.modalTitle.textContent = 'Nuova Prenotazione';
+        this.dom.modalBody.innerHTML = this.renderNewReservationStep1();
+        this.dom.modal.style.display = 'flex';
+
+        // Bind eventi step 1
+        this.bindNewReservationStep1();
+    }
+
+    renderNewReservationStep1() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        return `
+            <div class="fp-new-reservation">
+                <div class="fp-step-indicator">
+                    <div class="fp-step is-active">1. Dettagli</div>
+                    <div class="fp-step">2. Orario</div>
+                    <div class="fp-step">3. Cliente</div>
+                </div>
+
+                <form id="fp-new-reservation-form-step1">
+                    <div class="fp-form-group">
+                        <label for="new-meal">Servizio *</label>
+                        <select id="new-meal" class="fp-form-control" required>
+                            <option value="">Seleziona servizio...</option>
+                            <option value="lunch">Pranzo</option>
+                            <option value="dinner">Cena</option>
+                        </select>
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-date">Data *</label>
+                        <input type="date" id="new-date" class="fp-form-control" min="${today}" required />
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-party">Numero Coperti *</label>
+                        <input type="number" id="new-party" class="fp-form-control" min="1" max="20" value="2" required />
+                    </div>
+
+                    <div class="fp-form-actions">
+                        <button type="button" class="fp-btn fp-btn--secondary" data-action="cancel-new">
+                            Annulla
+                        </button>
+                        <button type="submit" class="fp-btn fp-btn--primary">
+                            Avanti →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    bindNewReservationStep1() {
+        const form = document.getElementById('fp-new-reservation-form-step1');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const meal = document.getElementById('new-meal').value;
+            const date = document.getElementById('new-date').value;
+            const party = parseInt(document.getElementById('new-party').value);
+
+            if (!meal || !date || !party) {
+                alert('Compila tutti i campi obbligatori');
+                return;
+            }
+
+            // Salva i dati e passa allo step 2
+            this.newReservationData = { meal, date, party };
+            await this.showNewReservationStep2();
+        });
+
+        this.dom.modalBody.querySelector('[data-action="cancel-new"]')?.addEventListener('click', () => {
+            this.closeModal();
+        });
+    }
+
+    async showNewReservationStep2() {
+        const { meal, date, party } = this.newReservationData;
+
+        // Mostra loading
+        this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Caricamento slot disponibili...</p></div>';
+
+        try {
+            // Chiama endpoint availability
+            const url = `${this.config.restRoot}/availability?date=${date}&party=${party}&meal=${meal}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error('Errore nel caricamento degli slot');
+            }
+
+            const data = await response.json();
+            const slots = data.slots || [];
+
+            if (slots.length === 0) {
+                this.dom.modalBody.innerHTML = `
+                    <div class="fp-empty-state">
+                        <span class="dashicons dashicons-calendar-alt"></span>
+                        <h3>Nessuno slot disponibile</h3>
+                        <p>Non ci sono slot disponibili per la data e i coperti selezionati.</p>
+                        <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.openNewReservationModal()">
+                            ← Torna Indietro
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Mostra slot disponibili
+            this.dom.modalBody.innerHTML = this.renderNewReservationStep2(slots);
+            this.bindNewReservationStep2();
+        } catch (error) {
+            console.error('[Manager] Error loading slots:', error);
+            this.dom.modalBody.innerHTML = `
+                <div class="fp-error-state">
+                    <span class="dashicons dashicons-warning"></span>
+                    <h3>Errore</h3>
+                    <p>${error.message}</p>
+                    <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.openNewReservationModal()">
+                        ← Torna Indietro
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    renderNewReservationStep2(slots) {
+        const { meal, date, party } = this.newReservationData;
+        
+        // Filtra solo slot available
+        const availableSlots = slots.filter(slot => slot.status === 'available');
+
+        let slotsHtml = '';
+        if (availableSlots.length === 0) {
+            slotsHtml = '<p class="fp-no-slots">Nessuno slot disponibile per questi criteri.</p>';
+        } else {
+            slotsHtml = availableSlots.map(slot => {
+                const time = slot.time.substring(0, 5); // HH:MM
+                return `
+                    <label class="fp-slot-option">
+                        <input type="radio" name="slot" value="${slot.time}" required />
+                        <span class="fp-slot-time">${time}</span>
+                        <span class="fp-slot-capacity">${slot.capacity} posti</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        return `
+            <div class="fp-new-reservation">
+                <div class="fp-step-indicator">
+                    <div class="fp-step is-complete">1. Dettagli</div>
+                    <div class="fp-step is-active">2. Orario</div>
+                    <div class="fp-step">3. Cliente</div>
+                </div>
+
+                <div class="fp-selection-summary">
+                    <strong>Servizio:</strong> ${meal === 'lunch' ? 'Pranzo' : 'Cena'} | 
+                    <strong>Data:</strong> ${date} | 
+                    <strong>Coperti:</strong> ${party}
+                </div>
+
+                <form id="fp-new-reservation-form-step2">
+                    <div class="fp-form-group">
+                        <label>Seleziona Orario *</label>
+                        <div class="fp-slots-grid">
+                            ${slotsHtml}
+                        </div>
+                    </div>
+
+                    <div class="fp-form-actions">
+                        <button type="button" class="fp-btn fp-btn--secondary" data-action="back-step1">
+                            ← Indietro
+                        </button>
+                        <button type="submit" class="fp-btn fp-btn--primary" ${availableSlots.length === 0 ? 'disabled' : ''}>
+                            Avanti →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    bindNewReservationStep2() {
+        const form = document.getElementById('fp-new-reservation-form-step2');
+        if (!form) return;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const selectedSlot = form.querySelector('input[name="slot"]:checked');
+            if (!selectedSlot) {
+                alert('Seleziona un orario');
+                return;
+            }
+
+            this.newReservationData.time = selectedSlot.value;
+            this.showNewReservationStep3();
+        });
+
+        this.dom.modalBody.querySelector('[data-action="back-step1"]')?.addEventListener('click', () => {
+            this.openNewReservationModal();
+        });
+    }
+
+    showNewReservationStep3() {
+        this.dom.modalBody.innerHTML = this.renderNewReservationStep3();
+        this.bindNewReservationStep3();
+    }
+
+    renderNewReservationStep3() {
+        const { meal, date, time, party } = this.newReservationData;
+        const timeFormatted = time.substring(0, 5);
+
+        return `
+            <div class="fp-new-reservation">
+                <div class="fp-step-indicator">
+                    <div class="fp-step is-complete">1. Dettagli</div>
+                    <div class="fp-step is-complete">2. Orario</div>
+                    <div class="fp-step is-active">3. Cliente</div>
+                </div>
+
+                <div class="fp-selection-summary">
+                    <strong>Servizio:</strong> ${meal === 'lunch' ? 'Pranzo' : 'Cena'} | 
+                    <strong>Data:</strong> ${date} ${timeFormatted} | 
+                    <strong>Coperti:</strong> ${party}
+                </div>
+
+                <form id="fp-new-reservation-form-step3">
+                    <div class="fp-form-row">
+                        <div class="fp-form-group">
+                            <label for="new-first-name">Nome *</label>
+                            <input type="text" id="new-first-name" class="fp-form-control" required />
+                        </div>
+                        <div class="fp-form-group">
+                            <label for="new-last-name">Cognome *</label>
+                            <input type="text" id="new-last-name" class="fp-form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-email">Email *</label>
+                        <input type="email" id="new-email" class="fp-form-control" required />
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-phone">Telefono *</label>
+                        <input type="tel" id="new-phone" class="fp-form-control" placeholder="+39 ..." required />
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-notes">Note</label>
+                        <textarea id="new-notes" class="fp-form-control" rows="3" placeholder="Note aggiuntive..."></textarea>
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="new-allergies">Allergie/Intolleranze</label>
+                        <textarea id="new-allergies" class="fp-form-control" rows="2" placeholder="Eventuali allergie..."></textarea>
+                    </div>
+
+                    <div class="fp-form-actions">
+                        <button type="button" class="fp-btn fp-btn--secondary" data-action="back-step2">
+                            ← Indietro
+                        </button>
+                        <button type="submit" class="fp-btn fp-btn--primary">
+                            <span class="dashicons dashicons-yes"></span>
+                            Crea Prenotazione
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    bindNewReservationStep3() {
+        const form = document.getElementById('fp-new-reservation-form-step3');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.createNewReservation();
+        });
+
+        this.dom.modalBody.querySelector('[data-action="back-step2"]')?.addEventListener('click', async () => {
+            await this.showNewReservationStep2();
+        });
+    }
+
+    async createNewReservation() {
+        const { meal, date, time, party } = this.newReservationData;
+        
+        const formData = {
+            date,
+            time,
+            party,
+            first_name: document.getElementById('new-first-name').value,
+            last_name: document.getElementById('new-last-name').value,
+            email: document.getElementById('new-email').value,
+            phone: document.getElementById('new-phone').value,
+            notes: document.getElementById('new-notes').value,
+            allergies: document.getElementById('new-allergies').value,
+            status: 'confirmed',
+            meal,
+        };
+
+        // Mostra loading
+        this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Creazione prenotazione in corso...</p></div>';
+
+        try {
+            const response = await fetch(`${this.config.restRoot}/reservations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce,
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Errore nella creazione della prenotazione');
+            }
+
+            const result = await response.json();
+            
+            // Success!
+            this.dom.modalBody.innerHTML = `
+                <div class="fp-success-state">
+                    <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 48px;"></span>
+                    <h3>Prenotazione Creata!</h3>
+                    <p>La prenotazione è stata creata con successo.</p>
+                    <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.closeModal(); window.fpResvManager.loadReservations(); window.fpResvManager.loadOverview();">
+                        Chiudi
+                    </button>
+                </div>
+            `;
+        } catch (error) {
+            console.error('[Manager] Error creating reservation:', error);
+            this.dom.modalBody.innerHTML = `
+                <div class="fp-error-state">
+                    <span class="dashicons dashicons-warning"></span>
+                    <h3>Errore</h3>
+                    <p>${error.message}</p>
+                    <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.showNewReservationStep3()">
+                        ← Riprova
+                    </button>
+                </div>
+            `;
+        }
     }
 
     closeModal() {
@@ -767,16 +1138,7 @@ class ReservationManager {
         this.dom.errorMessage.textContent = message;
     }
 
-    showEmpty() {
-        this.dom.emptyState.style.display = 'flex';
-        this.dom.viewDay.style.display = 'none';
-        this.dom.viewList.style.display = 'none';
-        this.dom.viewCalendar.style.display = 'none';
-    }
-
-    hideEmpty() {
-        this.dom.emptyState.style.display = 'none';
-    }
+    // Nota: showEmpty e hideEmpty ora sono gestiti direttamente in renderCurrentView
 
     // ============================================
     // UTILITIES

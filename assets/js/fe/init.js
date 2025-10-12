@@ -70,12 +70,27 @@ function autoCheckVisibility() {
 const initializedWidgets = new Set();
 
 function initializeFPResv() {
-    console.log('[FP-RESV] Plugin v0.1.5 loaded - Complete form functionality active');
+    console.log('[FP-RESV] Plugin v0.1.11 loaded - Complete form functionality active');
     console.log('[FP-RESV] Current readyState:', document.readyState);
     console.log('[FP-RESV] Body innerHTML length:', document.body ? document.body.innerHTML.length : 0);
     
     const widgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
     console.log('[FP-RESV] Found widgets:', widgets.length);
+    
+    // Debug: verifica cosa c'è nel DOM
+    const byDataAttr = document.querySelectorAll('[data-fp-resv]');
+    const byClass = document.querySelectorAll('.fp-resv-widget');
+    const byAppAttr = document.querySelectorAll('[data-fp-resv-app]');
+    console.log('[FP-RESV] Debug - Found by [data-fp-resv]:', byDataAttr.length);
+    console.log('[FP-RESV] Debug - Found by .fp-resv-widget:', byClass.length);
+    console.log('[FP-RESV] Debug - Found by [data-fp-resv-app]:', byAppAttr.length);
+    
+    // Cerca se c'è testo "fp-resv" nel body
+    if (document.body && document.body.innerHTML.indexOf('fp-resv') !== -1) {
+        console.log('[FP-RESV] Debug - "fp-resv" text found in body HTML');
+    } else {
+        console.log('[FP-RESV] Debug - "fp-resv" text NOT found in body HTML');
+    }
 
     if (widgets.length === 0) {
         console.warn('[FP-RESV] No widgets found on page. Expected shortcode [fp_reservations] or Gutenberg block.');
