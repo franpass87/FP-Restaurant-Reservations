@@ -6,40 +6,40 @@
 :root {
   /* ==================== COLORI ==================== */
   
-  /* Colori Primari */
-  --fp-color-primary: #2563eb;
-  --fp-color-primary-hover: #1d4ed8;
-  --fp-color-primary-light: rgba(37, 99, 235, 0.1);
-  --fp-color-primary-rgb: 37, 99, 235;
+  /* Colori Primari - Schema Minimalista Bianco e Nero */
+  --fp-color-primary: #000000;
+  --fp-color-primary-hover: #1a1a1a;
+  --fp-color-primary-light: rgba(0, 0, 0, 0.05);
+  --fp-color-primary-rgb: 0, 0, 0;
   
-  /* Colori Superficie */
+  /* Colori Superficie - Sfondi Bianchi e Grigi Chiari */
   --fp-color-surface: #ffffff;
-  --fp-color-surface-alt: #f8fafc;
+  --fp-color-surface-alt: #fafafa;
   --fp-color-surface-elevated: #ffffff;
   
-  /* Colori Testo */
-  --fp-color-text: #0f172a;
-  --fp-color-text-muted: #64748b;
-  --fp-color-text-light: #94a3b8;
+  /* Colori Testo - Scala di Grigi */
+  --fp-color-text: #000000;
+  --fp-color-text-muted: #666666;
+  --fp-color-text-light: #999999;
   
-  /* Colori Bordi */
-  --fp-color-border: rgba(148, 163, 184, 0.38);
-  --fp-color-border-light: rgba(148, 163, 184, 0.2);
-  --fp-color-divider: rgba(148, 163, 184, 0.32);
+  /* Colori Bordi - Grigi */
+  --fp-color-border: #e0e0e0;
+  --fp-color-border-light: #f0f0f0;
+  --fp-color-divider: #e5e5e5;
   
-  /* Colori Stato */
-  --fp-color-success: #16a34a;
-  --fp-color-success-light: rgba(34, 197, 94, 0.1);
+  /* Colori Stato - Scala di Grigi (mantengo solo errori in rosso per sicurezza) */
+  --fp-color-success: #2d2d2d;
+  --fp-color-success-light: rgba(45, 45, 45, 0.08);
   --fp-color-error: #dc2626;
   --fp-color-error-light: rgba(239, 68, 68, 0.1);
-  --fp-color-warning: #f59e0b;
-  --fp-color-warning-light: rgba(245, 158, 11, 0.1);
-  --fp-color-info: #3b82f6;
-  --fp-color-info-light: rgba(59, 130, 246, 0.1);
+  --fp-color-warning: #666666;
+  --fp-color-warning-light: rgba(102, 102, 102, 0.1);
+  --fp-color-info: #404040;
+  --fp-color-info-light: rgba(64, 64, 64, 0.1);
   
-  /* Colori Semantici */
-  --fp-color-available: #16a34a;
-  --fp-color-limited: #ca8a04;
+  /* Colori Semantici - Scala di Grigi (tranne "pieno" che resta rosso) */
+  --fp-color-available: #2d2d2d;
+  --fp-color-limited: #666666;
   --fp-color-full: #dc2626;
   
   /* ==================== SPAZIATURE ==================== */
@@ -99,8 +99,8 @@
   --fp-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --fp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   
-  /* Shadow Focus */
-  --fp-shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  /* Shadow Focus - Nero */
+  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
   
   /* ==================== TRANSIZIONI ==================== */
   
@@ -134,11 +134,11 @@
   --fp-container-max-width: 100%;
   --fp-form-max-width: 600px;
   
-  /* ==================== GRADIENTI ==================== */
+  /* ==================== GRADIENTI - Minimalisti ==================== */
   
-  --fp-gradient-primary: linear-gradient(135deg, var(--fp-color-primary) 0%, var(--fp-color-primary-hover) 100%);
-  --fp-gradient-surface: linear-gradient(145deg, var(--fp-color-surface) 0%, var(--fp-color-surface-alt) 100%);
-  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 100%);
+  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --fp-gradient-surface: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 100%);
   
   /* ==================== BACKDROP FILTER ==================== */
   
@@ -146,17 +146,9 @@
   --fp-backdrop-blur-strong: blur(20px);
 }
 
-/* ==================== DARK MODE (Opzionale) ==================== */
+/* ==================== DARK MODE (Disabilitato) ==================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fp-color-surface: #0f172a;
-    --fp-color-surface-alt: #1e293b;
-    --fp-color-text: #f8fafc;
-    --fp-color-text-muted: #94a3b8;
-    --fp-color-border: rgba(148, 163, 184, 0.2);
-  }
-}
+/* Dark mode rimosso su richiesta dell'utente */
 
 /* ==================== VARIABILI PERSONALIZZABILI ==================== */
 /* Queste possono essere sovrascritte dal tema o dall'admin panel */

@@ -173,9 +173,6 @@ final class AdminREST
 
     public function handleArrivals(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Inizia output buffering per prevenire output inattesi
-        ob_start();
-        
         try {
             $range = strtolower((string) $request->get_param('range'));
             if (!in_array($range, ['today', 'week'], true)) {
@@ -215,24 +212,10 @@ final class AdminREST
                 'reservations' => $reservations,
             ];
             
-            // Pulisci output inatteso SENZA chiudere il buffer
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_contents();
-                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Arrivals] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_clean();
-            }
-            
             $response = rest_ensure_response($responseData);
-            
-            // NON toccare il buffer - WordPress REST API lo gestisce completamente
             
             return $response;
         } catch (Throwable $e) {
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
             error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_arrivals_error',
@@ -247,9 +230,6 @@ final class AdminREST
      */
     public function handleStats(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Inizia output buffering per prevenire output inattesi
-        ob_start();
-        
         try {
             $dateParam = $request->get_param('date');
             $date = $this->sanitizeDate($dateParam);
@@ -313,27 +293,10 @@ final class AdminREST
                 'stats' => $stats,
             ];
             
-            // Pulisci output inatteso SENZA chiudere il buffer
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_contents();
-                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Stats] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_clean();
-            }
-            
             $response = rest_ensure_response($responseData);
-            
-            // Chiudi il buffer solo dopo aver creato la risposta
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
             
             return $response;
         } catch (Throwable $e) {
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
             error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_stats_error',
@@ -348,9 +311,6 @@ final class AdminREST
      */
     public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Inizia output buffering per prevenire output inattesi
-        ob_start();
-        
         try {
             $timezone = wp_timezone();
             $today = new DateTimeImmutable('today', $timezone);
@@ -400,24 +360,10 @@ final class AdminREST
                 'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
             ];
             
-            // Pulisci output inatteso SENZA chiudere il buffer
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_contents();
-                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Overview] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_clean();
-            }
-            
             $response = rest_ensure_response($responseData);
-            
-            // NON toccare il buffer - WordPress REST API lo gestisce completamente
             
             return $response;
         } catch (Throwable $e) {
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
             error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
             return new WP_Error(
                 'fp_resv_overview_error',
@@ -429,7 +375,17 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        ob_start();
+        // DEBUG: Log immediato all'inizio
+        error_log('[FP Resv Agenda] ========================================');
+        error_log('[FP Resv Agenda] METODO CHIAMATO! Timestamp: ' . date('Y-m-d H:i:s'));
+        error_log('[FP Resv Agenda] Request params: ' . json_encode($request->get_params()));
+        error_log('[FP Resv Agenda] ========================================');
+        
+        // Test immediato: restituisce una risposta minima per vedere se arriva al client
+        if (isset($_GET['test_minimal'])) {
+            error_log('[FP Resv Agenda] TEST MINIMAL MODE');
+            return new WP_REST_Response(['test' => 'ok', 'timestamp' => time()], 200);
+        }
         
         try {
             $dateParam = $request->get_param('date');
@@ -517,27 +473,6 @@ final class AdminREST
                 error_log('[FP Resv Agenda] Response data JSON length: ' . strlen($jsonEncoded));
             }
             
-            // Cattura qualsiasi output inatteso SENZA chiudere il buffer
-            // Questo è importante perché WordPress REST API potrebbe aspettarsi un buffer attivo
-            $unexpectedOutput = '';
-            $bufferLevel = ob_get_level();
-            if ($bufferLevel > 0) {
-                $unexpectedOutput = ob_get_contents();
-                if ($unexpectedOutput === false) {
-                    $unexpectedOutput = '';
-                }
-                // Pulisci il buffer ma NON chiuderlo ancora
-                ob_clean();
-            }
-            
-            if (!empty(trim($unexpectedOutput))) {
-                error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
-                // Log anche su file
-                $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
-                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Output inatteso: ' . substr($unexpectedOutput, 0, 500) . PHP_EOL, FILE_APPEND);
-            }
-            
-            error_log('[FP Resv Agenda] Buffer level prima di response: ' . ob_get_level());
             error_log('[FP Resv Agenda] Chiamata rest_ensure_response...');
             
             // Assicurati che la risposta sia sempre valida
@@ -593,19 +528,9 @@ final class AdminREST
             @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Risposta creata con successo, status: ' . $response->get_status() . PHP_EOL, FILE_APPEND);
             
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
-            error_log('[FP Resv Agenda] Buffer level alla fine: ' . ob_get_level());
-            
-            // IMPORTANTE: NON modificare il buffer qui!
-            // WordPress REST API gestirà automaticamente l'output buffering.
-            // Qualsiasi operazione sul buffer qui causerebbe una risposta vuota o corrotta.
-            // Semplicemente ritorna la risposta e lascia che WordPress faccia il resto.
             
             return $response;
         } catch (Throwable $e) {
-            // In caso di errore, pulisci il buffer per evitare output corrotto
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
             
             // Log l'errore completo per debugging
             error_log('[FP Resv Agenda] === ERRORE CRITICO ===');
@@ -632,9 +557,6 @@ final class AdminREST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Inizia output buffering per prevenire output inattesi
-        ob_start();
-        
         error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE DAL MANAGER START ===');
         
         try {
@@ -657,16 +579,6 @@ final class AdminREST
                 error_log('[FP Resv Admin] WARNING: Prenotazione creata ma non trovata con findAgendaEntry');
             }
             
-            // Pulisci output inatteso SENZA usare ob_clean che cancella tutto
-            $unexpectedOutput = '';
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_contents();
-                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Admin] WARNING: Output inatteso rilevato: ' . substr($unexpectedOutput, 0, 200));
-                    // NON usare ob_clean() qui - lascia che WordPress gestisca il buffer
-                }
-            }
-            
             $responseData = [
                 'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
                 'result'      => $result,
@@ -675,19 +587,9 @@ final class AdminREST
             error_log('[FP Resv Admin] Response data: ' . json_encode($responseData));
             error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA ===');
             
-            // Chiudi il buffer solo DOPO aver creato la risposta
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            
             return rest_ensure_response($responseData);
             
         } catch (InvalidArgumentException|RuntimeException $exception) {
-            // Pulisci il buffer in caso di errore
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            
             error_log('[FP Resv Admin] Errore validazione: ' . $exception->getMessage());
             
             return new WP_Error(
@@ -696,11 +598,6 @@ final class AdminREST
                 ['status' => 400]
             );
         } catch (Throwable $exception) {
-            // Pulisci il buffer in caso di errore
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            
             error_log('[FP Resv Admin] Errore critico: ' . $exception->getMessage());
             error_log('[FP Resv Admin] Stack trace: ' . $exception->getTraceAsString());
             
@@ -918,13 +815,22 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        // Permette agli amministratori di accedere anche se non hanno la capability specifica
-        // Questo allineamento con AdminController previene errori 403 quando gli admin
-        // accedono all'agenda prima che la capability sia stata assegnata
+        // DEBUG: Log controllo permessi
+        $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canManageOptions = current_user_can('manage_options');
+        $result = $canManage || $canManageOptions;
         
-        return $canManage || $canManageOptions;
+        error_log('[FP Resv Permissions] User ID: ' . $userId);
+        error_log('[FP Resv Permissions] Can manage reservations: ' . ($canManage ? 'YES' : 'NO'));
+        error_log('[FP Resv Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
+        error_log('[FP Resv Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
+        
+        if (!$result) {
+            error_log('[FP Resv Permissions] ❌ ACCESSO NEGATO! Endpoint bloccato.');
+        }
+        
+        return $result;
     }
 
     private function sanitizeDate(mixed $value): ?string

@@ -121,15 +121,14 @@ Tutte le classi esistenti sono ancora supportate. Ecco alcune equivalenze con le
 }
 ```
 
-### Esempio 2: Creare un Tema Scuro
+### Esempio 2: Modificare i Gradienti
 
 ```css
 /* form.css - sezione CUSTOM OVERRIDES */
 
-.fp-resv-widget--dark {
-  --fp-color-surface: #1e293b;
-  --fp-color-text: #f8fafc;
-  --fp-color-border: rgba(255, 255, 255, 0.1);
+.fp-resv-widget--gradient {
+  --fp-gradient-surface: linear-gradient(145deg, #f0f4ff 0%, #e0e7ff 100%);
+  --fp-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 ```
 

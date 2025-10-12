@@ -260,30 +260,7 @@
 
 /* ==================== DARK MODE ==================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fp-color-surface: #0f172a;
-    --fp-color-surface-alt: #1e293b;
-    --fp-color-surface-elevated: #334155;
-    --fp-color-text: #f8fafc;
-    --fp-color-text-muted: #94a3b8;
-    --fp-color-text-light: #cbd5e1;
-    --fp-color-border: rgba(148, 163, 184, 0.2);
-    --fp-color-border-light: rgba(148, 163, 184, 0.1);
-    --fp-color-divider: rgba(148, 163, 184, 0.15);
-  }
-  
-  .fp-resv {
-    background: linear-gradient(145deg, var(--fp-color-surface) 0%, var(--fp-color-surface-alt) 100%);
-  }
-  
-  .fp-input,
-  .fp-select,
-  .fp-textarea {
-    background: var(--fp-color-surface-elevated);
-    color: var(--fp-color-text);
-  }
-}
+/* Dark mode rimosso su richiesta dell'utente */
 
 /* ==================== HIGH CONTRAST MODE ==================== */
 
