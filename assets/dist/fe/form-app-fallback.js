@@ -516,25 +516,224 @@ if (typeof window !== 'undefined') {
     window.fpResvApp = window.FPResv;
 }
 
+function ensureWidgetVisibility(widget) {
+    if (!widget) {
+        return;
+    }
+    
+    // Force visibility with inline styles as a fallback
+    widget.style.display = 'block';
+    widget.style.visibility = 'visible';
+    widget.style.opacity = '1';
+    widget.style.position = 'relative';
+    widget.style.width = '100%';
+    widget.style.height = 'auto';
+    
+    // Ensure parent containers don't hide the widget
+    var parent = widget.parentElement;
+    var depth = 0;
+    while (parent && depth < 5) {
+        var display = window.getComputedStyle(parent).display;
+        if (display === 'none') {
+            console.warn('[FP-RESV] Found hidden parent element, making visible:', parent);
+            parent.style.display = 'block';
+        }
+        parent = parent.parentElement;
+        depth++;
+    }
+    
+    console.log('[FP-RESV] Widget visibility ensured:', widget.id || 'unnamed');
+}
+
+// Track already initialized widgets to avoid double initialization
+var initializedWidgets = [];
+
+function isWidgetInitialized(widget) {
+    for (var i = 0; i < initializedWidgets.length; i++) {
+        if (initializedWidgets[i] === widget) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function initializeFPResv() {
     console.log('[FP-RESV] Plugin v0.1.5 loaded - Fallback form functionality active');
-    const widgets = document.querySelectorAll('[data-fp-resv]');
+    console.log('[FP-RESV] Current readyState:', document.readyState);
+    console.log('[FP-RESV] Body innerHTML length:', document.body ? document.body.innerHTML.length : 0);
+    
+    const widgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
     console.log('[FP-RESV] Found widgets:', widgets.length);
 
+    if (widgets.length === 0) {
+        console.warn('[FP-RESV] No widgets found on page. Expected shortcode [fp_reservations] or Gutenberg block.');
+        console.log('[FP-RESV] Searching for potential widget containers...');
+        
+        // Debug: check for common WordPress content areas
+        var content = document.querySelector('.entry-content, .post-content, .page-content, main, article');
+        if (content) {
+            console.log('[FP-RESV] Found content container:', content.className || 'unnamed');
+            console.log('[FP-RESV] Content container innerHTML length:', content.innerHTML.length);
+            
+            // Check if there's any fp-resv related content
+            if (content.innerHTML.indexOf('fp-resv') !== -1) {
+                console.log('[FP-RESV] Found fp-resv string in content, but no valid widget element');
+            }
+        } else {
+            console.log('[FP-RESV] No standard content container found');
+        }
+        
+        return;
+    }
+
     Array.prototype.forEach.call(widgets, function (widget) {
+        // Skip if already initialized
+        if (isWidgetInitialized(widget)) {
+            console.log('[FP-RESV] Widget already initialized, skipping:', widget.id || 'unnamed');
+            return;
+        }
+        
         try {
+            // Mark as initialized
+            initializedWidgets.push(widget);
+            
+            // Ensure widget is visible first
+            ensureWidgetVisibility(widget);
+            
+            // Initialize the widget
             new FormApp(widget);
-            console.log('[FP-RESV] Widget initialized:', widget.id || 'unnamed');
+            console.log('[FP-RESV] Widget initialized successfully:', widget.id || 'unnamed');
         } catch (error) {
             console.error('[FP-RESV] Error initializing widget:', error);
+            // Remove from initialized array on error so it can be retried
+            var index = initializedWidgets.indexOf(widget);
+            if (index > -1) {
+                initializedWidgets.splice(index, 1);
+            }
         }
     });
 }
 
+// Auto-check visibility every second for the first 10 seconds
+function autoCheckVisibility() {
+    var checks = 0;
+    var maxChecks = 10;
+    
+    var interval = setInterval(function() {
+        checks++;
+        
+        var widgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+        var hasHiddenWidget = false;
+        
+        Array.prototype.forEach.call(widgets, function(widget) {
+            var computed = window.getComputedStyle(widget);
+            if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                console.warn('[FP-RESV] Widget became hidden, forcing visibility again:', widget.id || 'unnamed');
+                ensureWidgetVisibility(widget);
+                hasHiddenWidget = true;
+            }
+        });
+        
+        if (checks >= maxChecks || !hasHiddenWidget) {
+            clearInterval(interval);
+            if (checks >= maxChecks) {
+                console.log('[FP-RESV] Visibility auto-check completed after ' + checks + ' checks');
+            }
+        }
+    }, 1000);
+}
+
+// Set up MutationObserver to detect widgets added dynamically
+function setupWidgetObserver() {
+    if (typeof MutationObserver === 'undefined') {
+        console.warn('[FP-RESV] MutationObserver not supported, dynamic widgets won\'t be detected');
+        return;
+    }
+    
+    var observer = new MutationObserver(function(mutations) {
+        var hasNewWidgets = false;
+        
+        for (var i = 0; i < mutations.length; i++) {
+            var mutation = mutations[i];
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                for (var j = 0; j < mutation.addedNodes.length; j++) {
+                    var node = mutation.addedNodes[j];
+                    if (node.nodeType === 1) { // Element node
+                        // Check if the node itself is a widget
+                        var isWidget = false;
+                        if (node.matches) {
+                            isWidget = node.matches('[data-fp-resv]') || node.matches('.fp-resv-widget') || node.matches('[data-fp-resv-app]');
+                        } else if (node.getAttribute) {
+                            // Fallback for older browsers
+                            isWidget = node.getAttribute('data-fp-resv') !== null || 
+                                      node.getAttribute('data-fp-resv-app') !== null ||
+                                      (node.className && node.className.indexOf('fp-resv-widget') !== -1);
+                        }
+                        
+                        if (isWidget) {
+                            hasNewWidgets = true;
+                        }
+                        // Check if the node contains a widget
+                        else if (node.querySelector) {
+                            var widget = node.querySelector('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+                            if (widget) {
+                                hasNewWidgets = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (hasNewWidgets) {
+            console.log('[FP-RESV] New widget(s) detected in DOM, initializing...');
+            initializeFPResv();
+        }
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('[FP-RESV] MutationObserver set up to detect dynamic widgets');
+}
+
+// Retry initialization with increasing delays
+function retryInitialization() {
+    var delays = [500, 1000, 2000, 3000]; // Retry after 0.5s, 1s, 2s, 3s
+    
+    for (var i = 0; i < delays.length; i++) {
+        (function(delay) {
+            setTimeout(function() {
+                var currentWidgetCount = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]').length;
+                if (currentWidgetCount > initializedWidgets.length) {
+                    console.log('[FP-RESV] Retry: Found ' + currentWidgetCount + ' widgets, ' + initializedWidgets.length + ' initialized');
+                    initializeFPResv();
+                }
+            }, delay);
+        })(delays[i]);
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFPResv);
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeFPResv();
+        // Start auto-check after initialization
+        setTimeout(autoCheckVisibility, 500);
+        // Set up observer for dynamic widgets
+        setupWidgetObserver();
+        // Retry in case widgets load late
+        retryInitialization();
+    });
 } else {
     initializeFPResv();
+    // Start auto-check after initialization
+    setTimeout(autoCheckVisibility, 500);
+    // Set up observer for dynamic widgets
+    setupWidgetObserver();
+    // Retry in case widgets load late
+    retryInitialization();
 }
 
 // Event listener per tracking
