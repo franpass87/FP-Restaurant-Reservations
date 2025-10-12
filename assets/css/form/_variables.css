@@ -6,10 +6,10 @@
 :root {
   /* ==================== COLORI ==================== */
   
-  /* Colori Primari - Schema Minimalista Bianco e Nero */
+  /* Colori Primari - NERO su BIANCO (Contrasto Alto) */
   --fp-color-primary: #000000;
-  --fp-color-primary-hover: #1a1a1a;
-  --fp-color-primary-light: rgba(0, 0, 0, 0.05);
+  --fp-color-primary-hover: #333333;
+  --fp-color-primary-light: rgba(0, 0, 0, 0.08);
   --fp-color-primary-rgb: 0, 0, 0;
   
   /* Colori Superficie - Sfondi Bianchi e Grigi Chiari */

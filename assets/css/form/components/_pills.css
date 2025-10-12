@@ -77,9 +77,9 @@
 .fp-pill[aria-pressed="true"],
 .fp-pill[data-active="true"],
 .fp-pill--active {
-  background: var(--fp-gradient-primary);
-  border-color: var(--fp-color-primary);
-  color: white;
+  background: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
   box-shadow: var(--fp-shadow-lg);
 }
 

@@ -1,0 +1,223 @@
+/**
+ * FP Restaurant Reservations - FIX CONTRASTI E VISIBILITÀ
+ * 
+ * IMPORTANTE: Questo file FORZA i colori corretti per garantire SEMPRE la visibilità
+ * 
+ * REGOLA D'ORO:
+ * - Bottoni NERI → Testo BIANCO
+ * - Bottoni BIANCHI → Testo NERO con BORDO NERO
+ * - Input BIANCHI → Testo NERO
+ * - Sfondo BIANCO → Testo NERO
+ * 
+ * Data: 12 Ottobre 2025
+ * Motivo: Fix urgente visibilità bottoni
+ */
+
+/* ==================== BOTTONI PRIMARI - NERO CON TESTO BIANCO ==================== */
+
+.fp-btn,
+.fp-resv-button,
+.fp-btn--primary,
+.fp-resv-button--primary,
+button.fp-btn,
+button.fp-resv-button {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.fp-btn:hover,
+.fp-resv-button:hover,
+.fp-btn--primary:hover,
+.fp-resv-button--primary:hover {
+  background: #333333 !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+}
+
+/* ==================== BOTTONI SECONDARI - BIANCO CON TESTO NERO ==================== */
+
+.fp-btn--secondary,
+.fp-btn--ghost,
+.fp-resv-button--secondary,
+.fp-resv-button--ghost {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+.fp-btn--secondary:hover,
+.fp-btn--ghost:hover,
+.fp-resv-button--secondary:hover,
+.fp-resv-button--ghost:hover {
+  background: #f5f5f5 !important;
+  color: #000000 !important;
+  border: 2px solid #333333 !important;
+}
+
+/* ==================== INPUT - BIANCO CON TESTO NERO ==================== */
+
+.fp-input,
+.fp-select,
+.fp-textarea,
+input.fp-input,
+select.fp-select,
+textarea.fp-textarea {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1.5px solid #e0e0e0 !important;
+}
+
+.fp-input:focus,
+.fp-select:focus,
+.fp-textarea:focus {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.fp-input::placeholder,
+.fp-select::placeholder,
+.fp-textarea::placeholder {
+  color: #999999 !important;
+}
+
+/* ==================== PILL BUTTONS (PASTI) ==================== */
+
+.fp-pill,
+.fp-meal-pill {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.fp-pill:hover,
+.fp-meal-pill:hover {
+  border-color: #000000 !important;
+  background: #fafafa !important;
+  color: #000000 !important;
+}
+
+/* ATTIVO - NERO CON BIANCO */
+.fp-pill[aria-pressed="true"],
+.fp-pill[data-active="true"],
+.fp-meal-pill[aria-pressed="true"],
+.fp-meal-pill[data-active="true"] {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+/* ==================== SLOT ORARI ==================== */
+
+.fp-slots__list button,
+.fp-resv-slots__list button {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.fp-slots__list button:hover,
+.fp-resv-slots__list button:hover {
+  border-color: #000000 !important;
+  background: #fafafa !important;
+  color: #000000 !important;
+}
+
+/* SELEZIONATO - NERO CON BIANCO */
+.fp-slots__list button[aria-pressed="true"],
+.fp-resv-slots__list button[aria-pressed="true"] {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+/* ==================== TESTO GENERALE ==================== */
+
+.fp-resv,
+.fp-resv-widget {
+  color: #000000 !important;
+}
+
+.fp-resv-widget__headline {
+  color: #000000 !important;
+}
+
+.fp-resv-widget__subheadline {
+  color: #666666 !important;
+}
+
+.fp-field__label,
+.fp-resv-step__title,
+.fp-resv-step__label {
+  color: #000000 !important;
+}
+
+.fp-hint,
+.fp-resv-step__description {
+  color: #666666 !important;
+}
+
+/* ==================== PARTY INPUT (+/-) ==================== */
+
+.fp-resv-party-btn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.fp-resv-party-btn:hover:not(:disabled) {
+  background: #fafafa !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+/* ==================== ALERT / FEEDBACK ==================== */
+
+.fp-alert--success {
+  background: rgba(45, 45, 45, 0.08) !important;
+  color: #000000 !important;
+  border-color: #2d2d2d !important;
+}
+
+.fp-alert--error {
+  background: rgba(220, 38, 38, 0.08) !important;
+  color: #000000 !important;
+  border-color: #dc2626 !important;
+}
+
+/* ==================== BADGE ==================== */
+
+.fp-badge {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* ==================== PROGRESS BAR ==================== */
+
+.fp-progress__index {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.fp-progress__label {
+  color: #000000 !important;
+}
+
+/* ==================== GARANZIA VISIBILITÀ ASSOLUTA ==================== */
+
+/* Se qualcosa è ancora invisibile, questa regola lo salva */
+.fp-resv * {
+  min-contrast: 4.5 !important;
+}
+
+/* Assicura che tutti i link siano visibili */
+.fp-resv a {
+  color: #000000 !important;
+  text-decoration: underline !important;
+}
+
+.fp-resv a:hover {
+  color: #333333 !important;
+}
+

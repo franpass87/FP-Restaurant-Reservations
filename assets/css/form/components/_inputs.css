@@ -20,13 +20,13 @@
   font-family: inherit;
   font-size: var(--fp-text-base);
   line-height: var(--fp-leading-normal);
-  color: var(--fp-color-text);
+  color: #000000 !important;
   
-  /* Visual */
-  background: var(--fp-color-surface);
-  border: 1.5px solid var(--fp-color-border);
+  /* Visual - BIANCO con TESTO NERO */
+  background: #ffffff !important;
+  border: 1.5px solid #e0e0e0 !important;
   border-radius: var(--fp-radius-lg);
-  box-shadow: var(--fp-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: var(--fp-shadow-sm);
   
   /* Interaction */
   transition: all var(--fp-transition-base);
