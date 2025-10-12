@@ -64,90 +64,49 @@ final class WidgetController
         $moduleExists = file_exists($modulePath);
         $legacyExists = file_exists($legacyPath);
 
-        // AGGRESSIVE FIX: Force JavaScript loading with multiple fallbacks
-        if ($legacyExists) {
-            // Try multiple loading strategies
-            wp_register_script(
-                self::HANDLE_LEGACY,
-                $legacyUrl,
-                [],
-                $version, // Use same version as CSS for consistent cache busting
-                false // Load in header, not footer
-            );
-
-            wp_enqueue_script(self::HANDLE_LEGACY);
-            
-            // Add aggressive inline initialization with multiple fallbacks
-            add_action('wp_footer', function() use ($legacyUrl, $version) {
-                echo '<script>
-                console.log("[FP-RESV] AGGRESSIVE initialization starting...");
-                
-                // Strategy 1: Direct script injection if wp_enqueue fails
-                function injectScriptDirectly() {
-                    const script = document.createElement("script");
-                    script.src = "' . esc_js($legacyUrl) . '?v=' . esc_js($version) . '";
-                    script.onload = function() {
-                        console.log("[FP-RESV] Script loaded directly, initializing...");
-                        initializeFPResv();
-                    };
-                    script.onerror = function() {
-                        console.error("[FP-RESV] Direct script injection failed");
-                        // Fallback to development version
-                        const devScript = document.createElement("script");
-                        devScript.src = "' . esc_js(Plugin::$url . 'assets/js/fe/form-app-fallback.js') . '?v=' . esc_js($version) . '";
-                        devScript.onload = function() {
-                            console.log("[FP-RESV] Development script loaded");
-                            initializeFPResv();
-                        };
-                        document.head.appendChild(devScript);
-                    };
-                    document.head.appendChild(script);
-                }
-                
-                function initializeFPResv() {
-                    console.log("[FP-RESV] Attempting initialization...");
-                    
-                    if (window.FPResv && window.FPResv.FormApp) {
-                        console.log("[FP-RESV] SUCCESS: FPResv found, initializing widgets");
-                        const widgets = document.querySelectorAll("[data-fp-resv]");
-                        console.log("[FP-RESV] Found widgets:", widgets.length);
-                        
-                        widgets.forEach(function(widget) {
-                            try {
-                                new window.FPResv.FormApp(widget);
-                                console.log("[FP-RESV] Widget initialized:", widget.id || "unnamed");
-                            } catch (error) {
-                                console.error("[FP-RESV] Error initializing widget:", error);
-                            }
-                        });
-                    } else {
-                        console.log("[FP-RESV] FPResv not available, trying direct injection...");
-                        injectScriptDirectly();
-                    }
-                }
-                
-                // Start with immediate check
-                setTimeout(function() {
-                    if (window.FPResv && window.FPResv.FormApp) {
-                        initializeFPResv();
-                    } else {
-                        injectScriptDirectly();
-                    }
-                }, 100);
-                </script>';
-            });
-        } else {
-            // Fall back to development module
-            $moduleUrl = Plugin::$url . 'assets/js/fe/form-app-fallback.js';
-            
+        // Load both module and legacy scripts for proper browser support
+        // Modern browsers load the module version, older browsers load the legacy version
+        if ($moduleExists && $legacyExists) {
+            // Register and enqueue ES module version for modern browsers
             wp_register_script(
                 self::HANDLE_MODULE,
                 $moduleUrl,
                 [],
                 $version,
-                false // Load in header, not footer
+                true // Load in footer
             );
+            wp_enqueue_script(self::HANDLE_MODULE);
 
+            // Register and enqueue legacy version for older browsers
+            wp_register_script(
+                self::HANDLE_LEGACY,
+                $legacyUrl,
+                [],
+                $version,
+                true // Load in footer
+            );
+            wp_enqueue_script(self::HANDLE_LEGACY);
+        } elseif ($legacyExists) {
+            // If only legacy exists, use it without nomodule attribute
+            wp_register_script(
+                self::HANDLE_LEGACY,
+                $legacyUrl,
+                [],
+                $version,
+                true
+            );
+            wp_enqueue_script(self::HANDLE_LEGACY);
+        } else {
+            // Fall back to development version
+            $fallbackUrl = Plugin::$url . 'assets/js/fe/form-app-fallback.js';
+            
+            wp_register_script(
+                self::HANDLE_MODULE,
+                $fallbackUrl,
+                [],
+                $version,
+                true
+            );
             wp_enqueue_script(self::HANDLE_MODULE);
         }
     }
