@@ -156,16 +156,30 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
+        $sql = 'SELECT r.*, '
+            . 'COALESCE(c.first_name, "") as first_name, '
+            . 'COALESCE(c.last_name, "") as last_name, '
+            . 'COALESCE(c.email, "") as email, '
+            . 'COALESCE(c.phone, "") as phone, '
+            . 'COALESCE(c.lang, "it") as customer_lang '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.date BETWEEN %s AND %s '
+            . 'AND r.status != "cancelled" '
             . 'ORDER BY r.date ASC, r.time ASC';
 
         $rows = $this->wpdb->get_results(
             $this->wpdb->prepare($sql, $startDate, $endDate),
             ARRAY_A
         );
+        
+        // Log per debug
+        error_log('[FP Repository] findAgendaRange chiamato con startDate=' . $startDate . ' endDate=' . $endDate);
+        error_log('[FP Repository] Query trovato ' . (is_array($rows) ? count($rows) : 0) . ' prenotazioni');
+        
+        if (is_array($rows) && count($rows) > 0) {
+            error_log('[FP Repository] Prima prenotazione: ID=' . ($rows[0]['id'] ?? 'N/A') . ' Date=' . ($rows[0]['date'] ?? 'N/A'));
+        }
 
         return is_array($rows) ? $rows : [];
     }
