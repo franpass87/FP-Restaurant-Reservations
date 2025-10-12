@@ -277,15 +277,32 @@ button.fp-meal-pill:focus-visible {
 
 /* ==================== PROGRESS BAR ==================== */
 
-/* Step NON attivi: sfondo chiaro, testo scuro */
-.fp-progress__index {
-  background: #f5f5f5 !important;
-  border: 2px solid #e0e0e0 !important;
-  color: #000000 !important;
+/* Container progress */
+.fp-resv-progress {
+  background: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
 }
 
-.fp-progress__label {
-  color: #666666 !important;
+/* Barra di progresso (mobile) */
+.fp-progress::before {
+  background: #e0e0e0 !important;
+}
+
+.fp-progress::after {
+  background: #000000 !important;
+}
+
+/* Step NON attivi: sfondo chiaro, testo scuro (solo desktop) */
+@media (min-width: 768px) {
+  .fp-progress__index {
+    background: #f5f5f5 !important;
+    border: 2px solid #e0e0e0 !important;
+    color: #000000 !important;
+  }
+
+  .fp-progress__label {
+    color: #666666 !important;
+  }
 }
 
 /* Step ATTIVO: sfondo nero, testo bianco */
@@ -294,6 +311,7 @@ button.fp-meal-pill:focus-visible {
   background: #000000 !important;
   border-color: #000000 !important;
   color: #ffffff !important;
+  border-radius: 8px !important;
 }
 
 .fp-progress__item[data-state="active"] .fp-progress__label,

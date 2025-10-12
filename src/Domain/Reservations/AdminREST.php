@@ -98,6 +98,24 @@ final class AdminREST
             error_log('[FP Resv AdminREST] ❌ ERRORE registrazione /agenda: ' . $e->getMessage());
         }
 
+        // ENDPOINT TEMPORANEO DI DEBUG - Bypassa tutto
+        register_rest_route(
+            'fp-resv/v1',
+            '/agenda-debug',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => function() {
+                    return new WP_REST_Response([
+                        'success' => true,
+                        'message' => 'Endpoint debug funziona!',
+                        'timestamp' => time(),
+                        'reservations_count' => 'TODO'
+                    ], 200);
+                },
+                'permission_callback' => '__return_true', // Pubblico per test
+            ]
+        );
+        
         register_rest_route(
             'fp-resv/v1',
             '/agenda/reservations',
