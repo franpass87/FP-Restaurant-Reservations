@@ -418,8 +418,13 @@ class ReservationManager {
         let filtered = [...this.state.reservations];
         
         // Filtra per servizio (meal) - usa il campo meal dalla prenotazione
+        // Se meal è NULL, mostra la prenotazione in tutti i filtri (considera come "non specificato")
         if (this.state.filters.service) {
-            filtered = filtered.filter(r => r.meal === this.state.filters.service);
+            filtered = filtered.filter(r => {
+                // Se meal è null/undefined, non filtrare (mostra sempre)
+                if (!r.meal) return true;
+                return r.meal === this.state.filters.service;
+            });
         }
         
         // Filtra per stato
