@@ -1190,6 +1190,8 @@
 /* ============================================
    RESPONSIVE
    ============================================ */
+
+/* Tablet (1024px e sotto) */
 @media (max-width: 1024px) {
     .fp-manager-toolbar {
         flex-direction: column;
@@ -1205,26 +1207,145 @@
     .fp-search-input {
         min-width: 100%;
     }
+    
+    .fp-manager-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
+/* Mobile (768px e sotto) */
 @media (max-width: 768px) {
+    /* Header ottimizzato */
     .fp-manager-header {
-        padding: 16px 20px;
+        padding: 12px 16px;
     }
     
     .fp-manager-header__top {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
+        margin-bottom: 20px;
     }
     
-    .fp-manager-main {
-        padding: 16px 20px;
+    .fp-manager-header__branding h1 {
+        font-size: 22px;
+        gap: 8px;
     }
     
+    .fp-manager-breadcrumbs {
+        font-size: 12px;
+    }
+    
+    .fp-manager-header__actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .fp-manager-header__actions .fp-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 12px;
+        font-size: 13px;
+        justify-content: center;
+    }
+    
+    /* Stats dashboard a scorrimento orizzontale */
     .fp-manager-stats {
         grid-template-columns: 1fr;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
     }
     
+    .fp-stat-card {
+        scroll-snap-align: start;
+        min-width: 280px;
+    }
+    
+    .fp-stat-card__value {
+        font-size: 28px;
+    }
+    
+    /* Main content */
+    .fp-manager-main {
+        padding: 12px 16px;
+    }
+    
+    /* Toolbar mobile */
+    .fp-manager-toolbar {
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .fp-manager-toolbar__left,
+    .fp-manager-toolbar__right {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    /* Date navigation mobile */
+    .fp-date-nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .fp-date-picker {
+        flex: 1;
+        max-width: 200px;
+    }
+    
+    /* View switcher compatto */
+    .fp-view-switcher {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .fp-view-btn {
+        flex: 1;
+        padding: 10px 8px;
+        font-size: 0;
+        justify-content: center;
+    }
+    
+    .fp-view-btn .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .fp-view-btn span {
+        display: none;
+    }
+    
+    /* Filtri mobile */
+    .fp-filter-select {
+        width: 100%;
+        min-width: auto;
+        padding: 10px 12px;
+        font-size: 15px;
+    }
+    
+    .fp-search-input {
+        min-width: 100%;
+        padding: 10px 12px 10px 40px;
+        font-size: 15px;
+    }
+    
+    /* Buttons touch-friendly */
+    .fp-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+    
+    .fp-btn-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Timeline mobile */
     .fp-timeline-slot {
         flex-direction: column;
         gap: 12px;
@@ -1232,26 +1353,39 @@
     
     .fp-timeline-slot__time {
         min-width: auto;
+        font-size: 15px;
     }
     
     .fp-timeline-slot__reservations {
         grid-template-columns: 1fr;
     }
     
+    /* List view mobile */
     .fp-list-card {
         flex-direction: column;
         align-items: flex-start;
+        padding: 16px;
+    }
+    
+    .fp-list-card__main {
+        width: 100%;
+    }
+    
+    .fp-status-badge {
+        margin-top: 8px;
     }
 
     /* Month View Mobile */
     .fp-month-header {
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
         align-items: stretch;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
     }
 
     .fp-month-header h2 {
-        font-size: 20px;
+        font-size: 18px;
         text-align: center;
     }
 
@@ -1261,28 +1395,336 @@
 
     .fp-calendar-day-name {
         font-size: 10px;
-        padding: 8px 4px;
+        padding: 8px 2px;
     }
 
     .fp-calendar-day {
         min-height: 70px;
-        padding: 8px 4px;
+        padding: 6px 4px;
+    }
+    
+    .fp-calendar-day:hover {
+        transform: none;
     }
 
     .fp-calendar-day__number {
         font-size: 14px;
+        margin-bottom: 4px;
     }
 
-    .fp-calendar-day__count,
-    .fp-calendar-day__guests {
+    .fp-calendar-day__count {
         font-size: 10px;
-        padding: 2px 4px;
+        padding: 3px 4px;
+    }
+    
+    .fp-calendar-day__guests {
+        font-size: 9px;
     }
 
     .fp-calendar-day--today .fp-calendar-day__number {
         width: 24px;
         height: 24px;
         font-size: 12px;
+    }
+    
+    /* Modal mobile */
+    .fp-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+    
+    .fp-modal__content {
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: var(--fp-radius-lg) var(--fp-radius-lg) 0 0;
+    }
+    
+    .fp-modal__header {
+        padding: 16px 20px;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+    
+    .fp-modal__header h2 {
+        font-size: 18px;
+    }
+    
+    .fp-modal__body {
+        padding: 20px;
+    }
+    
+    /* Form mobile */
+    .fp-form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .fp-form-control {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .fp-slots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+        max-height: 300px;
+    }
+    
+    .fp-slot-option {
+        padding: 12px 8px;
+    }
+    
+    .fp-slot-time {
+        font-size: 16px;
+    }
+    
+    /* Reservation cards mobile */
+    .fp-reservation-card {
+        padding: 14px;
+    }
+    
+    .fp-reservation-card:hover {
+        transform: none;
+    }
+    
+    .fp-reservation-card__header {
+        margin-bottom: 10px;
+    }
+}
+
+/* Small Mobile (480px e sotto) */
+@media (max-width: 480px) {
+    /* Header ancora più compatto */
+    .fp-manager-header {
+        padding: 10px 12px;
+    }
+    
+    .fp-manager-header__branding h1 {
+        font-size: 18px;
+    }
+    
+    .fp-manager-header__branding h1 .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .fp-manager-header__actions .fp-btn span:not(.dashicons) {
+        display: none;
+    }
+    
+    /* Stats cards a scorrimento */
+    .fp-manager-stats {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+    
+    .fp-stat-card {
+        min-width: 250px;
+        scroll-snap-align: center;
+    }
+    
+    .fp-stat-card__icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .fp-stat-card__icon .dashicons {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .fp-stat-card__value {
+        font-size: 24px;
+    }
+    
+    .fp-stat-card__meta {
+        font-size: 12px;
+    }
+    
+    /* Main content */
+    .fp-manager-main {
+        padding: 10px 12px;
+    }
+    
+    /* Toolbar compatto */
+    .fp-manager-toolbar {
+        padding: 10px 12px;
+    }
+    
+    .fp-date-nav {
+        flex-wrap: wrap;
+    }
+    
+    .fp-date-picker {
+        flex: 1 1 100%;
+        max-width: 100%;
+        margin-bottom: 8px;
+        order: -1;
+    }
+    
+    /* View switcher icone */
+    .fp-view-btn {
+        padding: 8px 6px;
+    }
+    
+    .fp-view-btn .dashicons {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Filtri stacked */
+    .fp-filter-select {
+        font-size: 14px;
+    }
+    
+    /* Calendario mese mini */
+    .fp-calendar-day-name {
+        font-size: 9px;
+        padding: 6px 2px;
+    }
+    
+    .fp-calendar-day {
+        min-height: 60px;
+        padding: 4px 2px;
+    }
+    
+    .fp-calendar-day__number {
+        font-size: 12px;
+    }
+    
+    .fp-calendar-day__count {
+        font-size: 9px;
+        padding: 2px 3px;
+    }
+    
+    .fp-calendar-day__guests {
+        font-size: 8px;
+    }
+    
+    .fp-calendar-day--today .fp-calendar-day__number {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    
+    /* List card compatta */
+    .fp-list-card {
+        padding: 12px;
+    }
+    
+    .fp-list-card__avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .fp-list-card__avatar .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .fp-list-card__name {
+        font-size: 15px;
+    }
+    
+    .fp-list-card__meta,
+    .fp-list-card__contact {
+        font-size: 12px;
+    }
+    
+    /* Modal full screen */
+    .fp-modal__content {
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    
+    .fp-modal__header,
+    .fp-modal__body {
+        padding: 16px;
+    }
+    
+    /* Slots grid 2 colonne */
+    .fp-slots-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    /* Reservation card compatta */
+    .fp-reservation-card {
+        padding: 12px;
+    }
+    
+    .fp-reservation-card__name {
+        font-size: 14px;
+    }
+    
+    .fp-reservation-card__phone,
+    .fp-reservation-card__notes {
+        font-size: 12px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Aumenta le aree di tap */
+    .fp-btn,
+    .fp-btn-icon,
+    .fp-filter-select,
+    .fp-date-picker,
+    .fp-search-input {
+        min-height: 44px;
+    }
+    
+    .fp-view-btn {
+        min-height: 48px;
+        min-width: 48px;
+    }
+    
+    .fp-reservation-card,
+    .fp-list-card,
+    .fp-calendar-day {
+        cursor: pointer;
+        -webkit-tap-highlight-color: rgba(79, 70, 229, 0.1);
+    }
+    
+    /* Rimuovi hover effects su touch */
+    .fp-reservation-card:hover,
+    .fp-list-card:hover,
+    .fp-calendar-day:hover {
+        transform: none;
+    }
+    
+    /* Active states per feedback visivo */
+    .fp-btn:active {
+        transform: scale(0.97);
+    }
+    
+    .fp-reservation-card:active,
+    .fp-list-card:active {
+        opacity: 0.8;
+    }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .fp-manager-header__top {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .fp-manager-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .fp-calendar-day {
+        min-height: 80px;
     }
 }
 
