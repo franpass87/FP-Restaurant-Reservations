@@ -251,23 +251,12 @@ final class AdminREST
             
             $response = rest_ensure_response($responseData);
             
-            // NON chiudere il buffer - WordPress REST API lo gestisce
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Arrivals] WARNING: Output inatteso finale: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_start();
-            }
+            // NON toccare il buffer - WordPress REST API lo gestisce completamente
             
             return $response;
         } catch (Throwable $e) {
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Arrivals] Output in catch: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_start();
+            while (ob_get_level() > 0) {
+                ob_end_clean();
             }
             error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
             return new WP_Error(
@@ -447,24 +436,12 @@ final class AdminREST
             
             $response = rest_ensure_response($responseData);
             
-            // NON chiudere il buffer - WordPress REST API lo gestisce
-            // Cattura e pulisci solo output inatteso, poi riavvia il buffer
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Overview] WARNING: Output inatteso finale: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_start();
-            }
+            // NON toccare il buffer - WordPress REST API lo gestisce completamente
             
             return $response;
         } catch (Throwable $e) {
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Overview] Output in catch: ' . substr($unexpectedOutput, 0, 200));
-                }
-                ob_start();
+            while (ob_get_level() > 0) {
+                ob_end_clean();
             }
             error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
             return new WP_Error(
@@ -688,29 +665,16 @@ final class AdminREST
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
             error_log('[FP Resv Agenda] Buffer level alla fine: ' . ob_get_level());
             
-            // IMPORTANTE: NON chiudere il buffer qui!
+            // IMPORTANTE: NON modificare il buffer qui!
             // WordPress REST API gestirà automaticamente l'output buffering.
-            // Pulire il buffer qui causerebbe una risposta vuota.
-            // Cattura e pulisci solo output inatteso, ma lascia il buffer aperto.
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Agenda] WARNING: Output inatteso finale rimosso: ' . substr($unexpectedOutput, 0, 200));
-                }
-                // Riavvia il buffer per WordPress
-                ob_start();
-            }
+            // Qualsiasi operazione sul buffer qui causerebbe una risposta vuota o corrotta.
+            // Semplicemente ritorna la risposta e lascia che WordPress faccia il resto.
             
             return $response;
         } catch (Throwable $e) {
-            // Cattura output inatteso ma non chiudere il buffer
-            if (ob_get_level() > 0) {
-                $unexpectedOutput = ob_get_clean();
-                if (!empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Agenda] Output inatteso in catch: ' . substr($unexpectedOutput, 0, 200));
-                }
-                // Riavvia il buffer per WordPress
-                ob_start();
+            // In caso di errore, pulisci il buffer per evitare output corrotto
+            while (ob_get_level() > 0) {
+                ob_end_clean();
             }
             
             // Log l'errore completo per debugging

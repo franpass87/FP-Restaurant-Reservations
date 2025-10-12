@@ -357,55 +357,66 @@ final class WidgetController
             pointer-events: none !important;
             opacity: 0.8 !important;
         }
-        /* Progress bar items - alta leggibilità */
+        /* Progress bar items - bianco pulito */
         .fp-resv-widget .fp-progress__item,
         #fp-resv-default .fp-progress__item {
             z-index: 10 !important;
             position: relative !important;
             background: #ffffff !important;
-            border: 2px solid rgba(148, 163, 184, 0.35) !important;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.1) !important;
-            color: #64748b !important;
+            border: 2px solid #cbd5e1 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            color: #475569 !important;
             font-weight: 600 !important;
             padding: 0.65rem 1.1rem !important;
             min-height: 2.75rem !important;
             min-width: 2.75rem !important;
         }
-        /* Progress bar items - stato attivo CON TESTO BIANCO */
+        /* Progress bar items - stato attivo NERO CON TESTO BIANCO */
         .fp-resv-widget .fp-progress__item[aria-current="step"],
         #fp-resv-default .fp-progress__item[aria-current="step"] {
-            background: #1e293b !important;
-            border-color: #1e293b !important;
+            background: #000000 !important;
+            border-color: #000000 !important;
             color: #ffffff !important;
-            box-shadow: 0 6px 18px rgba(30, 41, 59, 0.4), 0 3px 10px rgba(15, 23, 42, 0.2) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
             font-weight: 700 !important;
         }
-        /* Progress bar items - testo numeri sempre visibile */
+        /* Testo negli item - eredita colore */
         .fp-resv-widget .fp-progress__item span,
         .fp-resv-widget .fp-progress__item,
         #fp-resv-default .fp-progress__item span,
         #fp-resv-default .fp-progress__item {
-            color: inherit !important;
             font-size: 0.95rem !important;
             line-height: 1.3 !important;
         }
-        /* Forza colore testo su qualsiasi elemento interno */
-        .fp-resv-widget .fp-progress__item *,
-        #fp-resv-default .fp-progress__item * {
-            color: inherit !important;
-        }
-        /* Forza testo BIANCO su item attivo */
+        /* CRITICO: Forza BIANCO su item attivo (nero) */
+        .fp-resv-widget .fp-progress__item[aria-current="step"],
         .fp-resv-widget .fp-progress__item[aria-current="step"] *,
         .fp-resv-widget .fp-progress__item[aria-current="step"] span,
+        #fp-resv-default .fp-progress__item[aria-current="step"],
         #fp-resv-default .fp-progress__item[aria-current="step"] *,
         #fp-resv-default .fp-progress__item[aria-current="step"] span {
             color: #ffffff !important;
         }
-        /* Progress bar items completati - verde */
+        /* Forza GRIGIO SCURO su item inattivi (bianchi) */
+        .fp-resv-widget .fp-progress__item:not([aria-current="step"]),
+        .fp-resv-widget .fp-progress__item:not([aria-current="step"]) *,
+        .fp-resv-widget .fp-progress__item:not([aria-current="step"]) span,
+        #fp-resv-default .fp-progress__item:not([aria-current="step"]),
+        #fp-resv-default .fp-progress__item:not([aria-current="step"]) *,
+        #fp-resv-default .fp-progress__item:not([aria-current="step"]) span {
+            color: #475569 !important;
+        }
+        /* Progress bar items completati - mantieni verde */
         .fp-resv-widget .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]),
         #fp-resv-default .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) {
             background: #f0fdf4 !important;
             border-color: #86efac !important;
+            color: #166534 !important;
+        }
+        .fp-resv-widget .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) *,
+        .fp-resv-widget .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) span,
+        #fp-resv-default .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) *,
+        #fp-resv-default .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) span {
             color: #166534 !important;
         }
         /* Assicura che contenuti del form non siano coperti dalla progress bar */
