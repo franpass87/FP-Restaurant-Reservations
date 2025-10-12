@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Endpoint Manager</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #4ec9b0; }
+        .test { margin: 20px 0; padding: 15px; background: #252526; border-radius: 5px; }
+        .success { border-left: 4px solid #4ec9b0; }
+        .error { border-left: 4px solid #f48771; }
+        .warning { border-left: 4px solid #f0c674; }
+        button { padding: 10px 20px; margin: 5px; background: #0e639c; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #1177bb; }
+        pre { background: #1e1e1e; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .status { display: inline-block; padding: 3px 10px; border-radius: 3px; font-weight: bold; }
+        .status-ok { background: #4ec9b0; color: #000; }
+        .status-error { background: #f48771; color: #000; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Test Endpoint Manager Prenotazioni</h1>
+    <p>Questo script testa tutti gli step per capire dove si blocca il manager.</p>
+    
+    <button onclick="runAllTests()">▶️ ESEGUI TUTTI I TEST</button>
+    <button onclick="clearResults()">🗑️ PULISCI RISULTATI</button>
+    
+    <div id="results"></div>
+</div>
+
+<script>
+const results = document.getElementById('results');
+
+function clearResults() {
+    results.innerHTML = '';
+}
+
+function addTest(title, status, content) {
+    const test = document.createElement('div');
+    test.className = `test ${status}`;
+    test.innerHTML = `
+        <h3>${title} <span class="status status-${status}">${status.toUpperCase()}</span></h3>
+        <div>${content}</div>
+    `;
+    results.appendChild(test);
+}
+
+async function runAllTests() {
+    clearResults();
+    
+    // Test 1: Verifica che siamo su WordPress
+    addTest('Test 1: Ambiente WordPress', 'warning', 'Verifico...');
+    await sleep(100);
+    
+    const isWP = typeof window.location.href !== 'undefined' && window.location.href.includes('wp-');
+    if (isWP) {
+        updateLastTest('success', '✅ Ambiente WordPress rilevato');
+    } else {
+        updateLastTest('warning', '⚠️ Non sembra WordPress, ma procedo comunque');
+    }
+    
+    // Test 2: Verifica endpoint base WordPress
+    addTest('Test 2: WordPress REST API', 'warning', 'Verifico /wp-json/...');
+    try {
+        const response = await fetch('/wp-json/', { credentials: 'include' });
+        const data = await response.json();
+        
+        if (data.namespaces) {
+            const hasFpResv = data.namespaces.includes('fp-resv/v1');
+            if (hasFpResv) {
+                updateLastTest('success', `✅ Namespace 'fp-resv/v1' TROVATO!<br>Endpoint registrato correttamente.`);
+            } else {
+                updateLastTest('error', `❌ Namespace 'fp-resv/v1' NON TROVATO<br>Namespaces disponibili: ${data.namespaces.join(', ')}<br><strong>PROBLEMA: Plugin non registrato!</strong>`);
+                return; // Ferma i test
+            }
+        } else {
+            updateLastTest('error', '❌ Risposta REST API non valida');
+            return;
+        }
+    } catch (e) {
+        updateLastTest('error', `❌ Errore: ${e.message}`);
+        return;
+    }
+    
+    // Test 3: Test endpoint minimale
+    addTest('Test 3: Endpoint Agenda (modalità test)', 'warning', 'Verifico /wp-json/fp-resv/v1/agenda?test_minimal=1...');
+    try {
+        const response = await fetch('/wp-json/fp-resv/v1/agenda?test_minimal=1', { 
+            credentials: 'include' 
+        });
+        
+        const text = await response.text();
+        
+        if (response.ok && text.length > 0) {
+            try {
+                const data = JSON.parse(text);
+                if (data.test === 'ok') {
+                    updateLastTest('success', `✅ Endpoint risponde correttamente!<br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                } else {
+                    updateLastTest('warning', `⚠️ Risposta valida ma inattesa:<br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                }
+            } catch (e) {
+                updateLastTest('error', `❌ Risposta non è JSON valido:<br><pre>${text.substring(0, 500)}</pre>`);
+                return;
+            }
+        } else {
+            updateLastTest('error', `❌ Status: ${response.status}<br>Risposta vuota o errore<br>Text: "${text.substring(0, 200)}"`);
+            return;
+        }
+    } catch (e) {
+        updateLastTest('error', `❌ Errore: ${e.message}`);
+        return;
+    }
+    
+    // Test 4: Test endpoint completo
+    addTest('Test 4: Endpoint Agenda (completo)', 'warning', 'Verifico /wp-json/fp-resv/v1/agenda...');
+    try {
+        const response = await fetch('/wp-json/fp-resv/v1/agenda?range=month&date=2025-10-12', { 
+            credentials: 'include' 
+        });
+        
+        const text = await response.text();
+        
+        if (response.status === 403) {
+            updateLastTest('error', `❌ 403 FORBIDDEN - Non sei autenticato come admin!<br>Soluzione: Fai login come amministratore su WordPress, poi ricarica questa pagina.`);
+            return;
+        }
+        
+        if (text.length === 0) {
+            updateLastTest('error', `❌ RISPOSTA VUOTA!<br>Status: ${response.status}<br>Questo è il bug dell'output buffering.<br><strong>Hai caricato il file AdminREST.php modificato?</strong>`);
+            return;
+        }
+        
+        try {
+            const data = JSON.parse(text);
+            
+            if (data.reservations) {
+                const count = data.reservations.length;
+                updateLastTest('success', `✅ Endpoint funziona!<br>Prenotazioni trovate: <strong>${count}</strong><br><br>Prime 3:<br><pre>${JSON.stringify(data.reservations.slice(0, 3), null, 2)}</pre>`);
+                
+                // Test 5: Verifica meal NULL
+                addTest('Test 5: Verifica campo MEAL', 'success', `Analizzando ${count} prenotazioni...`);
+                const withMeal = data.reservations.filter(r => r.meal).length;
+                const withoutMeal = data.reservations.filter(r => !r.meal).length;
+                updateLastTest('success', `
+                    ✅ Analisi completata:<br>
+                    - Con meal: <strong>${withMeal}</strong><br>
+                    - Senza meal (NULL): <strong>${withoutMeal}</strong><br>
+                    ${withoutMeal > 0 ? '<br>⚠️ Le prenotazioni con meal NULL verranno mostrate grazie al fix JavaScript.' : ''}
+                `);
+                
+            } else {
+                updateLastTest('warning', `⚠️ Risposta valida ma senza campo 'reservations':<br><pre>${JSON.stringify(data, null, 2).substring(0, 500)}</pre>`);
+            }
+        } catch (e) {
+            updateLastTest('error', `❌ Risposta non è JSON valido:<br><pre>${text.substring(0, 500)}</pre>`);
+            return;
+        }
+    } catch (e) {
+        updateLastTest('error', `❌ Errore: ${e.message}`);
+        return;
+    }
+    
+    // Test 6: Verifica configurazione manager
+    addTest('Test 6: Configurazione Manager', 'warning', 'Verifico fpResvManagerSettings...');
+    if (typeof window.fpResvManagerSettings !== 'undefined') {
+        const config = window.fpResvManagerSettings;
+        updateLastTest('success', `✅ Configurazione trovata:<br><pre>${JSON.stringify(config, null, 2)}</pre>`);
+    } else {
+        updateLastTest('warning', `⚠️ fpResvManagerSettings non trovato.<br>Questo script non è nella pagina del manager.<br>Vai su: WP Admin → Prenotazioni → Manager`);
+    }
+    
+    // Riepilogo finale
+    addTest('🎯 RIEPILOGO', 'success', `
+        <h3>Tutti i test completati!</h3>
+        <p><strong>Se tutti i test sono ✅:</strong> Il backend funziona! Il problema è nel JavaScript del manager.</p>
+        <p><strong>Se vedi ❌:</strong> Leggi il messaggio di errore e segui le indicazioni.</p>
+        <br>
+        <p><strong>Prossimi passi:</strong></p>
+        <ol>
+            <li>Se vedi "Prenotazioni trovate: X" → Vai al Manager e verifica</li>
+            <li>Se vedi "RISPOSTA VUOTA" → Carica AdminREST.php modificato</li>
+            <li>Se vedi "403 FORBIDDEN" → Fai login come admin</li>
+            <li>Se vedi "NON TROVATO" → Plugin non attivo o permalink non rigenerati</li>
+        </ol>
+    `);
+}
+
+function updateLastTest(status, content) {
+    const tests = results.querySelectorAll('.test');
+    const lastTest = tests[tests.length - 1];
+    lastTest.className = `test ${status}`;
+    lastTest.querySelector('div').innerHTML = content;
+    lastTest.querySelector('.status').textContent = status.toUpperCase();
+    lastTest.querySelector('.status').className = `status status-${status}`;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Auto-run se richiesto
+if (window.location.search.includes('autorun')) {
+    window.addEventListener('load', () => {
+        setTimeout(runAllTests, 500);
+    });
+}
+</script>
+
+</body>
+</html>
+

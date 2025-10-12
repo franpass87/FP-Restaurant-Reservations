@@ -228,12 +228,41 @@ textarea.fp-textarea {
 
 /* ==================== PROGRESS BAR ==================== */
 
+/* Step NON attivi: sfondo chiaro, testo scuro */
 .fp-progress__index {
-  background: #000000 !important;
-  color: #ffffff !important;
+  background: #f5f5f5 !important;
+  border: 2px solid #e0e0e0 !important;
+  color: #000000 !important;
 }
 
 .fp-progress__label {
+  color: #666666 !important;
+}
+
+/* Step ATTIVO: sfondo nero, testo bianco */
+.fp-progress__item[data-state="active"] .fp-progress__index,
+.fp-progress__item[aria-current="step"] .fp-progress__index {
+  background: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.fp-progress__item[data-state="active"] .fp-progress__label,
+.fp-progress__item[aria-current="step"] .fp-progress__label {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Step COMPLETATO: sfondo nero, testo bianco, con checkmark */
+.fp-progress__item[data-completed="true"] .fp-progress__index,
+.fp-progress__item[data-progress-state="done"] .fp-progress__index {
+  background: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.fp-progress__item[data-completed="true"] .fp-progress__label,
+.fp-progress__item[data-progress-state="done"] .fp-progress__label {
   color: #000000 !important;
 }
 

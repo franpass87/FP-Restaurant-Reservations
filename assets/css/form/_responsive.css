@@ -20,10 +20,6 @@
     border-radius: var(--fp-radius-xl);
   }
   
-  #fp-resv-default.fp-resv-widget {
-    padding: 0 !important;
-  }
-  
   /* Topbar */
   .fp-topbar {
     flex-direction: column;

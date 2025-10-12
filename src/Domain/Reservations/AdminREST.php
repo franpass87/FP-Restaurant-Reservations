@@ -396,6 +396,7 @@ final class AdminREST
     {
         // DEBUG: Log immediato all'inizio
         error_log('[FP Resv Agenda] ========================================');
+        error_log('[FP Resv Agenda] 🚀 FILE MODIFICATO VERSIONE 2025-10-12-V2 🚀');
         error_log('[FP Resv Agenda] METODO CHIAMATO! Timestamp: ' . date('Y-m-d H:i:s'));
         error_log('[FP Resv Agenda] Request params: ' . json_encode($request->get_params()));
         error_log('[FP Resv Agenda] ========================================');
@@ -403,7 +404,12 @@ final class AdminREST
         // Test immediato: restituisce una risposta minima per vedere se arriva al client
         if (isset($_GET['test_minimal'])) {
             error_log('[FP Resv Agenda] TEST MINIMAL MODE');
-            return new WP_REST_Response(['test' => 'ok', 'timestamp' => time()], 200);
+            return new WP_REST_Response([
+                'test' => 'ok', 
+                'timestamp' => time(),
+                'version' => '2025-10-12-V2',
+                'message' => 'File modificato caricato correttamente!'
+            ], 200);
         }
         
         try {
