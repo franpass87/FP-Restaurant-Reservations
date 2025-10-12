@@ -41,7 +41,10 @@ final class Shortcodes
             $container = ServiceContainer::getInstance();
             $options   = $container->get(Options::class);
             if (!$options instanceof Options) {
-                return '';
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP-RESV] CRITICAL: Options instance not available');
+                }
+                return '<!-- FP-RESV: Options not available -->';
             }
 
             $language = $container->get(Language::class);
@@ -67,7 +70,10 @@ final class Shortcodes
 
             $template = Plugin::$dir . 'templates/frontend/form.php';
             if (!file_exists($template)) {
-                return '';
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP-RESV] CRITICAL: Template not found at: ' . $template);
+                }
+                return '<!-- FP-RESV: Template not found -->';
             }
 
             ob_start();
@@ -75,15 +81,22 @@ final class Shortcodes
             $context = $context;
             include $template;
 
-            return (string) ob_get_clean();
+            $output = (string) ob_get_clean();
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP-RESV] Form rendered successfully, output length: ' . strlen($output));
+            }
+
+            return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('[FP-RESV] Error rendering form: ' . $e->getMessage());
+                error_log('[FP-RESV] Stack trace: ' . $e->getTraceAsString());
             }
             
-            // Return empty string to prevent white screen
-            return '';
+            // Return HTML comment to help debugging
+            return '<!-- FP-RESV: Error rendering form: ' . esc_html($e->getMessage()) . ' -->';
         }
     }
 
