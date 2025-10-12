@@ -157,5 +157,38 @@ Per verificare che il fix funzioni:
 2. `templates/frontend/form.php` - Aggiunto stile inline specifico per ID
 3. `assets/js/fe/form-app-fallback.js` - Aggiunto controllo JavaScript di visibilità
 
+## Aggiornamento 2025-10-12
+
+Il fix è stato completato aggiungendo le funzioni di visibilità direttamente al file sorgente `assets/js/fe/init.js` che viene compilato nei file distribuiti `onepage.esm.js` e `onepage.iife.js`.
+
+### File Aggiornati
+
+1. **`assets/js/fe/init.js`** - Aggiunto:
+   - Funzione `ensureWidgetVisibility()` per forzare la visibilità del widget
+   - Funzione `autoCheckVisibility()` per controllo periodico (10 secondi)
+   - Chiamata automatica a `ensureWidgetVisibility()` prima dell'inizializzazione
+   - Avvio automatico dell'auto-check dopo 500ms
+
+2. **`assets/dist/fe/onepage.esm.js`** - Ricompilato con le funzioni di visibilità
+3. **`assets/dist/fe/onepage.iife.js`** - Ricompilato con le funzioni di visibilità
+
+### Come Funziona
+
+1. Al caricamento della pagina, il codice cerca tutti i widget con attributo `[data-fp-resv]`, `.fp-resv-widget` o `[data-fp-resv-app]`
+2. Per ogni widget trovato, **prima** dell'inizializzazione:
+   - Forza `display: block`, `visibility: visible`, `opacity: 1` via JavaScript
+   - Controlla i 5 livelli di parent per assicurarsi che non siano nascosti
+3. Dopo 500ms dall'inizializzazione, parte un controllo automatico ogni secondo per 10 secondi
+4. Se il widget viene nascosto da CSS applicato successivamente, viene immediatamente ripristinato
+
+### Livelli di Protezione Completi
+
+Il fix implementa ora **4 livelli di protezione** funzionanti:
+
+1. ✅ **CSS Globale** (`assets/css/form.css`): Regole CSS con alta specificità
+2. ✅ **CSS Inline Specifico** (`templates/frontend/form.php`): Stili inline per ogni form
+3. ✅ **JavaScript Immediato** (`assets/js/fe/init.js`): Controllo alla inizializzazione
+4. ✅ **JavaScript Periodico** (`assets/js/fe/init.js`): Monitoraggio per 10 secondi
+
 Data: 2025-10-12
-Branch: cursor/fix-invisible-form-with-shortcode-231b
+Branch: cursor/fix-form-not-showing-on-page-5b7e
