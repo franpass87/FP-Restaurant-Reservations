@@ -510,6 +510,24 @@ final class Plugin
         Migrations::run();
 
         I18n::init();
+        
+        // Proteggi gli endpoint REST da redirect di altri plugin
+        add_filter('redirect_canonical', static function ($redirect_url, $requested_url) {
+            // Non redirigere le chiamate REST API
+            if (strpos($requested_url, '/wp-json/fp-resv/') !== false) {
+                return false;
+            }
+            return $redirect_url;
+        }, 10, 2);
+        
+        // Proteggi da plugin 404 redirect
+        add_filter('wp_redirect', static function ($location, $status) {
+            // Non redirigere le API REST
+            if (defined('REST_REQUEST') && REST_REQUEST) {
+                return false;
+            }
+            return $location;
+        }, 1, 2);
 
         $reservationsRest = new ReservationsREST($availability, $reservationsService, $reservationsRepository);
         $reservationsRest->register();
