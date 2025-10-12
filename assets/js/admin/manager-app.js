@@ -540,6 +540,9 @@ class ReservationManager {
                 startDate = this.formatDate(firstDay);
                 endDate = this.formatDate(lastDay);
                 range = 'month';
+                
+                console.log('[Manager] 📅 LOAD vista MESE:', year, month + 1);
+                console.log('[Manager] Range richiesto:', startDate, '->', endDate);
             }
             
             const params = new URLSearchParams({
@@ -548,6 +551,8 @@ class ReservationManager {
             });
 
             const url = this.buildRestUrl(`agenda?${params.toString()}`);
+            
+            console.log('[Manager] 🌐 Chiamata API:', url);
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -604,6 +609,15 @@ class ReservationManager {
             this.state.reservations = data.reservations || [];
             this.state.error = null;
             
+            console.log('[Manager] ✅ Prenotazioni ricevute dal backend:', this.state.reservations.length);
+            console.log('[Manager] Meta:', data.meta);
+            console.log('[Manager] Stats:', data.stats);
+            
+            if (this.state.reservations.length > 0) {
+                console.log('[Manager] Prima prenotazione:', this.state.reservations[0]);
+                console.log('[Manager] Ultima prenotazione:', this.state.reservations[this.state.reservations.length - 1]);
+            }
+            
             // Aggiorna statistiche nelle card
             this.updateStats(data.stats, data.meta);
             
@@ -617,7 +631,7 @@ class ReservationManager {
             
             // Log per debugging (rimovere dopo verifica)
             if (this.state.reservations.length === 0) {
-                console.warn('[Manager] No reservations found. Response:', {
+                console.warn('[Manager] ⚠️ No reservations found. Response:', {
                     meta: data.meta,
                     stats: data.stats,
                     reservationsCount: data.reservations ? data.reservations.length : 0
@@ -819,10 +833,18 @@ class ReservationManager {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
+        console.log('[Manager] 🗓️ RENDER MONTH VIEW');
+        console.log('[Manager] Anno:', year, 'Mese:', month + 1);
+        console.log('[Manager] Prenotazioni totali in state:', this.state.reservations.length);
+        
         // Get first day of month and last day
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
+        
+        const firstDayStr = this.formatDate(firstDay);
+        const lastDayStr = this.formatDate(lastDay);
+        console.log('[Manager] Range mese:', firstDayStr, '->', lastDayStr);
         
         // Get day of week for first day (0 = Sunday, 1 = Monday, etc)
         let startDay = firstDay.getDay();
@@ -836,13 +858,27 @@ class ReservationManager {
         
         // Raggruppa prenotazioni per data
         const reservationsByDate = {};
+        let totalReservationsInMonth = 0;
+        
         this.state.reservations.forEach(resv => {
             const date = resv.date;
-            if (!reservationsByDate[date]) {
-                reservationsByDate[date] = [];
+            console.log('[Manager] Prenotazione #' + resv.id + ' data:', date);
+            
+            // Verifica se la prenotazione è nel range del mese
+            if (date >= firstDayStr && date <= lastDayStr) {
+                totalReservationsInMonth++;
+                if (!reservationsByDate[date]) {
+                    reservationsByDate[date] = [];
+                }
+                reservationsByDate[date].push(resv);
+            } else {
+                console.log('[Manager] ⚠️ Prenotazione FUORI dal range del mese:', date);
             }
-            reservationsByDate[date].push(resv);
         });
+        
+        console.log('[Manager] Prenotazioni nel mese corrente:', totalReservationsInMonth);
+        console.log('[Manager] Giorni con prenotazioni:', Object.keys(reservationsByDate).length);
+        console.log('[Manager] reservationsByDate:', reservationsByDate);
         
         // Header
         let html = `
@@ -1378,15 +1414,37 @@ class ReservationManager {
 
             console.log('[Manager] DELETE Response Status:', response.status);
             console.log('[Manager] DELETE Response OK:', response.ok);
+            console.log('[Manager] DELETE Response Headers:', {
+                'content-type': response.headers.get('content-type'),
+                'content-length': response.headers.get('content-length')
+            });
+
+            // Leggi il body come testo prima
+            const responseText = await response.text();
+            console.log('[Manager] DELETE Response Body:', responseText);
 
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('[Manager] DELETE Error Data:', errorData);
-                throw new Error(errorData.message || 'Errore nell\'eliminazione della prenotazione');
+                let errorMessage = 'Errore nell\'eliminazione della prenotazione';
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorMessage = errorData.message || errorMessage;
+                    console.error('[Manager] DELETE Error Data:', errorData);
+                } catch (e) {
+                    console.error('[Manager] DELETE Response non è JSON valido:', responseText);
+                }
+                throw new Error(errorMessage);
             }
 
-            const result = await response.json();
-            console.log('[Manager] DELETE Success:', result);
+            // Prova a parsare il risultato
+            let result = {};
+            try {
+                result = JSON.parse(responseText);
+                console.log('[Manager] DELETE Success:', result);
+            } catch (e) {
+                console.error('[Manager] DELETE Success ma response non è JSON:', responseText);
+                // Se non è JSON ma status è 200, considera comunque successo
+                result = { success: true };
+            }
 
             this.closeModal();
             await this.loadReservations();
