@@ -18,11 +18,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--fp-space-lg);
+  gap: var(--fp-space-xl);
   width: 100%;
   max-width: var(--fp-form-max-width, 600px);
   margin-inline: auto;
-  padding: clamp(var(--fp-space-lg), 3.5vw, var(--fp-space-2xl));
+  padding: var(--fp-space-2xl);
   background: var(--fp-gradient-surface);
   border-radius: var(--fp-radius-2xl);
   box-shadow: var(--fp-shadow-xl);
@@ -66,7 +66,7 @@
 /* ==================== CARD / PANEL ==================== */
 
 .fp-card {
-  padding: var(--fp-space-lg);
+  padding: var(--fp-space-xl);
   background: var(--fp-color-surface);
   border-radius: var(--fp-radius-xl);
   border: 1px solid var(--fp-color-border-light);

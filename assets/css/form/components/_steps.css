@@ -17,8 +17,8 @@
 
 .fp-resv-step {
   display: none; /* Nascondi tutti gli step di default */
-  gap: var(--fp-space-lg);
-  padding: var(--fp-space-xl);
+  gap: var(--fp-space-xl);
+  padding: var(--fp-space-2xl);
   border-radius: var(--fp-radius-xl);
   border: 1.5px solid var(--fp-color-border);
   background: var(--fp-gradient-surface);

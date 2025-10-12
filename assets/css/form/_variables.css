@@ -27,30 +27,30 @@
   --fp-color-border-light: #f0f0f0;
   --fp-color-divider: #e5e5e5;
   
-  /* Colori Stato - Scala di Grigi (mantengo solo errori in rosso per sicurezza) */
-  --fp-color-success: #2d2d2d;
-  --fp-color-success-light: rgba(45, 45, 45, 0.08);
+  /* Colori Stato */
+  --fp-color-success: #16a34a;
+  --fp-color-success-light: rgba(34, 197, 94, 0.1);
   --fp-color-error: #dc2626;
   --fp-color-error-light: rgba(239, 68, 68, 0.1);
-  --fp-color-warning: #666666;
-  --fp-color-warning-light: rgba(102, 102, 102, 0.1);
-  --fp-color-info: #404040;
-  --fp-color-info-light: rgba(64, 64, 64, 0.1);
+  --fp-color-warning: #f59e0b;
+  --fp-color-warning-light: rgba(245, 158, 11, 0.1);
+  --fp-color-info: #3b82f6;
+  --fp-color-info-light: rgba(59, 130, 246, 0.1);
   
-  /* Colori Semantici - Scala di Grigi (tranne "pieno" che resta rosso) */
-  --fp-color-available: #2d2d2d;
-  --fp-color-limited: #666666;
-  --fp-color-full: #dc2626;
+  /* Colori Semaforo - VERDE/GIALLO/ROSSO per Disponibilità */
+  --fp-color-available: #16a34a;   /* Verde - Disponibile */
+  --fp-color-limited: #f59e0b;      /* Giallo - Limitato */
+  --fp-color-full: #dc2626;         /* Rosso - Pieno */
   
   /* ==================== SPAZIATURE ==================== */
   
-  --fp-space-xs: 0.5rem;    /* 8px */
-  --fp-space-sm: 0.75rem;   /* 12px */
-  --fp-space-md: 1rem;      /* 16px */
-  --fp-space-lg: 1.5rem;    /* 24px */
-  --fp-space-xl: 2rem;      /* 32px */
-  --fp-space-2xl: 3rem;     /* 48px */
-  --fp-space-3xl: 4rem;     /* 64px */
+  --fp-space-xs: 0.75rem;   /* 12px - PIÙ GENEROSE */
+  --fp-space-sm: 1rem;      /* 16px */
+  --fp-space-md: 1.5rem;    /* 24px */
+  --fp-space-lg: 2rem;      /* 32px */
+  --fp-space-xl: 2.5rem;    /* 40px */
+  --fp-space-2xl: 3.5rem;   /* 56px */
+  --fp-space-3xl: 5rem;     /* 80px */
   
   /* ==================== TIPOGRAFIA ==================== */
   

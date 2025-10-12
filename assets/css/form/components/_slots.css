@@ -8,13 +8,13 @@
 .fp-slots,
 .fp-resv-slots {
   display: grid;
-  gap: var(--fp-space-md);
-  padding: var(--fp-space-lg);
+  gap: var(--fp-space-lg);
+  padding: var(--fp-space-xl);
   border-radius: var(--fp-radius-xl);
   border: 1.5px solid var(--fp-color-border);
   background: var(--fp-gradient-surface);
   box-shadow: var(--fp-shadow-sm);
-  margin-bottom: var(--fp-space-lg);
+  margin-bottom: var(--fp-space-xl);
 }
 
 /* ==================== SLOTS STATUS ==================== */

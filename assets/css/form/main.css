@@ -69,6 +69,9 @@
 /* FIX CONTRASTI - IMPORTANTISSIMO! */
 @import './FIX-CONTRASTI-VISIBILITA.css';
 
+/* SPAZIATURE AUMENTATE - Box più ariosi */
+@import './SPAZIATURE-AUMENTATE.css';
+
 /* Force visibility del widget */
 .fp-resv-widget,
 .fp-resv-widget.fp-resv,

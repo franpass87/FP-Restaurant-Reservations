@@ -175,15 +175,48 @@ textarea.fp-textarea {
 /* ==================== ALERT / FEEDBACK ==================== */
 
 .fp-alert--success {
-  background: rgba(45, 45, 45, 0.08) !important;
+  background: rgba(22, 163, 74, 0.1) !important;
   color: #000000 !important;
-  border-color: #2d2d2d !important;
+  border-color: #16a34a !important;
 }
 
 .fp-alert--error {
   background: rgba(220, 38, 38, 0.08) !important;
   color: #000000 !important;
   border-color: #dc2626 !important;
+}
+
+.fp-alert--warning {
+  background: rgba(245, 158, 11, 0.1) !important;
+  color: #000000 !important;
+  border-color: #f59e0b !important;
+}
+
+/* ==================== SEMAFORO DISPONIBILITÀ - COLORI REALI ==================== */
+
+/* Badge e indicatori disponibilità */
+.fp-meals__legend-item--available,
+.fp-slot__availability--available,
+[data-availability="available"] {
+  color: #16a34a !important; /* VERDE */
+}
+
+.fp-meals__legend-item--limited,
+.fp-slot__availability--limited,
+[data-availability="limited"] {
+  color: #f59e0b !important; /* GIALLO */
+}
+
+.fp-meals__legend-item--full,
+.fp-slot__availability--full,
+[data-availability="full"] {
+  color: #dc2626 !important; /* ROSSO */
+}
+
+/* Indicatori rotondi del semaforo */
+.fp-meals__legend-indicator {
+  background: currentColor !important;
+  border-color: currentColor !important;
 }
 
 /* ==================== BADGE ==================== */

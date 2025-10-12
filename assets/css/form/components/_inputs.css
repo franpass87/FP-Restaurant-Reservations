@@ -12,9 +12,9 @@
   display: block;
   width: 100%;
   
-  /* Sizing */
+  /* Sizing - PIÙ PADDING */
   min-height: var(--fp-input-height-md);
-  padding: var(--fp-space-sm) var(--fp-space-md);
+  padding: var(--fp-space-md) var(--fp-space-lg);
   
   /* Typography */
   font-family: inherit;

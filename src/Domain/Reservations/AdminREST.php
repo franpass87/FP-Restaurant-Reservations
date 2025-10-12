@@ -54,30 +54,49 @@ final class AdminREST
 
     public function register(): void
     {
+        error_log('[FP Resv AdminREST] ✅ register() chiamato - Aggiunta action rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
+        error_log('[FP Resv AdminREST] ✅ Action rest_api_init aggiunta con successo');
+        
+        // Fallback: se siamo già in rest_api_init, registra subito
+        if (did_action('rest_api_init')) {
+            error_log('[FP Resv AdminREST] ⚠️ rest_api_init già eseguito, registro subito');
+            $this->registerRoutes();
+        }
     }
 
     public function registerRoutes(): void
     {
-        register_rest_route(
-            'fp-resv/v1',
-            '/agenda',
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'handleAgenda'],
-                'permission_callback' => [$this, 'checkPermissions'],
-                'args'                => [
-                    'date' => [
-                        'type'     => 'string',
-                        'required' => false,
+        error_log('[FP Resv AdminREST] ========================================');
+        error_log('[FP Resv AdminREST] 🚀 registerRoutes() CHIAMATO!');
+        error_log('[FP Resv AdminREST] Timestamp: ' . date('Y-m-d H:i:s'));
+        error_log('[FP Resv AdminREST] ========================================');
+        
+        try {
+            $result = register_rest_route(
+                'fp-resv/v1',
+                '/agenda',
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'handleAgenda'],
+                    'permission_callback' => [$this, 'checkPermissions'],
+                    'args'                => [
+                        'date' => [
+                            'type'     => 'string',
+                            'required' => false,
+                        ],
+                        'range' => [
+                            'type'     => 'string',
+                            'required' => false,
+                        ],
                     ],
-                    'range' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                ],
-            ]
-        );
+                ]
+            );
+            
+            error_log('[FP Resv AdminREST] Endpoint /agenda registrato: ' . ($result ? 'SUCCESS' : 'FAILED'));
+        } catch (\Throwable $e) {
+            error_log('[FP Resv AdminREST] ❌ ERRORE registrazione /agenda: ' . $e->getMessage());
+        }
 
         register_rest_route(
             'fp-resv/v1',

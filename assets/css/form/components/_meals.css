@@ -8,10 +8,10 @@
 .fp-meals {
   border: 1.5px solid var(--fp-color-divider);
   border-radius: var(--fp-radius-xl);
-  padding: var(--fp-space-lg);
+  padding: var(--fp-space-xl);
   background: var(--fp-gradient-surface);
   box-shadow: var(--fp-shadow-sm);
-  margin-bottom: var(--fp-space-lg);
+  margin-bottom: var(--fp-space-xl);
 }
 
 /* ==================== MEALS HEADER ==================== */
