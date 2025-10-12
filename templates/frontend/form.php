@@ -82,7 +82,7 @@ endif;
     data-fp-resv="<?php echo esc_attr($datasetJson); ?>"
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
     data-fp-resv-app
-    style="display: block !important; visibility: visible !important; opacity: 1 !important;"
+    data-version="<?php echo esc_attr(defined('FP_RESV_VERSION') ? FP_RESV_VERSION : '0.1.0'); ?>"
 >
     <form
         class="fp-resv-widget__form fp-section"

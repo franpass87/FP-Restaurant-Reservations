@@ -2,6 +2,22 @@
  * Frontend reservation form polished UI.
  */
 
+/* Force visibility of the form widget to prevent theme/plugin conflicts */
+.fp-resv-widget,
+.fp-resv-widget.fp-resv,
+.fp-resv-widget.fp-resv.fp-card,
+div.fp-resv-widget,
+div.fp-resv-widget.fp-resv,
+div.fp-resv-widget.fp-resv.fp-card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: min(100%, var(--fp-resv-max-width, 100%)) !important;
+    margin: 0 auto !important;
+}
+
 .fp-resv {
     --fp-resv-max-width: 100%;
     --fp-resv-margin-block: 0;
