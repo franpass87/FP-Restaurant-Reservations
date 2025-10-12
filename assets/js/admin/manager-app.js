@@ -7,7 +7,9 @@ class ReservationManager {
     constructor() {
         // Configurazione
         this.config = {
-            restRoot: window.fpResvManagerSettings?.restRoot || '/wp-json/fp-resv/v1',
+            restRoot: this.normalizeRestRoot(
+                window.fpResvManagerSettings?.restRoot || '/wp-json/fp-resv/v1'
+            ),
             nonce: window.fpResvManagerSettings?.nonce || '',
             strings: window.fpResvManagerSettings?.strings || {},
             meals: window.fpResvManagerSettings?.meals || [],
@@ -278,7 +280,7 @@ class ReservationManager {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
             
-            const response = await fetch(`${this.config.restRoot}/agenda/overview`, {
+            const response = await fetch(this.buildRestUrl('agenda/overview'), {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
@@ -347,7 +349,12 @@ class ReservationManager {
                 range = 'month';
             }
             
-            const url = `${this.config.restRoot}/agenda?date=${startDate}&range=${range}`;
+            const params = new URLSearchParams({
+                date: startDate,
+                range,
+            });
+
+            const url = this.buildRestUrl(`agenda?${params.toString()}`);
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -1110,7 +1117,7 @@ class ReservationManager {
         const status = this.dom.modalBody.querySelector('[data-field="status"]').value;
 
         try {
-            const response = await fetch(`${this.config.restRoot}/agenda/reservations/${resv.id}`, {
+            const response = await fetch(this.buildRestUrl(`agenda/reservations/${resv.id}`), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1132,7 +1139,7 @@ class ReservationManager {
 
     async deleteReservation(id) {
         try {
-            const response = await fetch(`${this.config.restRoot}/agenda/reservations/${id}`, {
+            const response = await fetch(this.buildRestUrl(`agenda/reservations/${id}`), {
                 method: 'DELETE',
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
@@ -1258,7 +1265,13 @@ class ReservationManager {
 
         try {
             // Chiama endpoint availability
-            const url = `${this.config.restRoot}/availability?date=${date}&party=${party}&meal=${meal}`;
+            const availabilityParams = new URLSearchParams({
+                date,
+                party,
+                meal,
+            });
+
+            const url = this.buildRestUrl(`availability?${availabilityParams.toString()}`);
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -1512,7 +1525,7 @@ class ReservationManager {
 
         try {
             // USA l'endpoint ADMIN con nonce admin
-            const response = await fetch(`${this.config.restRoot}/agenda/reservations`, {
+            const response = await fetch(this.buildRestUrl('agenda/reservations'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1700,6 +1713,37 @@ class ReservationManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    normalizeRestRoot(restRoot) {
+        if (!restRoot) {
+            return '';
+        }
+
+        const normalized = String(restRoot).trim();
+        if (normalized === '') {
+            return '';
+        }
+
+        return normalized.replace(/\/+$/, '');
+    }
+
+    buildRestUrl(path = '') {
+        const base = this.config?.restRoot || '';
+        if (base === '') {
+            return path;
+        }
+
+        if (!path) {
+            return base;
+        }
+
+        const stringPath = String(path);
+        const [rawPath, query = ''] = stringPath.split('?');
+        const sanitizedPath = rawPath.replace(/^\/+/, '');
+        const url = sanitizedPath ? `${base}/${sanitizedPath}` : base;
+
+        return query !== '' ? `${url}?${query}` : url;
     }
 }
 
