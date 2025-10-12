@@ -1163,7 +1163,10 @@ class ReservationManager {
 
     renderNewReservationStep3() {
         const { meal, date, time, party } = this.newReservationData;
-        const timeFormatted = time.substring(0, 5);
+        // time è in formato ISO (2025-10-12T19:00:00+00:00), estraiamo solo l'ora
+        const timeFormatted = time.includes('T') 
+            ? time.split('T')[1].substring(0, 5) 
+            : time.substring(0, 5);
 
         // Trova il label del meal selezionato
         let mealLabel = meal;
