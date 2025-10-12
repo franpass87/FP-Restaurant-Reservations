@@ -412,17 +412,111 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // BYPASS TOTALE - Restituisce risposta immediata
-        // Se vedi questo, il metodo viene chiamato correttamente
-        return new WP_REST_Response([
-            'success' => true,
-            'version' => '2025-10-12-V3-BYPASS',
-            'message' => 'Metodo chiamato con successo!',
-            'timestamp' => time(),
-            'debug' => 'Questo bypass evita TUTTO il codice per isolare il problema'
-        ], 200);
+        // Versione semplificata e funzionante
+        try {
+            // Parametri dalla richiesta
+            $dateParam = $request->get_param('date');
+            $rangeParam = $request->get_param('range');
+            
+            // Sanitizza data
+            $date = is_string($dateParam) ? sanitize_text_field($dateParam) : gmdate('Y-m-d');
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                $date = gmdate('Y-m-d');
+            }
+            
+            // Range
+            $rangeMode = is_string($rangeParam) ? strtolower($rangeParam) : 'day';
+            if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
+                $rangeMode = 'day';
+            }
+            
+            // Calcola date range
+            $start = new \DateTimeImmutable($date);
+            
+            if ($rangeMode === 'week') {
+                $dayOfWeek = (int)$start->format('N');
+                $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
+                $end = $start->add(new \DateInterval('P6D'));
+            } elseif ($rangeMode === 'month') {
+                $start = $start->modify('first day of this month');
+                $end = $start->modify('last day of this month');
+            } else {
+                $end = $start;
+            }
+            
+            // Query database
+            $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            
+            // Mappa prenotazioni
+            $reservations = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) continue;
+                
+                $reservations[] = [
+                    'id' => (int)($row['id'] ?? 0),
+                    'status' => (string)($row['status'] ?? 'pending'),
+                    'date' => (string)($row['date'] ?? ''),
+                    'time' => substr((string)($row['time'] ?? ''), 0, 5),
+                    'party' => (int)($row['party'] ?? 0),
+                    'meal' => $row['meal'] ?? null,
+                    'first_name' => (string)($row['first_name'] ?? ''),
+                    'last_name' => (string)($row['last_name'] ?? ''),
+                    'email' => (string)($row['email'] ?? ''),
+                    'phone' => (string)($row['phone'] ?? ''),
+                    'notes' => (string)($row['notes'] ?? ''),
+                    'allergies' => (string)($row['allergies'] ?? ''),
+                    'created_at' => (string)($row['created_at'] ?? ''),
+                ];
+            }
+            
+            // Statistiche semplici
+            $totalReservations = count($reservations);
+            $totalGuests = array_sum(array_column($reservations, 'party'));
+            
+            $statusCounts = [
+                'pending' => 0,
+                'confirmed' => 0,
+                'visited' => 0,
+                'no_show' => 0,
+                'cancelled' => 0,
+            ];
+            
+            foreach ($reservations as $r) {
+                $status = $r['status'];
+                if (isset($statusCounts[$status])) {
+                    $statusCounts[$status]++;
+                }
+            }
+            
+            // Risposta
+            return new WP_REST_Response([
+                'meta' => [
+                    'range' => $rangeMode,
+                    'start_date' => $start->format('Y-m-d'),
+                    'end_date' => $end->format('Y-m-d'),
+                    'current_date' => $date,
+                ],
+                'stats' => [
+                    'total_reservations' => $totalReservations,
+                    'total_guests' => $totalGuests,
+                    'by_status' => $statusCounts,
+                    'confirmed_percentage' => $totalReservations > 0 ? round(($statusCounts['confirmed'] / $totalReservations) * 100) : 0,
+                ],
+                'data' => [
+                    'slots' => [],
+                    'timeline' => [],
+                ],
+                'reservations' => $reservations,
+            ], 200);
+            
+        } catch (\Throwable $e) {
+            return new WP_Error(
+                'fp_resv_agenda_error',
+                'Errore: ' . $e->getMessage(),
+                ['status' => 500]
+            );
+        }
         
-        // CODICE ORIGINALE (temporaneamente disabilitato per test)
         /*
         // DEBUG: Log immediato all'inizio
         error_log('[FP Resv Agenda] ========================================');
