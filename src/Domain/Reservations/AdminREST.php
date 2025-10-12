@@ -392,22 +392,30 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Log iniziale per debug
+        error_log('[FP Resv Agenda] === INIZIO handleAgenda ===');
+        error_log('[FP Resv Agenda] Parametri richiesta: ' . print_r($request->get_params(), true));
+        
         // Inizia output buffering per prevenire qualsiasi output inatteso che corromperebbe il JSON
         ob_start();
         
         try {
             // Sanitizza e valida parametri
             $dateParam = $request->get_param('date');
+            error_log('[FP Resv Agenda] Date param grezzo: ' . var_export($dateParam, true));
+            
             $date = $this->sanitizeDate($dateParam);
             if ($date === null) {
                 $date = gmdate('Y-m-d');
             }
+            error_log('[FP Resv Agenda] Data sanitizzata: ' . $date);
 
             $range = $request->get_param('range');
             $rangeMode = is_string($range) ? strtolower($range) : 'day';
             if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
                 $rangeMode = 'day';
             }
+            error_log('[FP Resv Agenda] Range mode: ' . $rangeMode);
 
             $timezone = wp_timezone();
             $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
@@ -427,9 +435,13 @@ final class AdminREST
             } else {
                 $end = $start;
             }
+            
+            error_log('[FP Resv Agenda] Range calcolato: ' . $start->format('Y-m-d') . ' to ' . $end->format('Y-m-d'));
 
             // Recupera prenotazioni dal database
+            error_log('[FP Resv Agenda] Chiamata findAgendaRange...');
             $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            error_log('[FP Resv Agenda] findAgendaRange completato. Tipo: ' . gettype($rows) . ', Count: ' . (is_array($rows) ? count($rows) : 'N/A'));
             
             // Assicurati che sia un array
             if (!is_array($rows)) {
@@ -438,6 +450,7 @@ final class AdminREST
             }
             
             // Mappa le prenotazioni
+            error_log('[FP Resv Agenda] Inizio mapping ' . count($rows) . ' righe...');
             $reservations = [];
             foreach ($rows as $row) {
                 if (!is_array($row)) {
@@ -453,12 +466,21 @@ final class AdminREST
                     continue;
                 }
             }
+            error_log('[FP Resv Agenda] Mapping completato: ' . count($reservations) . ' prenotazioni mappate');
 
             // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
             // - meta: informazioni sulla richiesta
             // - stats: statistiche aggregate calcolate server-side
             // - data: dati organizzati per vista (slots per day, days per week/month)
             // - reservations: array piatto per backward compatibility
+            error_log('[FP Resv Agenda] Calcolo stats...');
+            $stats = $this->calculateStats($reservations);
+            error_log('[FP Resv Agenda] Stats calcolate: ' . json_encode($stats));
+            
+            error_log('[FP Resv Agenda] Organizzazione dati per vista...');
+            $data = $this->organizeByView($reservations, $rangeMode, $start, $end);
+            error_log('[FP Resv Agenda] Dati organizzati. Keys: ' . implode(', ', array_keys($data)));
+            
             $responseData = [
                 'meta' => [
                     'range' => $rangeMode,
@@ -466,10 +488,13 @@ final class AdminREST
                     'end_date' => $end->format('Y-m-d'),
                     'current_date' => $date,
                 ],
-                'stats' => $this->calculateStats($reservations),
-                'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
+                'stats' => $stats,
+                'data' => $data,
                 'reservations' => $reservations,
             ];
+            
+            error_log('[FP Resv Agenda] Response data creato. Keys: ' . implode(', ', array_keys($responseData)));
+            error_log('[FP Resv Agenda] Response data JSON length: ' . strlen(json_encode($responseData)));
             
             // Pulisci qualsiasi output inatteso prima di restituire la risposta
             $unexpectedOutput = ob_get_clean();
@@ -477,14 +502,21 @@ final class AdminREST
                 error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
             }
             
-            return rest_ensure_response($responseData);
+            error_log('[FP Resv Agenda] Chiamata rest_ensure_response...');
+            $response = rest_ensure_response($responseData);
+            error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
+            error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
+            
+            return $response;
         } catch (Throwable $e) {
             // Pulisci output buffer in caso di errore
             ob_end_clean();
             
             // Log l'errore completo per debugging
+            error_log('[FP Resv Agenda] === ERRORE CRITICO ===');
             error_log('[FP Resv Agenda] Errore critico in handleAgenda: ' . $e->getMessage());
             error_log('[FP Resv Agenda] Stack trace: ' . $e->getTraceAsString());
+            error_log('[FP Resv Agenda] === FINE handleAgenda ERROR ===');
             
             // Ritorna un errore strutturato invece di permettere che l'eccezione corrompa la risposta JSON
             return new WP_Error(
