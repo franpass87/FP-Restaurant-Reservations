@@ -64,8 +64,8 @@ final class AdminREST
         error_log('[FP Resv AdminREST] Registering /fp-resv/v1/agenda endpoint');
         
         // Log su file
-        $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
-        file_put_contents($logFile, date('Y-m-d H:i:s') . ' - registerRoutes chiamato, registrazione endpoint /agenda' . PHP_EOL, FILE_APPEND);
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - registerRoutes chiamato, registrazione endpoint /agenda' . PHP_EOL, FILE_APPEND);
         
         $routeRegistered = register_rest_route(
             'fp-resv/v1',
@@ -88,7 +88,7 @@ final class AdminREST
         );
         
         error_log('[FP Resv AdminREST] /fp-resv/v1/agenda registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED'));
-        file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Endpoint registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED') . PHP_EOL, FILE_APPEND);
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Endpoint registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED') . PHP_EOL, FILE_APPEND);
 
         // TEST: Endpoint diagnostico semplificato
         register_rest_route(
@@ -97,8 +97,8 @@ final class AdminREST
             [
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => function() {
-                    $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . ' - TEST endpoint chiamato!' . PHP_EOL, FILE_APPEND);
+                    $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+                    @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - TEST endpoint chiamato!' . PHP_EOL, FILE_APPEND);
                     
                     return rest_ensure_response([
                         'success' => true,
@@ -461,8 +461,8 @@ final class AdminREST
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         // CRITICAL: Log con file_put_contents per assicurarsi che venga scritto
-        $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
-        file_put_contents($logFile, date('Y-m-d H:i:s') . ' - handleAgenda CHIAMATO' . PHP_EOL, FILE_APPEND);
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - handleAgenda CHIAMATO' . PHP_EOL, FILE_APPEND);
         
         // Log iniziale per debug
         error_log('[FP Resv Agenda] === INIZIO handleAgenda ===');
@@ -609,8 +609,8 @@ final class AdminREST
             if (!empty(trim($unexpectedOutput))) {
                 error_log('[FP Resv Agenda] WARNING: Output inatteso rilevato e rimosso: ' . substr($unexpectedOutput, 0, 200));
                 // Log anche su file
-                $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
-                file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Output inatteso: ' . substr($unexpectedOutput, 0, 500) . PHP_EOL, FILE_APPEND);
+                $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Output inatteso: ' . substr($unexpectedOutput, 0, 500) . PHP_EOL, FILE_APPEND);
             }
             
             error_log('[FP Resv Agenda] Buffer level prima di response: ' . ob_get_level());
@@ -644,8 +644,8 @@ final class AdminREST
             }
             
             // Log su file per debugging
-            $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
-            file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Creazione risposta con ' . count($reservations) . ' prenotazioni' . PHP_EOL, FILE_APPEND);
+            $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
+            @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Creazione risposta con ' . count($reservations) . ' prenotazioni' . PHP_EOL, FILE_APPEND);
             
             $response = rest_ensure_response($responseData);
             error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
@@ -663,7 +663,7 @@ final class AdminREST
             }
             
             // Log finale su file
-            file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Risposta creata con successo, status: ' . $response->get_status() . PHP_EOL, FILE_APPEND);
+            @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Risposta creata con successo, status: ' . $response->get_status() . PHP_EOL, FILE_APPEND);
             
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
             error_log('[FP Resv Agenda] Buffer level alla fine: ' . ob_get_level());
@@ -900,7 +900,7 @@ final class AdminREST
 
     private function checkPermissions(): bool
     {
-        $logFile = WP_CONTENT_DIR . '/agenda-endpoint-calls.log';
+        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
         
         // Permette agli amministratori di accedere anche se non hanno la capability specifica
         // Questo allineamento con AdminController previene errori 403 quando gli admin
@@ -909,7 +909,7 @@ final class AdminREST
         $canManageOptions = current_user_can('manage_options');
         $hasPermission = $canManage || $canManageOptions;
         
-        file_put_contents($logFile, date('Y-m-d H:i:s') . ' - checkPermissions chiamato: ' . 
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - checkPermissions chiamato: ' . 
             'canManage=' . ($canManage ? 'true' : 'false') . ', ' .
             'canManageOptions=' . ($canManageOptions ? 'true' : 'false') . ', ' .
             'result=' . ($hasPermission ? 'true' : 'false') . ', ' .
