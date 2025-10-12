@@ -4,8 +4,21 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations;
 
-use FP\Resv\Core\Logging;
 use WP_REST_Request;
+
+// Importa le funzioni globali necessarie
+use function add_action;
+use function file_get_contents;
+use function json_decode;
+use function json_encode;
+use function header;
+use function http_response_code;
+use function is_array;
+use function ob_get_level;
+use function ob_end_clean;
+use function remove_all_actions;
+use function remove_all_filters;
+use function strpos;
 
 /**
  * Endpoint diretto che bypassa completamente il sistema REST di WordPress
@@ -46,8 +59,8 @@ final class DirectEndpoint
             return;
         }
 
-        Logging::log('api', '🔥 ENDPOINT DIRETTO INTERCETTATO - bypass completo WordPress REST');
-
+        // Log rimosso per evitare dipendenze circolari
+        
         try {
             // Ottieni il body della richiesta
             $body = file_get_contents('php://input');
@@ -68,8 +81,6 @@ final class DirectEndpoint
                 $request->set_param($key, $value);
             }
 
-            Logging::log('api', '🔥 Chiamo handleCreateReservation direttamente');
-
             // Chiama il metodo del controller REST esistente
             // Nota: handleCreateReservation ora usa output diretto, quindi NON ritorna qui
             $this->restController->handleCreateReservation($request);
@@ -78,12 +89,6 @@ final class DirectEndpoint
             $this->sendJsonError(500, 'fp_resv_no_output', 'No output generated');
 
         } catch (\Throwable $e) {
-            Logging::log('api', '🔥 ERRORE in endpoint diretto', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
             $this->sendJsonError(500, 'fp_resv_server_error', $e->getMessage());
         }
     }
