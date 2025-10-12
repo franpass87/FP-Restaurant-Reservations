@@ -632,30 +632,77 @@ final class AdminREST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $payload = $this->extractReservationPayload($request);
-
+        // Inizia output buffering per prevenire output inattesi
+        ob_start();
+        
+        error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE DAL MANAGER START ===');
+        
         try {
+            $payload = $this->extractReservationPayload($request);
+            
+            error_log('[FP Resv Admin] Payload estratto: ' . json_encode([
+                'date' => $payload['date'] ?? 'N/A',
+                'time' => $payload['time'] ?? 'N/A',
+                'party' => $payload['party'] ?? 'N/A',
+                'meal' => $payload['meal'] ?? 'N/A',
+            ]));
+
             $result = $this->service->create($payload);
+            
+            error_log('[FP Resv Admin] Prenotazione creata con ID: ' . ($result['id'] ?? 'N/A'));
+            
+            $entry = $this->reservations->findAgendaEntry((int) $result['id']);
+            
+            if ($entry === null) {
+                error_log('[FP Resv Admin] WARNING: Prenotazione creata ma non trovata con findAgendaEntry');
+            }
+            
+            // Pulisci output inatteso
+            if (ob_get_level() > 0) {
+                $unexpectedOutput = ob_get_contents();
+                if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
+                    error_log('[FP Resv Admin] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+                }
+                ob_clean();
+            }
+            
+            $responseData = [
+                'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+                'result'      => $result,
+            ];
+            
+            error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA ===');
+            
+            return rest_ensure_response($responseData);
+            
         } catch (InvalidArgumentException|RuntimeException $exception) {
+            // Pulisci il buffer in caso di errore
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            error_log('[FP Resv Admin] Errore validazione: ' . $exception->getMessage());
+            
             return new WP_Error(
                 'fp_resv_admin_reservation_invalid',
                 $exception->getMessage(),
                 ['status' => 400]
             );
         } catch (Throwable $exception) {
+            // Pulisci il buffer in caso di errore
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            error_log('[FP Resv Admin] Errore critico: ' . $exception->getMessage());
+            error_log('[FP Resv Admin] Stack trace: ' . $exception->getTraceAsString());
+            
             return new WP_Error(
                 'fp_resv_admin_reservation_error',
                 __('Impossibile creare la prenotazione.', 'fp-restaurant-reservations'),
                 ['status' => 500, 'details' => $exception->getMessage()]
             );
         }
-
-        $entry = $this->reservations->findAgendaEntry((int) $result['id']);
-
-        return rest_ensure_response([
-            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
-            'result'      => $result,
-        ]);
     }
 
     public function handleUpdateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error

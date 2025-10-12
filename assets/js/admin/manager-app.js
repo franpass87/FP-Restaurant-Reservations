@@ -1521,12 +1521,41 @@ class ReservationManager {
                 body: JSON.stringify(formData),
             });
 
+            console.log('[Manager] Response status:', response.status);
+            console.log('[Manager] Response headers:', response.headers);
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Errore nella creazione della prenotazione');
+                let errorMessage = 'Errore nella creazione della prenotazione';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                    console.error('[Manager] Error data:', errorData);
+                } catch (e) {
+                    console.error('[Manager] Could not parse error response:', e);
+                    const text = await response.text();
+                    console.error('[Manager] Raw error response:', text);
+                }
+                throw new Error(errorMessage);
             }
 
-            const result = await response.json();
+            // Prova a leggere la risposta come testo prima
+            const responseText = await response.text();
+            console.log('[Manager] Raw response:', responseText);
+            
+            if (!responseText || responseText.trim() === '') {
+                throw new Error('Risposta vuota dal server');
+            }
+            
+            // Ora prova a parsare il JSON
+            let result;
+            try {
+                result = JSON.parse(responseText);
+                console.log('[Manager] Parsed result:', result);
+            } catch (e) {
+                console.error('[Manager] JSON parse error:', e);
+                console.error('[Manager] Response was:', responseText.substring(0, 500));
+                throw new Error('Risposta non valida dal server: ' + e.message);
+            }
             
             // Success!
             this.dom.modalBody.innerHTML = `
