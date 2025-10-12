@@ -377,10 +377,37 @@ final class REST
             }
         }
 
+        // DEBUG: Log COMPLETO della richiesta
+        $jsonParams = $request->get_json_params();
+        $bodyParams = $request->get_body_params();
+        
+        Logging::log('api', 'Creazione prenotazione - DEBUG COMPLETO', [
+            'json_params' => $jsonParams,
+            'body_params' => $bodyParams,
+            'method' => $request->get_method(),
+            'content_type' => $request->get_content_type(),
+        ]);
+        
+        // DEBUG: Log dei campi time ricevuti
+        $timeValue = $this->param($request, ['time', 'fp_resv_time']) ?? '';
+        $slotStartValue = $this->param($request, ['fp_resv_slot_start', 'slot_start']) ?? '';
+        
+        Logging::log('api', 'Creazione prenotazione - campi estratti', [
+            'fp_resv_time' => $timeValue,
+            'fp_resv_slot_start' => $slotStartValue,
+            'date' => $this->param($request, ['date', 'fp_resv_date']) ?? '',
+            'party' => $this->param($request, ['party', 'fp_resv_party']) ?? 0,
+            'meal' => $this->param($request, ['meal', 'fp_resv_meal']) ?? '',
+            'first_name' => $this->param($request, ['first_name', 'fp_resv_first_name']) ?? '',
+            'email' => $this->param($request, ['email', 'fp_resv_email']) ?? '',
+        ]);
+        
         $payload = [
             'date'        => $this->param($request, ['date', 'fp_resv_date']) ?? '',
-            'time'        => $this->param($request, ['time', 'fp_resv_time']) ?? '',
+            'time'        => $timeValue,
             'party'       => (int) ($this->param($request, ['party', 'fp_resv_party']) ?? 0),
+            'meal'        => $this->param($request, ['meal', 'fp_resv_meal']) ?? '',
+            'room'        => (int) ($this->param($request, ['room', 'fp_resv_room']) ?? 0),
             'first_name'  => $this->param($request, ['first_name', 'fp_resv_first_name']) ?? '',
             'last_name'   => $this->param($request, ['last_name', 'fp_resv_last_name']) ?? '',
             'email'       => $this->param($request, ['email', 'fp_resv_email']) ?? '',
@@ -410,12 +437,31 @@ final class REST
         try {
             $result = $this->service->create($payload);
         } catch (InvalidArgumentException|RuntimeException $exception) {
+            // Log l'errore di validazione
+            Logging::log('api', 'Errore validazione prenotazione', [
+                'error' => $exception->getMessage(),
+                'type' => get_class($exception),
+                'payload_keys' => array_keys($payload),
+                'date' => $payload['date'] ?? null,
+                'time' => $payload['time'] ?? null,
+                'party' => $payload['party'] ?? null,
+                'meal' => $payload['meal'] ?? null,
+            ]);
+            
             return new WP_Error(
                 'fp_resv_invalid_reservation',
                 $exception->getMessage(),
                 ['status' => 400]
             );
         } catch (Throwable $exception) {
+            // Log l'errore generico
+            Logging::log('api', 'Errore generico durante creazione prenotazione', [
+                'error' => $exception->getMessage(),
+                'type' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            
             return new WP_Error(
                 'fp_resv_reservation_error',
                 __('Si è verificato un errore durante la creazione della prenotazione.', 'fp-restaurant-reservations'),

@@ -1495,6 +1495,10 @@ class FormApp {
         const start = performance.now();
         let latency = 0;
 
+        // DEBUG: Log del payload inviato
+        console.log('[FP-RESV] Payload inviato:', payload);
+        console.log('[FP-RESV] Endpoint:', endpoint);
+
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -1511,6 +1515,13 @@ class FormApp {
 
             if (!response.ok) {
                 const errorPayload = await safeJson(response);
+                
+                // DEBUG: Log dell'errore ricevuto
+                console.error('[FP-RESV] Errore API:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorPayload: errorPayload,
+                });
                 
                 // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
                 if (response.status === 403 && !this.state.nonceRetried) {

@@ -433,6 +433,14 @@ class Service
         $requestedTime = substr($time, 0, 5); // Assicura formato H:i
         $slotFound = false;
         $slotAvailable = false;
+        
+        // DEBUG: Log dettagliato degli slot disponibili
+        $availableSlotLabels = [];
+        foreach ($availability['slots'] as $slot) {
+            if (is_array($slot) && isset($slot['label'])) {
+                $availableSlotLabels[] = $slot['label'] . ' (' . ($slot['status'] ?? 'unknown') . ')';
+            }
+        }
 
         foreach ($availability['slots'] as $slot) {
             if (!is_array($slot) || !isset($slot['label'])) {
@@ -461,6 +469,8 @@ class Service
                 'party'          => $party,
                 'meal'           => $meal,
                 'available_slots'=> count($availability['slots']),
+                'available_slot_labels' => $availableSlotLabels,
+                'criteria_used' => $criteria,
             ]);
             
             throw new ConflictException(

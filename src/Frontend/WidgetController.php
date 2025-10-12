@@ -184,6 +184,158 @@ final class WidgetController
             gap: 0.65rem !important;
             align-items: flex-start !important;
         }
+        /* SPACING CORRETTI - Forza margini e padding */
+        .fp-resv-widget .fp-resv-step,
+        #fp-resv-default .fp-resv-step {
+            padding: 1.5rem clamp(1rem, 4vw, 1.5rem) !important;
+            margin-bottom: 1rem !important;
+        }
+        /* Spacing tra sezioni */
+        .fp-resv-widget .fp-section,
+        #fp-resv-default .fp-section {
+            margin-bottom: 1.25rem !important;
+        }
+        /* Spacing tra campi del form */
+        .fp-resv-widget .fp-resv-field,
+        .fp-resv-widget .fp-field,
+        #fp-resv-default .fp-resv-field,
+        #fp-resv-default .fp-field {
+            margin-bottom: 1rem !important;
+        }
+        /* Notice/hint text */
+        .fp-resv-widget .fp-hint,
+        .fp-resv-widget .fp-resv-meal-notice,
+        #fp-resv-default .fp-hint,
+        #fp-resv-default .fp-resv-meal-notice {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            padding: 0.5rem 0.75rem !important;
+            line-height: 1.5 !important;
+        }
+        /* Pulsanti servizio (Pranzo, Cena, ecc) */
+        .fp-resv-widget .fp-meal-pill,
+        #fp-resv-default .fp-meal-pill {
+            margin: 0.5rem !important;
+            padding: 0.85rem 1.25rem !important;
+        }
+        /* Titoli sezioni */
+        .fp-resv-widget h2,
+        .fp-resv-widget h3,
+        #fp-resv-default h2,
+        #fp-resv-default h3 {
+            margin-top: 0 !important;
+            margin-bottom: 1rem !important;
+        }
+        /* Paragrafi descrittivi */
+        .fp-resv-widget p,
+        #fp-resv-default p {
+            margin-top: 0 !important;
+            margin-bottom: 0.75rem !important;
+            line-height: 1.6 !important;
+        }
+        /* Input, select, textarea */
+        .fp-resv-widget input,
+        .fp-resv-widget select,
+        .fp-resv-widget textarea,
+        #fp-resv-default input,
+        #fp-resv-default select,
+        #fp-resv-default textarea {
+            margin-top: 0.25rem !important;
+            padding: 0.75rem !important;
+        }
+        /* Labels */
+        .fp-resv-widget label,
+        #fp-resv-default label {
+            display: block !important;
+            margin-bottom: 0.5rem !important;
+        }
+        /* Progress bar spacing e z-index */
+        .fp-resv-widget .fp-resv-progress,
+        .fp-resv-widget .fp-progress,
+        #fp-resv-default .fp-resv-progress,
+        #fp-resv-default .fp-progress {
+            margin-bottom: 2rem !important;
+            padding: 1rem 0 !important;
+            position: relative !important;
+            z-index: 1 !important;
+            background: transparent !important;
+        }
+        /* Progress bar pseudo-elementi - evita sovrapposizione */
+        .fp-resv-widget .fp-progress::before,
+        #fp-resv-default .fp-progress::before,
+        .fp-resv-widget .fp-progress::after,
+        #fp-resv-default .fp-progress::after {
+            z-index: -1 !important;
+            pointer-events: none !important;
+        }
+        /* Progress bar items - sopra la banda */
+        .fp-resv-widget .fp-progress__item,
+        #fp-resv-default .fp-progress__item {
+            z-index: 2 !important;
+            position: relative !important;
+        }
+        /* Assicura che contenuti del form non siano coperti dalla progress bar */
+        .fp-resv-widget .fp-resv-step,
+        #fp-resv-default .fp-resv-step {
+            position: relative !important;
+            z-index: 3 !important;
+        }
+        /* Pulsanti - sopra la progress bar */
+        .fp-resv-widget button,
+        .fp-resv-widget .fp-btn,
+        #fp-resv-default button,
+        #fp-resv-default .fp-btn {
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        /* STICKY BAR - Pulsanti navigazione */
+        .fp-resv-widget .fp-resv-nav,
+        .fp-resv-widget .fp-resv-widget__actions,
+        #fp-resv-default .fp-resv-nav,
+        #fp-resv-default .fp-resv-widget__actions {
+            position: relative !important;
+            z-index: 100 !important;
+        }
+        /* CHECKBOX - Allineamento corretto */
+        .fp-resv-widget .fp-resv-field--checkbox,
+        .fp-resv-widget .fp-field--checkbox,
+        #fp-resv-default .fp-resv-field--checkbox,
+        #fp-resv-default .fp-field--checkbox {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .fp-resv-widget .fp-checkbox,
+        #fp-resv-default .fp-checkbox {
+            flex-shrink: 0 !important;
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+            margin: 0.25rem 0 0 0 !important;
+            cursor: pointer !important;
+        }
+        .fp-resv-widget .fp-resv-field--checkbox span,
+        .fp-resv-widget .fp-field--checkbox span,
+        #fp-resv-default .fp-resv-field--checkbox span,
+        #fp-resv-default .fp-field--checkbox span {
+            flex: 1 !important;
+            line-height: 1.6 !important;
+            margin: 0 !important;
+        }
+        /* Consent checkbox */
+        .fp-resv-widget .fp-resv-field--consent,
+        #fp-resv-default .fp-resv-field--consent {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        .fp-resv-widget .fp-resv-consent__text,
+        #fp-resv-default .fp-resv-consent__text {
+            flex: 1 !important;
+            line-height: 1.6 !important;
+        }
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
 
