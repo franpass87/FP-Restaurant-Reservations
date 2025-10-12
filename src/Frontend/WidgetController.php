@@ -276,7 +276,7 @@ final class WidgetController
         #fp-resv-default .fp-progress {
             margin-bottom: 2.5rem !important;
             margin-top: 1.5rem !important;
-            padding: 1.5rem 0 !important;
+            padding: 1.5rem clamp(1rem, 3vw, 2rem) !important;
             position: relative !important;
             z-index: 1 !important;
             background: transparent !important;
@@ -300,27 +300,44 @@ final class WidgetController
         #fp-resv-default .fp-progress__item {
             z-index: 10 !important;
             position: relative !important;
-            background: rgba(255, 255, 255, 0.95) !important;
-            border: 2px solid rgba(148, 163, 184, 0.3) !important;
+            background: #ffffff !important;
+            border: 2px solid rgba(148, 163, 184, 0.35) !important;
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.1) !important;
-            color: #1e293b !important;
+            color: #475569 !important;
             font-weight: 600 !important;
-            padding: 0.6rem 1rem !important;
-            min-height: 2.5rem !important;
+            padding: 0.65rem 1.1rem !important;
+            min-height: 2.75rem !important;
+            min-width: 2.75rem !important;
         }
         /* Progress bar items - stato attivo */
         .fp-resv-widget .fp-progress__item[aria-current="step"],
         #fp-resv-default .fp-progress__item[aria-current="step"] {
-            background: rgba(255, 255, 255, 1) !important;
+            background: #ffffff !important;
             border-color: var(--fp-resv-color-primary, #2563eb) !important;
             color: var(--fp-resv-color-primary, #2563eb) !important;
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25), 0 3px 8px rgba(15, 23, 42, 0.15) !important;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3), 0 3px 10px rgba(15, 23, 42, 0.15) !important;
+            font-weight: 700 !important;
         }
-        /* Progress bar items - testo sempre leggibile */
+        /* Progress bar items - testo numeri sempre visibile */
         .fp-resv-widget .fp-progress__item span,
-        #fp-resv-default .fp-progress__item span {
+        .fp-resv-widget .fp-progress__item,
+        #fp-resv-default .fp-progress__item span,
+        #fp-resv-default .fp-progress__item {
             color: inherit !important;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.95rem !important;
+            line-height: 1.3 !important;
+        }
+        /* Forza colore testo su qualsiasi elemento interno */
+        .fp-resv-widget .fp-progress__item *,
+        #fp-resv-default .fp-progress__item * {
+            color: inherit !important;
+        }
+        /* Progress bar items completati - verde */
+        .fp-resv-widget .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]),
+        #fp-resv-default .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]) {
+            background: #f0fdf4 !important;
+            border-color: #86efac !important;
+            color: #166534 !important;
         }
         /* Assicura che contenuti del form non siano coperti dalla progress bar */
         .fp-resv-widget .fp-resv-step,
@@ -357,79 +374,115 @@ final class WidgetController
             padding: 1rem 2rem !important;
             font-size: 1.05em !important;
         }
-        /* CHECKBOX - Layout migliorato per testi lunghi */
+        /* CHECKBOX - Layout robusto per testi lunghi */
         .fp-resv-widget .fp-resv-field--checkbox,
         .fp-resv-widget .fp-field--checkbox,
+        .fp-resv-widget label.fp-resv-field--checkbox,
+        .fp-resv-widget label.fp-field--checkbox,
         #fp-resv-default .fp-resv-field--checkbox,
-        #fp-resv-default .fp-field--checkbox {
+        #fp-resv-default .fp-field--checkbox,
+        #fp-resv-default label.fp-resv-field--checkbox,
+        #fp-resv-default label.fp-field--checkbox {
             display: flex !important;
+            flex-direction: row !important;
             align-items: flex-start !important;
-            gap: 1rem !important;
+            gap: 0.85rem !important;
             margin-bottom: 1.25rem !important;
             width: 100% !important;
             max-width: 100% !important;
+            flex-wrap: nowrap !important;
         }
-        /* Checkbox input - sempre a sinistra, mai restringere */
+        /* Checkbox input - sempre a sinistra, dimensione fissa */
         .fp-resv-widget .fp-checkbox,
         .fp-resv-widget input[type="checkbox"],
+        .fp-resv-widget .fp-resv-field--checkbox input,
+        .fp-resv-widget .fp-field--checkbox input,
         #fp-resv-default .fp-checkbox,
-        #fp-resv-default input[type="checkbox"] {
-            flex-shrink: 0 !important;
-            flex-grow: 0 !important;
+        #fp-resv-default input[type="checkbox"],
+        #fp-resv-default .fp-resv-field--checkbox input,
+        #fp-resv-default .fp-field--checkbox input {
+            flex: 0 0 1.25rem !important;
             width: 1.25rem !important;
             height: 1.25rem !important;
             min-width: 1.25rem !important;
-            margin: 0.2rem 0 0 0 !important;
+            max-width: 1.25rem !important;
+            margin: 0.15rem 0 0 0 !important;
+            padding: 0 !important;
             cursor: pointer !important;
+            order: -1 !important;
         }
-        /* Testo checkbox - prende tutto lo spazio disponibile */
+        /* Testo checkbox - prende tutto lo spazio rimanente */
         .fp-resv-widget .fp-resv-field--checkbox span,
         .fp-resv-widget .fp-field--checkbox span,
-        .fp-resv-widget .fp-resv-field--checkbox label,
-        .fp-resv-widget .fp-field--checkbox label,
+        .fp-resv-widget .fp-resv-field--checkbox > span,
+        .fp-resv-widget .fp-field--checkbox > span,
+        .fp-resv-widget .fp-resv-field--checkbox > label,
+        .fp-resv-widget .fp-field--checkbox > label,
         #fp-resv-default .fp-resv-field--checkbox span,
         #fp-resv-default .fp-field--checkbox span,
-        #fp-resv-default .fp-resv-field--checkbox label,
-        #fp-resv-default .fp-field--checkbox label {
-            flex: 1 1 auto !important;
-            max-width: calc(100% - 2.5rem) !important;
+        #fp-resv-default .fp-resv-field--checkbox > span,
+        #fp-resv-default .fp-field--checkbox > span,
+        #fp-resv-default .fp-resv-field--checkbox > label,
+        #fp-resv-default .fp-field--checkbox > label {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
             line-height: 1.65 !important;
             margin: 0 !important;
             padding: 0 !important;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
-            hyphens: auto !important;
+            word-break: break-word !important;
             cursor: pointer !important;
+            order: 1 !important;
         }
-        /* Label che contiene checkbox - layout flex */
-        .fp-resv-widget label.fp-resv-field--checkbox,
-        .fp-resv-widget label.fp-field--checkbox,
-        #fp-resv-default label.fp-resv-field--checkbox,
-        #fp-resv-default label.fp-field--checkbox {
-            display: flex !important;
-            align-items: flex-start !important;
-            cursor: pointer !important;
+        /* Link dentro il testo */
+        .fp-resv-widget .fp-resv-field--checkbox a,
+        .fp-resv-widget .fp-field--checkbox a,
+        #fp-resv-default .fp-resv-field--checkbox a,
+        #fp-resv-default .fp-field--checkbox a {
+            display: inline !important;
+            word-wrap: break-word !important;
         }
-        /* Consent checkbox - stessi fix */
+        /* Consent checkbox - stessi fix robusti */
         .fp-resv-widget .fp-resv-field--consent,
-        #fp-resv-default .fp-resv-field--consent {
+        .fp-resv-widget label.fp-resv-field--consent,
+        #fp-resv-default .fp-resv-field--consent,
+        #fp-resv-default label.fp-resv-field--consent {
             display: flex !important;
+            flex-direction: row !important;
             align-items: flex-start !important;
-            gap: 1rem !important;
+            gap: 0.85rem !important;
             margin-top: 1.5rem !important;
             margin-bottom: 1.5rem !important;
             width: 100% !important;
+            flex-wrap: nowrap !important;
         }
+        /* Checkbox del consent */
+        .fp-resv-widget .fp-resv-field--consent input[type="checkbox"],
+        #fp-resv-default .fp-resv-field--consent input[type="checkbox"] {
+            flex: 0 0 1.25rem !important;
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+            min-width: 1.25rem !important;
+            max-width: 1.25rem !important;
+            margin: 0.15rem 0 0 0 !important;
+            padding: 0 !important;
+            order: -1 !important;
+        }
+        /* Testo del consent */
         .fp-resv-widget .fp-resv-consent__text,
         .fp-resv-widget .fp-resv-field--consent span,
+        .fp-resv-widget .fp-resv-field--consent > span,
         #fp-resv-default .fp-resv-consent__text,
-        #fp-resv-default .fp-resv-field--consent span {
-            flex: 1 1 auto !important;
-            max-width: calc(100% - 2.5rem) !important;
+        #fp-resv-default .fp-resv-field--consent span,
+        #fp-resv-default .fp-resv-field--consent > span {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
             line-height: 1.65 !important;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
-            hyphens: auto !important;
+            word-break: break-word !important;
+            order: 1 !important;
         }
         /* Badge OBBLIGATORIO/OPZIONALE */
         .fp-resv-widget .fp-resv-field--checkbox .fp-badge,

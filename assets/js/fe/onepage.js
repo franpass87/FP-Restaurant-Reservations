@@ -1496,8 +1496,21 @@ class FormApp {
         const start = performance.now();
         let latency = 0;
 
+        // DEBUG: Verifica finale del nonce prima dell'invio
+        if (!payload.fp_resv_nonce) {
+            console.error('[FP-RESV] ATTENZIONE: Payload senza nonce! Tentativo di recupero...');
+            const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
+            if (nonceField && nonceField.value) {
+                payload.fp_resv_nonce = nonceField.value;
+                console.log('[FP-RESV] Nonce recuperato dal form:', payload.fp_resv_nonce.substring(0, 10) + '...');
+            } else {
+                console.error('[FP-RESV] IMPOSSIBILE recuperare nonce!');
+            }
+        }
+        
         // DEBUG: Log del payload inviato
         console.log('[FP-RESV] Payload inviato:', payload);
+        console.log('[FP-RESV] Nonce nel payload:', payload.fp_resv_nonce ? 'PRESENTE (' + payload.fp_resv_nonce.substring(0, 10) + '...)' : 'MANCANTE');
         console.log('[FP-RESV] Endpoint:', endpoint);
 
         try {
@@ -1526,13 +1539,19 @@ class FormApp {
                 
                 // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
                 if (response.status === 403 && !this.state.nonceRetried) {
+                    console.warn('[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce...');
+                    
                     // Aspetta 500ms per dare tempo ai cookie di essere impostati correttamente
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
                     const freshNonce = await this.refreshNonce();
+                    console.log('[FP-RESV] Nonce fresco ottenuto:', freshNonce ? (freshNonce.substring(0, 10) + '...') : 'FALLITO');
+                    
                     if (freshNonce) {
                         this.state.nonceRetried = true;
                         payload.fp_resv_nonce = freshNonce;
+                        
+                        console.log('[FP-RESV] Retry con nuovo nonce...');
                         
                         // Aspetta altri 200ms prima di riprovare
                         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1741,21 +1760,17 @@ class FormApp {
             this.form.appendChild(newNonceField);
         }
         
-        const currentNonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
-        if (!currentNonceField.value || currentNonceField.value.trim() === '') {
-            console.warn('[FP-RESV] Nonce vuoto! Richiesta nuovo nonce...');
-            try {
-                const newNonce = await this.refreshNonce();
-                if (newNonce) {
-                    console.log('[FP-RESV] Nonce ottenuto con successo');
-                } else {
-                    console.error('[FP-RESV] Impossibile ottenere nonce!');
-                }
-            } catch (error) {
-                console.error('[FP-RESV] Errore richiesta nonce:', error);
+        // SEMPRE rigenera il nonce all'inizializzazione per evitare nonce scaduti
+        console.log('[FP-RESV] Rigenerazione nonce per sicurezza...');
+        try {
+            const newNonce = await this.refreshNonce();
+            if (newNonce) {
+                console.log('[FP-RESV] Nonce rigenerato con successo:', newNonce.substring(0, 10) + '...');
+            } else {
+                console.error('[FP-RESV] Impossibile ottenere nonce fresco!');
             }
-        } else {
-            console.log('[FP-RESV] Nonce già presente nel form');
+        } catch (error) {
+            console.error('[FP-RESV] Errore richiesta nonce:', error);
         }
     }
 
