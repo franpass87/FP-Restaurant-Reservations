@@ -673,16 +673,30 @@ class ModernAgenda {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
-        // Combina date e time
-        data.slot_start = `${data.date} ${data.time}`;
-        data.status = 'pending';
+        console.log('[Agenda] 📝 Creazione prenotazione...', data);
+        
+        // Assicurati che lo status sia impostato se non presente
+        if (!data.status) {
+            data.status = 'pending';
+        }
         
         try {
-            await this.api('agenda/reservations', { method: 'POST', body: data });
+            const response = await this.api('agenda/reservations', { method: 'POST', body: data });
+            console.log('[Agenda] ✅ Prenotazione creata:', response);
+            
             this.closeModal(document.querySelector('[data-modal="new-reservation"]'));
             this.showNotification('Prenotazione creata con successo!');
+            
+            // Se la prenotazione è per una data diversa da quella corrente, naviga a quella data
+            if (data.date && data.date !== this.formatDate(this.state.currentDate)) {
+                this.state.currentDate = new Date(data.date + 'T12:00:00');
+                this.dom.datePicker.valueAsDate = this.state.currentDate;
+            }
+            
+            // Ricarica i dati
             await this.loadData();
         } catch (error) {
+            console.error('[Agenda] ❌ Errore creazione:', error);
             alert(`Errore: ${error.message}`);
         }
     }
