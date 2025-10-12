@@ -134,10 +134,11 @@ class ModernAgenda {
             case 'today':
                 this.goToToday();
                 break;
-            case 'set-view':
+            case 'set-view': {
                 const view = btn.dataset.view;
                 if (view) this.changeView(view);
                 break;
+            }
             case 'new-reservation':
                 this.openNewReservationModal();
                 break;
@@ -193,14 +194,15 @@ class ModernAgenda {
         console.log('[Agenda] 📊 Cambio vista:', view);
         
         this.state.currentView = view;
-        
+
         // Aggiorna pulsanti vista
         this.dom.viewButtons.forEach(btn => {
             const isActive = btn.dataset.view === view;
             btn.classList.toggle('button-primary', isActive);
             btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
-        
+
         // Ricarica dati
         this.loadData();
     }
@@ -225,6 +227,7 @@ class ModernAgenda {
             // Costruisci parametri
             const params = new URLSearchParams({
                 date: startDate,
+                end_date: endDate,
             });
             
             // Aggiungi range per viste multiple giorni
@@ -293,7 +296,7 @@ class ModernAgenda {
         let end = new Date(this.state.currentDate);
         
         switch (this.state.currentView) {
-            case 'week':
+            case 'week': {
                 // Lunedì - Domenica
                 const dayOfWeek = start.getDay();
                 const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -301,17 +304,18 @@ class ModernAgenda {
                 end = new Date(start);
                 end.setDate(end.getDate() + 6);
                 break;
-                
+            }
+
             case 'month':
                 start.setDate(1);
                 end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
                 break;
-                
+
             case 'list':
                 end.setDate(end.getDate() + 6);
                 break;
         }
-        
+
         return {
             startDate: this.formatDate(start),
             endDate: this.formatDate(end),
@@ -403,23 +407,23 @@ class ModernAgenda {
             no_show: 'No-show',
             cancelled: 'Annullata',
         };
-        
+
         const customer = resv.customer || {};
         const name = this.getGuestName(resv);
-        
+
         return `
-            <div class="fp-resv-card" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
-                <div class="fp-resv-card__header">
-                    <strong class="fp-resv-card__name">${this.escapeHtml(name)}</strong>
-                    <span class="fp-resv-card__badge">${statusLabels[resv.status] || resv.status}</span>
+            <div class="fp-resv-reservation-card" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
+                <div class="fp-resv-reservation-card__header">
+                    <strong class="fp-resv-reservation-card__name">${this.escapeHtml(name)}</strong>
+                    <span class="fp-resv-reservation-card__badge">${statusLabels[resv.status] || resv.status}</span>
                 </div>
-                <div class="fp-resv-card__body">
-                    <div class="fp-resv-card__info">
+                <div class="fp-resv-reservation-card__info">
+                    <div class="fp-resv-reservation-card__info-item">
                         <span class="dashicons dashicons-groups"></span>
                         <span>${resv.party} ${resv.party === 1 ? 'coperto' : 'coperti'}</span>
                     </div>
                     ${customer.phone ? `
-                    <div class="fp-resv-card__info">
+                    <div class="fp-resv-reservation-card__info-item">
                         <span class="dashicons dashicons-phone"></span>
                         <span>${this.escapeHtml(customer.phone)}</span>
                     </div>
@@ -439,33 +443,33 @@ class ModernAgenda {
         const days = this.groupByDays(this.state.reservations, 7);
         
         const html = `
-            <div class="fp-resv-week-grid">
+            <div class="fp-resv-week__grid">
                 ${days.map(day => `
-                    <div class="fp-resv-week-day">
-                        <div class="fp-resv-week-day__header">
-                            <div class="fp-resv-week-day__name">${this.getDayName(day.date)}</div>
-                            <div class="fp-resv-week-day__number">${day.date.getDate()}</div>
+                    <div class="fp-resv-week__day">
+                        <div class="fp-resv-week__header">
+                            <div class="fp-resv-week__day-name">${this.getDayName(day.date)}</div>
+                            <div class="fp-resv-week__day-number">${day.date.getDate()}</div>
                         </div>
-                        <div class="fp-resv-week-day__body">
+                        <div class="fp-resv-week__content">
                             ${day.reservations.length > 0
                                 ? day.reservations.map(r => `
-                                    <div class="fp-resv-week-item" data-status="${r.status}" data-action="view-reservation-${r.id}">
-                                        <div class="fp-resv-week-item__time">${this.formatTime(r.time)}</div>
-                                        <div class="fp-resv-week-item__guest">${this.escapeHtml(this.getGuestName(r))}</div>
-                                        <div class="fp-resv-week-item__party">${r.party} cop.</div>
+                                    <div class="fp-resv-week__item" data-status="${r.status}" data-action="view-reservation-${r.id}">
+                                        <div class="fp-resv-week__time">${this.formatTime(r.time)}</div>
+                                        <div class="fp-resv-week__guest">${this.escapeHtml(this.getGuestName(r))}</div>
+                                        <div class="fp-resv-week__party">${r.party} cop.</div>
                                     </div>
                                 `).join('')
-                                : '<div class="fp-resv-week-day__empty">Nessuna prenotazione</div>'
+                                : '<div class="fp-resv-week__empty">Nessuna prenotazione</div>'
                             }
                         </div>
                     </div>
                 `).join('')}
             </div>
         `;
-        
+
         this.dom.weekView.innerHTML = html;
     }
-    
+
     renderMonthView() {
         if (!this.dom.monthView) return;
         
@@ -499,34 +503,38 @@ class ModernAgenda {
                 calendarDays.push({ date, dateStr, reservations });
             }
         }
-        
+
+        while (calendarDays.length % 7 !== 0) {
+            calendarDays.push({ date: null, reservations: [] });
+        }
+
         const html = `
-            <div class="fp-resv-month-header">
-                <h3>${this.getMonthYear(this.state.currentDate)}</h3>
+            <div class="fp-resv-month__header">
+                <h3 class="fp-resv-month__title">${this.getMonthYear(this.state.currentDate)}</h3>
             </div>
-            <div class="fp-resv-month-calendar">
-                <div class="fp-resv-month-weekdays">
+            <div class="fp-resv-month__calendar">
+                <div class="fp-resv-month__weekdays">
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
-                <div class="fp-resv-month-grid">
+                <div class="fp-resv-month__grid">
                     ${calendarDays.map(day => {
                         if (!day.date) {
-                            return '<div class="fp-resv-month-day fp-resv-month-day--empty"></div>';
+                            return '<div class="fp-resv-month__day fp-resv-month__day--empty"></div>';
                         }
                         const isToday = this.formatDate(day.date) === this.formatDate(new Date());
                         return `
-                            <div class="fp-resv-month-day ${isToday ? 'fp-resv-month-day--today' : ''}">
-                                <div class="fp-resv-month-day__number">${day.date.getDate()}</div>
+                            <div class="fp-resv-month__day ${isToday ? 'fp-resv-month__day--today' : ''}">
+                                <div class="fp-resv-month__day-number">${day.date.getDate()}</div>
                                 ${day.reservations.length > 0 ? `
-                                    <div class="fp-resv-month-day__count">${day.reservations.length}</div>
-                                    <div class="fp-resv-month-day__items">
+                                    <div class="fp-resv-month__count">${day.reservations.length}</div>
+                                    <div class="fp-resv-month__items">
                                         ${day.reservations.slice(0, 2).map(r => `
-                                            <div class="fp-resv-month-item" data-action="view-reservation-${r.id}">
+                                            <div class="fp-resv-month__item" data-action="view-reservation-${r.id}">
                                                 ${this.formatTime(r.time)} ${this.escapeHtml(this.getGuestName(r))}
                                             </div>
                                         `).join('')}
                                         ${day.reservations.length > 2 ? `
-                                            <div class="fp-resv-month-more">+${day.reservations.length - 2}</div>
+                                            <div class="fp-resv-month__more">+${day.reservations.length - 2}</div>
                                         ` : ''}
                                     </div>
                                 ` : ''}
@@ -562,41 +570,54 @@ class ModernAgenda {
         };
         
         const html = `
-            <table class="fp-resv-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Ora</th>
-                        <th>Cliente</th>
-                        <th>Coperti</th>
-                        <th>Telefono</th>
-                        <th>Stato</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sorted.map(r => {
-                        const customer = r.customer || {};
-                        return `
-                            <tr data-action="view-reservation-${r.id}" style="cursor: pointer;">
-                                <td>${this.formatDateShort(r.date)}</td>
-                                <td><strong>${this.formatTime(r.time)}</strong></td>
-                                <td>${this.escapeHtml(this.getGuestName(r))}</td>
-                                <td>${r.party}</td>
-                                <td>${this.escapeHtml(customer.phone || '-')}</td>
-                                <td><span class="fp-resv-badge fp-resv-badge--${r.status}">${statusLabels[r.status] || r.status}</span></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+            <div class="fp-resv-list__table-wrapper">
+                <table class="fp-resv-list__table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ora</th>
+                            <th>Cliente</th>
+                            <th>Coperti</th>
+                            <th>Telefono</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map(r => {
+                            const customer = r.customer || {};
+                            return `
+                                <tr class="fp-resv-list__row" data-action="view-reservation-${r.id}">
+                                    <td>${this.formatDateShort(r.date)}</td>
+                                    <td><strong>${this.formatTime(r.time)}</strong></td>
+                                    <td>${this.escapeHtml(this.getGuestName(r))}</td>
+                                    <td>${r.party}</td>
+                                    <td>${this.escapeHtml(customer.phone || '-')}</td>
+                                    <td><span class="fp-resv-list__badge fp-resv-list__badge--${r.status}">${statusLabels[r.status] || r.status}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
-        
+
         this.dom.listView.innerHTML = html;
     }
     
     updateSummary() {
         if (this.dom.summaryDate) {
-            this.dom.summaryDate.textContent = this.formatDateLong(this.state.currentDate);
+            const { startDate, endDate } = this.getDateRange();
+            let summaryText = this.formatDateLong(this.state.currentDate);
+
+            if (this.state.currentView === 'month') {
+                summaryText = this.getMonthYear(this.state.currentDate);
+            } else if (this.state.currentView === 'week' || this.state.currentView === 'list') {
+                const start = new Date(`${startDate}T12:00:00`);
+                const end = new Date(`${endDate}T12:00:00`);
+                summaryText = `${this.formatDateLong(start)} → ${this.formatDateLong(end)}`;
+            }
+
+            this.dom.summaryDate.textContent = summaryText;
         }
         
         if (this.dom.summaryStats) {
@@ -656,7 +677,6 @@ class ModernAgenda {
             form.reset();
             const dateInput = form.querySelector('[name="date"]');
             const partyInput = form.querySelector('[name="party"]');
-            const timeSelect = form.querySelector('[data-role="time-slots"]');
             
             // Imposta la data corrente
             if (dateInput) {
@@ -975,8 +995,24 @@ class ModernAgenda {
     }
     
     formatDate(date) {
+        if (typeof date === 'string') {
+            const normalized = date.trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+                return normalized;
+            }
+        }
+
         const d = date instanceof Date ? date : new Date(date);
-        return d.toISOString().split('T')[0];
+
+        if (Number.isNaN(d.getTime())) {
+            return '';
+        }
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     }
     
     formatDateLong(date) {

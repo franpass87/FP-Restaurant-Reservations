@@ -68,45 +68,49 @@ $headingId   = 'fp-resv-agenda-title';
 
                 <!-- Switcher Vista -->
                 <div class="fp-resv-agenda__view-switcher" role="group" aria-label="<?php esc_attr_e('Seleziona vista', 'fp-restaurant-reservations'); ?>">
-                    <button 
-                        type="button" 
-                        class="button button-primary" 
-                        data-action="set-view" 
+                    <button
+                        type="button"
+                        class="button button-primary fp-resv-view-btn is-active"
+                        data-action="set-view"
                         data-view="day"
                         title="<?php esc_attr_e('Vista giornaliera', 'fp-restaurant-reservations'); ?>"
+                        aria-pressed="true"
                     >
                         <span class="dashicons dashicons-clock"></span>
-                        <span><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button 
-                        type="button" 
-                        class="button" 
-                        data-action="set-view" 
+                    <button
+                        type="button"
+                        class="button fp-resv-view-btn"
+                        data-action="set-view"
                         data-view="week"
                         title="<?php esc_attr_e('Vista settimanale', 'fp-restaurant-reservations'); ?>"
+                        aria-pressed="false"
                     >
                         <span class="dashicons dashicons-calendar"></span>
-                        <span><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button 
-                        type="button" 
-                        class="button" 
-                        data-action="set-view" 
+                    <button
+                        type="button"
+                        class="button fp-resv-view-btn"
+                        data-action="set-view"
                         data-view="month"
                         title="<?php esc_attr_e('Vista mensile', 'fp-restaurant-reservations'); ?>"
+                        aria-pressed="false"
                     >
                         <span class="dashicons dashicons-calendar-alt"></span>
-                        <span><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button 
-                        type="button" 
-                        class="button" 
-                        data-action="set-view" 
+                    <button
+                        type="button"
+                        class="button fp-resv-view-btn"
+                        data-action="set-view"
                         data-view="list"
                         title="<?php esc_attr_e('Vista lista', 'fp-restaurant-reservations'); ?>"
+                        aria-pressed="false"
                     >
                         <span class="dashicons dashicons-list-view"></span>
-                        <span><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
+                        <span class="fp-resv-view-btn__label"><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
                     </button>
                 </div>
                 
@@ -170,7 +174,7 @@ $headingId   = 'fp-resv-agenda-title';
             </button>
         </header>
         <div class="fp-resv-modal__body">
-            <form data-form="new-reservation">
+            <form data-form="new-reservation" class="fp-resv-reservation-form">
                 <div class="fp-resv-form__row">
                     <label>
                         <span><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?> *</span>
