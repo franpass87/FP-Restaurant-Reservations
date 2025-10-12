@@ -31,6 +31,7 @@ final class PagesConfig
             'language' => self::getLanguagePage(),
             'closures' => self::getClosuresPage(),
             'tracking' => self::getTrackingPage(),
+            'debug' => self::getDebugPage(),
         ];
     }
 
@@ -1091,6 +1092,35 @@ final class PagesConfig
                 'min'         => 0,
                 'max'         => 120,
                 'description' => __('Imposta 0 per disattivare la pulizia automatica.', 'fp-restaurant-reservations'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function getDebugPage(): array
+    {
+        return [
+            'page_title'   => __('Debug & Diagnostica', 'fp-restaurant-reservations'),
+            'menu_title'   => __('Debug', 'fp-restaurant-reservations'),
+            'slug'         => 'fp-resv-debug',
+            'option_group' => 'fp_resv_debug',
+            'option_name'  => 'fp_resv_debug',
+            'sections'     => [
+                'debug-settings' => [
+                    'title'       => __('Opzioni debug', 'fp-restaurant-reservations'),
+                    'description' => __('Attiva il logging e il debug banner per diagnosticare problemi del plugin.', 'fp-restaurant-reservations'),
+                    'fields'      => [
+                        'manager_debug_panel' => [
+                            'label'          => __('Debug Banner Manager', 'fp-restaurant-reservations'),
+                            'type'           => 'checkbox',
+                            'checkbox_label' => __('Mostra il banner di debug nella pagina Manager con gli errori del plugin', 'fp-restaurant-reservations'),
+                            'default'        => '0',
+                            'description'    => __('Il banner mostrerà errori, chiamate REST API e informazioni di diagnostica. Si attiva automaticamente anche se WP_DEBUG è true.', 'fp-restaurant-reservations'),
+                        ],
+                    ],
+                ],
             ],
         ];
     }
