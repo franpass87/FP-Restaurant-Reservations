@@ -6,8 +6,10 @@
  */
 
 if (!isset($context) || !is_array($context)) {
+    error_log('[FP-RESV] Template: context non valido o assente');
     return;
 }
+error_log('[FP-RESV] Template: inizia rendering form con context keys: ' . implode(', ', array_keys($context)));
 
 $config     = $context['config'] ?? [];
 $strings    = $context['strings'] ?? [];
