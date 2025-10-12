@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Frontend;
 
+use FP\Resv\Core\EmailList;
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\ServiceContainer;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
@@ -167,9 +168,7 @@ final class ManageController
             'restaurant_name' => get_bloginfo('name'),
         ]);
 
-        $recipients = is_array($notifications['restaurant_emails'] ?? null)
-            ? array_values(array_filter($notifications['restaurant_emails']))
-            : [];
+        $recipients = EmailList::parse($notifications['restaurant_emails'] ?? []);
 
         if ($recipients === []) {
             return false;

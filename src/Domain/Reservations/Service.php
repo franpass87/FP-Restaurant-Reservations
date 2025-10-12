@@ -20,6 +20,7 @@ use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Domain\Brevo\Client as BrevoClient;
 use FP\Resv\Core\Consent;
+use FP\Resv\Core\EmailList;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\ICS;
 use FP\Resv\Core\Logging;
@@ -757,12 +758,8 @@ class Service
             'reply_to_email'    => '',
         ]);
 
-        $restaurantRecipients = is_array($notifications['restaurant_emails'] ?? null)
-            ? array_values(array_filter($notifications['restaurant_emails']))
-            : [];
-        $webmasterRecipients = is_array($notifications['webmaster_emails'] ?? null)
-            ? array_values(array_filter($notifications['webmaster_emails']))
-            : [];
+        $restaurantRecipients = EmailList::parse($notifications['restaurant_emails'] ?? []);
+        $webmasterRecipients  = EmailList::parse($notifications['webmaster_emails'] ?? []);
 
         // Deduplica: rimuovi dai destinatari webmaster quelli già presenti in restaurant
         // per evitare di inviare due email alla stessa persona
