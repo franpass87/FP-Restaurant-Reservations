@@ -375,9 +375,14 @@ class ReservationManager {
             // Parse JSON
             const data = JSON.parse(text);
             console.log('[Manager] Reservations data loaded:', data);
+            console.log('[Manager] Reservations array:', data.reservations);
+            console.log('[Manager] Reservations count:', data.reservations ? data.reservations.length : 0);
             
             this.state.reservations = data.reservations || [];
             this.state.error = null;
+            
+            console.log('[Manager] State reservations set to:', this.state.reservations.length, 'items');
+            console.log('[Manager] Current view:', this.state.currentView);
 
             this.hideLoading();
             this.renderCurrentView();
@@ -396,6 +401,41 @@ class ReservationManager {
     // ============================================
     // RENDERING
     // ============================================
+
+    getFilteredReservations() {
+        let filtered = [...this.state.reservations];
+        
+        console.log('[Manager] Filtering from', filtered.length, 'reservations');
+        
+        // Filtra per servizio (meal)
+        if (this.state.filters.service) {
+            const originalCount = filtered.length;
+            filtered = filtered.filter(r => r.meal === this.state.filters.service);
+            console.log('[Manager] Service filter applied:', this.state.filters.service, '- reduced from', originalCount, 'to', filtered.length);
+        }
+        
+        // Filtra per stato
+        if (this.state.filters.status) {
+            const originalCount = filtered.length;
+            filtered = filtered.filter(r => r.status === this.state.filters.status);
+            console.log('[Manager] Status filter applied:', this.state.filters.status, '- reduced from', originalCount, 'to', filtered.length);
+        }
+        
+        // Filtra per ricerca
+        if (this.state.filters.search) {
+            const searchLower = this.state.filters.search.toLowerCase();
+            const originalCount = filtered.length;
+            filtered = filtered.filter(r => {
+                const name = `${r.first_name || ''} ${r.last_name || ''}`.toLowerCase();
+                const email = (r.email || '').toLowerCase();
+                const phone = (r.phone || '').toLowerCase();
+                return name.includes(searchLower) || email.includes(searchLower) || phone.includes(searchLower);
+            });
+            console.log('[Manager] Search filter applied:', this.state.filters.search, '- reduced from', originalCount, 'to', filtered.length);
+        }
+        
+        return filtered;
+    }
 
     renderStats() {
         if (!this.state.overview) return;
@@ -427,48 +467,59 @@ class ReservationManager {
     }
 
     renderCurrentView() {
-        console.log('[Manager] Rendering view:', this.state.currentView);
+        console.log('[Manager] === Rendering view ===');
+        console.log('[Manager] Current view:', this.state.currentView);
+        console.log('[Manager] Total reservations in state:', this.state.reservations.length);
+        
         const filtered = this.getFilteredReservations();
         console.log('[Manager] Filtered reservations:', filtered.length);
 
-        // Nascondi tutti gli stati
-        this.dom.loadingState.style.display = 'none';
-        this.dom.errorState.style.display = 'none';
-        this.dom.emptyState.style.display = 'none';
+        // Nascondi tutti gli stati (con protezioni)
+        if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
+        if (this.dom.errorState) this.dom.errorState.style.display = 'none';
+        if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
 
         if (filtered.length === 0) {
+            console.log('[Manager] No filtered reservations - showing empty state');
             // Mostra empty state ma lascia visibile il container della vista corrente
-            this.dom.emptyState.style.display = 'flex';
+            if (this.dom.emptyState) this.dom.emptyState.style.display = 'flex';
             
             // Nascondi tutte le viste
-            this.dom.viewDay.style.display = 'none';
-            this.dom.viewList.style.display = 'none';
-            this.dom.viewMonth.style.display = 'none';
+            if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
+            if (this.dom.viewList) this.dom.viewList.style.display = 'none';
+            if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
             return;
         }
 
+        console.log('[Manager] Have reservations - hiding empty state, showing view');
+        
         // Nascondi empty state
-        this.dom.emptyState.style.display = 'none';
+        if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
 
         // Mostra la vista corrente e nascondi le altre
-        this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
-        this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
-        this.dom.viewMonth.style.display = this.state.currentView === 'month' ? 'block' : 'none';
+        if (this.dom.viewDay) this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
+        if (this.dom.viewList) this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
+        if (this.dom.viewMonth) this.dom.viewMonth.style.display = this.state.currentView === 'month' ? 'block' : 'none';
 
+        console.log('[Manager] View visibility set, now rendering content');
+        
         // Render della vista attiva
         switch (this.state.currentView) {
             case 'day':
+                console.log('[Manager] Rendering DAY view with', filtered.length, 'reservations');
                 this.renderDayView(filtered);
                 break;
             case 'list':
+                console.log('[Manager] Rendering LIST view with', filtered.length, 'reservations');
                 this.renderListView(filtered);
                 break;
             case 'month':
+                console.log('[Manager] Rendering MONTH view');
                 this.renderMonthView();
                 break;
         }
 
-        console.log('[Manager] View rendered successfully');
+        console.log('[Manager] ✅ View rendered successfully');
     }
 
     renderDayView(reservations) {

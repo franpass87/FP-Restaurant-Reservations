@@ -89,28 +89,26 @@ $styleCss  = isset($style['css']) ? (string) $style['css'] : '';
 $styleHash = isset($style['hash']) ? (string) $style['hash'] : '';
 $styleId   = $styleHash !== '' ? 'fp-resv-style-' . $styleHash : 'fp-resv-style-' . md5($formId);
 
-if ($styleCss !== '') :
-    ?>
-    <style id="<?php echo esc_attr($styleId); ?>"><?php echo wp_strip_all_tags($styleCss); ?></style>
-    <?php
-endif;
-?>
-<!-- Force visibility styles - ensures form is always visible -->
-<style>
-.fp-resv-widget#<?php echo esc_attr($formId); ?>,
-div.fp-resv-widget#<?php echo esc_attr($formId); ?>,
-#<?php echo esc_attr($formId); ?>.fp-resv-widget {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    z-index: 1 !important;
+// Instead of using <style> tag (which WPBakery escapes), inject CSS via JavaScript
+$escapedCss = '';
+if ($styleCss !== '') {
+    $escapedCss = str_replace("'", "\\'", str_replace("\n", '', $styleCss));
 }
-</style>
+?>
+<script>
+(function() {
+    // Inject CSS without using <style> tag to avoid WPBakery escaping
+    var styleId = '<?php echo esc_js($styleId); ?>';
+    var css = '<?php echo $escapedCss; ?>';
+    
+    if (css && !document.getElementById(styleId)) {
+        var style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = css;
+        document.head.appendChild(style);
+    }
+})();
+</script>
 <div
     class="fp-resv-widget fp-resv fp-card"
     id="<?php echo esc_attr($formId); ?>"
