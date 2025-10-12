@@ -1,30 +1,30 @@
-function b(n, t) {
+function g(n, t) {
   if (!n)
     return null;
   const e = Object.assign({ event: n }, t || {});
   return window.dataLayer = window.dataLayer || [], window.dataLayer.push(e), window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(e), e;
 }
-const ut = /\D+/g;
-function Q(n) {
-  return n ? String(n).replace(ut, "") : "";
+const dt = /\D+/g;
+function Z(n) {
+  return n ? String(n).replace(dt, "") : "";
 }
-function P(n) {
-  const t = Q(n);
+function F(n) {
+  const t = Z(n);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function D(n) {
-  return Q(n);
+function T(n) {
+  return Z(n);
 }
-function ht(n, t) {
-  const e = P(n), i = D(t);
+function ut(n, t) {
+  const e = F(n), i = T(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function H(n) {
-  const t = D(n);
+  const t = T(n);
   return t.length >= 6 && t.length <= 15;
 }
-function ft(n) {
-  const t = D(n);
+function ht(n) {
+  const t = T(n);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
@@ -36,18 +36,18 @@ function ft(n) {
   }
   return { masked: i.join(" "), digits: t };
 }
-function T(n, t) {
-  const e = n.value, { masked: i } = ft(e), s = n.selectionStart;
+function z(n, t) {
+  const e = n.value, { masked: i } = ht(e), s = n.selectionStart;
   if (n.value = i, s !== null) {
     const a = i.length - e.length, r = Math.max(0, s + a);
     n.setSelectionRange(r, r);
   }
-  n.setAttribute("data-phone-local", D(n.value)), n.setAttribute("data-phone-cc", P(t));
+  n.setAttribute("data-phone-local", T(n.value)), n.setAttribute("data-phone-cc", F(t));
 }
-function z(n, t) {
-  const e = D(n.value), i = P(t);
+function D(n, t) {
+  const e = T(n.value), i = F(t);
   return {
-    e164: ht(i, e),
+    e164: ut(i, e),
     local: e,
     country: i
   };
@@ -67,7 +67,7 @@ function j(n) {
   }
   return String(n).trim();
 }
-function pt(n) {
+function ft(n) {
   if (n == null)
     return "";
   const t = Array.isArray(n) ? [...n] : [n];
@@ -98,11 +98,11 @@ function pt(n) {
   }
   return "";
 }
-function tt(n, t) {
-  const e = pt(t);
+function Q(n, t) {
+  const e = ft(t);
   return e === "" ? n : n ? n.includes(e) ? n : n + " (" + e + ")" : e;
 }
-function mt(n) {
+function pt(n) {
   const t = n.getAttribute("data-fp-resv");
   if (!t)
     return {};
@@ -113,7 +113,7 @@ function mt(n) {
   }
   return {};
 }
-function yt(n, t) {
+function mt(n, t) {
   if (!n)
     return {};
   const e = n.getAttribute(t);
@@ -128,7 +128,7 @@ function yt(n, t) {
   }
   return {};
 }
-function vt(n) {
+function yt(n) {
   if (n == null)
     return null;
   if (typeof n == "number")
@@ -136,7 +136,7 @@ function vt(n) {
   const t = String(n).replace(",", "."), e = parseFloat(t);
   return Number.isNaN(e) ? null : e;
 }
-function et(n, t) {
+function tt(n, t) {
   if (!n)
     return null;
   if (typeof n.closest == "function")
@@ -149,10 +149,10 @@ function et(n, t) {
   }
   return null;
 }
-function bt(n, t) {
+function vt(n, t) {
   n && (t ? (n.setAttribute("aria-disabled", "true"), n.setAttribute("disabled", "disabled")) : (n.removeAttribute("disabled"), n.setAttribute("aria-disabled", "false")));
 }
-function U(n) {
+function bt(n) {
   return n.text().then((t) => {
     if (!t)
       return {};
@@ -163,7 +163,7 @@ function U(n) {
     }
   });
 }
-function $(n, t) {
+function U(n, t) {
   if (n && typeof n == "string")
     try {
       return new URL(n, window.location.origin).toString();
@@ -172,17 +172,17 @@ function $(n, t) {
     }
   return window.wpApiSettings && window.wpApiSettings.root ? window.wpApiSettings.root.replace(/\/$/, "") + t : t;
 }
-const gt = ["service", "date", "party", "slots", "details", "confirm"], J = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (n) => window.requestIdleCallback(n) : (n) => window.setTimeout(() => n(Date.now()), 1);
+const gt = ["service", "date", "party", "slots", "details", "confirm"], $ = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (n) => window.requestIdleCallback(n) : (n) => window.setTimeout(() => n(Date.now()), 1);
 let O = null;
 function St() {
-  return O || (O = Promise.resolve().then(() => Ft)), O;
+  return O || (O = Promise.resolve().then(() => _t)), O;
 }
 function At(n) {
-  return et(n, "data-fp-resv-section");
+  return tt(n, "data-fp-resv-section");
 }
-class it {
+class et {
   constructor(t) {
-    this.root = t, this.dataset = mt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
+    this.root = t, this.dataset = pt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(gt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
@@ -218,7 +218,7 @@ class it {
       submitError: this.messages.msg_submit_error || "Non è stato possibile completare la prenotazione. Riprova.",
       submitSuccess: this.messages.msg_submit_success || "Prenotazione inviata con successo.",
       mealFullNotice: this.messages.meal_full_notice || "Nessuna disponibilità per questo servizio. Scegli un altro giorno."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.ensureNoncePresent(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), J(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.ensureNoncePresent(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), $(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -254,29 +254,29 @@ class it {
       this.updatePhoneCountryFromPrefix();
       return;
     }
-    this.phoneField && T(this.phoneField, this.getPhoneCountryCode());
+    this.phoneField && z(this.phoneField, this.getPhoneCountryCode());
   }
   updatePhoneCountryFromPrefix() {
     if (!this.phonePrefixField)
       return;
-    const t = P(this.phonePrefixField.value);
+    const t = F(this.phonePrefixField.value);
     let e = t;
     if (e === "" && this.phoneCountryCode) {
-      const i = P(this.phoneCountryCode);
+      const i = F(this.phoneCountryCode);
       i && (e = i);
     }
     if (e === "" && this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const i = P(this.hiddenPhoneCc.value);
+      const i = F(this.hiddenPhoneCc.value);
       i && (e = i);
     }
     if (e === "") {
       const i = this.config && this.config.defaults || {};
       if (i.phone_country_code) {
-        const s = P(i.phone_country_code);
+        const s = F(i.phone_country_code);
         s && (e = s);
       }
     }
-    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && T(this.phoneField, e);
+    e === "" && (e = "39"), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = e), t !== "" && (this.phoneCountryCode = t), this.phoneField && z(this.phoneField, e);
   }
   initializeDateField() {
     if (!this.dateField)
@@ -291,8 +291,8 @@ class it {
       if (this.currentAvailableDays.length > 0 && s) {
         const r = new Date(s).getDay().toString();
         if (!this.currentAvailableDays.includes(r)) {
-          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], f = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((y) => o[parseInt(y)]).join(", ")}.`;
-          i.target.setCustomValidity(f), i.target.setAttribute("aria-invalid", "true"), window.console && window.console.warn && console.warn("[FP-RESV] " + f), setTimeout(() => {
+          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], h = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((v) => o[parseInt(v)]).join(", ")}.`;
+          i.target.setCustomValidity(h), i.target.setAttribute("aria-invalid", "true"), window.console && window.console.warn && console.warn("[FP-RESV] " + h), setTimeout(() => {
             i.target.value = "";
           }, 100);
           return;
@@ -336,7 +336,7 @@ class it {
       }
       this.scheduleAvailabilityUpdate(i);
     };
-    J(() => {
+    $(() => {
       St().then((e) => {
         if (!(!e || typeof e.createAvailabilityController != "function" || !this.availabilityRoot) && (this.availabilityController = e.createAvailabilityController({
           root: this.availabilityRoot,
@@ -360,7 +360,7 @@ class it {
     const e = t.target;
     if (!e)
       return;
-    this.handleFirstInteraction(), e === this.phoneField ? T(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
+    this.handleFirstInteraction(), e === this.phoneField ? z(this.phoneField, this.getPhoneCountryCode()) : e === this.phonePrefixField && this.updatePhoneCountryFromPrefix(), this.updateSummary();
     const i = e.getAttribute("data-fp-resv-field") || "", s = i && e.dataset.fpResvLastValue || "", a = i && typeof e.value == "string" ? e.value : "", r = !i || s !== a, o = At(e);
     if (!o) {
       this.isConsentField(e) && this.syncConsentState(), this.updateSubmitState();
@@ -452,7 +452,7 @@ class it {
     }
     this.applyMealSelection(t), this.applyMealAvailabilityNotice(e, i, { skipSlotReset: !0 });
     const s = this.events.meal_selected || "meal_selected";
-    b(s, {
+    g(s, {
       meal_type: t.getAttribute("data-fp-resv-meal") || "",
       meal_label: t.getAttribute("data-meal-label") || ""
     }), this.updateAvailableDaysForMeal(e), this.scheduleAvailabilityUpdate({ immediate: !0 });
@@ -466,8 +466,8 @@ class it {
     if (s && this.currentAvailableDays.length > 0) {
       const r = new Date(s).getDay().toString();
       if (!this.currentAvailableDays.includes(r)) {
-        const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], u = this.currentAvailableDays.map((f) => o[parseInt(f)]).join(", ");
-        window.console && window.console.warn && console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${u}.`), this.dateField.value = "", this.dateField.setCustomValidity(""), this.dateField.setAttribute("aria-invalid", "false"), this.availabilityController && typeof this.availabilityController.clear == "function" && this.availabilityController.clear();
+        const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], d = this.currentAvailableDays.map((h) => o[parseInt(h)]).join(", ");
+        window.console && window.console.warn && console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${d}.`), this.dateField.value = "", this.dateField.setCustomValidity(""), this.dateField.setAttribute("aria-invalid", "false"), this.availabilityController && typeof this.availabilityController.clear == "function" && this.availabilityController.clear();
       }
     }
   }
@@ -496,7 +496,7 @@ class it {
   applyMealSelection(t) {
     const e = t.getAttribute("data-fp-resv-meal") || "";
     this.hiddenMeal && (this.hiddenMeal.value = e);
-    const i = vt(t.getAttribute("data-meal-price"));
+    const i = yt(t.getAttribute("data-meal-price"));
     this.hiddenPrice && (this.hiddenPrice.value = i !== null ? String(i) : ""), this.clearSlotSelection({ schedule: !1 }), this.updateMealNoticeFromButton(t), this.updateSubmitState();
   }
   clearSlotSelection(t = {}) {
@@ -515,8 +515,8 @@ class it {
       const r = this.sections.indexOf(i);
       if (r !== -1)
         for (let o = r + 1; o < this.sections.length; o += 1) {
-          const u = this.sections[o];
-          this.updateSectionAttributes(u, "locked", { silent: !0 });
+          const d = this.sections[o];
+          this.updateSectionAttributes(d, "locked", { silent: !0 });
         }
       this.updateProgressIndicators(), (t.forceRewind && s || a === "completed" || a === "active") && this.activateSectionByKey(s);
     }
@@ -595,7 +595,7 @@ class it {
       return;
     this.state.unlocked[t] = !0;
     const e = this.events.section_unlocked || "section_unlocked";
-    b(e, { section: t });
+    g(e, { section: t });
   }
   updateSectionAttributes(t, e, i = {}) {
     const s = t.getAttribute("data-step") || "", a = i && i.silent === !0;
@@ -610,12 +610,12 @@ class it {
     let i = 0;
     const s = e.length || 1;
     Array.prototype.forEach.call(e, function(r, o) {
-      const u = r.getAttribute("data-step") || "", f = t.state.sectionStates[u] || "locked";
-      r.setAttribute("data-state", f), r.setAttribute("data-progress-state", f === "completed" ? "done" : f);
-      const y = r.querySelector(".fp-progress__label");
-      y && (f === "active" ? y.removeAttribute("aria-hidden") : y.setAttribute("aria-hidden", "true"));
-      const E = f === "locked";
-      r.tabIndex = E ? -1 : 0, E ? r.setAttribute("aria-disabled", "true") : r.removeAttribute("aria-disabled"), f === "active" ? (r.setAttribute("aria-current", "step"), i = Math.max(i, o + 0.5)) : r.removeAttribute("aria-current"), f === "completed" ? (r.setAttribute("data-completed", "true"), i = Math.max(i, o + 1)) : r.removeAttribute("data-completed");
+      const d = r.getAttribute("data-step") || "", h = t.state.sectionStates[d] || "locked";
+      r.setAttribute("data-state", h), r.setAttribute("data-progress-state", h === "completed" ? "done" : h);
+      const v = r.querySelector(".fp-progress__label");
+      v && (h === "active" ? v.removeAttribute("aria-hidden") : v.setAttribute("aria-hidden", "true"));
+      const y = h === "locked";
+      r.tabIndex = y ? -1 : 0, y ? r.setAttribute("aria-disabled", "true") : r.removeAttribute("aria-disabled"), h === "active" ? (r.setAttribute("aria-current", "step"), i = Math.max(i, o + 0.5)) : r.removeAttribute("aria-current"), h === "completed" ? (r.setAttribute("data-completed", "true"), i = Math.max(i, o + 1)) : r.removeAttribute("data-completed");
     });
     const a = Math.min(100, Math.max(0, Math.round(i / s * 100)));
     this.progress.style.setProperty("--fp-progress-fill", a + "%");
@@ -625,8 +625,8 @@ class it {
     if (e.length === 0)
       return !0;
     if ((t.getAttribute("data-step") || "") === "slots") {
-      const a = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null, r = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, o = a && a.value.trim() !== "", u = r && r.value.trim() !== "";
-      if (!o || !u)
+      const a = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null, r = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null, o = a && a.value.trim() !== "", d = r && r.value.trim() !== "";
+      if (!o || !d)
         return !1;
     }
     let s = !0;
@@ -644,7 +644,7 @@ class it {
     }
     if (t && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
-      b(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
+      g(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
   }
   updateInlineErrors() {
@@ -673,8 +673,8 @@ class it {
       }
       let r = !1, o = "";
       if (s && typeof s.checkValidity == "function" && !s.checkValidity() && (r = !0, o = e[i] || ""), i === "email" && s && s.value && s.value.trim() !== "" && s.checkValidity() && (r = !1, o = ""), i === "phone" && this.phoneField) {
-        const u = z(this.phoneField, this.getPhoneCountryCode());
-        u.local && !H(u.local) && (r = !0, o = this.copy.invalidPhone);
+        const d = D(this.phoneField, this.getPhoneCountryCode());
+        d.local && !H(d.local) && (r = !0, o = this.copy.invalidPhone);
       }
       i === "consent" && s && s.checked && (r = !1, o = ""), r ? (a.textContent = o, a.hidden = !1, s && s.setAttribute && s.setAttribute("aria-invalid", "true")) : (a.textContent = "", a.hidden = !0, s && s.removeAttribute && s.removeAttribute("aria-invalid"));
     });
@@ -704,44 +704,44 @@ class it {
     if (!this.submitButton)
       return;
     const i = e === "sending" ? !1 : !!t, s = this.state.ctaEnabled;
-    bt(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && b("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
+    vt(this.submitButton, !i), this.submitLabel && (e === "sending" ? this.submitLabel.textContent = this.copy.ctaSending : i ? this.submitLabel.textContent = this.copy.ctaEnabled : this.submitLabel.textContent = this.copy.ctaDisabled), this.submitSpinner && (this.submitSpinner.hidden = e !== "sending"), s !== i && e !== "sending" && g("cta_state_change", { enabled: i }), this.state.ctaEnabled = i;
   }
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), a = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), u = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), y = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), E = this.form.querySelector('[data-fp-resv-field="pets"]');
-    let _ = "";
-    s && s.value && (_ = s.value.trim()), a && a.value && (_ = (_ + " " + a.value.trim()).trim());
-    let A = "";
-    if (r && r.value && (A = r.value.trim()), o && o.value) {
-      const w = this.getPhoneCountryCode(), I = (w ? "+" + w + " " : "") + o.value.trim();
-      A = A !== "" ? A + " / " + I : I;
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), a = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), d = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), y = this.form.querySelector('[data-fp-resv-field="pets"]');
+    let k = "";
+    s && s.value && (k = s.value.trim()), a && a.value && (k = (k + " " + a.value.trim()).trim());
+    let P = "";
+    if (r && r.value && (P = r.value.trim()), o && o.value) {
+      const S = this.getPhoneCountryCode(), I = (S ? "+" + S + " " : "") + o.value.trim();
+      P = P !== "" ? P + " / " + I : I;
     }
-    const v = [];
-    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && v.push("Seggioloni: " + parseInt(f.value, 10)), y && "checked" in y && y.checked && v.push("Tavolo accessibile per sedia a rotelle"), E && "checked" in E && E.checked && v.push("Animali domestici");
-    const N = v.join("; ");
-    this.summaryTargets.forEach(function(w) {
-      switch (w.getAttribute("data-fp-resv-summary")) {
+    const w = [];
+    h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && w.push("Seggioloni: " + parseInt(h.value, 10)), v && "checked" in v && v.checked && w.push("Tavolo accessibile per sedia a rotelle"), y && "checked" in y && y.checked && w.push("Animali domestici");
+    const b = w.join("; ");
+    this.summaryTargets.forEach(function(S) {
+      switch (S.getAttribute("data-fp-resv-summary")) {
         case "date":
-          w.textContent = t && t.value ? t.value : "";
+          S.textContent = t && t.value ? t.value : "";
           break;
         case "time":
-          w.textContent = e && e.value ? e.value : "";
+          S.textContent = e && e.value ? e.value : "";
           break;
         case "party":
-          w.textContent = i && i.value ? i.value : "";
+          S.textContent = i && i.value ? i.value : "";
           break;
         case "name":
-          w.textContent = _;
+          S.textContent = k;
           break;
         case "contact":
-          w.textContent = A;
+          S.textContent = P;
           break;
         case "notes":
-          w.textContent = u && u.value ? u.value : "";
+          S.textContent = d && d.value ? d.value : "";
           break;
         case "extras":
-          w.textContent = N;
+          S.textContent = b;
           break;
       }
     });
@@ -752,7 +752,7 @@ class it {
     if (this.state.touchedFields.consent = !0, !this.form.checkValidity())
       return this.form.reportValidity(), this.focusFirstInvalid(), this.updateInlineErrors(), this.updateSubmitState(), !1;
     const e = this.events.submit || "reservation_submit", i = this.collectAvailabilityParams();
-    b(e, {
+    g(e, {
       source: "form",
       form_id: this.form && this.form.id ? this.form.id : this.root.id || "",
       date: i.date,
@@ -765,12 +765,12 @@ class it {
     let o = 0;
     if (!s.fp_resv_nonce) {
       console.error("[FP-RESV] ATTENZIONE: Payload senza nonce! Tentativo di recupero...");
-      const u = this.form.querySelector('input[name="fp_resv_nonce"]');
-      u && u.value ? (s.fp_resv_nonce = u.value, console.log("[FP-RESV] Nonce recuperato dal form:", s.fp_resv_nonce.substring(0, 10) + "...")) : console.error("[FP-RESV] IMPOSSIBILE recuperare nonce!");
+      const d = this.form.querySelector('input[name="fp_resv_nonce"]');
+      d && d.value ? (s.fp_resv_nonce = d.value, console.log("[FP-RESV] Nonce recuperato dal form:", s.fp_resv_nonce.substring(0, 10) + "...")) : console.error("[FP-RESV] IMPOSSIBILE recuperare nonce!");
     }
     console.log("[FP-RESV] Payload inviato:", s), console.log("[FP-RESV] Nonce nel payload:", s.fp_resv_nonce ? "PRESENTE (" + s.fp_resv_nonce.substring(0, 10) + "...)" : "MANCANTE"), console.log("[FP-RESV] Endpoint:", a);
     try {
-      const u = await fetch(a, {
+      const d = await fetch(a, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -779,18 +779,28 @@ class it {
         body: JSON.stringify(s),
         credentials: "same-origin"
       });
-      if (o = Math.round(performance.now() - r), b("ui_latency", { op: "submit", ms: o }), !u.ok) {
-        const y = await U(u);
+      o = Math.round(performance.now() - r), g("ui_latency", { op: "submit", ms: o }), console.log("[FP-RESV] Response status:", d.status), console.log("[FP-RESV] Response headers:", {
+        contentType: d.headers.get("content-type"),
+        contentLength: d.headers.get("content-length")
+      });
+      const h = await d.text();
+      if (console.log("[FP-RESV] Response text length:", h.length), console.log("[FP-RESV] Response text preview:", h.substring(0, 200)), !d.ok) {
+        let y;
+        try {
+          y = h ? JSON.parse(h) : {};
+        } catch (P) {
+          console.error("[FP-RESV] Errore parsing risposta errore:", P), y = { message: "Risposta non valida dal server" };
+        }
         if (console.error("[FP-RESV] Errore API:", {
-          status: u.status,
-          statusText: u.statusText,
+          status: d.status,
+          statusText: d.statusText,
           errorPayload: y
-        }), u.status === 403 && !this.state.nonceRetried) {
-          console.warn("[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce..."), await new Promise((A) => setTimeout(A, 500));
-          const _ = await this.refreshNonce();
-          if (console.log("[FP-RESV] Nonce fresco ottenuto:", _ ? _.substring(0, 10) + "..." : "FALLITO"), _) {
-            this.state.nonceRetried = !0, s.fp_resv_nonce = _, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((v) => setTimeout(v, 200));
-            const A = await fetch(a, {
+        }), d.status === 403 && !this.state.nonceRetried) {
+          console.warn("[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce..."), await new Promise((w) => setTimeout(w, 500));
+          const P = await this.refreshNonce();
+          if (console.log("[FP-RESV] Nonce fresco ottenuto:", P ? P.substring(0, 10) + "..." : "FALLITO"), P) {
+            this.state.nonceRetried = !0, s.fp_resv_nonce = P, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((b) => setTimeout(b, 200));
+            const w = await fetch(a, {
               method: "POST",
               headers: {
                 Accept: "application/json",
@@ -799,28 +809,40 @@ class it {
               body: JSON.stringify(s),
               credentials: "same-origin"
             });
-            if (A.ok) {
-              const v = await A.json();
-              return this.handleSubmitSuccess(v), this.state.nonceRetried = !1, !1;
+            if (w.ok) {
+              const b = await w.text();
+              console.log("[FP-RESV] Retry success - Response text:", b.substring(0, 200));
+              let S;
+              try {
+                S = b ? JSON.parse(b) : {};
+              } catch (q) {
+                console.error("[FP-RESV] Errore parsing retry success:", q), S = {};
+              }
+              return this.handleSubmitSuccess(S), this.state.nonceRetried = !1, !1;
             } else {
-              const v = await U(A);
-              throw v && v.message && (v.message = v.message + " Se hai appena accettato i cookie, riprova tra qualche secondo."), Object.assign(new Error(v.message || this.copy.submitError), {
-                status: A.status,
-                payload: v
+              const b = await bt(w);
+              throw b && b.message && (b.message = b.message + " Se hai appena accettato i cookie, riprova tra qualche secondo."), Object.assign(new Error(b.message || this.copy.submitError), {
+                status: w.status,
+                payload: b
               });
             }
           }
         }
-        const E = y && y.message || this.copy.submitError;
-        throw Object.assign(new Error(E), {
-          status: u.status,
+        const k = y && y.message || this.copy.submitError;
+        throw Object.assign(new Error(k), {
+          status: d.status,
           payload: y
         });
       }
-      const f = await u.json();
-      this.handleSubmitSuccess(f), this.state.requestId = null;
-    } catch (u) {
-      o || (o = Math.round(performance.now() - r), b("ui_latency", { op: "submit", ms: o })), this.handleSubmitError(u, o);
+      let v;
+      try {
+        v = h ? JSON.parse(h) : {}, console.log("[FP-RESV] Risposta successo parsata:", v);
+      } catch (y) {
+        throw console.error("[FP-RESV] ERRORE parsing risposta successo:", y), console.error("[FP-RESV] Testo risposta:", h), new Error("Risposta non valida dal server (JSON malformato)");
+      }
+      this.handleSubmitSuccess(v), this.state.requestId = null;
+    } catch (d) {
+      o || (o = Math.round(performance.now() - r), g("ui_latency", { op: "submit", ms: o })), this.handleSubmitError(d, o);
     } finally {
       this.state.sending = !1, this.updateSubmitState();
     }
@@ -840,19 +862,19 @@ class it {
       });
     }
     t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
-      i && i.event && b(i.event, i);
+      i && i.event && g(i.event, i);
     });
   }
   handleSubmitError(t, e) {
     const i = t && typeof t.status == "number" ? t.status : "unknown", s = t && t.message || this.copy.submitError, a = t && typeof t == "object" && t.payload || null;
-    let r = tt(s, a);
-    i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (u) => {
-      u.preventDefault(), window.location.reload();
+    let r = Q(s, a);
+    i === 403 && this.errorAlert && this.errorRetry && (this.errorRetry.textContent = this.messages.reload_button || "Ricarica pagina", this.errorRetry.onclick = (d) => {
+      d.preventDefault(), window.location.reload();
     }), this.errorAlert && this.errorMessage && (this.errorMessage.textContent = r, this.errorAlert.hidden = !1, requestAnimationFrame(() => {
       typeof this.errorAlert.scrollIntoView == "function" && this.errorAlert.scrollIntoView({ behavior: "smooth", block: "center" }), typeof this.errorAlert.focus == "function" && (this.errorAlert.setAttribute("tabindex", "-1"), this.errorAlert.focus({ preventScroll: !0 }));
     })), this.state.hintOverride = r, this.updateSubmitState();
     const o = this.events.submit_error || "submit_error";
-    b(o, { code: i, latency: e });
+    g(o, { code: i, latency: e });
   }
   clearError() {
     this.errorAlert && (this.errorAlert.hidden = !0), this.errorRetry && (this.errorRetry.textContent = this.messages.retry_button || "Riprova", this.errorRetry.onclick = null), this.state.hintOverride = "";
@@ -867,11 +889,11 @@ class it {
       i ? (console.log("[FP-RESV] Nonce trovato nel DOM:", i.value.substring(0, 10) + "..."), e.fp_resv_nonce = i.value) : console.error("[FP-RESV] Campo nonce non trovato nel DOM!");
     }
     if (this.phoneField) {
-      const i = z(this.phoneField, this.getPhoneCountryCode());
+      const i = D(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
-      const i = P(this.phonePrefixField.value);
+      const i = F(this.phonePrefixField.value);
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
@@ -911,18 +933,18 @@ class it {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = z(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = z(this.phoneField, this.getPhoneCountryCode());
+    const t = D(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
     }
-    H(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), b("phone_validation_error", { field: "phone" }), b("ui_validation_error", { field: "phone" }));
+    H(t.local) ? (this.phoneField.setCustomValidity(""), this.phoneField.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidPhone && (this.state.hintOverride = "", this.updateSubmitState())) : (this.phoneField.setCustomValidity(this.copy.invalidPhone), this.phoneField.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidPhone, this.updateSubmitState(), g("phone_validation_error", { field: "phone" }), g("ui_validation_error", { field: "phone" }));
   }
   validateEmailField(t) {
     if (typeof t.value == "string") {
@@ -933,7 +955,7 @@ class it {
       t.setCustomValidity(""), t.removeAttribute("aria-invalid");
       return;
     }
-    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), b("ui_validation_error", { field: "email" }));
+    t.setCustomValidity(""), t.checkValidity() ? (t.setCustomValidity(""), t.setAttribute("aria-invalid", "false"), this.state.hintOverride === this.copy.invalidEmail && (this.state.hintOverride = "", this.updateSubmitState())) : (t.setCustomValidity(this.copy.invalidEmail), t.setAttribute("aria-invalid", "true"), this.state.hintOverride = this.copy.invalidEmail, this.updateSubmitState(), g("ui_validation_error", { field: "email" }));
   }
   focusFirstInvalid() {
     const t = this.form.querySelector("[data-fp-resv-field]:invalid, [required]:invalid");
@@ -1005,10 +1027,10 @@ class it {
     this.updateSummary(), this.updateSubmitState();
   }
   handleAvailabilityLatency(t) {
-    b("ui_latency", { op: "availability", ms: Math.round(t) });
+    g("ui_latency", { op: "availability", ms: Math.round(t) });
   }
   handleAvailabilityRetry(t) {
-    b("availability_retry", { attempt: t });
+    g("availability_retry", { attempt: t });
   }
   handleWindowFocus() {
     this.availabilityController && typeof this.availabilityController.revalidate == "function" && this.availabilityController.revalidate();
@@ -1017,30 +1039,30 @@ class it {
     if (this.state.started)
       return;
     const t = this.events.start || "reservation_start";
-    b(t, { source: "form" }), this.state.started = !0;
+    g(t, { source: "form" }), this.state.started = !0;
   }
   handleDelegatedTrackingEvent(t) {
     const e = t.target instanceof HTMLElement ? t.target : null;
     if (!e)
       return;
-    const i = et(e, "data-fp-resv-event");
+    const i = tt(e, "data-fp-resv-event");
     if (!i)
       return;
     const s = i.getAttribute("data-fp-resv-event");
     if (!s)
       return;
-    let a = yt(i, "data-fp-resv-payload");
+    let a = mt(i, "data-fp-resv-payload");
     if ((!a || typeof a != "object") && (a = {}), a.trigger || (a.trigger = t.type || "click"), !a.href && i instanceof HTMLAnchorElement && i.href && (a.href = i.href), !a.label) {
       const r = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
       r && (a.label = r.trim());
     }
-    b(s, a);
+    g(s, a);
   }
   handleReservationConfirmed(t) {
     if (!t || !t.detail)
       return;
     const e = t.detail || {}, i = this.events.confirmed || "reservation_confirmed";
-    b(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && b(this.events.purchase || "purchase", e.purchase);
+    g(i, e), e && e.purchase && e.purchase.value && e.purchase.value_is_estimated && g(this.events.purchase || "purchase", e.purchase);
   }
   scrollIntoView(t) {
     const e = this.root || t;
@@ -1069,23 +1091,23 @@ class it {
   }
   getPhoneCountryCode() {
     if (this.phonePrefixField && this.phonePrefixField.value) {
-      const e = P(this.phonePrefixField.value);
+      const e = F(this.phonePrefixField.value);
       if (e)
         return e;
     }
     if (this.hiddenPhoneCc && this.hiddenPhoneCc.value) {
-      const e = P(this.hiddenPhoneCc.value);
+      const e = F(this.hiddenPhoneCc.value);
       if (e)
         return e;
     }
     if (this.phoneCountryCode) {
-      const e = P(this.phoneCountryCode);
+      const e = F(this.phoneCountryCode);
       if (e)
         return e;
     }
     const t = this.config && this.config.defaults || {};
     if (t.phone_country_code) {
-      const e = P(t.phone_country_code);
+      const e = F(t.phone_country_code);
       if (e)
         return e;
     }
@@ -1093,11 +1115,11 @@ class it {
   }
   getReservationEndpoint() {
     const t = this.config.endpoints || {};
-    return $(t.reservations, "/wp-json/fp-resv/v1/reservations");
+    return U(t.reservations, "/wp-json/fp-resv/v1/reservations");
   }
   getAvailabilityEndpoint() {
     const t = this.config.endpoints || {};
-    return $(t.availability, "/wp-json/fp-resv/v1/availability");
+    return U(t.availability, "/wp-json/fp-resv/v1/availability");
   }
   loadExternalScript(t, e, i) {
     if (typeof window > "u" || typeof document > "u")
@@ -1110,8 +1132,8 @@ class it {
     return new Promise((s) => {
       const a = () => {
         if (typeof e == "function") {
-          const u = e();
-          s(u || null);
+          const d = e();
+          s(d || null);
           return;
         }
         s(null);
@@ -1119,9 +1141,9 @@ class it {
       let r = document.querySelector(`script[src="${t}"]`);
       if (!r && i && (r = document.querySelector(`script[${i}]`)), r) {
         if (typeof e == "function") {
-          const u = e();
-          if (u) {
-            s(u);
+          const d = e();
+          if (d) {
+            s(d);
             return;
           }
         }
@@ -1154,8 +1176,8 @@ class it {
     )), this.googlePromise);
   }
 }
-typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = it, window.fpResvApp = window.FPResv);
-function st(n) {
+typeof window < "u" && (window.FPResv = window.FPResv || {}, window.FPResv.FormApp = et, window.fpResvApp = window.FPResv);
+function it(n) {
   if (!n)
     return;
   n.style.display = "block", n.style.visibility = "visible", n.style.opacity = "1", n.style.position = "relative", n.style.width = "100%", n.style.height = "auto";
@@ -1164,7 +1186,7 @@ function st(n) {
     window.getComputedStyle(t).display === "none" && (console.warn("[FP-RESV] Found hidden parent element, making visible:", t), t.style.display = "block"), t = t.parentElement, e++;
   console.log("[FP-RESV] Widget visibility ensured:", n.id || "unnamed");
 }
-function G() {
+function J() {
   let n = 0;
   const t = 10, e = setInterval(function() {
     n++;
@@ -1172,12 +1194,12 @@ function G() {
     let s = !1;
     Array.prototype.forEach.call(i, function(a) {
       const r = window.getComputedStyle(a);
-      (r.display === "none" || r.visibility === "hidden" || r.opacity === "0") && (console.warn("[FP-RESV] Widget became hidden, forcing visibility again:", a.id || "unnamed"), st(a), s = !0);
+      (r.display === "none" || r.visibility === "hidden" || r.opacity === "0") && (console.warn("[FP-RESV] Widget became hidden, forcing visibility again:", a.id || "unnamed"), it(a), s = !0);
     }), (n >= t || !s) && (clearInterval(e), n >= t && console.log("[FP-RESV] Visibility auto-check completed after " + n + " checks"));
   }, 1e3);
 }
-const q = /* @__PURE__ */ new Set();
-function x() {
+const V = /* @__PURE__ */ new Set();
+function N() {
   const n = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]");
   if (n.length === 0) {
     const t = document.querySelector(".entry-content, .post-content, .page-content, main, article");
@@ -1189,23 +1211,23 @@ function x() {
       const e = t.parentElement;
       e.parentElement && (e.parentElement.insertBefore(t, e), e.remove(), console.log("[FP-RESV] Removed WPBakery <p> wrapper"));
     }
-    if (q.has(t)) {
+    if (V.has(t)) {
       console.log("[FP-RESV] Widget already initialized, skipping:", t.id || "unnamed");
       return;
     }
     try {
-      q.add(t), st(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
-      const e = new it(t);
+      V.add(t), it(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
+      const e = new et(t);
       console.log("[FP-RESV] Widget initialized successfully:", t.id || "unnamed"), (e.sections || []).forEach(function(s, a) {
-        const r = s.getAttribute("data-step"), o = s.getAttribute("data-state"), u = s.hasAttribute("hidden");
-        console.log(`[FP-RESV] Step ${a + 1} (${r}): state=${o}, hidden=${u}`);
+        const r = s.getAttribute("data-step"), o = s.getAttribute("data-state"), d = s.hasAttribute("hidden");
+        console.log(`[FP-RESV] Step ${a + 1} (${r}): state=${o}, hidden=${d}`);
       });
     } catch (e) {
-      console.error("[FP-RESV] Error initializing widget:", e), q.delete(t);
+      console.error("[FP-RESV] Error initializing widget:", e), V.delete(t);
     }
   });
 }
-function X() {
+function G() {
   if (typeof MutationObserver > "u") {
     console.warn("[FP-RESV] MutationObserver not supported, dynamic widgets won't be detected");
     return;
@@ -1216,32 +1238,32 @@ function X() {
       i.addedNodes && i.addedNodes.length > 0 && Array.prototype.forEach.call(i.addedNodes, function(s) {
         s.nodeType === 1 && (s.matches && (s.matches("[data-fp-resv]") || s.matches(".fp-resv-widget") || s.matches("[data-fp-resv-app]")) || s.querySelector && s.querySelector("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]")) && (e = !0);
       });
-    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), x());
+    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), N());
   }).observe(document.body, {
     childList: !0,
     subtree: !0
   }), console.log("[FP-RESV] MutationObserver set up to detect dynamic widgets");
 }
-function Y() {
+function X() {
   [500, 1e3, 2e3, 3e3].forEach(function(t) {
     setTimeout(function() {
       const e = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length;
-      e > q.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + q.size + " initialized"), x());
+      e > V.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + V.size + " initialized"), N());
     }, t);
   });
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", function() {
-  x(), setTimeout(G, 500), X(), Y();
-}) : (x(), setTimeout(G, 500), X(), Y());
+  N(), setTimeout(J, 500), G(), X();
+}) : (N(), setTimeout(J, 500), G(), X());
 (typeof window.vc_js < "u" || document.querySelector("[data-vc-full-width]") || document.querySelector(".vc_row")) && (console.log("[FP-RESV] WPBakery detected - adding compatibility listeners"), document.addEventListener("vc-full-content-loaded", function() {
-  console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(x, 100);
+  console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(N, 100);
 }), window.addEventListener("load", function() {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > q.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), x());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > V.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), N());
   }, 1e3);
 }), [1500, 3e3, 5e3, 1e4].forEach(function(n) {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > q.size && (console.log("[FP-RESV] WPBakery extended retry (" + n + "ms) - initializing..."), x());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > V.size && (console.log("[FP-RESV] WPBakery extended retry (" + n + "ms) - initializing..."), N());
   }, n);
 }));
 document.addEventListener("fp-resv:tracking:push", function(n) {
@@ -1251,10 +1273,10 @@ document.addEventListener("fp-resv:tracking:push", function(n) {
   if (!e)
     return;
   const i = t.payload || t.data || {};
-  b(e, i && typeof i == "object" ? i : {});
+  g(e, i && typeof i == "object" ? i : {});
 });
-const Et = 400, wt = 6e4, Ct = 3, Z = 600;
-function Pt(n, t) {
+const Et = 400, wt = 6e4, Pt = 3, Y = 600;
+function Ct(n, t) {
   let e;
   try {
     e = new URL(n, window.location.origin);
@@ -1268,55 +1290,55 @@ function B(n) {
   for (; n.firstChild; )
     n.removeChild(n.firstChild);
 }
-function _t(n) {
+function Ft(n) {
   const t = n.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), a = t.querySelector("[data-fp-resv-slots-boundary]"), r = a ? a.querySelector("[data-fp-resv-slots-retry]") : null, o = /* @__PURE__ */ new Map();
-  let u = null, f = null, y = null, E = 0;
-  function _(l) {
+  let d = null, h = null, v = null, y = 0;
+  function k(l) {
     if (typeof l != "string")
       return "";
-    const d = l.trim().toLowerCase();
-    if (d === "")
+    const u = l.trim().toLowerCase();
+    if (u === "")
       return "";
-    const h = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), m = (g) => g.some((c) => h.startsWith(c)), C = (g) => g.some((c) => h.includes(c));
-    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const f = ((A) => typeof A.normalize == "function" ? A.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : A)(u), m = (A) => A.some((c) => f.startsWith(c)), C = (A) => A.some((c) => f.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : u === "waitlist" || u === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : u;
   }
-  function A(l, d) {
-    const p = Array.isArray(l) ? l : [], h = p.length;
-    if (h === 0)
-      return d === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
-    const m = p.map((c) => _(c && c.status)).filter((c) => c !== "");
-    return m.some((c) => c === "limited") ? { state: "limited", slots: h } : m.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : m.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
+  function P(l, u) {
+    const p = Array.isArray(l) ? l : [], f = p.length;
+    if (f === 0)
+      return u === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
+    const m = p.map((c) => k(c && c.status)).filter((c) => c !== "");
+    return m.some((c) => c === "limited") ? { state: "limited", slots: f } : m.some((c) => c === "available") ? { state: "available", slots: f } : u ? { state: "available", slots: f } : m.length === 0 ? { state: "available", slots: f } : { state: "full", slots: f };
   }
-  function v(l, d) {
+  function w(l, u) {
     if (typeof n.onAvailabilitySummary == "function")
       try {
-        n.onAvailabilitySummary(d, l || f || {});
+        n.onAvailabilitySummary(u, l || h || {});
       } catch {
       }
   }
   r && r.addEventListener("click", () => {
-    f && M(f, 0);
+    h && M(h, 0);
   });
-  function N(l, d) {
-    const p = typeof d == "string" ? d : d ? "loading" : "idle", h = typeof l == "string" ? l : "";
-    e && (e.textContent = h, e.setAttribute("data-state", p));
+  function b(l, u) {
+    const p = typeof u == "string" ? u : u ? "loading" : "idle", f = typeof l == "string" ? l : "";
+    e && (e.textContent = f, e.setAttribute("data-state", p));
     const m = p === "loading";
     t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
-  function w() {
+  function S() {
     if (!i)
       return;
     B(i);
     const l = n.skeletonCount || 4;
-    for (let d = 0; d < l; d += 1) {
-      const p = document.createElement("li"), h = document.createElement("span");
-      h.className = "fp-skeleton", p.appendChild(h), i.appendChild(p);
+    for (let u = 0; u < l; u += 1) {
+      const p = document.createElement("li"), f = document.createElement("span");
+      f.className = "fp-skeleton", p.appendChild(f), i.appendChild(p);
     }
   }
-  function V(l) {
+  function q(l) {
     s && (s.hidden = !1);
-    const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", h = d && typeof l.date == "string" ? l.date.trim() : "", m = d && typeof l.party < "u" ? String(l.party).trim() : "", C = d && !!l.requiresMeal, g = p !== "", S = h !== "" && (m !== "" && m !== "0") && (!C || g), F = C && !g ? n.strings && n.strings.selectMeal || "" : S && n.strings && n.strings.slotsEmpty || "";
-    N(F, "idle"), i && B(i), v(l, { state: S ? "unavailable" : "unknown", slots: 0 });
+    const u = l && typeof l == "object", p = u && typeof l.meal == "string" ? l.meal.trim() : "", f = u && typeof l.date == "string" ? l.date.trim() : "", m = u && typeof l.party < "u" ? String(l.party).trim() : "", C = u && !!l.requiresMeal, A = p !== "", E = f !== "" && (m !== "" && m !== "0") && (!C || A), _ = C && !A ? n.strings && n.strings.selectMeal || "" : E && n.strings && n.strings.slotsEmpty || "";
+    b(_, "idle"), i && B(i), w(l, { state: E ? "unavailable" : "unknown", slots: 0 });
   }
   function I() {
     s && (s.hidden = !0);
@@ -1324,128 +1346,128 @@ function _t(n) {
   function W() {
     a && (a.hidden = !0);
   }
-  function nt(l) {
-    const d = n.strings && n.strings.slotsError || n.strings && n.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
+  function st(l) {
+    const u = n.strings && n.strings.slotsError || n.strings && n.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.";
     if (a) {
       const p = a.querySelector("[data-fp-resv-slots-boundary-message]");
-      p && (p.textContent = l || d), a.hidden = !1;
+      p && (p.textContent = l || u), a.hidden = !1;
     }
-    N(l || d, "error"), v(f, { state: "error", slots: 0 });
+    b(l || u, "error"), w(h, { state: "error", slots: 0 });
   }
-  function at(l, d) {
+  function nt(l, u) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
-    Array.prototype.forEach.call(p, (h) => {
-      h.setAttribute("aria-pressed", h === d ? "true" : "false");
-    }), y = l, typeof n.onSlotSelected == "function" && n.onSlotSelected(l);
+    Array.prototype.forEach.call(p, (f) => {
+      f.setAttribute("aria-pressed", f === u ? "true" : "false");
+    }), v = l, typeof n.onSlotSelected == "function" && n.onSlotSelected(l);
   }
-  function rt() {
-    if (y = null, !i)
+  function at() {
+    if (v = null, !i)
       return;
     const l = i.querySelectorAll("button[data-slot]");
-    Array.prototype.forEach.call(l, (d) => {
-      d.setAttribute("aria-pressed", "false");
+    Array.prototype.forEach.call(l, (u) => {
+      u.setAttribute("aria-pressed", "false");
     });
   }
-  function K(l, d, p) {
-    if (p && p !== E || d && f && d !== f || (W(), I(), !i))
+  function K(l, u, p) {
+    if (p && p !== y || u && h && u !== h || (W(), I(), !i))
       return;
     B(i);
-    const h = l && Array.isArray(l.slots) ? l.slots : [];
-    if (h.length === 0) {
-      V(d);
+    const f = l && Array.isArray(l.slots) ? l.slots : [];
+    if (f.length === 0) {
+      q(u);
       return;
     }
-    h.forEach((C) => {
-      const g = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", y && y.start === C.start ? "true" : "false"), c.addEventListener("click", () => at(C, c)), g.appendChild(c), i.appendChild(g);
-    }), N(n.strings && n.strings.slotsUpdated || "", !1);
+    f.forEach((C) => {
+      const A = document.createElement("li"), c = document.createElement("button");
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", v && v.start === C.start ? "true" : "false"), c.addEventListener("click", () => nt(C, c)), A.appendChild(c), i.appendChild(A);
+    }), b(n.strings && n.strings.slotsUpdated || "", !1);
     const m = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
-    v(d, A(h, m));
+    w(u, P(f, m));
   }
-  function M(l, d) {
-    if (f = l, !l || !l.date || !l.party) {
-      V(l);
+  function M(l, u) {
+    if (h = l, !l || !l.date || !l.party) {
+      q(l);
       return;
     }
-    const p = ++E, h = JSON.stringify([l.date, l.meal, l.party]), m = o.get(h);
-    if (m && Date.now() - m.timestamp < wt && d === 0) {
+    const p = ++y, f = JSON.stringify([l.date, l.meal, l.party]), m = o.get(f);
+    if (m && Date.now() - m.timestamp < wt && u === 0) {
       K(m.payload, l, p);
       return;
     }
-    W(), I(), w(), N(n.strings && n.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), v(l, { state: "loading", slots: 0 });
-    const C = Pt(n.endpoint, l), g = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((R) => {
+    W(), I(), S(), b(n.strings && n.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), w(l, { state: "loading", slots: 0 });
+    const C = Ct(n.endpoint, l), A = performance.now();
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
-        const S = new Error("availability_error");
-        S.status = c.status, S.payload = R;
-        const F = c.headers.get("Retry-After");
-        if (F) {
-          const k = Number.parseInt(F, 10);
-          Number.isFinite(k) && (S.retryAfter = k);
+        const E = new Error("availability_error");
+        E.status = c.status, E.payload = x;
+        const _ = c.headers.get("Retry-After");
+        if (_) {
+          const R = Number.parseInt(_, 10);
+          Number.isFinite(R) && (E.retryAfter = R);
         }
-        throw S;
+        throw E;
       }
-      return R;
+      return x;
     })).then((c) => {
-      if (p !== E)
+      if (p !== y)
         return;
-      const R = performance.now() - g;
-      typeof n.onLatency == "function" && n.onLatency(R), o.set(h, { payload: c, timestamp: Date.now() }), K(c, l, p);
+      const x = performance.now() - A;
+      typeof n.onLatency == "function" && n.onLatency(x), o.set(f, { payload: c, timestamp: Date.now() }), K(c, l, p);
     }).catch((c) => {
-      if (p !== E)
+      if (p !== y)
         return;
-      const R = performance.now() - g;
-      typeof n.onLatency == "function" && n.onLatency(R);
-      const S = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, F = typeof c.status == "number" ? c.status : S && typeof S.status == "number" ? S.status : 0;
-      let k = 0;
+      const x = performance.now() - A;
+      typeof n.onLatency == "function" && n.onLatency(x);
+      const E = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, _ = typeof c.status == "number" ? c.status : E && typeof E.status == "number" ? E.status : 0;
+      let R = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
-        k = c.retryAfter;
-      else if (S && typeof S.retry_after < "u") {
-        const L = Number.parseInt(S.retry_after, 10);
-        Number.isFinite(L) && (k = L);
+        R = c.retryAfter;
+      else if (E && typeof E.retry_after < "u") {
+        const L = Number.parseInt(E.retry_after, 10);
+        Number.isFinite(L) && (R = L);
       }
-      if (d >= Ct - 1 ? !1 : F === 429 || F >= 500 && F < 600 ? !0 : F === 0) {
-        const L = d + 1;
+      if (u >= Pt - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+        const L = u + 1;
         typeof n.onRetry == "function" && n.onRetry(L);
-        const dt = k > 0 ? Math.max(k * 1e3, Z) : Z * Math.pow(2, d);
-        window.setTimeout(() => M(l, L), dt);
+        const ct = R > 0 ? Math.max(R * 1e3, Y) : Y * Math.pow(2, u);
+        window.setTimeout(() => M(l, L), ct);
         return;
       }
-      const ot = c && c.payload && (c.payload.message || c.payload.code) || S && S.message || n.strings && n.strings.slotsError || n.strings && n.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", lt = c && c.payload || S || null, ct = tt(ot, lt);
-      nt(ct);
+      const rt = c && c.payload && (c.payload.message || c.payload.code) || E && E.message || n.strings && n.strings.slotsError || n.strings && n.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", ot = c && c.payload || E || null, lt = Q(rt, ot);
+      st(lt);
     });
   }
   return {
-    schedule(l, d = {}) {
-      u && window.clearTimeout(u);
-      const p = d && typeof d == "object" ? d : {}, h = l || (typeof n.getParams == "function" ? n.getParams() : null), m = !!(h && h.requiresMeal);
-      if (!h || !h.date || !h.party || m && !h.meal) {
-        f = h, V(h || {});
+    schedule(l, u = {}) {
+      d && window.clearTimeout(d);
+      const p = u && typeof u == "object" ? u : {}, f = l || (typeof n.getParams == "function" ? n.getParams() : null), m = !!(f && f.requiresMeal);
+      if (!f || !f.date || !f.party || m && !f.meal) {
+        h = f, q(f || {});
         return;
       }
       if (p.immediate) {
-        M(h, 0);
+        M(f, 0);
         return;
       }
-      u = window.setTimeout(() => {
-        M(h, 0);
+      d = window.setTimeout(() => {
+        M(f, 0);
       }, Et);
     },
     revalidate() {
-      if (!f)
+      if (!h)
         return;
-      const l = JSON.stringify([f.date, f.meal, f.party]);
-      o.delete(l), M(f, 0);
+      const l = JSON.stringify([h.date, h.meal, h.party]);
+      o.delete(l), M(h, 0);
     },
     getSelection() {
-      return y;
+      return v;
     },
     clearSelection() {
-      rt();
+      at();
     }
   };
 }
-const Ft = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const _t = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createAvailabilityController: _t
+  createAvailabilityController: Ft
 }, Symbol.toStringTag, { value: "Module" }));

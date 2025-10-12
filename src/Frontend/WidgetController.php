@@ -253,21 +253,83 @@ final class WidgetController
             margin-bottom: 0.75rem !important;
             line-height: 1.6 !important;
         }
-        /* Input, select, textarea */
-        .fp-resv-widget input,
+        /* Input, select, textarea - MIGLIOrata visibilità */
+        .fp-resv-widget input:not([type="checkbox"]):not([type="radio"]),
         .fp-resv-widget select,
         .fp-resv-widget textarea,
-        #fp-resv-default input,
+        #fp-resv-default input:not([type="checkbox"]):not([type="radio"]),
         #fp-resv-default select,
         #fp-resv-default textarea {
             margin-top: 0.25rem !important;
-            padding: 0.75rem !important;
+            padding: 0.85rem 1rem !important;
+            border: 2px solid #cbd5e1 !important;
+            border-radius: 0.5rem !important;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
+            width: 100% !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
-        /* Labels */
+        /* Input focus - bordo blu */
+        .fp-resv-widget input:not([type="checkbox"]):not([type="radio"]):focus,
+        .fp-resv-widget select:focus,
+        .fp-resv-widget textarea:focus,
+        #fp-resv-default input:not([type="checkbox"]):not([type="radio"]):focus,
+        #fp-resv-default select:focus,
+        #fp-resv-default textarea:focus {
+            outline: none !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+        }
+        /* Input placeholder - più visibile */
+        .fp-resv-widget input::placeholder,
+        .fp-resv-widget textarea::placeholder,
+        #fp-resv-default input::placeholder,
+        #fp-resv-default textarea::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1 !important;
+        }
+        /* Campo data - ancora più visibile */
+        .fp-resv-widget input[type="date"],
+        .fp-resv-widget input[data-fp-resv-field="date"],
+        #fp-resv-default input[type="date"],
+        #fp-resv-default input[data-fp-resv-field="date"] {
+            font-size: 1.05rem !important;
+            padding: 1rem !important;
+            border-width: 2px !important;
+            min-height: 3rem !important;
+            cursor: pointer !important;
+        }
+        /* Campi numerici (party, ecc) - più visibili */
+        .fp-resv-widget input[type="number"],
+        .fp-resv-widget input[data-fp-resv-field="party"],
+        #fp-resv-default input[type="number"],
+        #fp-resv-default input[data-fp-resv-field="party"] {
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            min-height: 3rem !important;
+        }
+        /* Campi email e telefono */
+        .fp-resv-widget input[type="email"],
+        .fp-resv-widget input[type="tel"],
+        .fp-resv-widget input[data-fp-resv-field="phone"],
+        #fp-resv-default input[type="email"],
+        #fp-resv-default input[type="tel"],
+        #fp-resv-default input[data-fp-resv-field="phone"] {
+            font-size: 1.05rem !important;
+            min-height: 3rem !important;
+        }
+        /* Labels - più evidenti */
         .fp-resv-widget label,
         #fp-resv-default label {
             display: block !important;
             margin-bottom: 0.5rem !important;
+            color: #334155 !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
         }
         /* Progress bar spacing e z-index */
         .fp-resv-widget .fp-resv-progress,
@@ -303,19 +365,19 @@ final class WidgetController
             background: #ffffff !important;
             border: 2px solid rgba(148, 163, 184, 0.35) !important;
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.1) !important;
-            color: #475569 !important;
+            color: #64748b !important;
             font-weight: 600 !important;
             padding: 0.65rem 1.1rem !important;
             min-height: 2.75rem !important;
             min-width: 2.75rem !important;
         }
-        /* Progress bar items - stato attivo */
+        /* Progress bar items - stato attivo CON TESTO BIANCO */
         .fp-resv-widget .fp-progress__item[aria-current="step"],
         #fp-resv-default .fp-progress__item[aria-current="step"] {
-            background: #ffffff !important;
-            border-color: var(--fp-resv-color-primary, #2563eb) !important;
-            color: var(--fp-resv-color-primary, #2563eb) !important;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3), 0 3px 10px rgba(15, 23, 42, 0.15) !important;
+            background: #1e293b !important;
+            border-color: #1e293b !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(30, 41, 59, 0.4), 0 3px 10px rgba(15, 23, 42, 0.2) !important;
             font-weight: 700 !important;
         }
         /* Progress bar items - testo numeri sempre visibile */
@@ -331,6 +393,13 @@ final class WidgetController
         .fp-resv-widget .fp-progress__item *,
         #fp-resv-default .fp-progress__item * {
             color: inherit !important;
+        }
+        /* Forza testo BIANCO su item attivo */
+        .fp-resv-widget .fp-progress__item[aria-current="step"] *,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] span,
+        #fp-resv-default .fp-progress__item[aria-current="step"] *,
+        #fp-resv-default .fp-progress__item[aria-current="step"] span {
+            color: #ffffff !important;
         }
         /* Progress bar items completati - verde */
         .fp-resv-widget .fp-progress__item[aria-disabled="false"]:not([aria-current="step"]),

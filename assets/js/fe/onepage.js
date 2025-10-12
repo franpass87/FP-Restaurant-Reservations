@@ -1527,8 +1527,26 @@ class FormApp {
             latency = Math.round(performance.now() - start);
             pushDataLayerEvent('ui_latency', { op: 'submit', ms: latency });
 
+            // DEBUG: Log della risposta grezza
+            console.log('[FP-RESV] Response status:', response.status);
+            console.log('[FP-RESV] Response headers:', {
+                contentType: response.headers.get('content-type'),
+                contentLength: response.headers.get('content-length')
+            });
+            
+            // Leggi il body come testo prima di parsare
+            const responseText = await response.text();
+            console.log('[FP-RESV] Response text length:', responseText.length);
+            console.log('[FP-RESV] Response text preview:', responseText.substring(0, 200));
+
             if (!response.ok) {
-                const errorPayload = await safeJson(response);
+                let errorPayload;
+                try {
+                    errorPayload = responseText ? JSON.parse(responseText) : {};
+                } catch (parseError) {
+                    console.error('[FP-RESV] Errore parsing risposta errore:', parseError);
+                    errorPayload = { message: 'Risposta non valida dal server' };
+                }
                 
                 // DEBUG: Log dell'errore ricevuto
                 console.error('[FP-RESV] Errore API:', {
@@ -1568,7 +1586,17 @@ class FormApp {
                         });
                         
                         if (retryResponse.ok) {
-                            const data = await retryResponse.json();
+                            const retryText = await retryResponse.text();
+                            console.log('[FP-RESV] Retry success - Response text:', retryText.substring(0, 200));
+                            
+                            let data;
+                            try {
+                                data = retryText ? JSON.parse(retryText) : {};
+                            } catch (parseError) {
+                                console.error('[FP-RESV] Errore parsing retry success:', parseError);
+                                data = {};
+                            }
+                            
                             this.handleSubmitSuccess(data);
                             this.state.nonceRetried = false;
                             return false;
@@ -1593,10 +1621,20 @@ class FormApp {
                 });
             }
 
-        const data = await response.json();
-        this.handleSubmitSuccess(data);
-        // Reset request_id dopo successo
-        this.state.requestId = null;
+            // Parse la risposta di successo
+            let data;
+            try {
+                data = responseText ? JSON.parse(responseText) : {};
+                console.log('[FP-RESV] Risposta successo parsata:', data);
+            } catch (parseError) {
+                console.error('[FP-RESV] ERRORE parsing risposta successo:', parseError);
+                console.error('[FP-RESV] Testo risposta:', responseText);
+                throw new Error('Risposta non valida dal server (JSON malformato)');
+            }
+
+            this.handleSubmitSuccess(data);
+            // Reset request_id dopo successo
+            this.state.requestId = null;
     } catch (error) {
             if (!latency) {
                 latency = Math.round(performance.now() - start);
