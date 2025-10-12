@@ -345,21 +345,11 @@ final class REST
     }
 
     /**
-     * Helper per output diretto di errori JSON (bypassa WP_REST_Response)
+     * Helper per creare errori WP_Error
      */
-    private function outputError(string $code, string $message, array $data = []): void
+    private function createError(string $code, string $message, array $data = []): WP_Error
     {
-        $status = $data['status'] ?? 400;
-        unset($data['status']);
-        
-        header('Content-Type: application/json; charset=UTF-8');
-        http_response_code($status);
-        echo wp_json_encode([
-            'code' => $code,
-            'message' => $message,
-            'data' => array_merge(['status' => $status], $data),
-        ]);
-        exit;
+        return new WP_Error($code, $message, $data);
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -407,7 +397,7 @@ final class REST
                 'user_logged_in' => is_user_logged_in(),
             ];
             
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_invalid_nonce',
                 __('Errore di sicurezza. Ricarica la pagina e riprova.', 'fp-restaurant-reservations'),
                 array_merge(['status' => 403], $debugInfo)
@@ -416,7 +406,7 @@ final class REST
 
         $ip = Helpers::clientIp();
         if (!RateLimiter::allow('reservation:' . $ip, 5, 300)) {
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_rate_limited',
                 __('Hai effettuato troppe richieste. Attendi qualche minuto e riprova.', 'fp-restaurant-reservations'),
                 ['status' => 429]
@@ -425,7 +415,7 @@ final class REST
 
         $honeypot = $this->param($request, ['fp_resv_hp']);
         if ($honeypot !== null && $honeypot !== '') {
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_bot_detected',
                 __('Non è stato possibile elaborare la richiesta.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -434,7 +424,7 @@ final class REST
 
         $captchaPassed = apply_filters('fp_resv_validate_captcha', true, $request);
         if ($captchaPassed === false) {
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_captcha_failed',
                 __('Verifica anti-spam non superata.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -442,7 +432,7 @@ final class REST
         }
 
         if (!$this->consentGiven($request)) {
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_missing_consent',
                 __('Per confermare la prenotazione è necessario accettare il trattamento dati.', 'fp-restaurant-reservations'),
                 ['status' => 400]
@@ -471,12 +461,10 @@ final class REST
                     'message'     => __('Prenotazione già registrata.', 'fp-restaurant-reservations'),
                 ];
 
-                // Output diretto anche per idempotenza
-                header('Content-Type: application/json; charset=UTF-8');
-                header('X-FP-Resv-Idempotent: true');
-                http_response_code(200);
-                echo wp_json_encode($payload);
-                exit;
+                // Ritorna risposta standard per idempotenza
+                $response = new WP_REST_Response($payload, 200);
+                $response->set_headers(['X-FP-Resv-Idempotent' => 'true']);
+                return $response;
             }
         }
 
@@ -558,7 +546,7 @@ final class REST
                 'meal' => $payload['meal'] ?? null,
             ]);
             
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_invalid_reservation',
                 $exception->getMessage(),
                 ['status' => 400]
@@ -572,7 +560,7 @@ final class REST
                 'line' => $exception->getLine(),
             ]);
             
-            $this->outputError(
+            return $this->createError(
                 'fp_resv_reservation_error',
                 __('Si è verificato un errore durante la creazione della prenotazione.', 'fp-restaurant-reservations'),
                 [
@@ -598,34 +586,13 @@ final class REST
             'reservation_id' => $payload['reservation']['id'] ?? null,
         ]);
 
-        // Flush di TUTTI i buffer esistenti (da altri plugin/WordPress)
-        // ma SENZA cancellare il contenuto
-        while (ob_get_level()) {
-            ob_end_flush();
-        }
+        Logging::log('api', '>>> Costruisco WP_REST_Response standard');
         
-        Logging::log('api', '>>> OUTPUT DIRETTO invece di WP_REST_Response');
+        $response = new WP_REST_Response($payload, 201);
         
-        $json = wp_json_encode($payload);
+        Logging::log('api', '>>> RETURN response standard');
         
-        Logging::log('api', '>>> JSON PRONTO PER OUTPUT', [
-            'json_length' => strlen($json),
-            'json_preview' => substr($json, 0, 100),
-            'ob_level' => ob_get_level(),
-            'headers_sent' => headers_sent(),
-        ]);
-        
-        // Output diretto per evitare interferenze di WordPress
-        if (!headers_sent()) {
-            header('Content-Type: application/json; charset=UTF-8');
-            http_response_code(201);
-        }
-        
-        echo $json;
-        
-        Logging::log('api', '>>> ECHO ESEGUITO, chiamo die()');
-        
-        die(); // Usa die() invece di exit() per forzare terminazione
+        return $response;
     }
 
     private function consentGiven(WP_REST_Request $request): bool
