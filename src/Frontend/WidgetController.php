@@ -184,6 +184,7 @@ final class WidgetController
         $post = null;
         $shouldEnqueue = false;
 
+        // Check for shortcode or block in singular posts/pages
         if (is_singular()) {
             $post = get_post();
             if ($post instanceof WP_Post) {
@@ -193,6 +194,28 @@ final class WidgetController
 
                 if (function_exists('has_block') && has_block('fp-restaurant-reservations/form', $post)) {
                     $shouldEnqueue = true;
+                }
+            }
+        }
+
+        // Check for shortcode in other contexts (homepage, archives, etc.)
+        if (!$shouldEnqueue) {
+            global $wp_query;
+            
+            // Check all posts in the current query
+            if (isset($wp_query->posts) && is_array($wp_query->posts)) {
+                foreach ($wp_query->posts as $queried_post) {
+                    if ($queried_post instanceof WP_Post) {
+                        if (has_shortcode($queried_post->post_content, 'fp_reservations')) {
+                            $shouldEnqueue = true;
+                            break;
+                        }
+                        
+                        if (function_exists('has_block') && has_block('fp-restaurant-reservations/form', $queried_post)) {
+                            $shouldEnqueue = true;
+                            break;
+                        }
+                    }
                 }
             }
         }
