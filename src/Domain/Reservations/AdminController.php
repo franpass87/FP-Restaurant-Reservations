@@ -14,12 +14,14 @@ use function current_user_can;
 use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
+use function remove_query_arg;
 use function rest_url;
 use function sanitize_key;
 use function wp_create_nonce;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
+use function wp_safe_redirect;
 
 final class AdminController
 {
@@ -58,6 +60,16 @@ final class AdminController
     {
         if ($this->pageHook === null || $hook !== $this->pageHook) {
             return;
+        }
+
+        // Force refresh assets se richiesto via URL parameter
+        if (isset($_GET['force_refresh_assets']) && $_GET['force_refresh_assets'] === '1' && current_user_can('manage_options')) {
+            Plugin::forceRefreshAssets();
+            
+            // Redirect per rimuovere il parametro dall'URL
+            $redirect_url = remove_query_arg('force_refresh_assets');
+            wp_safe_redirect($redirect_url);
+            exit;
         }
 
         $scriptHandle = 'fp-resv-admin-agenda';
