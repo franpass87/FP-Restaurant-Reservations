@@ -122,14 +122,15 @@ final class WidgetController
         wp_enqueue_style('fp-resv-form');
         
         // Inline critical CSS per evitare FOUC e conflitti con WPBakery
-        // NON uso "all: initial" perché cancella anche gli stili interni del form!
+        // Uso !important solo su proprietà essenziali, mantenendo gli stili interni del form
         $inlineCss = '
-        /* Isola il widget da WPBakery/Theme - solo stili necessari */
+        /* Isola il widget da WPBakery/Theme */
         .vc_row .wpb_column .wpb_wrapper .fp-resv-widget,
         .vc_column_container .fp-resv-widget,
         .wpb_text_column .fp-resv-widget,
         .wpb_wrapper .fp-resv-widget,
-        div.fp-resv-widget {
+        div.fp-resv-widget,
+        #fp-resv-default {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -141,12 +142,47 @@ final class WidgetController
             position: relative !important;
             float: none !important;
         }
-        /* Box-sizing per tutti gli elementi */
+        /* Box-sizing per tutti */
         .fp-resv-widget,
         .fp-resv-widget *,
         .fp-resv-widget *::before,
         .fp-resv-widget *::after {
             box-sizing: border-box !important;
+        }
+        /* Forza layout corretto dei pulsanti di navigazione */
+        .fp-resv-widget .fp-resv-step__footer,
+        #fp-resv-default .fp-resv-step__footer {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-end !important;
+            gap: 0.75rem !important;
+            margin-top: 2rem !important;
+        }
+        /* Pulsante Indietro a sinistra */
+        .fp-resv-widget .fp-resv-step__footer [data-fp-resv-nav="prev"],
+        #fp-resv-default .fp-resv-step__footer [data-fp-resv-nav="prev"] {
+            margin-right: auto !important;
+        }
+        /* Sticky CTA bar */
+        .fp-resv-widget .fp-resv-sticky-cta,
+        #fp-resv-default .fp-resv-sticky-cta {
+            position: sticky !important;
+            bottom: -0.5rem !important;
+            padding: 0.85rem clamp(1rem, 4vw, 1.25rem) !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.95)) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(148, 163, 184, 0.2) !important;
+            box-shadow: 0 -14px 34px rgba(15, 23, 42, 0.12) !important;
+            z-index: 11 !important;
+            margin-top: 1rem !important;
+        }
+        /* Azioni dentro sticky bar */
+        .fp-resv-widget .fp-resv-widget__actions,
+        #fp-resv-default .fp-resv-widget__actions {
+            display: grid !important;
+            gap: 0.65rem !important;
+            align-items: flex-start !important;
         }
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
