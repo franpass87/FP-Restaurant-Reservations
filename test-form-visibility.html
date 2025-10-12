@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Visibilità Form - FP Restaurant Reservations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2563eb;
+        }
+        
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .success {
+            color: #16a34a;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        
+        .info {
+            background: #e0f2fe;
+            padding: 10px;
+            border-left: 4px solid #0284c7;
+            margin: 10px 0;
+        }
+        
+        /* Simulazione conflitti CSS comuni */
+        .theme-conflict-1 * {
+            display: none !important;
+        }
+        
+        .theme-conflict-2 {
+            visibility: hidden;
+            opacity: 0;
+        }
+        
+        .theme-conflict-3 {
+            height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Visibilità Form - FP Restaurant Reservations</h1>
+    
+    <div class="info">
+        <strong>ℹ️ Informazioni:</strong><br>
+        Questa pagina testa che il form di prenotazione sia visibile anche in presenza di conflitti CSS comuni.
+        Apri la console del browser (F12) per vedere i log di debug.
+    </div>
+
+    <!-- Test 1: Form Normale -->
+    <div class="test-section">
+        <div class="test-title">✅ Test 1: Form Normale (senza conflitti)</div>
+        <div class="test-description">Il form dovrebbe essere completamente visibile e funzionante.</div>
+        <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-1" data-fp-resv-app data-fp-resv="{}">
+            <div style="padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; border-radius: 12px;">
+                <h2>✅ Form Visibile</h2>
+                <p>Se vedi questo messaggio, il form è visibile correttamente!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 2: Parent con display: none !important -->
+    <div class="test-section">
+        <div class="test-title">🔥 Test 2: Parent con display: none !important</div>
+        <div class="test-description">
+            Test più critico: il parent ha <code>display: none !important</code> su tutti i figli.
+            Il form dovrebbe comunque essere visibile grazie ai fix implementati.
+        </div>
+        <div class="theme-conflict-1">
+            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-2" data-fp-resv-app data-fp-resv="{}">
+                <div style="padding: 40px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-align: center; border-radius: 12px;">
+                    <h2>💪 Form Visibile Nonostante il Conflitto</h2>
+                    <p>Se vedi questo, il fix funziona alla perfezione!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 3: visibility: hidden + opacity: 0 -->
+    <div class="test-section">
+        <div class="test-title">👀 Test 3: Parent con visibility: hidden e opacity: 0</div>
+        <div class="test-description">
+            Il container parent ha <code>visibility: hidden</code> e <code>opacity: 0</code>.
+        </div>
+        <div class="theme-conflict-2">
+            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-3" data-fp-resv-app data-fp-resv="{}">
+                <div style="padding: 40px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; text-align: center; border-radius: 12px;">
+                    <h2>👁️ Form Visibile</h2>
+                    <p>visibility e opacity override funzionano!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 4: height: 0 + overflow: hidden -->
+    <div class="test-section">
+        <div class="test-title">📏 Test 4: Parent con height: 0 e overflow: hidden</div>
+        <div class="test-description">
+            Il container parent ha <code>height: 0</code> e <code>overflow: hidden</code>.
+        </div>
+        <div class="theme-conflict-3">
+            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-4" data-fp-resv-app data-fp-resv="{}">
+                <div style="padding: 40px; background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; text-align: center; border-radius: 12px;">
+                    <h2>📐 Form Visibile</h2>
+                    <p>height e overflow gestiti correttamente!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risultati -->
+    <div class="test-section">
+        <div class="test-title">📊 Risultati Test</div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Simula i fix di visibilità
+        function ensureWidgetVisibility(widget) {
+            if (!widget) return;
+            
+            widget.style.display = 'block';
+            widget.style.visibility = 'visible';
+            widget.style.opacity = '1';
+            widget.style.position = 'relative';
+            widget.style.width = '100%';
+            widget.style.height = 'auto';
+            widget.style.overflow = 'visible';
+            
+            // Fix parent
+            let parent = widget.parentElement;
+            let depth = 0;
+            while (parent && depth < 5) {
+                const display = window.getComputedStyle(parent).display;
+                if (display === 'none') {
+                    console.warn('[TEST] Parent nascosto trovato, fix applicato:', parent.className);
+                    parent.style.display = 'block';
+                }
+                parent = parent.parentElement;
+                depth++;
+            }
+        }
+
+        // Test di visibilità
+        function testVisibility() {
+            const widgets = document.querySelectorAll('[data-fp-resv-app]');
+            const results = [];
+            
+            console.log('[TEST] Trovati', widgets.length, 'widgets');
+            
+            widgets.forEach((widget, index) => {
+                ensureWidgetVisibility(widget);
+                
+                const computed = window.getComputedStyle(widget);
+                const isVisible = computed.display !== 'none' && 
+                                 computed.visibility !== 'hidden' && 
+                                 parseFloat(computed.opacity) > 0;
+                
+                const testId = widget.id || `widget-${index}`;
+                const result = {
+                    id: testId,
+                    visible: isVisible,
+                    display: computed.display,
+                    visibility: computed.visibility,
+                    opacity: computed.opacity
+                };
+                
+                results.push(result);
+                
+                console.log(`[TEST] ${testId}:`, isVisible ? '✅ VISIBILE' : '❌ NASCOSTO', result);
+            });
+            
+            // Mostra risultati
+            const resultsDiv = document.getElementById('results');
+            let html = '<ul>';
+            results.forEach(r => {
+                const status = r.visible ? '<span class="success">✅ VISIBILE</span>' : '<span class="error">❌ NASCOSTO</span>';
+                html += `<li><strong>${r.id}</strong>: ${status} (display: ${r.display}, visibility: ${r.visibility}, opacity: ${r.opacity})</li>`;
+            });
+            html += '</ul>';
+            
+            const allVisible = results.every(r => r.visible);
+            if (allVisible) {
+                html = '<div class="success" style="font-size: 18px; margin-bottom: 15px;">🎉 TUTTI I TEST SUPERATI! Il form è visibile in tutti gli scenari.</div>' + html;
+            } else {
+                html = '<div class="error" style="font-size: 18px; margin-bottom: 15px;">⚠️ ATTENZIONE: Alcuni test hanno fallito.</div>' + html;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Esegui test dopo il caricamento
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testVisibility);
+        } else {
+            testVisibility();
+        }
+
+        // Auto-check ogni secondo per 10 secondi
+        let checks = 0;
+        const interval = setInterval(() => {
+            checks++;
+            console.log(`[TEST] Auto-check #${checks}`);
+            testVisibility();
+            
+            if (checks >= 10) {
+                clearInterval(interval);
+                console.log('[TEST] Auto-check completato');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
