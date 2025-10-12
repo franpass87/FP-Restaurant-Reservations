@@ -1,0 +1,262 @@
+/**
+ * FP Restaurant Reservations - Buttons
+ * Stili per tutti i bottoni del form
+ */
+
+/* ==================== BASE BUTTON ==================== */
+
+.fp-btn,
+.fp-resv-button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-sm);
+  
+  /* Sizing */
+  min-height: var(--fp-button-height-md);
+  padding: var(--fp-space-sm) var(--fp-space-lg);
+  
+  /* Typography */
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-font-semibold);
+  line-height: var(--fp-leading-tight);
+  text-decoration: none;
+  white-space: nowrap;
+  
+  /* Visual */
+  border-radius: var(--fp-radius-xl);
+  border: 1px solid transparent;
+  background: var(--fp-color-primary);
+  color: white;
+  box-shadow: var(--fp-shadow-md);
+  
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--fp-transition-base);
+  
+  /* Position */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ripple effect */
+.fp-btn::before,
+.fp-resv-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.fp-btn:hover::before,
+.fp-resv-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ==================== STATES ==================== */
+
+.fp-btn:hover,
+.fp-resv-button:hover {
+  background: var(--fp-color-primary-hover);
+  box-shadow: var(--fp-shadow-lg);
+  transform: translateY(-1px);
+}
+
+.fp-btn:active,
+.fp-resv-button:active {
+  transform: translateY(0);
+  box-shadow: var(--fp-shadow-sm);
+}
+
+.fp-btn:focus-visible,
+.fp-resv-button:focus-visible {
+  outline: none;
+  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
+}
+
+.fp-btn:disabled,
+.fp-btn[aria-disabled="true"],
+.fp-resv-button:disabled,
+.fp-resv-button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: var(--fp-shadow-sm);
+}
+
+/* ==================== VARIANTS ==================== */
+
+/* Primary (default) */
+.fp-btn--primary,
+.fp-resv-button--primary {
+  background: var(--fp-color-primary);
+  color: white;
+}
+
+.fp-btn--primary:hover,
+.fp-resv-button--primary:hover {
+  background: var(--fp-color-primary-hover);
+}
+
+/* Secondary / Ghost */
+.fp-btn--secondary,
+.fp-btn--ghost,
+.fp-resv-button--secondary,
+.fp-resv-button--ghost {
+  background: transparent;
+  color: var(--fp-color-primary);
+  border-color: var(--fp-color-border);
+  box-shadow: var(--fp-shadow-sm);
+}
+
+.fp-btn--secondary:hover,
+.fp-btn--ghost:hover,
+.fp-resv-button--secondary:hover,
+.fp-resv-button--ghost:hover {
+  background: var(--fp-color-primary-light);
+  border-color: var(--fp-color-primary);
+}
+
+/* Outline */
+.fp-btn--outline {
+  background: transparent;
+  color: var(--fp-color-primary);
+  border: 2px solid var(--fp-color-primary);
+  box-shadow: none;
+}
+
+.fp-btn--outline:hover {
+  background: var(--fp-color-primary);
+  color: white;
+}
+
+/* Danger / Error */
+.fp-btn--danger,
+.fp-btn--error {
+  background: var(--fp-color-error);
+  color: white;
+}
+
+.fp-btn--danger:hover,
+.fp-btn--error:hover {
+  background: #b91c1c;
+}
+
+/* Success */
+.fp-btn--success {
+  background: var(--fp-color-success);
+  color: white;
+}
+
+.fp-btn--success:hover {
+  background: #15803d;
+}
+
+/* ==================== SIZES ==================== */
+
+.fp-btn--sm {
+  min-height: var(--fp-button-height-sm);
+  padding: var(--fp-space-xs) var(--fp-space-md);
+  font-size: var(--fp-text-sm);
+}
+
+.fp-btn--lg {
+  min-height: var(--fp-button-height-lg);
+  padding: var(--fp-space-md) var(--fp-space-xl);
+  font-size: var(--fp-text-lg);
+}
+
+/* ==================== FULL WIDTH ==================== */
+
+.fp-btn--block {
+  width: 100%;
+}
+
+/* ==================== ICON BUTTONS ==================== */
+
+.fp-btn--icon {
+  padding: var(--fp-space-sm);
+  width: var(--fp-button-height-md);
+  height: var(--fp-button-height-md);
+  border-radius: 50%;
+}
+
+.fp-btn--icon.fp-btn--sm {
+  width: var(--fp-button-height-sm);
+  height: var(--fp-button-height-sm);
+}
+
+.fp-btn--icon.fp-btn--lg {
+  width: var(--fp-button-height-lg);
+  height: var(--fp-button-height-lg);
+}
+
+/* ==================== LOADING STATE ==================== */
+
+.fp-btn--loading {
+  pointer-events: none;
+  position: relative;
+}
+
+.fp-btn--loading::after {
+  content: '';
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: fp-spin 0.6s linear infinite;
+}
+
+@keyframes fp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== BUTTON GROUP ==================== */
+
+.fp-btn-group {
+  display: flex;
+  gap: var(--fp-space-sm);
+  flex-wrap: wrap;
+}
+
+.fp-btn-group--vertical {
+  flex-direction: column;
+}
+
+.fp-btn-group--attached .fp-btn:not(:first-child) {
+  margin-left: -1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.fp-btn-group--attached .fp-btn:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-btn--block-mobile {
+    width: 100%;
+  }
+  
+  .fp-sticky .fp-btn,
+  .fp-sticky .fp-resv-button {
+    flex: 1;
+  }
+}
+

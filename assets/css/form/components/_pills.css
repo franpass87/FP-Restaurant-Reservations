@@ -1,0 +1,203 @@
+/**
+ * FP Restaurant Reservations - Pills
+ * Stili per i bottoni pill (meal selector, slot selector)
+ */
+
+/* ==================== BASE PILL ==================== */
+
+.fp-pill {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-sm);
+  
+  /* Sizing */
+  padding: var(--fp-space-sm) var(--fp-space-lg);
+  min-height: 2.75rem;
+  
+  /* Typography */
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-font-semibold);
+  line-height: var(--fp-leading-tight);
+  letter-spacing: 0.01em;
+  
+  /* Visual */
+  background: var(--fp-gradient-surface);
+  border: 2px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-full);
+  box-shadow: var(--fp-shadow-sm);
+  
+  /* Interaction */
+  cursor: pointer;
+  transition: all var(--fp-transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient overlay effect */
+.fp-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.2) 100%);
+  opacity: 0.3;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Highlight effect */
+.fp-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--fp-color-primary-light);
+  opacity: 0;
+  transition: opacity var(--fp-transition-fast);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* ==================== STATES ==================== */
+
+.fp-pill:hover {
+  border-color: var(--fp-color-primary);
+  box-shadow: var(--fp-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.fp-pill:hover::after {
+  opacity: 1;
+}
+
+.fp-pill:active {
+  transform: translateY(0);
+}
+
+.fp-pill[aria-pressed="true"],
+.fp-pill[data-active="true"],
+.fp-pill--active {
+  background: var(--fp-gradient-primary);
+  border-color: var(--fp-color-primary);
+  color: white;
+  box-shadow: var(--fp-shadow-lg);
+}
+
+.fp-pill[aria-pressed="true"]::before,
+.fp-pill[data-active="true"]::before,
+.fp-pill--active::before {
+  opacity: 0.2;
+}
+
+.fp-pill:disabled,
+.fp-pill[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== MEAL PILLS ==================== */
+
+.fp-meal-pill {
+  /* Eredita da .fp-pill */
+  min-width: 140px;
+}
+
+.fp-meal-pill__label {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-space-xs);
+}
+
+.fp-meal-pill__icon {
+  font-size: 1.25em;
+}
+
+/* Stato non disponibile */
+.fp-meal-pill[data-meal-unavailable="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== SLOT PILLS (TIME SLOTS) ==================== */
+
+.fp-slot-pill {
+  /* Eredita da .fp-pill */
+  min-width: 100px;
+  padding: var(--fp-space-sm) var(--fp-space-md);
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-font-bold);
+}
+
+/* Stati disponibilità */
+.fp-slot-pill[data-availability="available"]::before {
+  box-shadow: inset 0 0 0 2px var(--fp-color-available);
+}
+
+.fp-slot-pill[data-availability="limited"]::before {
+  box-shadow: inset 0 0 0 2px var(--fp-color-limited);
+}
+
+.fp-slot-pill[data-availability="full"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== PILL LIST LAYOUT ==================== */
+
+.fp-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fp-pills-list--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--fp-space-sm);
+}
+
+/* ==================== VARIANTS ==================== */
+
+/* Pill compatta */
+.fp-pill--sm {
+  min-height: 2.25rem;
+  padding: var(--fp-space-xs) var(--fp-space-md);
+  font-size: var(--fp-text-sm);
+}
+
+/* Pill grande */
+.fp-pill--lg {
+  min-height: 3.5rem;
+  padding: var(--fp-space-md) var(--fp-space-xl);
+  font-size: var(--fp-text-lg);
+}
+
+/* Pill full width */
+.fp-pill--block {
+  width: 100%;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-pills-list--mobile-stack {
+    flex-direction: column;
+  }
+  
+  .fp-pills-list--mobile-stack .fp-pill {
+    width: 100%;
+  }
+  
+  .fp-meal-pill {
+    min-width: auto;
+    width: 100%;
+    justify-content: center;
+  }
+}
+

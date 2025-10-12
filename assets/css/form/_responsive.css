@@ -1,0 +1,352 @@
+/**
+ * FP Restaurant Reservations - Responsive Styles
+ * Media queries e breakpoint specifici
+ */
+
+/* ==================== BREAKPOINTS ==================== */
+/*
+  - xs: 0-639px (mobile)
+  - sm: 640px-767px (large mobile)
+  - md: 768px-1023px (tablet)
+  - lg: 1024px+ (desktop)
+*/
+
+/* ==================== MOBILE FIRST (< 640px) ==================== */
+
+@media (max-width: 640px) {
+  /* Container */
+  .fp-resv {
+    padding: var(--fp-space-md);
+    border-radius: var(--fp-radius-xl);
+  }
+  
+  #fp-resv-default.fp-resv-widget {
+    padding: 0 !important;
+  }
+  
+  /* Topbar */
+  .fp-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .fp-topbar .fp-resv-widget__headline {
+    text-align: center;
+    width: 100%;
+  }
+  
+  .fp-topbar .fp-resv-widget__subheadline {
+    text-align: center;
+    width: 100%;
+  }
+  
+  /* Progress */
+  .fp-progress {
+    gap: var(--fp-space-xs);
+    padding: var(--fp-space-sm);
+  }
+  
+  .fp-progress__index {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: var(--fp-text-xs);
+  }
+  
+  /* Meals */
+  .fp-meals__list {
+    flex-direction: column;
+    gap: var(--fp-space-sm);
+  }
+  
+  .fp-meal-pill {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Steps */
+  .fp-resv-step {
+    padding: var(--fp-space-lg);
+  }
+  
+  .fp-resv-step__footer {
+    flex-direction: column-reverse;
+  }
+  
+  .fp-resv-step__footer .fp-btn {
+    width: 100%;
+  }
+  
+  .fp-resv-step__footer [data-fp-resv-nav="prev"] {
+    margin-inline-end: 0;
+  }
+  
+  /* Slots */
+  .fp-slots__list,
+  .fp-resv-slots__list {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .fp-slots__list button,
+  .fp-resv-slots__list button {
+    width: 100%;
+  }
+  
+  /* Alerts */
+  .fp-alert {
+    flex-direction: column;
+  }
+  
+  .fp-alert .fp-btn {
+    width: 100%;
+  }
+  
+  /* Sticky CTA */
+  .fp-resv-sticky-cta {
+    padding-inline: var(--fp-space-sm);
+  }
+  
+  .fp-sticky {
+    justify-content: stretch;
+  }
+  
+  .fp-sticky .fp-btn,
+  .fp-sticky .fp-resv-button {
+    flex: 1 1 auto;
+  }
+  
+  /* Inputs */
+  .fp-input,
+  .fp-select,
+  .fp-textarea {
+    font-size: 16px; /* Previene zoom automatico su iOS */
+  }
+  
+  /* Party input */
+  .fp-resv-party-input-wrapper {
+    max-width: 280px;
+  }
+  
+  .fp-resv-party-btn {
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: var(--fp-text-xl);
+  }
+  
+  .fp-resv-party-input {
+    font-size: var(--fp-text-lg) !important;
+  }
+  
+  /* Summary */
+  .fp-resv-summary {
+    padding: var(--fp-space-md);
+    border-radius: var(--fp-radius-xl);
+  }
+  
+  .fp-resv-summary__info-box {
+    flex-direction: column;
+  }
+}
+
+/* ==================== TABLET (768px - 1023px) ==================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Grid */
+  .fp-resv-fields--grid {
+    grid-template-columns: 1fr;
+    gap: var(--fp-space-md);
+  }
+  
+  /* Progress - mostra tutti gli step */
+  .fp-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Maintain single column for extra requests */
+  .fp-resv-extra .fp-resv-fields--grid {
+    grid-template-columns: 1fr;
+    gap: var(--fp-space-md);
+  }
+}
+
+/* ==================== TABLET & UP (768px+) ==================== */
+
+@media (min-width: 768px) {
+  /* Consent fields */
+  .fp-resv .fp-resv-field--consent {
+    grid-template-columns: auto 1fr;
+    gap: var(--fp-space-sm);
+  }
+  
+  /* Manage page */
+  .fp-resv-manage .fp-input,
+  .fp-resv-manage .fp-select,
+  .fp-resv-manage .fp-textarea {
+    min-height: 52px;
+  }
+  
+  /* Sticky CTA diventa statica su tablet/desktop */
+  .fp-resv-sticky-cta {
+    position: static;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+}
+
+/* ==================== DESKTOP (1024px+) ==================== */
+
+@media (min-width: 1024px) {
+  /* Container più largo */
+  .fp-resv {
+    max-width: var(--fp-form-max-width, 600px);
+  }
+  
+  /* Grid a colonne multiple */
+  .fp-resv-fields--grid {
+    grid-template-columns: 1fr;
+    gap: var(--fp-space-lg);
+  }
+  
+  /* Email field full width */
+  .fp-resv-fields--grid .fp-resv-field--email {
+    grid-column: 1 / -1;
+  }
+  
+  /* Progress centrata */
+  .fp-progress {
+    justify-content: center;
+  }
+  
+  /* Button group orizzontale */
+  .fp-btn-group {
+    flex-direction: row;
+  }
+}
+
+/* ==================== LARGE DESKTOP (1280px+) ==================== */
+
+@media (min-width: 1280px) {
+  /* Aumenta spaziatura */
+  .fp-resv {
+    gap: var(--fp-space-xl);
+  }
+  
+  .fp-resv-step {
+    padding: var(--fp-space-2xl);
+  }
+}
+
+/* ==================== LANDSCAPE MOBILE ==================== */
+
+@media (max-height: 600px) and (orientation: landscape) {
+  /* Riduci padding verticale */
+  .fp-resv {
+    padding-block: var(--fp-space-md);
+  }
+  
+  .fp-resv-step {
+    padding-block: var(--fp-space-md);
+  }
+  
+  /* Progress più compatta */
+  .fp-resv-progress {
+    padding: var(--fp-space-xs);
+  }
+}
+
+/* ==================== DARK MODE ==================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fp-color-surface: #0f172a;
+    --fp-color-surface-alt: #1e293b;
+    --fp-color-surface-elevated: #334155;
+    --fp-color-text: #f8fafc;
+    --fp-color-text-muted: #94a3b8;
+    --fp-color-text-light: #cbd5e1;
+    --fp-color-border: rgba(148, 163, 184, 0.2);
+    --fp-color-border-light: rgba(148, 163, 184, 0.1);
+    --fp-color-divider: rgba(148, 163, 184, 0.15);
+  }
+  
+  .fp-resv {
+    background: linear-gradient(145deg, var(--fp-color-surface) 0%, var(--fp-color-surface-alt) 100%);
+  }
+  
+  .fp-input,
+  .fp-select,
+  .fp-textarea {
+    background: var(--fp-color-surface-elevated);
+    color: var(--fp-color-text);
+  }
+}
+
+/* ==================== HIGH CONTRAST MODE ==================== */
+
+@media (prefers-contrast: high) {
+  .fp-resv {
+    border: 2px solid currentColor;
+  }
+  
+  .fp-btn,
+  .fp-resv-button {
+    border: 2px solid currentColor;
+  }
+  
+  .fp-input,
+  .fp-select,
+  .fp-textarea {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+  .fp-resv {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .fp-btn,
+  .fp-resv-button,
+  .fp-resv-step__footer,
+  .fp-progress {
+    display: none !important;
+  }
+  
+  .fp-resv-step {
+    display: block !important;
+    page-break-inside: avoid;
+    border: none;
+  }
+  
+  .fp-resv-summary {
+    page-break-inside: avoid;
+  }
+}
+
+/* ==================== TOUCH DEVICES ==================== */
+
+@media (pointer: coarse) {
+  /* Aumenta target touch */
+  .fp-btn,
+  .fp-resv-button,
+  .fp-pill,
+  .fp-input,
+  .fp-select {
+    min-height: 44px; /* Apple recommended touch target size */
+  }
+  
+  .fp-checkbox,
+  .fp-radio {
+    width: 24px;
+    height: 24px;
+  }
+}
+

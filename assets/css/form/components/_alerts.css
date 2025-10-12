@@ -1,0 +1,234 @@
+/**
+ * FP Restaurant Reservations - Alerts
+ * Messaggi di feedback, errori, successo, info
+ */
+
+/* ==================== BASE ALERT ==================== */
+
+.fp-alert {
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-sm);
+  
+  /* Sizing */
+  padding: var(--fp-space-md);
+  
+  /* Typography */
+  font-size: var(--fp-text-sm);
+  line-height: var(--fp-leading-relaxed);
+  
+  /* Visual */
+  background: var(--fp-color-surface-alt);
+  border: 1.5px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-xl);
+  box-shadow: var(--fp-shadow-sm);
+  
+  /* Animation */
+  animation: fp-alert-slide-in 0.3s ease-out;
+}
+
+@keyframes fp-alert-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hidden alert */
+.fp-alert[hidden] {
+  display: none !important;
+}
+
+/* ==================== VARIANTS ==================== */
+
+/* Info (default) */
+.fp-alert--info {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.08) 0%, 
+    rgba(59, 130, 246, 0.12) 100%
+  );
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--fp-color-text);
+}
+
+.fp-alert--info::before {
+  content: 'ℹ';
+  color: var(--fp-color-info);
+}
+
+/* Success */
+.fp-alert--success {
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.1) 0%, 
+    rgba(34, 197, 94, 0.16) 100%
+  );
+  border-color: rgba(34, 197, 94, 0.3);
+  color: var(--fp-color-text);
+}
+
+.fp-alert--success::before {
+  content: '✓';
+  color: var(--fp-color-success);
+}
+
+/* Warning */
+.fp-alert--warning {
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.1) 0%, 
+    rgba(245, 158, 11, 0.16) 100%
+  );
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--fp-color-text);
+}
+
+.fp-alert--warning::before {
+  content: '⚠';
+  color: var(--fp-color-warning);
+}
+
+/* Error / Danger */
+.fp-alert--error,
+.fp-alert--danger {
+  background: linear-gradient(135deg, 
+    rgba(239, 68, 68, 0.08) 0%, 
+    rgba(239, 68, 68, 0.14) 100%
+  );
+  border-color: rgba(239, 68, 68, 0.35);
+  color: var(--fp-color-text);
+}
+
+.fp-alert--error::before,
+.fp-alert--danger::before {
+  content: '✕';
+  color: var(--fp-color-error);
+}
+
+/* ==================== ALERT WITH ICON ==================== */
+
+.fp-alert--with-icon {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--fp-space-md);
+  align-items: flex-start;
+}
+
+.fp-alert--with-icon::before {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  color: white;
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-font-bold);
+  margin-top: 0.125rem;
+}
+
+/* ==================== ALERT TITLE ==================== */
+
+.fp-alert__title {
+  margin: 0 0 var(--fp-space-xs);
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-font-bold);
+  color: var(--fp-color-text);
+}
+
+/* ==================== ALERT CONTENT ==================== */
+
+.fp-alert__content {
+  flex: 1;
+}
+
+.fp-alert__content p {
+  margin: 0;
+}
+
+.fp-alert__content p + p {
+  margin-top: var(--fp-space-sm);
+}
+
+/* ==================== ALERT WITH ACTION ==================== */
+
+.fp-alert__actions {
+  display: flex;
+  gap: var(--fp-space-sm);
+  margin-top: var(--fp-space-xs);
+}
+
+.fp-alert .fp-btn {
+  align-self: flex-start;
+  min-height: 2.25rem;
+  padding: var(--fp-space-xs) var(--fp-space-md);
+  font-size: var(--fp-text-sm);
+}
+
+/* ==================== DISMISSIBLE ALERT ==================== */
+
+.fp-alert--dismissible {
+  position: relative;
+  padding-right: var(--fp-space-2xl);
+}
+
+.fp-alert__close {
+  position: absolute;
+  top: var(--fp-space-sm);
+  right: var(--fp-space-sm);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--fp-color-text-muted);
+  cursor: pointer;
+  border-radius: var(--fp-radius-sm);
+  transition: all var(--fp-transition-fast);
+}
+
+.fp-alert__close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--fp-color-text);
+}
+
+.fp-alert__close::before {
+  content: '×';
+  font-size: var(--fp-text-xl);
+  line-height: 1;
+}
+
+/* ==================== FEEDBACK CONTAINER ==================== */
+
+.fp-resv-widget__feedback {
+  display: grid;
+  gap: var(--fp-space-md);
+}
+
+.fp-resv-widget__feedback .fp-alert {
+  margin: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-alert {
+    flex-direction: column;
+  }
+  
+  .fp-alert .fp-btn {
+    width: 100%;
+  }
+  
+  .fp-alert__actions {
+    flex-direction: column;
+  }
+}
+

@@ -1,0 +1,360 @@
+/**
+ * FP Restaurant Reservations - Inputs & Form Controls
+ * Stili per input, select, textarea, checkbox, radio
+ */
+
+/* ==================== BASE INPUT ==================== */
+
+.fp-input,
+.fp-select,
+.fp-textarea {
+  /* Layout */
+  display: block;
+  width: 100%;
+  
+  /* Sizing */
+  min-height: var(--fp-input-height-md);
+  padding: var(--fp-space-sm) var(--fp-space-md);
+  
+  /* Typography */
+  font-family: inherit;
+  font-size: var(--fp-text-base);
+  line-height: var(--fp-leading-normal);
+  color: var(--fp-color-text);
+  
+  /* Visual */
+  background: var(--fp-color-surface);
+  border: 1.5px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-lg);
+  box-shadow: var(--fp-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  
+  /* Interaction */
+  transition: all var(--fp-transition-base);
+  
+  /* Reset */
+  appearance: none;
+}
+
+/* ==================== STATES ==================== */
+
+.fp-input:hover,
+.fp-select:hover,
+.fp-textarea:hover {
+  border-color: var(--fp-color-primary);
+}
+
+.fp-input:focus,
+.fp-select:focus,
+.fp-textarea:focus {
+  outline: none;
+  border-color: var(--fp-color-primary);
+  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-sm);
+  background: white;
+}
+
+.fp-input:disabled,
+.fp-select:disabled,
+.fp-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--fp-color-surface-alt);
+}
+
+.fp-input[readonly],
+.fp-select[readonly],
+.fp-textarea[readonly] {
+  background: var(--fp-color-surface-alt);
+  cursor: default;
+}
+
+/* Error state */
+.fp-input[aria-invalid="true"],
+.fp-select[aria-invalid="true"],
+.fp-textarea[aria-invalid="true"],
+.fp-input--error,
+.fp-select--error,
+.fp-textarea--error {
+  border-color: var(--fp-color-error);
+}
+
+.fp-input[aria-invalid="true"]:focus,
+.fp-select[aria-invalid="true"]:focus,
+.fp-textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px var(--fp-color-error-light), var(--fp-shadow-sm);
+}
+
+/* ==================== TEXTAREA ==================== */
+
+.fp-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: var(--fp-leading-relaxed);
+}
+
+/* ==================== SELECT ==================== */
+
+.fp-select {
+  cursor: pointer;
+  padding-right: var(--fp-space-xl);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M4.5 6l3.5 3.5L11.5 6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--fp-space-md) center;
+  background-size: 16px;
+}
+
+.fp-select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%232563eb' d='M4.5 6l3.5 3.5L11.5 6'/%3E%3C/svg%3E");
+}
+
+/* ==================== CHECKBOX ==================== */
+
+.fp-checkbox {
+  /* Sizing */
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  
+  /* Visual */
+  border: 2px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-sm);
+  background: var(--fp-color-surface);
+  box-shadow: var(--fp-shadow-sm);
+  
+  /* Interaction */
+  cursor: pointer;
+  transition: all var(--fp-transition-fast);
+  
+  /* Custom accent color */
+  accent-color: var(--fp-color-primary);
+}
+
+.fp-checkbox:hover {
+  border-color: var(--fp-color-primary);
+  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+}
+
+.fp-checkbox:focus-visible {
+  outline: none;
+  box-shadow: var(--fp-shadow-focus);
+}
+
+.fp-checkbox:checked {
+  border-color: var(--fp-color-primary);
+  background: var(--fp-color-primary);
+}
+
+.fp-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== RADIO ==================== */
+
+.fp-radio {
+  /* Sizing */
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  
+  /* Visual */
+  border: 2px solid var(--fp-color-border);
+  border-radius: 50%;
+  background: var(--fp-color-surface);
+  
+  /* Interaction */
+  cursor: pointer;
+  transition: all var(--fp-transition-fast);
+  
+  /* Custom accent color */
+  accent-color: var(--fp-color-primary);
+}
+
+.fp-radio:hover {
+  border-color: var(--fp-color-primary);
+  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+}
+
+.fp-radio:focus-visible {
+  outline: none;
+  box-shadow: var(--fp-shadow-focus);
+}
+
+.fp-radio:checked {
+  border-color: var(--fp-color-primary);
+  background: var(--fp-color-primary);
+}
+
+/* ==================== FIELD WRAPPER ==================== */
+
+.fp-field {
+  display: grid;
+  gap: var(--fp-space-xs);
+}
+
+.fp-field > label {
+  display: grid;
+  gap: var(--fp-space-xs);
+}
+
+/* ==================== FIELD WITH ICON ==================== */
+
+.fp-field--with-icon {
+  position: relative;
+}
+
+.fp-field--with-icon .fp-input {
+  padding-left: var(--fp-space-xl);
+}
+
+.fp-field__icon {
+  position: absolute;
+  left: var(--fp-space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fp-color-text-muted);
+  pointer-events: none;
+}
+
+/* ==================== INPUT GROUP ==================== */
+
+.fp-input-group {
+  display: flex;
+  align-items: stretch;
+  gap: var(--fp-space-sm);
+}
+
+.fp-input-group .fp-input {
+  flex: 1;
+}
+
+.fp-input-group__addon {
+  display: flex;
+  align-items: center;
+  padding: var(--fp-space-sm) var(--fp-space-md);
+  background: var(--fp-color-surface-alt);
+  border: 1.5px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-lg);
+  color: var(--fp-color-text-muted);
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-font-semibold);
+  white-space: nowrap;
+}
+
+/* ==================== PHONE INPUT ==================== */
+
+.fp-resv-phone-input {
+  display: flex;
+  align-items: stretch;
+  gap: var(--fp-space-sm);
+  flex-wrap: wrap;
+}
+
+.fp-resv-phone-input .fp-input--prefix {
+  flex: 0 0 auto;
+  width: clamp(5rem, 30vw, 8rem);
+}
+
+.fp-resv-phone-input .fp-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+/* ==================== PARTY INPUT (con +/-) ==================== */
+
+.fp-resv-party-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-sm);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.fp-resv-party-btn {
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-md);
+  background: var(--fp-color-surface);
+  color: var(--fp-color-text);
+  font-size: var(--fp-text-2xl);
+  font-weight: var(--fp-font-bold);
+  cursor: pointer;
+  transition: all var(--fp-transition-fast);
+  user-select: none;
+}
+
+.fp-resv-party-btn:hover:not(:disabled) {
+  border-color: var(--fp-color-primary);
+  background: var(--fp-color-primary-light);
+  color: var(--fp-color-primary);
+}
+
+.fp-resv-party-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fp-resv-party-input {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fp-text-xl);
+  font-weight: var(--fp-font-bold);
+}
+
+/* Nascondi le frecce del number input */
+.fp-resv-party-input::-webkit-outer-spin-button,
+.fp-resv-party-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fp-resv-party-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ==================== ERROR MESSAGE ==================== */
+
+.fp-field-error {
+  font-size: var(--fp-text-sm);
+  color: var(--fp-color-error);
+  margin-top: var(--fp-space-xs);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fp-space-xs);
+}
+
+.fp-field-error::before {
+  content: '⚠';
+  flex-shrink: 0;
+}
+
+/* ==================== HONEYPOT (hidden field) ==================== */
+
+.fp-resv-field--honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(100%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-input,
+  .fp-select,
+  .fp-textarea {
+    font-size: 16px; /* Evita zoom automatico su iOS */
+  }
+}
+

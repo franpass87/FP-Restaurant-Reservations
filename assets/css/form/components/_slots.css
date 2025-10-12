@@ -1,0 +1,214 @@
+/**
+ * FP Restaurant Reservations - Time Slots
+ * Selezione degli orari disponibili
+ */
+
+/* ==================== SLOTS CONTAINER ==================== */
+
+.fp-slots,
+.fp-resv-slots {
+  display: grid;
+  gap: var(--fp-space-md);
+  padding: var(--fp-space-lg);
+  border-radius: var(--fp-radius-xl);
+  border: 1.5px solid var(--fp-color-border);
+  background: var(--fp-gradient-surface);
+  box-shadow: var(--fp-shadow-sm);
+  margin-bottom: var(--fp-space-lg);
+}
+
+/* ==================== SLOTS STATUS ==================== */
+
+.fp-slots__status,
+.fp-slots__empty,
+.fp-resv-slots__status,
+.fp-resv-slots__empty {
+  margin: 0;
+  color: var(--fp-color-text-muted);
+  font-size: var(--fp-text-sm);
+  font-style: italic;
+}
+
+.fp-slots__status[data-state="loading"],
+.fp-resv-slots__status[data-state="loading"] {
+  font-style: italic;
+  color: var(--fp-color-primary);
+}
+
+.fp-slots__status[data-state="error"],
+.fp-resv-slots__status[data-state="error"] {
+  color: var(--fp-color-error);
+  font-weight: var(--fp-font-semibold);
+}
+
+/* ==================== SLOTS BOUNDARY (header con filtri) ==================== */
+
+.fp-slots__boundary,
+.fp-resv-slots__boundary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-sm);
+  margin-bottom: var(--fp-space-sm);
+}
+
+/* ==================== SLOTS LIST ==================== */
+
+.fp-slots__list,
+.fp-resv-slots__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--fp-space-sm);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.fp-resv-slots__list > li {
+  list-style: none;
+}
+
+.fp-resv-slots__list > li::marker {
+  content: none;
+}
+
+/* ==================== SLOT BUTTON ==================== */
+
+.fp-slots__list button,
+.fp-resv-slots__list button {
+  /* Layout */
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Sizing */
+  padding: var(--fp-space-sm) var(--fp-space-md);
+  min-height: 2.75rem;
+  
+  /* Typography */
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-font-semibold);
+  line-height: var(--fp-leading-tight);
+  letter-spacing: 0.005em;
+  
+  /* Visual */
+  border-radius: var(--fp-radius-full);
+  border: 2px solid var(--fp-color-border);
+  background: var(--fp-gradient-surface);
+  color: var(--fp-color-text);
+  box-shadow: var(--fp-shadow-sm);
+  
+  /* Interaction */
+  cursor: pointer;
+  transition: all var(--fp-transition-base);
+  overflow: hidden;
+}
+
+/* Gradient overlay */
+.fp-slots__list button::before,
+.fp-resv-slots__list button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.1) 100%);
+  opacity: 1;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity var(--fp-transition-fast);
+}
+
+/* ==================== SLOT STATES ==================== */
+
+/* Hover */
+.fp-slots__list button:hover,
+.fp-resv-slots__list button:hover {
+  border-color: var(--fp-color-primary);
+  box-shadow: var(--fp-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.fp-slots__list button:hover::before,
+.fp-resv-slots__list button:hover::before {
+  opacity: 0.7;
+}
+
+/* Focus */
+.fp-slots__list button:focus-visible,
+.fp-resv-slots__list button:focus-visible {
+  outline: none;
+  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
+}
+
+/* Selected */
+.fp-slots__list button[aria-pressed="true"],
+.fp-resv-slots__list button[aria-pressed="true"] {
+  background: var(--fp-gradient-primary);
+  border-color: var(--fp-color-primary);
+  color: white;
+  box-shadow: var(--fp-shadow-lg);
+}
+
+.fp-slots__list button[aria-pressed="true"]::before,
+.fp-resv-slots__list button[aria-pressed="true"]::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 1;
+}
+
+/* Disabled */
+.fp-slots__list button:disabled,
+.fp-resv-slots__list button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== AVAILABILITY INDICATORS ==================== */
+
+/* Badge di disponibilità */
+.fp-slot__availability {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--fp-color-surface);
+  z-index: 2;
+}
+
+.fp-slot__availability--available {
+  background: var(--fp-color-available);
+}
+
+.fp-slot__availability--limited {
+  background: var(--fp-color-limited);
+}
+
+.fp-slot__availability--full {
+  background: var(--fp-color-full);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-slots,
+  .fp-resv-slots {
+    padding: var(--fp-space-md);
+  }
+  
+  /* Slot full width su mobile */
+  .fp-slots__list,
+  .fp-resv-slots__list {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .fp-slots__list button,
+  .fp-resv-slots__list button {
+    width: 100%;
+  }
+}
+

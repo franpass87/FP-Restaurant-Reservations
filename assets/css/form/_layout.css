@@ -1,0 +1,255 @@
+/**
+ * FP Restaurant Reservations - Layout System
+ * Grid, containers, spacing e struttura
+ */
+
+/* ==================== CONTAINER PRINCIPALE ==================== */
+
+.fp-resv-widget {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: var(--fp-container-max-width, 100%);
+  margin-inline: auto;
+  isolation: isolate;
+}
+
+.fp-resv {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-lg);
+  width: 100%;
+  max-width: var(--fp-form-max-width, 600px);
+  margin-inline: auto;
+  padding: clamp(var(--fp-space-lg), 3.5vw, var(--fp-space-2xl));
+  background: var(--fp-gradient-surface);
+  border-radius: var(--fp-radius-2xl);
+  box-shadow: var(--fp-shadow-xl);
+  backdrop-filter: var(--fp-backdrop-blur);
+}
+
+/* ==================== SEZIONI ==================== */
+
+.fp-section {
+  display: grid;
+  gap: var(--fp-space-md);
+  min-width: 0;
+}
+
+.fp-section > * {
+  min-width: 0;
+}
+
+/* ==================== TOPBAR / HEADER ==================== */
+
+.fp-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-lg);
+  padding-bottom: var(--fp-space-lg);
+  border-bottom: 2px solid var(--fp-color-divider);
+  margin-bottom: var(--fp-space-md);
+}
+
+.fp-topbar__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.fp-topbar__actions {
+  flex-shrink: 0;
+}
+
+/* ==================== CARD / PANEL ==================== */
+
+.fp-card {
+  padding: var(--fp-space-lg);
+  background: var(--fp-color-surface);
+  border-radius: var(--fp-radius-xl);
+  border: 1px solid var(--fp-color-border-light);
+  box-shadow: var(--fp-shadow-md);
+}
+
+.fp-card--bordered {
+  border: 2px solid var(--fp-color-border);
+}
+
+.fp-card--elevated {
+  box-shadow: var(--fp-shadow-lg);
+}
+
+/* ==================== GRID SYSTEM ==================== */
+
+.fp-grid {
+  display: grid;
+  gap: var(--fp-space-md);
+}
+
+.fp-grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.fp-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.fp-grid--auto {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Grid responsive */
+@media (max-width: 768px) {
+  .fp-grid--2,
+  .fp-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== FLEX UTILITIES ==================== */
+
+.fp-flex {
+  display: flex;
+  gap: var(--fp-space-md);
+}
+
+.fp-flex--column {
+  flex-direction: column;
+}
+
+.fp-flex--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.fp-flex--between {
+  justify-content: space-between;
+}
+
+.fp-flex--wrap {
+  flex-wrap: wrap;
+}
+
+/* ==================== SPACING UTILITIES ==================== */
+
+.fp-gap-xs { gap: var(--fp-space-xs); }
+.fp-gap-sm { gap: var(--fp-space-sm); }
+.fp-gap-md { gap: var(--fp-space-md); }
+.fp-gap-lg { gap: var(--fp-space-lg); }
+.fp-gap-xl { gap: var(--fp-space-xl); }
+
+/* Margin utilities */
+.fp-mt-0 { margin-top: 0; }
+.fp-mt-xs { margin-top: var(--fp-space-xs); }
+.fp-mt-sm { margin-top: var(--fp-space-sm); }
+.fp-mt-md { margin-top: var(--fp-space-md); }
+.fp-mt-lg { margin-top: var(--fp-space-lg); }
+.fp-mt-xl { margin-top: var(--fp-space-xl); }
+
+.fp-mb-0 { margin-bottom: 0; }
+.fp-mb-xs { margin-bottom: var(--fp-space-xs); }
+.fp-mb-sm { margin-bottom: var(--fp-space-sm); }
+.fp-mb-md { margin-bottom: var(--fp-space-md); }
+.fp-mb-lg { margin-bottom: var(--fp-space-lg); }
+.fp-mb-xl { margin-bottom: var(--fp-space-xl); }
+
+/* Padding utilities */
+.fp-p-0 { padding: 0; }
+.fp-p-xs { padding: var(--fp-space-xs); }
+.fp-p-sm { padding: var(--fp-space-sm); }
+.fp-p-md { padding: var(--fp-space-md); }
+.fp-p-lg { padding: var(--fp-space-lg); }
+.fp-p-xl { padding: var(--fp-space-xl); }
+
+/* ==================== STICKY / FIXED ==================== */
+
+.fp-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--fp-z-sticky);
+  padding-top: var(--fp-space-lg);
+  margin-top: var(--fp-space-lg);
+  background: var(--fp-gradient-overlay);
+  backdrop-filter: var(--fp-backdrop-blur);
+}
+
+.fp-sticky--top {
+  top: 0;
+  bottom: auto;
+  padding-top: 0;
+  padding-bottom: var(--fp-space-lg);
+  margin-top: 0;
+  margin-bottom: var(--fp-space-lg);
+}
+
+/* ==================== VISIBILITÀ ==================== */
+
+.fp-hidden {
+  display: none !important;
+}
+
+.fp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(100%);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* ==================== OVERFLOW ==================== */
+
+.fp-overflow-hidden {
+  overflow: hidden;
+}
+
+.fp-overflow-auto {
+  overflow: auto;
+}
+
+.fp-overflow-scroll {
+  overflow: scroll;
+}
+
+/* ==================== DIVISORI ==================== */
+
+.fp-divider {
+  height: 1px;
+  border: 0;
+  background: var(--fp-color-divider);
+  margin: var(--fp-space-lg) 0;
+}
+
+.fp-divider--thick {
+  height: 2px;
+}
+
+.fp-divider--gradient {
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--fp-color-divider) 20%, 
+    var(--fp-color-divider) 80%, 
+    transparent
+  );
+}
+
+/* ==================== ASPECT RATIO ==================== */
+
+.fp-aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.fp-aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.fp-aspect-photo {
+  aspect-ratio: 4 / 3;
+}
+

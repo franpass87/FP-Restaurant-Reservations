@@ -1,0 +1,241 @@
+/**
+ * FP Restaurant Reservations - Utility Classes
+ * Classi helper riutilizzabili
+ */
+
+/* ==================== DISPLAY ==================== */
+
+.fp-block { display: block !important; }
+.fp-inline-block { display: inline-block !important; }
+.fp-inline { display: inline !important; }
+.fp-flex { display: flex !important; }
+.fp-inline-flex { display: inline-flex !important; }
+.fp-grid { display: grid !important; }
+.fp-inline-grid { display: inline-grid !important; }
+.fp-hidden { display: none !important; }
+
+/* ==================== VISIBILITY ==================== */
+
+.fp-visible { visibility: visible !important; }
+.fp-invisible { visibility: hidden !important; }
+
+/* ==================== POSITION ==================== */
+
+.fp-static { position: static !important; }
+.fp-relative { position: relative !important; }
+.fp-absolute { position: absolute !important; }
+.fp-fixed { position: fixed !important; }
+.fp-sticky { position: sticky !important; }
+
+/* ==================== FLEX UTILITIES ==================== */
+
+.fp-flex-row { flex-direction: row !important; }
+.fp-flex-col { flex-direction: column !important; }
+.fp-flex-wrap { flex-wrap: wrap !important; }
+.fp-flex-nowrap { flex-wrap: nowrap !important; }
+
+.fp-items-start { align-items: flex-start !important; }
+.fp-items-center { align-items: center !important; }
+.fp-items-end { align-items: flex-end !important; }
+.fp-items-stretch { align-items: stretch !important; }
+
+.fp-justify-start { justify-content: flex-start !important; }
+.fp-justify-center { justify-content: center !important; }
+.fp-justify-end { justify-content: flex-end !important; }
+.fp-justify-between { justify-content: space-between !important; }
+.fp-justify-around { justify-content: space-around !important; }
+
+.fp-flex-1 { flex: 1 1 0% !important; }
+.fp-flex-auto { flex: 1 1 auto !important; }
+.fp-flex-none { flex: none !important; }
+.fp-flex-shrink-0 { flex-shrink: 0 !important; }
+.fp-flex-grow-0 { flex-grow: 0 !important; }
+
+/* ==================== GRID UTILITIES ==================== */
+
+.fp-grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+.fp-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.fp-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.fp-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+
+.fp-col-span-1 { grid-column: span 1 / span 1 !important; }
+.fp-col-span-2 { grid-column: span 2 / span 2 !important; }
+.fp-col-span-full { grid-column: 1 / -1 !important; }
+
+/* ==================== WIDTH ==================== */
+
+.fp-w-auto { width: auto !important; }
+.fp-w-full { width: 100% !important; }
+.fp-w-screen { width: 100vw !important; }
+.fp-w-fit { width: fit-content !important; }
+.fp-w-min { width: min-content !important; }
+.fp-w-max { width: max-content !important; }
+
+/* ==================== HEIGHT ==================== */
+
+.fp-h-auto { height: auto !important; }
+.fp-h-full { height: 100% !important; }
+.fp-h-screen { height: 100vh !important; }
+.fp-h-fit { height: fit-content !important; }
+
+/* ==================== MIN/MAX WIDTH & HEIGHT ==================== */
+
+.fp-min-w-0 { min-width: 0 !important; }
+.fp-min-w-full { min-width: 100% !important; }
+.fp-max-w-full { max-width: 100% !important; }
+.fp-max-w-none { max-width: none !important; }
+
+.fp-min-h-0 { min-height: 0 !important; }
+.fp-min-h-full { min-height: 100% !important; }
+.fp-max-h-full { max-height: 100% !important; }
+
+/* ==================== SPACING (già in layout, ma override) ==================== */
+
+.fp-m-0 { margin: 0 !important; }
+.fp-m-auto { margin: auto !important; }
+.fp-mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.fp-my-auto { margin-top: auto !important; margin-bottom: auto !important; }
+
+.fp-p-0 { padding: 0 !important; }
+
+/* ==================== BORDER ==================== */
+
+.fp-border-0 { border-width: 0 !important; }
+.fp-border { border-width: 1px !important; }
+.fp-border-2 { border-width: 2px !important; }
+
+.fp-border-t { border-top-width: 1px !important; }
+.fp-border-r { border-right-width: 1px !important; }
+.fp-border-b { border-bottom-width: 1px !important; }
+.fp-border-l { border-left-width: 1px !important; }
+
+.fp-rounded-none { border-radius: 0 !important; }
+.fp-rounded-sm { border-radius: var(--fp-radius-sm) !important; }
+.fp-rounded-md { border-radius: var(--fp-radius-md) !important; }
+.fp-rounded-lg { border-radius: var(--fp-radius-lg) !important; }
+.fp-rounded-xl { border-radius: var(--fp-radius-xl) !important; }
+.fp-rounded-full { border-radius: var(--fp-radius-full) !important; }
+
+/* ==================== OPACITY ==================== */
+
+.fp-opacity-0 { opacity: 0 !important; }
+.fp-opacity-25 { opacity: 0.25 !important; }
+.fp-opacity-50 { opacity: 0.5 !important; }
+.fp-opacity-75 { opacity: 0.75 !important; }
+.fp-opacity-100 { opacity: 1 !important; }
+
+/* ==================== POINTER EVENTS ==================== */
+
+.fp-pointer-events-none { pointer-events: none !important; }
+.fp-pointer-events-auto { pointer-events: auto !important; }
+
+/* ==================== CURSOR ==================== */
+
+.fp-cursor-auto { cursor: auto !important; }
+.fp-cursor-default { cursor: default !important; }
+.fp-cursor-pointer { cursor: pointer !important; }
+.fp-cursor-not-allowed { cursor: not-allowed !important; }
+
+/* ==================== USER SELECT ==================== */
+
+.fp-select-none { user-select: none !important; }
+.fp-select-text { user-select: text !important; }
+.fp-select-all { user-select: all !important; }
+.fp-select-auto { user-select: auto !important; }
+
+/* ==================== SHADOW ==================== */
+
+.fp-shadow-none { box-shadow: none !important; }
+.fp-shadow-sm { box-shadow: var(--fp-shadow-sm) !important; }
+.fp-shadow-md { box-shadow: var(--fp-shadow-md) !important; }
+.fp-shadow-lg { box-shadow: var(--fp-shadow-lg) !important; }
+.fp-shadow-xl { box-shadow: var(--fp-shadow-xl) !important; }
+
+/* ==================== Z-INDEX ==================== */
+
+.fp-z-0 { z-index: 0 !important; }
+.fp-z-10 { z-index: 10 !important; }
+.fp-z-20 { z-index: 20 !important; }
+.fp-z-30 { z-index: 30 !important; }
+.fp-z-40 { z-index: 40 !important; }
+.fp-z-50 { z-index: 50 !important; }
+.fp-z-auto { z-index: auto !important; }
+
+/* ==================== OVERFLOW ==================== */
+
+.fp-overflow-auto { overflow: auto !important; }
+.fp-overflow-hidden { overflow: hidden !important; }
+.fp-overflow-visible { overflow: visible !important; }
+.fp-overflow-scroll { overflow: scroll !important; }
+
+.fp-overflow-x-auto { overflow-x: auto !important; }
+.fp-overflow-y-auto { overflow-y: auto !important; }
+
+/* ==================== TRANSITION ==================== */
+
+.fp-transition-none { transition: none !important; }
+.fp-transition-all { transition: all var(--fp-transition-base) !important; }
+.fp-transition-fast { transition: all var(--fp-transition-fast) !important; }
+.fp-transition-slow { transition: all var(--fp-transition-slow) !important; }
+
+/* ==================== TRANSFORM ==================== */
+
+.fp-rotate-0 { transform: rotate(0deg) !important; }
+.fp-rotate-90 { transform: rotate(90deg) !important; }
+.fp-rotate-180 { transform: rotate(180deg) !important; }
+.fp-scale-0 { transform: scale(0) !important; }
+.fp-scale-50 { transform: scale(0.5) !important; }
+.fp-scale-100 { transform: scale(1) !important; }
+.fp-scale-110 { transform: scale(1.1) !important; }
+
+/* ==================== ASPECT RATIO ==================== */
+
+.fp-aspect-auto { aspect-ratio: auto !important; }
+.fp-aspect-square { aspect-ratio: 1 / 1 !important; }
+.fp-aspect-video { aspect-ratio: 16 / 9 !important; }
+
+/* ==================== OBJECT FIT ==================== */
+
+.fp-object-contain { object-fit: contain !important; }
+.fp-object-cover { object-fit: cover !important; }
+.fp-object-fill { object-fit: fill !important; }
+.fp-object-none { object-fit: none !important; }
+
+/* ==================== INSET ==================== */
+
+.fp-inset-0 { inset: 0 !important; }
+.fp-inset-auto { inset: auto !important; }
+
+.fp-top-0 { top: 0 !important; }
+.fp-right-0 { right: 0 !important; }
+.fp-bottom-0 { bottom: 0 !important; }
+.fp-left-0 { left: 0 !important; }
+
+/* ==================== BACKDROP FILTER ==================== */
+
+.fp-backdrop-blur { backdrop-filter: var(--fp-backdrop-blur) !important; }
+.fp-backdrop-blur-none { backdrop-filter: none !important; }
+
+/* ==================== RESPONSIVE UTILITIES ==================== */
+
+@media (min-width: 640px) {
+  .fp-sm\:block { display: block !important; }
+  .fp-sm\:hidden { display: none !important; }
+  .fp-sm\:flex { display: flex !important; }
+  .fp-sm\:grid { display: grid !important; }
+}
+
+@media (min-width: 768px) {
+  .fp-md\:block { display: block !important; }
+  .fp-md\:hidden { display: none !important; }
+  .fp-md\:flex { display: flex !important; }
+  .fp-md\:grid { display: grid !important; }
+}
+
+@media (min-width: 1024px) {
+  .fp-lg\:block { display: block !important; }
+  .fp-lg\:hidden { display: none !important; }
+  .fp-lg\:flex { display: flex !important; }
+  .fp-lg\:grid { display: grid !important; }
+}
+

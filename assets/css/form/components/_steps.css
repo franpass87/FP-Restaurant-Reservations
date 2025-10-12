@@ -1,0 +1,179 @@
+/**
+ * FP Restaurant Reservations - Steps
+ * Container per gli step del form multi-step
+ */
+
+/* ==================== STEPS CONTAINER ==================== */
+
+.fp-resv-widget__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--fp-space-lg);
+}
+
+/* ==================== SINGLE STEP ==================== */
+
+.fp-resv-step {
+  display: none; /* Nascondi tutti gli step di default */
+  gap: var(--fp-space-lg);
+  padding: var(--fp-space-xl);
+  border-radius: var(--fp-radius-xl);
+  border: 1.5px solid var(--fp-color-border);
+  background: var(--fp-gradient-surface);
+  box-shadow: var(--fp-shadow-md);
+  animation: fp-step-fade-in 0.3s ease-out;
+  scroll-margin-top: var(--fp-space-3xl);
+  transition: all var(--fp-transition-slow);
+}
+
+/* Mostra solo lo step attivo */
+.fp-resv-step[data-state="active"] {
+  display: grid !important;
+}
+
+/* Nascondi step con hidden attribute */
+.fp-resv-step[hidden] {
+  display: none !important;
+}
+
+/* Override per stati conflittuali */
+.fp-resv-step[data-state="locked"],
+.fp-resv-step[data-state="completed"] {
+  display: none !important;
+}
+
+/* Step attivo ha un bordo evidenziato */
+.fp-resv-step[data-state="active"] {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: var(--fp-shadow-xl), 
+              0 0 0 1px rgba(37, 99, 235, 0.1);
+  background: var(--fp-color-surface);
+}
+
+/* Step completato */
+.fp-resv-step[data-state="completed"] {
+  border-color: rgba(22, 163, 74, 0.4);
+  box-shadow: var(--fp-shadow-lg);
+}
+
+/* Step bloccato */
+.fp-resv-step[data-state="locked"] {
+  opacity: 0.6;
+  filter: saturate(0.8);
+  pointer-events: none;
+}
+
+/* Fallback: mostra il primo step se JS non è caricato */
+.fp-resv-step:first-child {
+  display: grid !important;
+}
+
+.fp-resv-step:not(:first-child) {
+  display: none !important;
+}
+
+/* Quando JS è attivo, rispetta data-state */
+.fp-resv-step[data-state="locked"]:first-child {
+  display: none !important;
+}
+
+.fp-resv-step[data-state="active"]:not(:first-child) {
+  display: grid !important;
+}
+
+/* ==================== STEP HEADER ==================== */
+
+.fp-resv-step__header {
+  display: grid;
+  gap: var(--fp-space-sm);
+  padding-bottom: var(--fp-space-sm);
+  border-bottom: 1px solid var(--fp-color-border-light);
+  margin-bottom: var(--fp-space-md);
+}
+
+/* ==================== STEP BODY ==================== */
+
+.fp-resv-step__body {
+  display: grid;
+  gap: var(--fp-space-md);
+  padding-bottom: var(--fp-space-sm);
+}
+
+/* ==================== STEP FOOTER ==================== */
+
+.fp-resv-step__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--fp-space-sm);
+  margin-top: var(--fp-space-lg);
+  padding-top: var(--fp-space-md);
+  border-top: 1px solid var(--fp-color-border-light);
+}
+
+/* Bottone "Indietro" allineato a sinistra */
+.fp-resv-step__footer [data-fp-resv-nav="prev"] {
+  margin-inline-end: auto;
+}
+
+/* ==================== STEP ANIMATION ==================== */
+
+@keyframes fp-step-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==================== STEP SECTIONS ==================== */
+
+/* Nascondi tutte le sezioni di default */
+.fp-resv [data-fp-resv-section] {
+  display: none !important;
+}
+
+/* Mostra solo le sezioni attive */
+.fp-resv [data-fp-resv-section][data-state="active"] {
+  display: block !important;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .fp-resv-step {
+    padding: var(--fp-space-lg);
+  }
+  
+  .fp-resv-step__footer {
+    flex-direction: column-reverse;
+  }
+  
+  .fp-resv-step__footer .fp-btn {
+    width: 100%;
+  }
+  
+  .fp-resv-step__footer [data-fp-resv-nav="prev"] {
+    margin-inline-end: 0;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+  .fp-resv-step {
+    border: none;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+  
+  .fp-resv-step__footer {
+    display: none;
+  }
+}
+
