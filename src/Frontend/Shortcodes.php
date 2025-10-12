@@ -49,8 +49,10 @@ final class Shortcodes
             
             $options = $container->get(Options::class);
             if (!$options instanceof Options) {
-                error_log('[FP-RESV] CRITICAL: Options instance not available');
-                return self::renderError('Options non disponibili');
+                error_log('[FP-RESV] WARNING: Options instance missing from container, creating fallback instance');
+                $options = new Options();
+                $container->register(Options::class, $options);
+                $container->register('settings.options', $options);
             }
             error_log('[FP-RESV] Options caricati correttamente');
 
@@ -58,6 +60,8 @@ final class Shortcodes
             if (!$language instanceof Language) {
                 error_log('[FP-RESV] Language not in container, creating new instance');
                 $language = new Language($options);
+                $container->register(Language::class, $language);
+                $container->register('settings.language.runtime', $language);
             }
 
             error_log('[FP-RESV] Creating FormContext...');
