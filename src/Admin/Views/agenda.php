@@ -160,7 +160,7 @@ $headingId   = 'fp-resv-agenda-title';
 </div>
 
 <!-- Modal: Nuova Prenotazione -->
-<div class="fp-resv-modal" data-modal="new-reservation" hidden aria-hidden="true" role="dialog" aria-labelledby="new-resv-title">
+<div class="fp-resv-modal" data-modal="new-reservation" hidden role="dialog" aria-labelledby="new-resv-title" aria-modal="true">
     <div class="fp-resv-modal__backdrop" data-action="close-modal"></div>
     <div class="fp-resv-modal__dialog">
         <header class="fp-resv-modal__header">
@@ -227,12 +227,12 @@ $headingId   = 'fp-resv-agenda-title';
 </div>
 
 <!-- Modal: Dettagli Prenotazione -->
-<div class="fp-resv-modal" data-modal="reservation-details" hidden aria-hidden="true" role="dialog" aria-labelledby="details-title">
-    <div class="fp-resv-modal__backdrop" data-action="close-details"></div>
+<div class="fp-resv-modal" data-modal="reservation-details" hidden role="dialog" aria-labelledby="details-title" aria-modal="true">
+    <div class="fp-resv-modal__backdrop" data-action="close-modal"></div>
     <div class="fp-resv-modal__dialog fp-resv-modal__dialog--wide">
         <header class="fp-resv-modal__header">
             <h2 id="details-title"><?php esc_html_e('Dettagli prenotazione', 'fp-restaurant-reservations'); ?></h2>
-            <button type="button" class="button-link" data-action="close-details" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
+            <button type="button" class="button-link" data-action="close-modal" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
                 &times;
             </button>
         </header>
@@ -242,7 +242,7 @@ $headingId   = 'fp-resv-agenda-title';
             </div>
         </div>
         <footer class="fp-resv-modal__footer">
-            <button type="button" class="button" data-action="close-details">
+            <button type="button" class="button" data-action="close-modal">
                 <?php esc_html_e('Chiudi', 'fp-restaurant-reservations'); ?>
             </button>
         </footer>

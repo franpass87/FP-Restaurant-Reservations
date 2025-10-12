@@ -743,14 +743,20 @@ class ModernAgenda {
     openModal(modal) {
         if (!modal) return;
         modal.hidden = false;
-        modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        
+        // Focus trap: trova il primo elemento focalizzabile e dagli il focus
+        const focusable = modal.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) {
+            focusable[0].focus();
+        }
     }
     
     closeModal(modal) {
         if (!modal) return;
         modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
     
