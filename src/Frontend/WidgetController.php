@@ -9,15 +9,22 @@ use WP_Post;
 use function add_action;
 use function add_filter;
 use function apply_filters;
+use function current_user_can;
+use function defined;
+use function do_shortcode;
+use function error_log;
 use function file_exists;
 use function function_exists;
 use function get_post;
 use function has_block;
 use function has_shortcode;
+use function in_the_loop;
 use function is_admin;
 use function is_embed;
+use function is_main_query;
 use function is_singular;
 use function str_contains;
+use function strpos;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_register_script;
@@ -36,6 +43,60 @@ final class WidgetController
         Elementor::register();
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
+        
+        // Force shortcode execution if content contains it but theme doesn't process it
+        add_filter('the_content', [$this, 'forceShortcodeExecution'], 999);
+        
+        // Add debug hook to track shortcode execution
+        add_action('wp_footer', [$this, 'debugShortcodeExecution'], 999);
+    }
+    
+    /**
+     * Force shortcode execution even if theme doesn't call the_content() properly
+     */
+    public function forceShortcodeExecution(string $content): string
+    {
+        // Only process if we're in the main query and not in admin
+        if (is_admin() || !in_the_loop() || !is_main_query()) {
+            return $content;
+        }
+        
+        // If content contains shortcode but it hasn't been processed, force it
+        if (strpos($content, '[fp_reservations') !== false && strpos($content, 'fp-resv-widget') === false) {
+            error_log('[FP-RESV] Forcing shortcode execution in content filter');
+            $content = do_shortcode($content);
+        }
+        
+        return $content;
+    }
+    
+    /**
+     * Debug: Check if shortcode was executed and output debug info
+     */
+    public function debugShortcodeExecution(): void
+    {
+        global $post;
+        
+        // Only run on singular pages
+        if (!is_singular() || !$post) {
+            return;
+        }
+        
+        // Check if content has shortcode
+        $hasShortcode = strpos($post->post_content, '[fp_reservations') !== false;
+        
+        if ($hasShortcode) {
+            error_log('[FP-RESV] DEBUG: Page "' . $post->post_title . '" (ID: ' . $post->ID . ') contains shortcode');
+            error_log('[FP-RESV] DEBUG: Post type: ' . $post->post_type);
+            error_log('[FP-RESV] DEBUG: Checking if form was rendered...');
+            
+            // In debug mode, add visible indicator
+            if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+                echo '<!-- [FP-RESV] DEBUG: This page should contain the reservation form -->';
+                echo '<!-- [FP-RESV] DEBUG: Shortcode found in content: YES -->';
+                echo '<!-- [FP-RESV] DEBUG: Check console for "[FP-RESV] Found widgets" message -->';
+            }
+        }
     }
 
     public function enqueueAssets(): void
