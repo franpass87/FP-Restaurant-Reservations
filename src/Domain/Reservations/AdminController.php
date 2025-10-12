@@ -71,9 +71,14 @@ final class AdminController
         wp_enqueue_style($styleHandle, $styleUrl, [], $version);
 
         // Carica meal plans configurati
-        $options = Plugin::container()->get('core.options');
-        $mealsDefinition = $options->getField('fp_resv_frontend', 'frontend_meals', '');
-        $meals = \FP\Resv\Domain\Settings\MealPlan::parse(is_string($mealsDefinition) ? $mealsDefinition : '');
+        $container = Plugin::container();
+        $options = $container->get(\FP\Resv\Domain\Settings\Options::class);
+        if ($options instanceof \FP\Resv\Domain\Settings\Options) {
+            $mealsDefinition = $options->getField('fp_resv_frontend', 'frontend_meals', '');
+            $meals = \FP\Resv\Domain\Settings\MealPlan::parse(is_string($mealsDefinition) ? $mealsDefinition : '');
+        } else {
+            $meals = [];
+        }
 
         wp_localize_script($scriptHandle, 'fpResvManagerSettings', [
             'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),

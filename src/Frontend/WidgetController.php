@@ -41,6 +41,10 @@ final class WidgetController
         add_action('init', [Gutenberg::class, 'register']);
 
         Elementor::register();
+        
+        // Force WPBakery to process our shortcode in text blocks
+        add_filter('the_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
+        
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
         
@@ -223,5 +227,26 @@ final class WidgetController
         $shouldEnqueue = (bool) apply_filters('fp_resv_frontend_should_enqueue', $shouldEnqueue, $post);
 
         return $shouldEnqueue;
+    }
+
+    /**
+     * Force WPBakery to process FP reservations shortcode
+     * WPBakery sometimes doesn't process shortcodes in text blocks
+     */
+    public function forceWPBakeryShortcodeProcessing(string $content): string
+    {
+        // Only process if WPBakery is active and content contains our shortcode
+        if (!class_exists('Vc_Manager') && !function_exists('vc_is_page_editable')) {
+            return $content;
+        }
+        
+        if (strpos($content, '[fp_reservations') === false) {
+            return $content;
+        }
+        
+        error_log('[FP-RESV] WPBakery content filter - processing shortcode');
+        
+        // Process shortcode explicitly
+        return do_shortcode($content);
     }
 }
