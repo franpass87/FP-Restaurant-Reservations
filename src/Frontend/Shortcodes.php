@@ -85,6 +85,14 @@ final class Shortcodes
             
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('[FP-RESV] Form rendered successfully, output length: ' . strlen($output));
+                error_log('[FP-RESV] Form ID: ' . ($context['config']['formId'] ?? 'not-set'));
+                error_log('[FP-RESV] Location: ' . ($context['config']['location'] ?? 'not-set'));
+            }
+            
+            // Se l'output è vuoto o troppo corto, qualcosa è andato storto
+            if (strlen($output) < 100) {
+                error_log('[FP-RESV] WARNING: Form output is too short or empty');
+                error_log('[FP-RESV] Context keys: ' . implode(', ', array_keys($context)));
             }
 
             return $output;

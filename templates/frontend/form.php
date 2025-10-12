@@ -6,12 +6,21 @@
  */
 
 if (!isset($context) || !is_array($context)) {
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('[FP-RESV] CRITICAL: Context is not set or not an array in form.php');
+    }
     return;
 }
 
 $config     = $context['config'] ?? [];
 $strings    = $context['strings'] ?? [];
 $steps      = $context['steps'] ?? [];
+
+// Log se steps è vuoto
+if (empty($steps) && defined('WP_DEBUG') && WP_DEBUG) {
+    error_log('[FP-RESV] WARNING: Steps array is empty in form.php');
+    error_log('[FP-RESV] Context keys: ' . implode(', ', array_keys($context)));
+}
 $pdfUrl     = isset($context['pdf_url']) ? (string) $context['pdf_url'] : '';
 $pdfLabel   = isset($strings['pdf_label']) ? (string) $strings['pdf_label'] : '';
 $pdfTooltip = isset($strings['pdf_tooltip']) ? (string) $strings['pdf_tooltip'] : '';
