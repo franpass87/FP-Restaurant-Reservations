@@ -460,6 +460,9 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Inizia output buffering IMMEDIATAMENTE per prevenire qualsiasi output inatteso
+        ob_start();
+        
         // CRITICAL: Log con file_put_contents per assicurarsi che venga scritto
         $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - handleAgenda CHIAMATO' . PHP_EOL, FILE_APPEND);
@@ -469,9 +472,6 @@ final class AdminREST
         error_log('[FP Resv Agenda] Request method: ' . $request->get_method());
         error_log('[FP Resv Agenda] Request route: ' . $request->get_route());
         error_log('[FP Resv Agenda] Parametri richiesta: ' . print_r($request->get_params(), true));
-        
-        // Inizia output buffering per prevenire qualsiasi output inatteso che corromperebbe il JSON
-        ob_start();
         
         try {
             // Sanitizza e valida parametri
@@ -647,8 +647,11 @@ final class AdminREST
             $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
             @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Creazione risposta con ' . count($reservations) . ' prenotazioni' . PHP_EOL, FILE_APPEND);
             
-            $response = rest_ensure_response($responseData);
-            error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
+            // Crea la risposta esplicitamente con status 200
+            $response = new WP_REST_Response($responseData, 200);
+            $response->set_headers(['Content-Type' => 'application/json; charset=UTF-8']);
+            
+            error_log('[FP Resv Agenda] WP_REST_Response creato. Tipo: ' . gettype($response));
             error_log('[FP Resv Agenda] Response status: ' . $response->get_status());
             
             // Verifica il contenuto della risposta
