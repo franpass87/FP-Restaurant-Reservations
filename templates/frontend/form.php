@@ -80,6 +80,7 @@ endif;
     data-fp-resv="<?php echo esc_attr($datasetJson); ?>"
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
     data-fp-resv-app
+    style="display: block !important; visibility: visible !important; opacity: 1 !important;"
 >
     <form
         class="fp-resv-widget__form fp-section"

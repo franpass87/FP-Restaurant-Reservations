@@ -83,8 +83,9 @@ final class Shortcodes
 
             $output = (string) ob_get_clean();
             
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] Form rendered successfully, output length: ' . strlen($output));
+            // Ensure output is not empty
+            if (empty(trim($output))) {
+                return '<!-- FP-RESV: Form rendering produced empty output. Check if context data is properly configured. -->';
             }
 
             return $output;
