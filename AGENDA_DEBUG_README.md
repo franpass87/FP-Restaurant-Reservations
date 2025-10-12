@@ -1,7 +1,9 @@
 # Debug Agenda - Guida alla risoluzione problemi
 
 ## Problema identificato
-L'API `/wp-json/fp-resv/v1/agenda` ritorna status 200 ma con corpo null/vuoto, causando un'agenda vuota anche quando ci sono prenotazioni nel database.
+L'API `/wp-json/fp-resv/v1/agenda` ritorna status 200 ma con corpo null/vuoto, causando un'agenda vuota **ANCHE QUANDO CI SONO PRENOTAZIONI NEL DATABASE**.
+
+⚠️ **IMPORTANTE**: Questo significa che il problema NON è la mancanza di dati, ma un problema nel recupero/serializzazione dei dati esistenti.
 
 ## Modifiche apportate
 
@@ -49,14 +51,21 @@ Quando accedi all'agenda, cerca nei log:
 
 Se questi log non appaiono, significa che l'endpoint non viene chiamato (problema di routing).
 
-### Passo 3: Verificare il database
+### Passo 3: Verificare il database (CRITICO!)
 Controlla se ci sono prenotazioni nel database:
 
 ```sql
 SELECT COUNT(*) FROM wp_fp_reservations;
 ```
 
-Se non ci sono prenotazioni, l'agenda sarà giustamente vuota.
+**IMPORTANTE**: Se ci sono prenotazioni ma l'agenda è vuota, cerca nei log:
+
+```
+[FP Resv Repository] === findAgendaRange chiamato ===
+[FP Resv Repository] Numero righe trovate: X
+```
+
+Se `X` è 0 anche se hai prenotazioni, il problema è nel range di date o nella query SQL.
 
 ### Passo 4: Verificare la risposta
 Cerca nei log la risposta generata:
@@ -77,9 +86,17 @@ Se il JSON length è 0 o molto piccolo, c'è un problema nella generazione della
 2. Flush permalink: Impostazioni > Permalink > Salva
 3. Riattiva il plugin
 
-### Causa 2: Database vuoto
-**Sintomo**: Log mostra "0 prenotazioni mappate"
-**Soluzione**: Questo è normale se non ci sono prenotazioni. Crea una prenotazione di test.
+### Causa 2: Query SQL non trova prenotazioni
+**Sintomo**: Log mostra "Numero righe trovate: 0" ma tu SAI che ci sono prenotazioni
+**Possibili problemi**:
+1. Range di date sbagliato (es. cerchi oggi ma le prenotazioni sono per domani)
+2. Problema di timezone
+3. Formato data nel database diverso da quello cercato
+
+**Soluzione**: 
+1. Esegui `test-direct-sql.php` per vedere esattamente quali date hanno prenotazioni
+2. Controlla nel log il range di date usato: `[FP Resv Repository] Start date: XXXX`
+3. Verifica che il range includa le date con prenotazioni
 
 ### Causa 3: Errore PHP non catturato
 **Sintomo**: Log si interrompe improvvisamente
@@ -93,17 +110,32 @@ Se il JSON length è 0 o molto piccolo, c'è un problema nella generazione della
 
 ## Script di test
 
-Usa lo script `test-agenda-endpoint.php` nella root del plugin per testare l'endpoint direttamente:
+### Test 1: Verifica Database (INIZIA SEMPRE DA QUI!)
+
+Usa lo script `test-direct-sql.php` per verificare che le prenotazioni esistano:
 
 ```bash
-# Da WordPress admin
-php wp-content/plugins/fp-restaurant-reservations/test-agenda-endpoint.php
+# Da linea di comando (se hai accesso SSH)
+cd wp-content/plugins/fp-restaurant-reservations/
+php test-direct-sql.php
 ```
 
 Oppure da browser:
 ```
-https://tuosito.com/wp-content/plugins/fp-restaurant-reservations/test-agenda-debug.php
+https://tuosito.com/wp-content/plugins/fp-restaurant-reservations/test-direct-sql.php
 ```
+
+Questo script ti dirà:
+- ✓ Se le prenotazioni esistono nel database
+- ✓ Quante prenotazioni hai per oggi
+- ✓ Se ci sono prenotazioni future
+- ✓ Se la query SQL funziona correttamente
+
+**Se questo script trova 0 prenotazioni**, il problema è che non ci sono dati da mostrare!
+
+### Test 2: Verifica i Log di WordPress
+
+Una volta confermato che le prenotazioni esistono, controlla il file `wp-content/debug.log` per capire dove si perdono i dati.
 
 ## Verifica frontend
 

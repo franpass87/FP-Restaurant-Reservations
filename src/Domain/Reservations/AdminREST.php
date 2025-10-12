@@ -460,34 +460,50 @@ final class AdminREST
             // Mappa le prenotazioni
             error_log('[FP Resv Agenda] Inizio mapping ' . count($rows) . ' righe...');
             $reservations = [];
-            foreach ($rows as $row) {
+            $mappingErrors = 0;
+            
+            foreach ($rows as $index => $row) {
                 if (!is_array($row)) {
-                    error_log('[FP Resv Agenda] WARNING: Row non è un array, tipo: ' . gettype($row));
+                    error_log('[FP Resv Agenda] WARNING: Row #' . $index . ' non è un array, tipo: ' . gettype($row));
                     continue;
                 }
                 
+                error_log('[FP Resv Agenda] Mapping row #' . $index . ' - ID: ' . ($row['id'] ?? 'N/A') . ', Date: ' . ($row['date'] ?? 'N/A'));
+                
                 try {
-                    $reservations[] = $this->mapAgendaReservation($row);
+                    $mapped = $this->mapAgendaReservation($row);
+                    $reservations[] = $mapped;
+                    error_log('[FP Resv Agenda] ✓ Row #' . $index . ' mappata con successo');
                 } catch (Throwable $e) {
                     // Log l'errore ma continua con le altre prenotazioni
-                    error_log('[FP Resv Agenda] Errore mapping prenotazione ID ' . ($row['id'] ?? 'unknown') . ': ' . $e->getMessage());
+                    $mappingErrors++;
+                    error_log('[FP Resv Agenda] ✗ Errore mapping row #' . $index . ' (ID: ' . ($row['id'] ?? 'unknown') . '): ' . $e->getMessage());
+                    error_log('[FP Resv Agenda] Stack trace: ' . $e->getTraceAsString());
                     continue;
                 }
             }
-            error_log('[FP Resv Agenda] Mapping completato: ' . count($reservations) . ' prenotazioni mappate');
+            
+            error_log('[FP Resv Agenda] Mapping completato: ' . count($reservations) . ' prenotazioni mappate, ' . $mappingErrors . ' errori');
 
             // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
             // - meta: informazioni sulla richiesta
             // - stats: statistiche aggregate calcolate server-side
             // - data: dati organizzati per vista (slots per day, days per week/month)
             // - reservations: array piatto per backward compatibility
-            error_log('[FP Resv Agenda] Calcolo stats...');
+            error_log('[FP Resv Agenda] Calcolo stats con ' . count($reservations) . ' prenotazioni...');
             $stats = $this->calculateStats($reservations);
             error_log('[FP Resv Agenda] Stats calcolate: ' . json_encode($stats));
             
-            error_log('[FP Resv Agenda] Organizzazione dati per vista...');
+            error_log('[FP Resv Agenda] Organizzazione dati per vista: ' . $rangeMode);
             $data = $this->organizeByView($reservations, $rangeMode, $start, $end);
             error_log('[FP Resv Agenda] Dati organizzati. Keys: ' . implode(', ', array_keys($data)));
+            
+            if (isset($data['slots'])) {
+                error_log('[FP Resv Agenda] Numero slots organizzati: ' . count($data['slots']));
+            }
+            if (isset($data['days'])) {
+                error_log('[FP Resv Agenda] Numero giorni organizzati: ' . count($data['days']));
+            }
             
             $responseData = [
                 'meta' => [
@@ -502,7 +518,14 @@ final class AdminREST
             ];
             
             error_log('[FP Resv Agenda] Response data creato. Keys: ' . implode(', ', array_keys($responseData)));
-            error_log('[FP Resv Agenda] Response data JSON length: ' . strlen(json_encode($responseData)));
+            error_log('[FP Resv Agenda] Numero prenotazioni nella risposta: ' . count($reservations));
+            
+            $jsonEncoded = json_encode($responseData);
+            if ($jsonEncoded === false) {
+                error_log('[FP Resv Agenda] ERRORE: json_encode ha fallito! Errore: ' . json_last_error_msg());
+            } else {
+                error_log('[FP Resv Agenda] Response data JSON length: ' . strlen($jsonEncoded));
+            }
             
             // Pulisci qualsiasi output inatteso prima di restituire la risposta
             $unexpectedOutput = ob_get_clean();
@@ -542,6 +565,18 @@ final class AdminREST
             $response = rest_ensure_response($responseData);
             error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
             error_log('[FP Resv Agenda] Response status: ' . $response->get_status());
+            
+            // Verifica il contenuto della risposta
+            $responseContent = $response->get_data();
+            error_log('[FP Resv Agenda] Response get_data() tipo: ' . gettype($responseContent));
+            
+            if (is_array($responseContent)) {
+                error_log('[FP Resv Agenda] Response contiene: ' . implode(', ', array_keys($responseContent)));
+                error_log('[FP Resv Agenda] Response reservations count: ' . (isset($responseContent['reservations']) ? count($responseContent['reservations']) : 'NON_PRESENTE'));
+            } else {
+                error_log('[FP Resv Agenda] WARNING: Response data non è un array! È: ' . var_export($responseContent, true));
+            }
+            
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
             
             return $response;
