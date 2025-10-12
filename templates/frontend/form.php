@@ -76,13 +76,32 @@ if ($styleCss !== '') :
     <?php
 endif;
 ?>
+<!-- Force visibility styles - ensures form is always visible -->
+<style>
+.fp-resv-widget#<?php echo esc_attr($formId); ?>,
+div.fp-resv-widget#<?php echo esc_attr($formId); ?>,
+#<?php echo esc_attr($formId); ?>.fp-resv-widget {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    z-index: 1 !important;
+}
+</style>
 <div
     class="fp-resv-widget fp-resv fp-card"
     id="<?php echo esc_attr($formId); ?>"
     data-fp-resv="<?php echo esc_attr($datasetJson); ?>"
     data-style-hash="<?php echo esc_attr($styleHash); ?>"
     data-fp-resv-app
-    style="display: block !important; visibility: visible !important; opacity: 1 !important;"
+    data-version="<?php echo esc_attr(defined('FP_RESV_VERSION') ? FP_RESV_VERSION : '0.1.0'); ?>"
+    style="display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; width: 100% !important; height: auto !important;"
+    role="region"
+    aria-label="<?php echo esc_attr($strings['headline'] ?? 'Modulo di prenotazione'); ?>"
 >
     <form
         class="fp-resv-widget__form fp-section"

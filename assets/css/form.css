@@ -2,6 +2,51 @@
  * Frontend reservation form polished UI.
  */
 
+/* Force visibility of the form widget to prevent theme/plugin conflicts */
+/* High specificity rules to override any theme/plugin CSS */
+.fp-resv-widget,
+.fp-resv-widget.fp-resv,
+.fp-resv-widget.fp-resv.fp-card,
+div.fp-resv-widget,
+div.fp-resv-widget.fp-resv,
+div.fp-resv-widget.fp-resv.fp-card,
+div[data-fp-resv-app],
+div[data-fp-resv-app].fp-resv-widget,
+#fp-resv-form,
+[id^="fp-resv-"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: min(100%, var(--fp-resv-max-width, 100%)) !important;
+    margin: 0 auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    transform: none !important;
+}
+
+/* Ensure the form element inside is also visible */
+.fp-resv-widget .fp-resv-widget__form,
+.fp-resv-widget form[data-fp-resv-form],
+.fp-resv form,
+form[data-fp-resv-form] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Ensure all direct children are visible */
+.fp-resv-widget > *,
+.fp-resv > * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .fp-resv {
     --fp-resv-max-width: 100%;
     --fp-resv-margin-block: 0;

@@ -516,25 +516,97 @@ if (typeof window !== 'undefined') {
     window.fpResvApp = window.FPResv;
 }
 
+function ensureWidgetVisibility(widget) {
+    if (!widget) {
+        return;
+    }
+    
+    // Force visibility with inline styles as a fallback
+    widget.style.display = 'block';
+    widget.style.visibility = 'visible';
+    widget.style.opacity = '1';
+    widget.style.position = 'relative';
+    widget.style.width = '100%';
+    widget.style.height = 'auto';
+    
+    // Ensure parent containers don't hide the widget
+    var parent = widget.parentElement;
+    var depth = 0;
+    while (parent && depth < 5) {
+        var display = window.getComputedStyle(parent).display;
+        if (display === 'none') {
+            console.warn('[FP-RESV] Found hidden parent element, making visible:', parent);
+            parent.style.display = 'block';
+        }
+        parent = parent.parentElement;
+        depth++;
+    }
+    
+    console.log('[FP-RESV] Widget visibility ensured:', widget.id || 'unnamed');
+}
+
 function initializeFPResv() {
     console.log('[FP-RESV] Plugin v0.1.5 loaded - Fallback form functionality active');
-    const widgets = document.querySelectorAll('[data-fp-resv]');
+    const widgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
     console.log('[FP-RESV] Found widgets:', widgets.length);
+
+    if (widgets.length === 0) {
+        console.warn('[FP-RESV] No widgets found on page. Expected shortcode [fp_reservations] or Gutenberg block.');
+    }
 
     Array.prototype.forEach.call(widgets, function (widget) {
         try {
+            // Ensure widget is visible first
+            ensureWidgetVisibility(widget);
+            
+            // Initialize the widget
             new FormApp(widget);
-            console.log('[FP-RESV] Widget initialized:', widget.id || 'unnamed');
+            console.log('[FP-RESV] Widget initialized successfully:', widget.id || 'unnamed');
         } catch (error) {
             console.error('[FP-RESV] Error initializing widget:', error);
         }
     });
 }
 
+// Auto-check visibility every second for the first 10 seconds
+function autoCheckVisibility() {
+    var checks = 0;
+    var maxChecks = 10;
+    
+    var interval = setInterval(function() {
+        checks++;
+        
+        var widgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+        var hasHiddenWidget = false;
+        
+        Array.prototype.forEach.call(widgets, function(widget) {
+            var computed = window.getComputedStyle(widget);
+            if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                console.warn('[FP-RESV] Widget became hidden, forcing visibility again:', widget.id || 'unnamed');
+                ensureWidgetVisibility(widget);
+                hasHiddenWidget = true;
+            }
+        });
+        
+        if (checks >= maxChecks || !hasHiddenWidget) {
+            clearInterval(interval);
+            if (checks >= maxChecks) {
+                console.log('[FP-RESV] Visibility auto-check completed after ' + checks + ' checks');
+            }
+        }
+    }, 1000);
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFPResv);
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeFPResv();
+        // Start auto-check after initialization
+        setTimeout(autoCheckVisibility, 500);
+    });
 } else {
     initializeFPResv();
+    // Start auto-check after initialization
+    setTimeout(autoCheckVisibility, 500);
 }
 
 // Event listener per tracking
