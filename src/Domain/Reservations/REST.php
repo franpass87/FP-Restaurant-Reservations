@@ -139,6 +139,30 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        
+        // TEST OUTPUT ENDPOINT
+        register_rest_route(
+            'fp-resv/v1',
+            '/test-output',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => function(WP_REST_Request $request) {
+                    $data = [
+                        'success' => true,
+                        'message' => 'Test output funziona!',
+                        'timestamp' => time(),
+                        'payload' => $request->get_json_params(),
+                    ];
+                    
+                    // Test diretto senza WP_REST_Response
+                    header('Content-Type: application/json');
+                    http_response_code(200);
+                    echo wp_json_encode($data);
+                    exit;
+                },
+                'permission_callback' => '__return_true',
+            ]
+        );
     }
 
     public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
@@ -280,6 +304,9 @@ final class REST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        // Cattura eventuali output indesiderati
+        ob_start();
+        
         // Cerca il nonce in ordine: body JSON params, body params, poi header
         $jsonParams = $request->get_json_params();
         $nonce = null;
@@ -518,8 +545,18 @@ final class REST
             $response->set_status(201);
         }
         
+        // Pulisce output buffer e verifica se c'era contenuto indesiderato
+        $unwantedOutput = ob_get_clean();
+        if (!empty($unwantedOutput)) {
+            Logging::log('api', '⚠️ OUTPUT INDESIDERATO CATTURATO', [
+                'output' => $unwantedOutput,
+                'length' => strlen($unwantedOutput),
+            ]);
+        }
+        
         Logging::log('api', '>>> RETURN response', [
             'status' => $response instanceof WP_REST_Response ? $response->get_status() : 'unknown',
+            'has_unwanted_output' => !empty($unwantedOutput),
         ]);
 
         return $response;
