@@ -464,6 +464,14 @@ final class AdminREST
 
             $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
             
+            // 🔍 DEBUG: Log per capire cosa viene cercato e trovato
+            error_log('[FP Resv Agenda] 📅 Cercando prenotazioni tra: ' . $start->format('Y-m-d') . ' e ' . $end->format('Y-m-d'));
+            error_log('[FP Resv Agenda] 📊 Prenotazioni trovate dal database: ' . (is_array($rows) ? count($rows) : '0'));
+            
+            // Se vuoi vedere TUTTE le prenotazioni indipendentemente dalla data (per debug),
+            // decommented la riga seguente:
+            // $rows = $this->reservations->findAgendaRange('2020-01-01', '2030-12-31');
+            
             if (!is_array($rows)) {
                 $rows = [];
             }
@@ -477,9 +485,12 @@ final class AdminREST
                 try {
                     $reservations[] = $this->mapAgendaReservation($row);
                 } catch (Throwable $e) {
+                    error_log('[FP Resv Agenda] ⚠️ Errore nel mapping di una prenotazione: ' . $e->getMessage());
                     continue;
                 }
             }
+
+            error_log('[FP Resv Agenda] ✅ Prenotazioni mappate con successo: ' . count($reservations));
 
             $stats = $this->calculateStats($reservations);
             $data = $this->organizeByView($reservations, $rangeMode, $start, $end);

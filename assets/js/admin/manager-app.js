@@ -1487,9 +1487,15 @@ class ReservationManager {
     async createNewReservation() {
         const { meal, date, time, party } = this.newReservationData;
         
+        // Estrai solo l'ora (HH:MM) dal formato ISO se necessario
+        let timeFormatted = time;
+        if (time.includes('T')) {
+            timeFormatted = time.split('T')[1].substring(0, 5);
+        }
+        
         const formData = {
             date,
-            time,
+            time: timeFormatted,  // Usa solo HH:MM
             party,
             first_name: document.getElementById('new-first-name').value,
             last_name: document.getElementById('new-last-name').value,
@@ -1505,7 +1511,8 @@ class ReservationManager {
         this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Creazione prenotazione in corso...</p></div>';
 
         try {
-            const response = await fetch(`${this.config.restRoot}/reservations`, {
+            // USA l'endpoint ADMIN invece di quello pubblico
+            const response = await fetch(`${this.config.restRoot}/agenda/reservations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
