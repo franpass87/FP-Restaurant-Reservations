@@ -1151,8 +1151,35 @@ class AgendaApp {
             console.log('[API] Response preview (first 200 chars):', text.substring(0, 200));
             
             if (!text || text.trim() === '') {
-                console.log('[API] ✓ Empty response');
-                return null;
+                console.warn('[API] ⚠ Empty response - ritorno oggetto vuoto valido');
+                // Ritorna una struttura vuota valida invece di null
+                const today = new Date();
+                const dateStr = today.getFullYear() + '-' + 
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(today.getDate()).padStart(2, '0');
+                
+                return {
+                    meta: {
+                        range: 'day',
+                        start_date: dateStr,
+                        end_date: dateStr,
+                        current_date: dateStr,
+                    },
+                    stats: {
+                        total_reservations: 0,
+                        total_guests: 0,
+                        by_status: {
+                            pending: 0,
+                            confirmed: 0,
+                            visited: 0,
+                            no_show: 0,
+                            cancelled: 0,
+                        },
+                        confirmed_percentage: 0,
+                    },
+                    data: { slots: [], timeline: [], days: [] },
+                    reservations: [],
+                };
             }
             
             try {
