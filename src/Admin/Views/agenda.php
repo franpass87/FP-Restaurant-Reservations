@@ -160,7 +160,7 @@ $headingId   = 'fp-resv-agenda-title';
 </div>
 
 <!-- Modal: Nuova Prenotazione -->
-<div class="fp-resv-modal" data-modal="new-reservation" hidden aria-hidden="true" role="dialog" aria-labelledby="new-resv-title">
+<div class="fp-resv-modal" data-modal="new-reservation" hidden role="dialog" aria-labelledby="new-resv-title" aria-modal="true">
     <div class="fp-resv-modal__backdrop" data-action="close-modal"></div>
     <div class="fp-resv-modal__dialog">
         <header class="fp-resv-modal__header">
@@ -174,11 +174,19 @@ $headingId   = 'fp-resv-agenda-title';
                 <div class="fp-resv-form__row">
                     <label>
                         <span><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="date" name="date" min="<?php echo esc_attr(gmdate('Y-m-d')); ?>" required />
+                        <input type="date" name="date" min="<?php echo esc_attr(gmdate('Y-m-d')); ?>" required data-trigger="load-slots" />
                     </label>
                     <label>
-                        <span><?php esc_html_e('Ora', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="time" name="time" step="900" required />
+                        <span><?php esc_html_e('Numero coperti', 'fp-restaurant-reservations'); ?> *</span>
+                        <input type="number" name="party" min="1" max="50" value="2" required data-trigger="load-slots" />
+                    </label>
+                </div>
+                <div class="fp-resv-form__row">
+                    <label style="grid-column: 1 / -1;">
+                        <span><?php esc_html_e('Orario', 'fp-restaurant-reservations'); ?> *</span>
+                        <select name="time" required data-role="time-slots">
+                            <option value=""><?php esc_html_e('Seleziona data e coperti per vedere gli slot disponibili', 'fp-restaurant-reservations'); ?></option>
+                        </select>
                     </label>
                 </div>
                 <div class="fp-resv-form__row">
@@ -202,12 +210,6 @@ $headingId   = 'fp-resv-agenda-title';
                     </label>
                 </div>
                 <div class="fp-resv-form__row">
-                    <label>
-                        <span><?php esc_html_e('Numero coperti', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="number" name="party" min="1" max="50" value="2" required />
-                    </label>
-                </div>
-                <div class="fp-resv-form__row">
                     <label style="grid-column: 1 / -1;">
                         <span><?php esc_html_e('Note', 'fp-restaurant-reservations'); ?></span>
                         <textarea name="notes" rows="3"></textarea>
@@ -227,12 +229,12 @@ $headingId   = 'fp-resv-agenda-title';
 </div>
 
 <!-- Modal: Dettagli Prenotazione -->
-<div class="fp-resv-modal" data-modal="reservation-details" hidden aria-hidden="true" role="dialog" aria-labelledby="details-title">
-    <div class="fp-resv-modal__backdrop" data-action="close-details"></div>
+<div class="fp-resv-modal" data-modal="reservation-details" hidden role="dialog" aria-labelledby="details-title" aria-modal="true">
+    <div class="fp-resv-modal__backdrop" data-action="close-modal"></div>
     <div class="fp-resv-modal__dialog fp-resv-modal__dialog--wide">
         <header class="fp-resv-modal__header">
             <h2 id="details-title"><?php esc_html_e('Dettagli prenotazione', 'fp-restaurant-reservations'); ?></h2>
-            <button type="button" class="button-link" data-action="close-details" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
+            <button type="button" class="button-link" data-action="close-modal" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
                 &times;
             </button>
         </header>
@@ -242,7 +244,7 @@ $headingId   = 'fp-resv-agenda-title';
             </div>
         </div>
         <footer class="fp-resv-modal__footer">
-            <button type="button" class="button" data-action="close-details">
+            <button type="button" class="button" data-action="close-modal">
                 <?php esc_html_e('Chiudi', 'fp-restaurant-reservations'); ?>
             </button>
         </footer>
