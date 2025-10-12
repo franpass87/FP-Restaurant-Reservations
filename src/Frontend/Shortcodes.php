@@ -17,6 +17,8 @@ use function shortcode_atts;
 
 final class Shortcodes
 {
+    private static bool $rendered = false;
+
     public static function register(): void
     {
         add_shortcode('fp_reservations', [self::class, 'render']);
@@ -114,6 +116,7 @@ final class Shortcodes
             }
 
             error_log('[FP-RESV] Form renderizzato correttamente, lunghezza output: ' . strlen($output));
+            self::$rendered = true;
             return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode
@@ -161,5 +164,10 @@ final class Shortcodes
         ];
 
         return self::render($atts);
+    }
+
+    public static function hasRendered(): bool
+    {
+        return self::$rendered;
     }
 }

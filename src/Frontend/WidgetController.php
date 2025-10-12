@@ -16,19 +16,26 @@ use function error_log;
 use function file_exists;
 use function function_exists;
 use function get_post;
+use function get_shortcode_regex;
 use function has_block;
 use function has_shortcode;
 use function in_the_loop;
+use function is_array;
+use function is_scalar;
 use function is_admin;
 use function is_embed;
 use function is_main_query;
 use function is_singular;
+use function esc_attr;
+use function preg_match_all;
 use function str_contains;
 use function strpos;
+use function trim;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_register_script;
 use function wp_register_style;
+use function shortcode_parse_atts;
 
 final class WidgetController
 {
@@ -89,14 +96,59 @@ final class WidgetController
             error_log('[FP-RESV] DEBUG: Page "' . $post->post_title . '" (ID: ' . $post->ID . ') contains shortcode');
             error_log('[FP-RESV] DEBUG: Post type: ' . $post->post_type);
             error_log('[FP-RESV] DEBUG: Checking if form was rendered...');
-            
+
             // In debug mode, add visible indicator
             if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
                 echo '<!-- [FP-RESV] DEBUG: This page should contain the reservation form -->';
                 echo '<!-- [FP-RESV] DEBUG: Shortcode found in content: YES -->';
                 echo '<!-- [FP-RESV] DEBUG: Check console for "[FP-RESV] Found widgets" message -->';
             }
+
+            if (!Shortcodes::hasRendered()) {
+                error_log('[FP-RESV] WARNING: Shortcode detected but widget markup missing. Injecting fallback render in footer.');
+                foreach ($this->extractShortcodeAttributes((string) $post->post_content) as $index => $attributes) {
+                    $fallbackIndex = (string) ($index + 1);
+                    echo '<div class="fp-resv-fallback" data-fp-resv-fallback="' . esc_attr($fallbackIndex) . '">';
+                    echo Shortcodes::render($attributes);
+                    echo '</div>';
+                }
+            }
         }
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function extractShortcodeAttributes(string $content): array
+    {
+        $pattern = get_shortcode_regex(['fp_reservations']);
+        if ($pattern === '') {
+            return [[]];
+        }
+
+        if (!preg_match_all('/' . $pattern . '/i', $content, $matches, PREG_SET_ORDER)) {
+            return [[]];
+        }
+
+        $shortcodes = [];
+        foreach ($matches as $shortcode) {
+            $attributes = [];
+            $attributeString = isset($shortcode[3]) ? trim((string) $shortcode[3]) : '';
+            if ($attributeString !== '') {
+                $parsed = shortcode_parse_atts($attributeString);
+                if (is_array($parsed)) {
+                    foreach ($parsed as $key => $value) {
+                        if (is_scalar($value)) {
+                            $attributes[(string) $key] = (string) $value;
+                        }
+                    }
+                }
+            }
+
+            $shortcodes[] = $attributes;
+        }
+
+        return $shortcodes === [] ? [[]] : $shortcodes;
     }
 
     public function enqueueAssets(): void
