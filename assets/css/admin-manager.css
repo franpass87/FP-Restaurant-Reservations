@@ -1188,6 +1188,77 @@
 }
 
 /* ============================================
+   TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* Pull-to-refresh indicator */
+.fp-manager-main {
+    position: relative;
+}
+
+.fp-manager-main.pull-to-refresh-ready::before {
+    content: '↓ Rilascia per aggiornare';
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--fp-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 9999;
+    animation: pullBounce 0.3s ease;
+}
+
+.fp-manager-main.pull-to-refresh-loading::before {
+    content: '⟳ Aggiornamento...';
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pullBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Scroll indicators per stats cards */
+.fp-manager-stats {
+    position: relative;
+}
+
+.fp-manager-stats::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, var(--fp-gray-50), transparent);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.fp-manager-stats.at-end::after {
+    opacity: 0;
+}
+
+/* Touch feedback */
+@media (hover: none) and (pointer: coarse) {
+    .fp-btn:active,
+    .fp-btn-icon:active {
+        opacity: 0.8;
+    }
+    
+    .fp-reservation-card:active,
+    .fp-list-card:active,
+    .fp-calendar-day:active {
+        background: var(--fp-gray-100);
+    }
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 

@@ -39,6 +39,7 @@ final class AdminController
         add_action('admin_menu', [$this, 'registerMenu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('admin_head', [$this, 'removeOtherPluginNotices']);
+        add_action('admin_head', [$this, 'addMobileViewportMeta']);
     }
 
     public function registerMenu(): void
@@ -59,6 +60,33 @@ final class AdminController
             self::PAGE_SLUG,
             [$this, 'renderPage']
         ) ?: null;
+    }
+
+    public function addMobileViewportMeta(): void
+    {
+        // Verifica se siamo nella pagina del manager
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if ($screen === null || $screen->id !== $this->pageHook) {
+            return;
+        }
+
+        // Aggiunge meta viewport per supporto mobile ottimale
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">' . "\n";
+        
+        // Aggiunge stili inline per ottimizzazioni mobile-first
+        echo '<style>
+            @media (max-width: 768px) {
+                #wpcontent {
+                    padding-left: 0;
+                }
+                .auto-fold #wpcontent {
+                    padding-left: 0;
+                }
+                #wpbody-content {
+                    padding-bottom: 0;
+                }
+            }
+        </style>' . "\n";
     }
 
     public function removeOtherPluginNotices(): void

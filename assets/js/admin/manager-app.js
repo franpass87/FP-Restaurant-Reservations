@@ -54,6 +54,9 @@ class ReservationManager {
         // Setup event listeners
         this.bindEvents();
         
+        // Setup touch optimizations
+        this.setupTouchOptimizations();
+        
         // Imposta data corrente
         this.updateDatePicker();
         
@@ -207,6 +210,165 @@ class ReservationManager {
                 this.closeModal();
             }
         });
+    }
+
+    setupTouchOptimizations() {
+        // Rileva se siamo su dispositivo touch
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (!isTouchDevice) {
+            return; // Niente da fare su desktop
+        }
+
+        // Smooth scroll per stats cards su mobile
+        const statsContainer = document.querySelector('.fp-manager-stats');
+        if (statsContainer && window.innerWidth <= 768) {
+            // Aggiungi indicatore di scroll per le stats cards
+            this.addScrollIndicator(statsContainer);
+        }
+
+        // Swipe gesture per navigation date su mobile
+        if (window.innerWidth <= 768) {
+            this.setupSwipeGestures();
+        }
+
+        // Previeni zoom accidentale su double-tap per elementi specifici
+        const preventZoomElements = document.querySelectorAll(
+            '.fp-btn, .fp-reservation-card, .fp-calendar-day, .fp-view-btn'
+        );
+        
+        preventZoomElements.forEach(element => {
+            element.addEventListener('touchend', (e) => {
+                // Previeni comportamento di default solo per questi elementi
+                const now = Date.now();
+                if (element._lastTap && now - element._lastTap < 300) {
+                    e.preventDefault();
+                }
+                element._lastTap = now;
+            }, { passive: false });
+        });
+
+        // Feedback tattile su azioni importanti (se disponibile)
+        if ('vibrate' in navigator) {
+            document.querySelectorAll('[data-action="new-reservation"], [data-modal-action="save"]')
+                .forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        navigator.vibrate(10); // Vibrazione leggera 10ms
+                    });
+                });
+        }
+
+        // Pull-to-refresh custom per reload dati
+        this.setupPullToRefresh();
+    }
+
+    addScrollIndicator(container) {
+        // Aggiunge indicatore visivo per scroll orizzontale
+        const updateScrollIndicator = () => {
+            const scrollLeft = container.scrollLeft;
+            const scrollWidth = container.scrollWidth;
+            const clientWidth = container.clientWidth;
+            
+            // Aggiungi/rimuovi classe per nascondere frecce
+            if (scrollLeft <= 0) {
+                container.classList.add('at-start');
+            } else {
+                container.classList.remove('at-start');
+            }
+            
+            if (scrollLeft >= scrollWidth - clientWidth - 10) {
+                container.classList.add('at-end');
+            } else {
+                container.classList.remove('at-end');
+            }
+        };
+
+        container.addEventListener('scroll', updateScrollIndicator, { passive: true });
+        updateScrollIndicator(); // Inizializza
+    }
+
+    setupSwipeGestures() {
+        // Implementa swipe left/right per cambiare data
+        const toolbar = document.querySelector('.fp-manager-toolbar');
+        if (!toolbar) return;
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 50;
+
+        toolbar.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        toolbar.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            // Verifica che sia uno swipe orizzontale (non verticale)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // Swipe right -> giorno precedente
+                    this.navigateDate(-1);
+                } else {
+                    // Swipe left -> giorno successivo
+                    this.navigateDate(1);
+                }
+            }
+        }, { passive: true });
+    }
+
+    setupPullToRefresh() {
+        // Pull-to-refresh personalizzato per ricaricare dati
+        const mainContent = document.querySelector('.fp-manager-main');
+        if (!mainContent) return;
+
+        let touchStartY = 0;
+        let isPulling = false;
+        let refreshThreshold = 80;
+
+        mainContent.addEventListener('touchstart', (e) => {
+            if (mainContent.scrollTop === 0) {
+                touchStartY = e.touches[0].clientY;
+                isPulling = true;
+            }
+        }, { passive: true });
+
+        mainContent.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            
+            const touchY = e.touches[0].clientY;
+            const pullDistance = touchY - touchStartY;
+
+            if (pullDistance > 0 && mainContent.scrollTop === 0) {
+                // Mostra indicatore di pull
+                if (pullDistance > refreshThreshold) {
+                    mainContent.classList.add('pull-to-refresh-ready');
+                }
+            }
+        }, { passive: true });
+
+        mainContent.addEventListener('touchend', async (e) => {
+            if (!isPulling) return;
+
+            const touchEndY = e.changedTouches[0].clientY;
+            const pullDistance = touchEndY - touchStartY;
+
+            if (pullDistance > refreshThreshold && mainContent.scrollTop === 0) {
+                // Trigger refresh
+                mainContent.classList.add('pull-to-refresh-loading');
+                await this.loadReservations();
+                mainContent.classList.remove('pull-to-refresh-loading');
+            }
+
+            mainContent.classList.remove('pull-to-refresh-ready');
+            isPulling = false;
+        }, { passive: true });
     }
 
     // ============================================
@@ -368,14 +530,38 @@ class ReservationManager {
             
             clearTimeout(timeoutId);
 
+            // 🚨 DEBUG PANEL - Mostra info dettagliate
+            this.showDebugPanel({
+                url: url,
+                status: response.status,
+                statusText: response.statusText,
+                headers: {
+                    'X-FP-Debug': response.headers.get('X-FP-Debug'),
+                    'Content-Type': response.headers.get('Content-Type'),
+                    'Content-Length': response.headers.get('Content-Length')
+                }
+            });
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('[Manager] Reservations response error:', response.status, errorText);
+                this.showDebugPanel({
+                    error: true,
+                    status: response.status,
+                    errorText: errorText,
+                    url: url
+                });
                 throw new Error(`Errore ${response.status}: ${response.statusText}`);
             }
 
             const text = await response.text();
             if (!text || text.trim() === '') {
+                this.showDebugPanel({
+                    warning: true,
+                    message: 'Risposta vuota dal server',
+                    url: url,
+                    bodyLength: 0
+                });
                 this.state.reservations = [];
                 this.state.error = null;
                 this.hideLoading();
@@ -386,6 +572,14 @@ class ReservationManager {
             const data = JSON.parse(text);
             this.state.reservations = data.reservations || [];
             this.state.error = null;
+            
+            // Aggiorna debug panel con successo
+            this.showDebugPanel({
+                success: true,
+                reservationsCount: this.state.reservations.length,
+                bodyLength: text.length,
+                url: url
+            });
             
             // Log per debugging (rimovere dopo verifica)
             if (this.state.reservations.length === 0) {
@@ -1706,6 +1900,86 @@ class ReservationManager {
         if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
         if (this.dom.errorState) this.dom.errorState.style.display = 'flex';
         if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
+    }
+
+    showDebugPanel(info) {
+        // Trova o crea il pannello di debug
+        let panel = document.getElementById('fp-resv-debug-panel');
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'fp-resv-debug-panel';
+            panel.style.cssText = `
+                position: fixed;
+                top: 32px;
+                left: 160px;
+                right: 0;
+                background: #fff;
+                border-left: 4px solid #0073aa;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                padding: 15px 20px;
+                z-index: 9999;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-size: 13px;
+                line-height: 1.6;
+            `;
+            document.body.appendChild(panel);
+        }
+
+        // Determina il colore in base al tipo
+        let borderColor = '#0073aa';
+        let icon = 'ℹ️';
+        if (info.error) {
+            borderColor = '#dc3232';
+            icon = '❌';
+        } else if (info.warning) {
+            borderColor = '#f0b849';
+            icon = '⚠️';
+        } else if (info.success) {
+            borderColor = '#46b450';
+            icon = '✅';
+        }
+        
+        panel.style.borderLeftColor = borderColor;
+
+        // Costruisci il contenuto
+        let content = `<strong>${icon} DEBUG INFO</strong> | ${new Date().toLocaleTimeString()}<br>`;
+        
+        if (info.url) {
+            content += `<strong>URL:</strong> ${info.url}<br>`;
+        }
+        
+        if (info.status) {
+            content += `<strong>Status:</strong> ${info.status} ${info.statusText || ''}<br>`;
+        }
+        
+        if (info.headers) {
+            content += `<strong>Headers:</strong><br>`;
+            for (let [key, value] of Object.entries(info.headers)) {
+                if (value !== null) {
+                    content += `&nbsp;&nbsp;${key}: ${value}<br>`;
+                }
+            }
+        }
+        
+        if (info.bodyLength !== undefined) {
+            content += `<strong>Body Length:</strong> ${info.bodyLength} bytes<br>`;
+        }
+        
+        if (info.reservationsCount !== undefined) {
+            content += `<strong>Prenotazioni caricate:</strong> ${info.reservationsCount}<br>`;
+        }
+        
+        if (info.message) {
+            content += `<strong>Messaggio:</strong> ${info.message}<br>`;
+        }
+        
+        if (info.errorText) {
+            content += `<strong>Errore:</strong> <pre style="margin:5px 0;padding:10px;background:#f5f5f5;overflow:auto;max-height:150px;">${info.errorText}</pre>`;
+        }
+        
+        content += `<button onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;border:none;background:#ddd;padding:5px 10px;cursor:pointer;border-radius:3px;">Chiudi</button>`;
+        
+        panel.innerHTML = content;
     }
 
     // Nota: showEmpty e hideEmpty ora sono gestiti direttamente in renderCurrentView

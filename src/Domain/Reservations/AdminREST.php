@@ -78,7 +78,7 @@ final class AdminREST
                 '/agenda',
                 [
                     'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => [$this, 'handleAgenda'],
+                    'callback'            => [$this, 'handleAgendaV2'],
                     'permission_callback' => '__return_true', // TEMPORANEO: Bypassa permissions
                     'args'                => [
                         'date' => [
@@ -410,15 +410,29 @@ final class AdminREST
         }
     }
 
-    public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
+    public function handleAgendaV2(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // 🚨 BYPASS TOTALE - SE NON FUNZIONA QUESTO, IL PROBLEMA È ALTROVE
-        return new WP_REST_Response([
+        // 🚨 LOG IMMEDIATO
+        error_log('=== HANDLEAGENDAV2 CHIAMATO! Timestamp: ' . time() . ' ===');
+        
+        // 🚨 BYPASS TOTALE V2 - METODO RINOMINATO PER FORZARE REFRESH
+        $response = new WP_REST_Response([
             'bypass' => true,
-            'message' => 'FILE AGGIORNATO 2025-10-12 V3',
+            'message' => 'FILE AGGIORNATO 2025-10-12 V4 - METODO RINOMINATO',
             'timestamp' => time(),
-            'reservations' => []
+            'reservations' => [],
+            'debug' => [
+                'method' => 'handleAgendaV2',
+                'file_version' => 'V4',
+                'php_version' => PHP_VERSION
+            ]
         ], 200);
+        
+        $response->header('X-FP-Debug', 'HandleAgendaV2-Called');
+        
+        error_log('=== HANDLEAGENDAV2 RISPOSTA CREATA, sto per ritornare ===');
+        
+        return $response;
         
         // TEST STEP BY STEP
         try {
