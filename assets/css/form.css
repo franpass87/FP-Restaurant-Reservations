@@ -458,7 +458,7 @@ form[data-fp-resv-form] {
 #fp-resv-default .fp-progress__item[aria-current="step"] em, 
 #fp-resv-default .fp-progress__item[aria-current="step"] div {
     color: #ffffff !important;
-    background: transparent;
+    background: #000000 !important;
 }
 
 /* Stili per elementi progress bar non attivi */
@@ -468,7 +468,7 @@ form[data-fp-resv-form] {
 #fp-resv-default .fp-progress__item:not([aria-current="step"]), 
 #fp-resv-default .fp-progress__item:not([aria-current="step"]) *, 
 #fp-resv-default .fp-progress__item:not([aria-current="step"]) span {
-    color: white;
+    color: white !important;
 }
 
 .fp-meals {
@@ -2355,36 +2355,39 @@ form[data-fp-resv-form] {
 
 /* === Party Input con Bottoni +/- === */
 .fp-resv-party-input-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-    max-width: 320px;
-    margin: 0 auto;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
 }
 
 .fp-resv-party-btn {
-    flex: 0 0 3rem;
-    width: 3rem;
-    height: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #cbd5e1;
-    border-radius: 0.5rem;
-    background: #ffffff;
-    color: #1e293b;
-    font-size: 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    padding: 0;
-    line-height: 1;
+    flex: 0 0 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid #cbd5e1 !important;
+    border-radius: 0.5rem !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    order: 0 !important;
 }
 
 .fp-resv-party-btn:hover {
@@ -2422,12 +2425,31 @@ form[data-fp-resv-form] {
 }
 
 .fp-resv-party-input {
-    flex: 1 1 auto;
-    text-align: center;
+    flex: 1 1 auto !important;
+    text-align: center !important;
     font-size: 1.25rem !important;
     font-weight: 700 !important;
     min-height: 3rem !important;
     padding: 0.85rem 1rem !important;
+    order: 1 !important;
+}
+
+/* Ordine specifico per i bottoni: - a sinistra, input al centro, + a destra */
+.fp-resv-party-btn[data-action="decrement"],
+.fp-resv-party-btn[aria-label*="Riduci"],
+.fp-resv-party-btn:first-child {
+    order: 0 !important;
+}
+
+.fp-resv-party-input,
+input.fp-resv-party-input {
+    order: 1 !important;
+}
+
+.fp-resv-party-btn[data-action="increment"],
+.fp-resv-party-btn[aria-label*="Aumenta"],
+.fp-resv-party-btn:last-child {
+    order: 2 !important;
 }
 
 /* Nascondi le frecce del campo number */
