@@ -412,26 +412,34 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Versione semplificata e funzionante
+        // TEST STEP BY STEP
         try {
-            // Parametri dalla richiesta
+            // STEP 1: Test base
+            $step = 1;
+            
+            // STEP 2: Parametri
+            $step = 2;
             $dateParam = $request->get_param('date');
             $rangeParam = $request->get_param('range');
             
-            // Sanitizza data
+            // STEP 3: Sanitizza
+            $step = 3;
             $date = is_string($dateParam) ? sanitize_text_field($dateParam) : gmdate('Y-m-d');
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                 $date = gmdate('Y-m-d');
             }
             
-            // Range
+            // STEP 4: Range
+            $step = 4;
             $rangeMode = is_string($rangeParam) ? strtolower($rangeParam) : 'day';
             if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
                 $rangeMode = 'day';
             }
             
-            // Calcola date range
+            // STEP 5: DateTimeImmutable
+            $step = 5;
             $start = new \DateTimeImmutable($date);
+            $end = $start;
             
             if ($rangeMode === 'week') {
                 $dayOfWeek = (int)$start->format('N');
@@ -440,38 +448,49 @@ final class AdminREST
             } elseif ($rangeMode === 'month') {
                 $start = $start->modify('first day of this month');
                 $end = $start->modify('last day of this month');
-            } else {
-                $end = $start;
             }
             
-            // Query database
+            // STEP 6: Test query (questo potrebbe essere il problema)
+            $step = 6;
+            if (!isset($this->reservations)) {
+                return new WP_REST_Response([
+                    'error' => 'Repository not initialized',
+                    'step' => $step
+                ], 500);
+            }
+            
+            $step = 7;
             $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
             
-            // Mappa prenotazioni
+            // STEP 8: Mappa prenotazioni
+            $step = 8;
             $reservations = [];
-            foreach ($rows as $row) {
-                if (!is_array($row)) continue;
-                
-                $reservations[] = [
-                    'id' => (int)($row['id'] ?? 0),
-                    'status' => (string)($row['status'] ?? 'pending'),
-                    'date' => (string)($row['date'] ?? ''),
-                    'time' => substr((string)($row['time'] ?? ''), 0, 5),
-                    'party' => (int)($row['party'] ?? 0),
-                    'meal' => $row['meal'] ?? null,
-                    'first_name' => (string)($row['first_name'] ?? ''),
-                    'last_name' => (string)($row['last_name'] ?? ''),
-                    'email' => (string)($row['email'] ?? ''),
-                    'phone' => (string)($row['phone'] ?? ''),
-                    'notes' => (string)($row['notes'] ?? ''),
-                    'allergies' => (string)($row['allergies'] ?? ''),
-                    'created_at' => (string)($row['created_at'] ?? ''),
-                ];
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    if (!is_array($row)) continue;
+                    
+                    $reservations[] = [
+                        'id' => (int)($row['id'] ?? 0),
+                        'status' => (string)($row['status'] ?? 'pending'),
+                        'date' => (string)($row['date'] ?? ''),
+                        'time' => substr((string)($row['time'] ?? ''), 0, 5),
+                        'party' => (int)($row['party'] ?? 0),
+                        'meal' => $row['meal'] ?? null,
+                        'first_name' => (string)($row['first_name'] ?? ''),
+                        'last_name' => (string)($row['last_name'] ?? ''),
+                        'email' => (string)($row['email'] ?? ''),
+                        'phone' => (string)($row['phone'] ?? ''),
+                        'notes' => (string)($row['notes'] ?? ''),
+                        'allergies' => (string)($row['allergies'] ?? ''),
+                        'created_at' => (string)($row['created_at'] ?? ''),
+                    ];
+                }
             }
             
-            // Statistiche semplici
+            // STEP 9: Statistiche
+            $step = 9;
             $totalReservations = count($reservations);
-            $totalGuests = array_sum(array_column($reservations, 'party'));
+            $totalGuests = $totalReservations > 0 ? array_sum(array_column($reservations, 'party')) : 0;
             
             $statusCounts = [
                 'pending' => 0,
@@ -488,7 +507,8 @@ final class AdminREST
                 }
             }
             
-            // Risposta
+            // STEP 10: Risposta
+            $step = 10;
             return new WP_REST_Response([
                 'meta' => [
                     'range' => $rangeMode,
@@ -510,11 +530,14 @@ final class AdminREST
             ], 200);
             
         } catch (\Throwable $e) {
-            return new WP_Error(
-                'fp_resv_agenda_error',
-                'Errore: ' . $e->getMessage(),
-                ['status' => 500]
-            );
+            return new WP_REST_Response([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'step' => $step ?? 'unknown',
+                'trace' => explode("\n", $e->getTraceAsString())
+            ], 500);
         }
         
         /*

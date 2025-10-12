@@ -14,7 +14,12 @@ use function current_user_can;
 use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
+use function function_exists;
+use function get_current_screen;
 use function get_option;
+use function plugin_basename;
+use function remove_action;
+use function remove_all_actions;
 use function rest_url;
 use function sanitize_key;
 use function wp_create_nonce;
@@ -33,6 +38,7 @@ final class AdminController
     {
         add_action('admin_menu', [$this, 'registerMenu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('admin_head', [$this, 'removeOtherPluginNotices']);
     }
 
     public function registerMenu(): void
@@ -53,6 +59,50 @@ final class AdminController
             self::PAGE_SLUG,
             [$this, 'renderPage']
         ) ?: null;
+    }
+
+    public function removeOtherPluginNotices(): void
+    {
+        // Verifica se siamo nella pagina del manager
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if ($screen === null || $screen->id !== $this->pageHook) {
+            return;
+        }
+
+        // Rimuovi tutti gli admin notices tranne quelli critici del nostro plugin
+        global $wp_filter;
+        
+        if (isset($wp_filter['admin_notices'])) {
+            $ourPluginPath = plugin_basename(Plugin::$dir);
+            
+            foreach ($wp_filter['admin_notices']->callbacks as $priority => $callbacks) {
+                foreach ($callbacks as $key => $callback) {
+                    // Mantieni solo i notice del nostro plugin (Requirements e BootstrapGuard)
+                    if (is_array($callback['function']) && count($callback['function']) === 2) {
+                        $class = is_object($callback['function'][0]) 
+                            ? get_class($callback['function'][0]) 
+                            : $callback['function'][0];
+                        
+                        // Mantieni solo i notice delle classi Requirements e BootstrapGuard
+                        if (strpos($class, 'FP\\Resv\\Core\\Requirements') !== false || 
+                            strpos($class, 'FP\\Resv\\Core\\BootstrapGuard') !== false) {
+                            continue;
+                        }
+                    }
+                    
+                    // Rimuovi tutti gli altri notice
+                    remove_action('admin_notices', $callback['function'], $priority);
+                }
+            }
+        }
+        
+        // Rimuovi anche user_admin_notices e network_admin_notices per completezza
+        if (isset($wp_filter['user_admin_notices'])) {
+            remove_all_actions('user_admin_notices');
+        }
+        if (isset($wp_filter['network_admin_notices'])) {
+            remove_all_actions('network_admin_notices');
+        }
     }
 
     public function enqueueAssets(string $hook): void
