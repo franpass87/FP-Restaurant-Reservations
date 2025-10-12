@@ -1511,17 +1511,14 @@ class ReservationManager {
         this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Creazione prenotazione in corso...</p></div>';
 
         try {
-            // USA l'endpoint PUBBLICO che già funziona perfettamente!
-            const response = await fetch(`${this.config.restRoot}/reservations`, {
+            // USA l'endpoint ADMIN con nonce admin
+            const response = await fetch(`${this.config.restRoot}/agenda/reservations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce, // Nonce REST admin
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    fp_resv_nonce: window.fpResvManagerSettings.publicNonce || '', // Nonce pubblico
-                    fp_resv_consent: '1', // Consenso (admin crea per conto del cliente)
-                }),
+                body: JSON.stringify(formData),
             });
 
             console.log('[Manager] Response status:', response.status);
