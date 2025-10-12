@@ -117,6 +117,7 @@ class FormApp {
 
         this.bind();
         this.initializeSections();
+        this.ensureNoncePresent(); // Verifica che il nonce sia presente
         this.initializePhoneField();
         this.initializeMeals();
         this.initializeDateField();
@@ -1690,6 +1691,19 @@ class FormApp {
                 payload[key] = value;
             }
         });
+        
+        // DEBUG: Verifica che il nonce sia presente
+        console.log('[FP-RESV] Nonce nel form:', payload.fp_resv_nonce ? 'PRESENTE' : 'MANCANTE');
+        if (!payload.fp_resv_nonce) {
+            console.warn('[FP-RESV] ATTENZIONE: Nonce mancante! Cercando nel DOM...');
+            const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
+            if (nonceField) {
+                console.log('[FP-RESV] Nonce trovato nel DOM:', nonceField.value.substring(0, 10) + '...');
+                payload.fp_resv_nonce = nonceField.value;
+            } else {
+                console.error('[FP-RESV] Campo nonce non trovato nel DOM!');
+            }
+        }
 
         if (this.phoneField) {
             const phoneData = buildPayload(this.phoneField, this.getPhoneCountryCode());
@@ -1712,6 +1726,37 @@ class FormApp {
         }
 
         return payload;
+    }
+
+    async ensureNoncePresent() {
+        const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
+        
+        if (!nonceField) {
+            console.warn('[FP-RESV] Campo nonce non trovato nel DOM! Creazione campo...');
+            // Crea il campo se manca completamente
+            const newNonceField = document.createElement('input');
+            newNonceField.type = 'hidden';
+            newNonceField.name = 'fp_resv_nonce';
+            newNonceField.value = '';
+            this.form.appendChild(newNonceField);
+        }
+        
+        const currentNonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
+        if (!currentNonceField.value || currentNonceField.value.trim() === '') {
+            console.warn('[FP-RESV] Nonce vuoto! Richiesta nuovo nonce...');
+            try {
+                const newNonce = await this.refreshNonce();
+                if (newNonce) {
+                    console.log('[FP-RESV] Nonce ottenuto con successo');
+                } else {
+                    console.error('[FP-RESV] Impossibile ottenere nonce!');
+                }
+            } catch (error) {
+                console.error('[FP-RESV] Errore richiesta nonce:', error);
+            }
+        } else {
+            console.log('[FP-RESV] Nonce già presente nel form');
+        }
     }
 
     async refreshNonce() {

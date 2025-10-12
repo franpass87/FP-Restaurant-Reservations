@@ -102,7 +102,7 @@ function tt(a, t) {
   const e = pt(t);
   return e === "" ? a : a ? a.includes(e) ? a : a + " (" + e + ")" : e;
 }
-function yt(a) {
+function mt(a) {
   const t = a.getAttribute("data-fp-resv");
   if (!t)
     return {};
@@ -113,7 +113,7 @@ function yt(a) {
   }
   return {};
 }
-function mt(a, t) {
+function yt(a, t) {
   if (!a)
     return {};
   const e = a.getAttribute(t);
@@ -175,14 +175,14 @@ function $(a, t) {
 const gt = ["service", "date", "party", "slots", "details", "confirm"], J = typeof window < "u" && typeof window.requestIdleCallback == "function" ? (a) => window.requestIdleCallback(a) : (a) => window.setTimeout(() => a(Date.now()), 1);
 let O = null;
 function St() {
-  return O || (O = Promise.resolve().then(() => kt)), O;
+  return O || (O = Promise.resolve().then(() => Ft)), O;
 }
 function At(a) {
   return et(a, "data-fp-resv-section");
 }
 class it {
   constructor(t) {
-    this.root = t, this.dataset = yt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
+    this.root = t, this.dataset = mt(t), this.config = this.dataset.config || {}, this.strings = this.dataset.strings || {}, this.messages = this.strings.messages || {}, this.events = this.dataset && this.dataset.events || {}, this.integrations = this.config.integrations || this.config.features || {}, this.form = t.querySelector("[data-fp-resv-form]");
     const e = Array.from(gt);
     this.sections = this.form ? Array.prototype.slice.call(this.form.querySelectorAll("[data-fp-resv-section]")) : [];
     const i = this.sections.map((s) => s.getAttribute("data-step") || "").filter(Boolean);
@@ -218,7 +218,7 @@ class it {
       submitError: this.messages.msg_submit_error || "Non è stato possibile completare la prenotazione. Riprova.",
       submitSuccess: this.messages.msg_submit_success || "Prenotazione inviata con successo.",
       mealFullNotice: this.messages.meal_full_notice || "Nessuna disponibilità per questo servizio. Scegli un altro giorno."
-    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), J(() => {
+    }, this.phoneCountryCode = this.getPhoneCountryCode(), this.hiddenPhoneCc && this.hiddenPhoneCc.value === "" && (this.hiddenPhoneCc.value = this.phoneCountryCode), this.handleDelegatedTrackingEvent = this.handleDelegatedTrackingEvent.bind(this), this.handleReservationConfirmed = this.handleReservationConfirmed.bind(this), this.handleWindowFocus = this.handleWindowFocus.bind(this), !(!this.form || this.sections.length === 0) && (this.bind(), this.initializeSections(), this.ensureNoncePresent(), this.initializePhoneField(), this.initializeMeals(), this.initializeDateField(), this.initializeAvailability(), this.syncConsentState(), this.updateSubmitState(), this.updateInlineErrors(), this.updateSummary(), J(() => {
       this.loadStripeIfNeeded(), this.loadGoogleCalendarIfNeeded();
     }));
   }
@@ -291,7 +291,7 @@ class it {
       if (this.currentAvailableDays.length > 0 && s) {
         const r = new Date(s).getDay().toString();
         if (!this.currentAvailableDays.includes(r)) {
-          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], f = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((m) => o[parseInt(m)]).join(", ")}.`;
+          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], f = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((y) => o[parseInt(y)]).join(", ")}.`;
           i.target.setCustomValidity(f), i.target.setAttribute("aria-invalid", "true"), window.console && window.console.warn && console.warn("[FP-RESV] " + f), setTimeout(() => {
             i.target.value = "";
           }, 100);
@@ -612,8 +612,8 @@ class it {
     Array.prototype.forEach.call(e, function(r, o) {
       const u = r.getAttribute("data-step") || "", f = t.state.sectionStates[u] || "locked";
       r.setAttribute("data-state", f), r.setAttribute("data-progress-state", f === "completed" ? "done" : f);
-      const m = r.querySelector(".fp-progress__label");
-      m && (f === "active" ? m.removeAttribute("aria-hidden") : m.setAttribute("aria-hidden", "true"));
+      const y = r.querySelector(".fp-progress__label");
+      y && (f === "active" ? y.removeAttribute("aria-hidden") : y.setAttribute("aria-hidden", "true"));
       const w = f === "locked";
       r.tabIndex = w ? -1 : 0, w ? r.setAttribute("aria-disabled", "true") : r.removeAttribute("aria-disabled"), f === "active" ? (r.setAttribute("aria-current", "step"), i = Math.max(i, o + 0.5)) : r.removeAttribute("aria-current"), f === "completed" ? (r.setAttribute("data-completed", "true"), i = Math.max(i, o + 1)) : r.removeAttribute("data-completed");
     });
@@ -709,7 +709,7 @@ class it {
   updateSummary() {
     if (this.summaryTargets.length === 0)
       return;
-    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), u = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), m = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), w = this.form.querySelector('[data-fp-resv-field="pets"]');
+    const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), u = this.form.querySelector('[data-fp-resv-field="notes"]'), f = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), y = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), w = this.form.querySelector('[data-fp-resv-field="pets"]');
     let _ = "";
     s && s.value && (_ = s.value.trim()), n && n.value && (_ = (_ + " " + n.value.trim()).trim());
     let A = "";
@@ -718,8 +718,8 @@ class it {
       A = A !== "" ? A + " / " + V : V;
     }
     const v = [];
-    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && v.push("Seggioloni: " + parseInt(f.value, 10)), m && "checked" in m && m.checked && v.push("Tavolo accessibile per sedia a rotelle"), w && "checked" in w && w.checked && v.push("Animali domestici");
-    const I = v.join("; ");
+    f && typeof f.value == "string" && parseInt(f.value, 10) > 0 && v.push("Seggioloni: " + parseInt(f.value, 10)), y && "checked" in y && y.checked && v.push("Tavolo accessibile per sedia a rotelle"), w && "checked" in w && w.checked && v.push("Animali domestici");
+    const N = v.join("; ");
     this.summaryTargets.forEach(function(E) {
       switch (E.getAttribute("data-fp-resv-summary")) {
         case "date":
@@ -741,7 +741,7 @@ class it {
           E.textContent = u && u.value ? u.value : "";
           break;
         case "extras":
-          E.textContent = I;
+          E.textContent = N;
           break;
       }
     });
@@ -775,11 +775,11 @@ class it {
         credentials: "same-origin"
       });
       if (o = Math.round(performance.now() - r), b("ui_latency", { op: "submit", ms: o }), !u.ok) {
-        const m = await U(u);
+        const y = await U(u);
         if (console.error("[FP-RESV] Errore API:", {
           status: u.status,
           statusText: u.statusText,
-          errorPayload: m
+          errorPayload: y
         }), u.status === 403 && !this.state.nonceRetried) {
           await new Promise((A) => setTimeout(A, 500));
           const _ = await this.refreshNonce();
@@ -806,10 +806,10 @@ class it {
             }
           }
         }
-        const w = m && m.message || this.copy.submitError;
+        const w = y && y.message || this.copy.submitError;
         throw Object.assign(new Error(w), {
           status: u.status,
-          payload: m
+          payload: y
         });
       }
       const f = await u.json();
@@ -856,7 +856,12 @@ class it {
     const t = new FormData(this.form), e = {};
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
-    }), this.phoneField) {
+    }), console.log("[FP-RESV] Nonce nel form:", e.fp_resv_nonce ? "PRESENTE" : "MANCANTE"), !e.fp_resv_nonce) {
+      console.warn("[FP-RESV] ATTENZIONE: Nonce mancante! Cercando nel DOM...");
+      const i = this.form.querySelector('input[name="fp_resv_nonce"]');
+      i ? (console.log("[FP-RESV] Nonce trovato nel DOM:", i.value.substring(0, 10) + "..."), e.fp_resv_nonce = i.value) : console.error("[FP-RESV] Campo nonce non trovato nel DOM!");
+    }
+    if (this.phoneField) {
       const i = z(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
@@ -865,6 +870,23 @@ class it {
       i && (e.fp_resv_phone_cc = i);
     }
     return e;
+  }
+  async ensureNoncePresent() {
+    if (!this.form.querySelector('input[name="fp_resv_nonce"]')) {
+      console.warn("[FP-RESV] Campo nonce non trovato nel DOM! Creazione campo...");
+      const i = document.createElement("input");
+      i.type = "hidden", i.name = "fp_resv_nonce", i.value = "", this.form.appendChild(i);
+    }
+    const e = this.form.querySelector('input[name="fp_resv_nonce"]');
+    if (!e.value || e.value.trim() === "") {
+      console.warn("[FP-RESV] Nonce vuoto! Richiesta nuovo nonce...");
+      try {
+        await this.refreshNonce() ? console.log("[FP-RESV] Nonce ottenuto con successo") : console.error("[FP-RESV] Impossibile ottenere nonce!");
+      } catch (i) {
+        console.error("[FP-RESV] Errore richiesta nonce:", i);
+      }
+    } else
+      console.log("[FP-RESV] Nonce già presente nel form");
   }
   async refreshNonce() {
     try {
@@ -1005,7 +1027,7 @@ class it {
     const s = i.getAttribute("data-fp-resv-event");
     if (!s)
       return;
-    let n = mt(i, "data-fp-resv-payload");
+    let n = yt(i, "data-fp-resv-payload");
     if ((!n || typeof n != "object") && (n = {}), n.trigger || (n.trigger = t.type || "click"), !n.href && i instanceof HTMLAnchorElement && i.href && (n.href = i.href), !n.label) {
       const r = i.getAttribute("data-fp-resv-label") || i.getAttribute("aria-label") || i.textContent || "";
       r && (n.label = r.trim());
@@ -1152,7 +1174,7 @@ function G() {
     }), (a >= t || !s) && (clearInterval(e), a >= t && console.log("[FP-RESV] Visibility auto-check completed after " + a + " checks"));
   }, 1e3);
 }
-const R = /* @__PURE__ */ new Set();
+const q = /* @__PURE__ */ new Set();
 function x() {
   const a = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]");
   if (a.length === 0) {
@@ -1165,19 +1187,19 @@ function x() {
       const e = t.parentElement;
       e.parentElement && (e.parentElement.insertBefore(t, e), e.remove(), console.log("[FP-RESV] Removed WPBakery <p> wrapper"));
     }
-    if (R.has(t)) {
+    if (q.has(t)) {
       console.log("[FP-RESV] Widget already initialized, skipping:", t.id || "unnamed");
       return;
     }
     try {
-      R.add(t), st(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
+      q.add(t), st(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
       const e = new it(t);
       console.log("[FP-RESV] Widget initialized successfully:", t.id || "unnamed"), (e.sections || []).forEach(function(s, n) {
         const r = s.getAttribute("data-step"), o = s.getAttribute("data-state"), u = s.hasAttribute("hidden");
         console.log(`[FP-RESV] Step ${n + 1} (${r}): state=${o}, hidden=${u}`);
       });
     } catch (e) {
-      console.error("[FP-RESV] Error initializing widget:", e), R.delete(t);
+      console.error("[FP-RESV] Error initializing widget:", e), q.delete(t);
     }
   });
 }
@@ -1202,7 +1224,7 @@ function Y() {
   [500, 1e3, 2e3, 3e3].forEach(function(t) {
     setTimeout(function() {
       const e = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length;
-      e > R.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + R.size + " initialized"), x());
+      e > q.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + q.size + " initialized"), x());
     }, t);
   });
 }
@@ -1213,11 +1235,11 @@ document.readyState === "loading" ? document.addEventListener("DOMContentLoaded"
   console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(x, 100);
 }), window.addEventListener("load", function() {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > R.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), x());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > q.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), x());
   }, 1e3);
 }), [1500, 3e3, 5e3, 1e4].forEach(function(a) {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > R.size && (console.log("[FP-RESV] WPBakery extended retry (" + a + "ms) - initializing..."), x());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > q.size && (console.log("[FP-RESV] WPBakery extended retry (" + a + "ms) - initializing..."), x());
   }, a);
 }));
 document.addEventListener("fp-resv:tracking:push", function(a) {
@@ -1246,22 +1268,22 @@ function B(a) {
 }
 function _t(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), r = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, o = /* @__PURE__ */ new Map();
-  let u = null, f = null, m = null, w = 0;
+  let u = null, f = null, y = null, w = 0;
   function _(l) {
     if (typeof l != "string")
       return "";
     const d = l.trim().toLowerCase();
     if (d === "")
       return "";
-    const h = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), y = (g) => g.some((c) => h.startsWith(c)), C = (g) => g.some((c) => h.includes(c));
-    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
+    const h = ((g) => typeof g.normalize == "function" ? g.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : g)(d), m = (g) => g.some((c) => h.startsWith(c)), C = (g) => g.some((c) => h.includes(c));
+    return m(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : d === "waitlist" || d === "busy" || m(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : m(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : d;
   }
   function A(l, d) {
     const p = Array.isArray(l) ? l : [], h = p.length;
     if (h === 0)
       return d === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
-    const y = p.map((c) => _(c && c.status)).filter((c) => c !== "");
-    return y.some((c) => c === "limited") ? { state: "limited", slots: h } : y.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : y.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
+    const m = p.map((c) => _(c && c.status)).filter((c) => c !== "");
+    return m.some((c) => c === "limited") ? { state: "limited", slots: h } : m.some((c) => c === "available") ? { state: "available", slots: h } : d ? { state: "available", slots: h } : m.length === 0 ? { state: "available", slots: h } : { state: "full", slots: h };
   }
   function v(l, d) {
     if (typeof a.onAvailabilitySummary == "function")
@@ -1271,13 +1293,13 @@ function _t(a) {
       }
   }
   r && r.addEventListener("click", () => {
-    f && L(f, 0);
+    f && M(f, 0);
   });
-  function I(l, d) {
+  function N(l, d) {
     const p = typeof d == "string" ? d : d ? "loading" : "idle", h = typeof l == "string" ? l : "";
     e && (e.textContent = h, e.setAttribute("data-state", p));
-    const y = p === "loading";
-    t.setAttribute("data-loading", y ? "true" : "false"), i && i.setAttribute("aria-busy", y ? "true" : "false");
+    const m = p === "loading";
+    t.setAttribute("data-loading", m ? "true" : "false"), i && i.setAttribute("aria-busy", m ? "true" : "false");
   }
   function E() {
     if (!i)
@@ -1289,10 +1311,10 @@ function _t(a) {
       h.className = "fp-skeleton", p.appendChild(h), i.appendChild(p);
     }
   }
-  function M(l) {
+  function I(l) {
     s && (s.hidden = !1);
-    const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", h = d && typeof l.date == "string" ? l.date.trim() : "", y = d && typeof l.party < "u" ? String(l.party).trim() : "", C = d && !!l.requiresMeal, g = p !== "", S = h !== "" && (y !== "" && y !== "0") && (!C || g), k = C && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
-    I(k, "idle"), i && B(i), v(l, { state: S ? "unavailable" : "unknown", slots: 0 });
+    const d = l && typeof l == "object", p = d && typeof l.meal == "string" ? l.meal.trim() : "", h = d && typeof l.date == "string" ? l.date.trim() : "", m = d && typeof l.party < "u" ? String(l.party).trim() : "", C = d && !!l.requiresMeal, g = p !== "", S = h !== "" && (m !== "" && m !== "0") && (!C || g), F = C && !g ? a.strings && a.strings.selectMeal || "" : S && a.strings && a.strings.slotsEmpty || "";
+    N(F, "idle"), i && B(i), v(l, { state: S ? "unavailable" : "unknown", slots: 0 });
   }
   function V() {
     s && (s.hidden = !0);
@@ -1306,16 +1328,16 @@ function _t(a) {
       const p = n.querySelector("[data-fp-resv-slots-boundary-message]");
       p && (p.textContent = l || d), n.hidden = !1;
     }
-    I(l || d, "error"), v(f, { state: "error", slots: 0 });
+    N(l || d, "error"), v(f, { state: "error", slots: 0 });
   }
   function nt(l, d) {
     const p = i ? i.querySelectorAll("button[data-slot]") : [];
     Array.prototype.forEach.call(p, (h) => {
       h.setAttribute("aria-pressed", h === d ? "true" : "false");
-    }), m = l, typeof a.onSlotSelected == "function" && a.onSlotSelected(l);
+    }), y = l, typeof a.onSlotSelected == "function" && a.onSlotSelected(l);
   }
   function rt() {
-    if (m = null, !i)
+    if (y = null, !i)
       return;
     const l = i.querySelectorAll("button[data-slot]");
     Array.prototype.forEach.call(l, (d) => {
@@ -1328,63 +1350,63 @@ function _t(a) {
     B(i);
     const h = l && Array.isArray(l.slots) ? l.slots : [];
     if (h.length === 0) {
-      M(d);
+      I(d);
       return;
     }
     h.forEach((C) => {
       const g = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", m && m.start === C.start ? "true" : "false"), c.addEventListener("click", () => nt(C, c)), g.appendChild(c), i.appendChild(g);
-    }), I(a.strings && a.strings.slotsUpdated || "", !1);
-    const y = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
-    v(d, A(h, y));
+      c.type = "button", c.textContent = C.label || "", c.dataset.slot = C.start || "", c.dataset.slotStatus = C.status || "", c.setAttribute("aria-pressed", y && y.start === C.start ? "true" : "false"), c.addEventListener("click", () => nt(C, c)), g.appendChild(c), i.appendChild(g);
+    }), N(a.strings && a.strings.slotsUpdated || "", !1);
+    const m = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
+    v(d, A(h, m));
   }
-  function L(l, d) {
+  function M(l, d) {
     if (f = l, !l || !l.date || !l.party) {
-      M(l);
+      I(l);
       return;
     }
-    const p = ++w, h = JSON.stringify([l.date, l.meal, l.party]), y = o.get(h);
-    if (y && Date.now() - y.timestamp < Et && d === 0) {
-      K(y.payload, l, p);
+    const p = ++w, h = JSON.stringify([l.date, l.meal, l.party]), m = o.get(h);
+    if (m && Date.now() - m.timestamp < Et && d === 0) {
+      K(m.payload, l, p);
       return;
     }
-    W(), V(), E(), I(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), v(l, { state: "loading", slots: 0 });
+    W(), V(), E(), N(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), v(l, { state: "loading", slots: 0 });
     const C = Pt(a.endpoint, l), g = performance.now();
-    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((q) => {
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((R) => {
       if (!c.ok) {
         const S = new Error("availability_error");
-        S.status = c.status, S.payload = q;
-        const k = c.headers.get("Retry-After");
-        if (k) {
-          const F = Number.parseInt(k, 10);
-          Number.isFinite(F) && (S.retryAfter = F);
+        S.status = c.status, S.payload = R;
+        const F = c.headers.get("Retry-After");
+        if (F) {
+          const k = Number.parseInt(F, 10);
+          Number.isFinite(k) && (S.retryAfter = k);
         }
         throw S;
       }
-      return q;
+      return R;
     })).then((c) => {
       if (p !== w)
         return;
-      const q = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(q), o.set(h, { payload: c, timestamp: Date.now() }), K(c, l, p);
+      const R = performance.now() - g;
+      typeof a.onLatency == "function" && a.onLatency(R), o.set(h, { payload: c, timestamp: Date.now() }), K(c, l, p);
     }).catch((c) => {
       if (p !== w)
         return;
-      const q = performance.now() - g;
-      typeof a.onLatency == "function" && a.onLatency(q);
-      const S = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, k = typeof c.status == "number" ? c.status : S && typeof S.status == "number" ? S.status : 0;
-      let F = 0;
+      const R = performance.now() - g;
+      typeof a.onLatency == "function" && a.onLatency(R);
+      const S = c && c.payload && typeof c.payload == "object" ? c.payload.data || {} : {}, F = typeof c.status == "number" ? c.status : S && typeof S.status == "number" ? S.status : 0;
+      let k = 0;
       if (c && typeof c.retryAfter == "number" && Number.isFinite(c.retryAfter))
-        F = c.retryAfter;
+        k = c.retryAfter;
       else if (S && typeof S.retry_after < "u") {
-        const N = Number.parseInt(S.retry_after, 10);
-        Number.isFinite(N) && (F = N);
+        const L = Number.parseInt(S.retry_after, 10);
+        Number.isFinite(L) && (k = L);
       }
-      if (d >= Ct - 1 ? !1 : k === 429 || k >= 500 && k < 600 ? !0 : k === 0) {
-        const N = d + 1;
-        typeof a.onRetry == "function" && a.onRetry(N);
-        const dt = F > 0 ? Math.max(F * 1e3, Q) : Q * Math.pow(2, d);
-        window.setTimeout(() => L(l, N), dt);
+      if (d >= Ct - 1 ? !1 : F === 429 || F >= 500 && F < 600 ? !0 : F === 0) {
+        const L = d + 1;
+        typeof a.onRetry == "function" && a.onRetry(L);
+        const dt = k > 0 ? Math.max(k * 1e3, Q) : Q * Math.pow(2, d);
+        window.setTimeout(() => M(l, L), dt);
         return;
       }
       const ot = c && c.payload && (c.payload.message || c.payload.code) || S && S.message || a.strings && a.strings.slotsError || a.strings && a.strings.submitError || "Impossibile aggiornare la disponibilità. Riprova.", lt = c && c.payload || S || null, ct = tt(ot, lt);
@@ -1394,34 +1416,34 @@ function _t(a) {
   return {
     schedule(l, d = {}) {
       u && window.clearTimeout(u);
-      const p = d && typeof d == "object" ? d : {}, h = l || (typeof a.getParams == "function" ? a.getParams() : null), y = !!(h && h.requiresMeal);
-      if (!h || !h.date || !h.party || y && !h.meal) {
-        f = h, M(h || {});
+      const p = d && typeof d == "object" ? d : {}, h = l || (typeof a.getParams == "function" ? a.getParams() : null), m = !!(h && h.requiresMeal);
+      if (!h || !h.date || !h.party || m && !h.meal) {
+        f = h, I(h || {});
         return;
       }
       if (p.immediate) {
-        L(h, 0);
+        M(h, 0);
         return;
       }
       u = window.setTimeout(() => {
-        L(h, 0);
+        M(h, 0);
       }, wt);
     },
     revalidate() {
       if (!f)
         return;
       const l = JSON.stringify([f.date, f.meal, f.party]);
-      o.delete(l), L(f, 0);
+      o.delete(l), M(f, 0);
     },
     getSelection() {
-      return m;
+      return y;
     },
     clearSelection() {
       rt();
     }
   };
 }
-const kt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ft = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   createAvailabilityController: _t
 }, Symbol.toStringTag, { value: "Module" }));

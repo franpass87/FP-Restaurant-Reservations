@@ -184,33 +184,53 @@ final class WidgetController
             gap: 0.65rem !important;
             align-items: flex-start !important;
         }
-        /* SPACING CORRETTI - Forza margini e padding */
+        /* SPACING CORRETTI - Forza margini e padding generosi */
+        .fp-resv-widget,
+        #fp-resv-default {
+            padding: clamp(1.5rem, 4vw, 2.5rem) !important;
+        }
         .fp-resv-widget .fp-resv-step,
         #fp-resv-default .fp-resv-step {
-            padding: 1.5rem clamp(1rem, 4vw, 1.5rem) !important;
-            margin-bottom: 1rem !important;
+            padding: 2rem clamp(1.5rem, 5vw, 2.5rem) !important;
+            margin-bottom: 1.5rem !important;
         }
         /* Spacing tra sezioni */
         .fp-resv-widget .fp-section,
         #fp-resv-default .fp-section {
-            margin-bottom: 1.25rem !important;
+            margin-bottom: 1.5rem !important;
+            padding: 0 !important;
         }
         /* Spacing tra campi del form */
         .fp-resv-widget .fp-resv-field,
         .fp-resv-widget .fp-field,
         #fp-resv-default .fp-resv-field,
         #fp-resv-default .fp-field {
-            margin-bottom: 1rem !important;
+            margin-bottom: 1.25rem !important;
         }
-        /* Notice/hint text */
+        /* Notice/hint text - più padding e margini */
         .fp-resv-widget .fp-hint,
         .fp-resv-widget .fp-resv-meal-notice,
         #fp-resv-default .fp-hint,
         #fp-resv-default .fp-resv-meal-notice {
-            margin-top: 0.5rem !important;
-            margin-bottom: 0.75rem !important;
-            padding: 0.5rem 0.75rem !important;
-            line-height: 1.5 !important;
+            margin-top: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            padding: 0.85rem 1rem !important;
+            line-height: 1.6 !important;
+        }
+        /* Header/Topbar - più spazio */
+        .fp-resv-widget .fp-topbar,
+        #fp-resv-default .fp-topbar {
+            padding: 1.5rem clamp(1.5rem, 5vw, 2.5rem) !important;
+            margin-bottom: 1.5rem !important;
+        }
+        /* Titoli nel form - più margini */
+        .fp-resv-widget .fp-resv-widget__headline,
+        #fp-resv-default .fp-resv-widget__headline {
+            margin-bottom: 0.5rem !important;
+        }
+        .fp-resv-widget .fp-resv-widget__subheadline,
+        #fp-resv-default .fp-resv-widget__subheadline {
+            margin-bottom: 0 !important;
         }
         /* Pulsanti servizio (Pranzo, Cena, ecc) */
         .fp-resv-widget .fp-meal-pill,
@@ -254,25 +274,53 @@ final class WidgetController
         .fp-resv-widget .fp-progress,
         #fp-resv-default .fp-resv-progress,
         #fp-resv-default .fp-progress {
-            margin-bottom: 2rem !important;
-            padding: 1rem 0 !important;
+            margin-bottom: 2.5rem !important;
+            margin-top: 1.5rem !important;
+            padding: 1.5rem 0 !important;
             position: relative !important;
             z-index: 1 !important;
             background: transparent !important;
         }
-        /* Progress bar pseudo-elementi - evita sovrapposizione */
+        /* Progress bar pseudo-elementi - più chiari e meno invadenti */
         .fp-resv-widget .fp-progress::before,
-        #fp-resv-default .fp-progress::before,
+        #fp-resv-default .fp-progress::before {
+            z-index: 0 !important;
+            pointer-events: none !important;
+            opacity: 0.25 !important;
+            background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2) 16%, rgba(148, 163, 184, 0.2) 84%, transparent) !important;
+        }
         .fp-resv-widget .fp-progress::after,
         #fp-resv-default .fp-progress::after {
-            z-index: -1 !important;
+            z-index: 0 !important;
             pointer-events: none !important;
+            opacity: 0.8 !important;
         }
-        /* Progress bar items - sopra la banda */
+        /* Progress bar items - alta leggibilità */
         .fp-resv-widget .fp-progress__item,
         #fp-resv-default .fp-progress__item {
-            z-index: 2 !important;
+            z-index: 10 !important;
             position: relative !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid rgba(148, 163, 184, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.1) !important;
+            color: #1e293b !important;
+            font-weight: 600 !important;
+            padding: 0.6rem 1rem !important;
+            min-height: 2.5rem !important;
+        }
+        /* Progress bar items - stato attivo */
+        .fp-resv-widget .fp-progress__item[aria-current="step"],
+        #fp-resv-default .fp-progress__item[aria-current="step"] {
+            background: rgba(255, 255, 255, 1) !important;
+            border-color: var(--fp-resv-color-primary, #2563eb) !important;
+            color: var(--fp-resv-color-primary, #2563eb) !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25), 0 3px 8px rgba(15, 23, 42, 0.15) !important;
+        }
+        /* Progress bar items - testo sempre leggibile */
+        .fp-resv-widget .fp-progress__item span,
+        #fp-resv-default .fp-progress__item span {
+            color: inherit !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
         }
         /* Assicura che contenuti del form non siano coperti dalla progress bar */
         .fp-resv-widget .fp-resv-step,
@@ -280,61 +328,117 @@ final class WidgetController
             position: relative !important;
             z-index: 3 !important;
         }
-        /* Pulsanti - sopra la progress bar */
+        /* Pulsanti - sopra la progress bar e con più padding */
         .fp-resv-widget button,
         .fp-resv-widget .fp-btn,
         #fp-resv-default button,
         #fp-resv-default .fp-btn {
             position: relative !important;
             z-index: 10 !important;
+            padding: 0.85rem 1.5rem !important;
+            margin: 0.25rem !important;
         }
-        /* STICKY BAR - Pulsanti navigazione */
+        /* STICKY BAR - Pulsanti navigazione con più spazio */
         .fp-resv-widget .fp-resv-nav,
         .fp-resv-widget .fp-resv-widget__actions,
         #fp-resv-default .fp-resv-nav,
         #fp-resv-default .fp-resv-widget__actions {
             position: relative !important;
             z-index: 100 !important;
+            padding: 1.5rem clamp(1.5rem, 5vw, 2.5rem) !important;
+            margin-top: 2rem !important;
         }
-        /* CHECKBOX - Allineamento corretto */
+        /* Pulsanti navigazione - più grandi e visibili */
+        .fp-resv-widget .fp-resv-nav button,
+        .fp-resv-widget .fp-resv-widget__actions button,
+        #fp-resv-default .fp-resv-nav button,
+        #fp-resv-default .fp-resv-widget__actions button {
+            min-height: 3rem !important;
+            padding: 1rem 2rem !important;
+            font-size: 1.05em !important;
+        }
+        /* CHECKBOX - Layout migliorato per testi lunghi */
         .fp-resv-widget .fp-resv-field--checkbox,
         .fp-resv-widget .fp-field--checkbox,
         #fp-resv-default .fp-resv-field--checkbox,
         #fp-resv-default .fp-field--checkbox {
             display: flex !important;
             align-items: flex-start !important;
-            gap: 0.75rem !important;
-            margin-bottom: 1rem !important;
+            gap: 1rem !important;
+            margin-bottom: 1.25rem !important;
+            width: 100% !important;
+            max-width: 100% !important;
         }
+        /* Checkbox input - sempre a sinistra, mai restringere */
         .fp-resv-widget .fp-checkbox,
-        #fp-resv-default .fp-checkbox {
+        .fp-resv-widget input[type="checkbox"],
+        #fp-resv-default .fp-checkbox,
+        #fp-resv-default input[type="checkbox"] {
             flex-shrink: 0 !important;
+            flex-grow: 0 !important;
             width: 1.25rem !important;
             height: 1.25rem !important;
-            margin: 0.25rem 0 0 0 !important;
+            min-width: 1.25rem !important;
+            margin: 0.2rem 0 0 0 !important;
             cursor: pointer !important;
         }
+        /* Testo checkbox - prende tutto lo spazio disponibile */
         .fp-resv-widget .fp-resv-field--checkbox span,
         .fp-resv-widget .fp-field--checkbox span,
+        .fp-resv-widget .fp-resv-field--checkbox label,
+        .fp-resv-widget .fp-field--checkbox label,
         #fp-resv-default .fp-resv-field--checkbox span,
-        #fp-resv-default .fp-field--checkbox span {
-            flex: 1 !important;
-            line-height: 1.6 !important;
+        #fp-resv-default .fp-field--checkbox span,
+        #fp-resv-default .fp-resv-field--checkbox label,
+        #fp-resv-default .fp-field--checkbox label {
+            flex: 1 1 auto !important;
+            max-width: calc(100% - 2.5rem) !important;
+            line-height: 1.65 !important;
             margin: 0 !important;
+            padding: 0 !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto !important;
+            cursor: pointer !important;
         }
-        /* Consent checkbox */
+        /* Label che contiene checkbox - layout flex */
+        .fp-resv-widget label.fp-resv-field--checkbox,
+        .fp-resv-widget label.fp-field--checkbox,
+        #fp-resv-default label.fp-resv-field--checkbox,
+        #fp-resv-default label.fp-field--checkbox {
+            display: flex !important;
+            align-items: flex-start !important;
+            cursor: pointer !important;
+        }
+        /* Consent checkbox - stessi fix */
         .fp-resv-widget .fp-resv-field--consent,
         #fp-resv-default .fp-resv-field--consent {
             display: flex !important;
             align-items: flex-start !important;
-            gap: 0.75rem !important;
+            gap: 1rem !important;
             margin-top: 1.5rem !important;
             margin-bottom: 1.5rem !important;
+            width: 100% !important;
         }
         .fp-resv-widget .fp-resv-consent__text,
-        #fp-resv-default .fp-resv-consent__text {
-            flex: 1 !important;
-            line-height: 1.6 !important;
+        .fp-resv-widget .fp-resv-field--consent span,
+        #fp-resv-default .fp-resv-consent__text,
+        #fp-resv-default .fp-resv-field--consent span {
+            flex: 1 1 auto !important;
+            max-width: calc(100% - 2.5rem) !important;
+            line-height: 1.65 !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto !important;
+        }
+        /* Badge OBBLIGATORIO/OPZIONALE */
+        .fp-resv-widget .fp-resv-field--checkbox .fp-badge,
+        .fp-resv-widget .fp-field--checkbox .fp-badge,
+        #fp-resv-default .fp-resv-field--checkbox .fp-badge,
+        #fp-resv-default .fp-field--checkbox .fp-badge {
+            display: inline-block !important;
+            margin-left: 0.5rem !important;
+            white-space: nowrap !important;
         }
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
