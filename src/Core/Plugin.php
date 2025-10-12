@@ -568,6 +568,13 @@ final class Plugin
 
         $container->register(WidgetController::class, $widgets);
         $container->register('frontend.widgets', $widgets);
+        
+        // Register shortcode debug page (admin only)
+        if (is_admin()) {
+            $shortcodeDebug = new \FP\Resv\Frontend\ShortcodeDebug();
+            $shortcodeDebug->register();
+            $container->register(\FP\Resv\Frontend\ShortcodeDebug::class, $shortcodeDebug);
+        }
 
         $manage = new ManageController();
         $manage->boot();
