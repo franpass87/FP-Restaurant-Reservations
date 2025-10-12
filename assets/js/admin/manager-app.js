@@ -2172,6 +2172,28 @@ class ReservationManager {
             content += `<strong>Errore:</strong> <pre style="margin:5px 0;padding:10px;background:#f5f5f5;overflow:auto;max-height:150px;">${info.errorText}</pre>`;
         }
         
+        // Mostra errori recenti dal plugin
+        if (this.config.errors && this.config.errors.length > 0) {
+            content += `<hr style="margin:10px 0;border:none;border-top:1px solid #ddd;">`;
+            content += `<strong>🔴 Errori Recenti del Plugin (${this.config.errors.length}):</strong><br>`;
+            content += `<div style="max-height:200px;overflow:auto;margin-top:5px;">`;
+            
+            this.config.errors.slice().reverse().forEach((error, index) => {
+                const timestamp = error.timestamp ? new Date(error.timestamp).toLocaleString() : 'N/A';
+                const contextStr = error.context ? JSON.stringify(error.context) : '';
+                
+                content += `
+                    <div style="margin:5px 0;padding:8px;background:${index === 0 ? '#fff3cd' : '#f5f5f5'};border-left:3px solid #dc3232;font-size:12px;">
+                        <div style="font-weight:bold;color:#dc3232;">${error.message}</div>
+                        <div style="color:#666;font-size:11px;margin-top:3px;">${timestamp}</div>
+                        ${contextStr ? `<details style="margin-top:5px;font-size:11px;"><summary style="cursor:pointer;color:#0073aa;">Dettagli</summary><pre style="margin:3px 0;padding:5px;background:#fff;overflow:auto;">${contextStr}</pre></details>` : ''}
+                    </div>
+                `;
+            });
+            
+            content += `</div>`;
+        }
+        
         content += `<button onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;border:none;background:#ddd;padding:5px 10px;cursor:pointer;border-radius:3px;">Chiudi</button>`;
         
         panel.innerHTML = content;

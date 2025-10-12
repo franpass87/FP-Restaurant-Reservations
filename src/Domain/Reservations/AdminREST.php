@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Reservations;
 use DateInterval;
 use DateTimeImmutable;
 use FP\Resv\Core\Roles;
+use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Tables\LayoutService;
 use InvalidArgumentException;
@@ -848,13 +849,28 @@ final class AdminREST
             // Verifica se ci sono filter attivi
             $filters = $GLOBALS['wp_filter']['rest_pre_serve_request'] ?? null;
             if ($filters) {
-                error_log('[FP Resv] ATTENZIONE: Ci sono ' . count($filters->callbacks ?? []) . ' filter su rest_pre_serve_request');
+                $filterCount = count($filters->callbacks ?? []);
+                error_log('[FP Resv] ATTENZIONE: Ci sono ' . $filterCount . ' filter su rest_pre_serve_request');
+                
+                ErrorLogger::log('REST filters potrebbero interferire con DELETE response', [
+                    'endpoint' => 'DELETE /agenda/reservations/' . $id,
+                    'filter_count' => $filterCount,
+                    'response_status' => 200,
+                    'response_has_data' => !empty($response->get_data()),
+                ]);
             }
             
             return $response;
         } catch (Throwable $exception) {
             error_log('[FP Resv] ERRORE ELIMINAZIONE: ' . $exception->getMessage());
             error_log('[FP Resv] Stack trace: ' . $exception->getTraceAsString());
+            
+            ErrorLogger::log('Errore eliminazione prenotazione', [
+                'reservation_id' => $id,
+                'error' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
             
             return new WP_Error(
                 'fp_resv_delete_failed',

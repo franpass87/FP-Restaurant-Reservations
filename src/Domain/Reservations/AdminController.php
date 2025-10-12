@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Reservations;
 
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\Roles;
+use FP\Resv\Core\ErrorLogger;
 use function __;
 use function add_action;
 use function add_submenu_page;
@@ -176,12 +177,19 @@ final class AdminController
             $debugMode = true;
         }
         
+        // Ottieni errori recenti se debug mode è attivo
+        $recentErrors = [];
+        if ($debugMode) {
+            $recentErrors = ErrorLogger::getRecentErrors(10);
+        }
+        
         wp_localize_script($scriptHandle, 'fpResvManagerSettings', [
             'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),
             'nonce'     => wp_create_nonce('wp_rest'),
             'publicNonce' => wp_create_nonce('fp_resv_submit'), // Nonce per l'endpoint pubblico
             'meals'     => $meals,
             'debugMode' => $debugMode, // Attiva/disattiva debug panel
+            'errors'    => $recentErrors, // Ultimi errori del plugin
             'links'     => [
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
                 'manager'  => esc_url_raw(admin_url('admin.php?page=fp-resv-manager')),
