@@ -22,7 +22,10 @@ final class Shortcodes
         error_log('[FP-RESV-SHORTCODE] register() method called');
         add_shortcode('fp_reservations', [self::class, 'render']);
         add_shortcode('fp_resv_debug', [self::class, 'renderDebug']);
+        add_shortcode('fp_resv_test', [self::class, 'renderTest']); // Test shortcode semplice
         error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_reservations") executed');
+        error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_resv_debug") executed');
+        error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_resv_test") executed');
     }
 
     /**
@@ -213,17 +216,46 @@ final class Shortcodes
     }
 
     /**
+     * Shortcode di test super semplice: [fp_resv_test]
+     * Serve solo a verificare che gli shortcode funzionino
+     */
+    public static function renderTest(): string
+    {
+        error_log('[FP-RESV-TEST] Test shortcode called!');
+        
+        $timestamp = date('Y-m-d H:i:s');
+        $user = wp_get_current_user();
+        $isAdmin = current_user_can('manage_options') ? 'SÌ' : 'NO';
+        
+        return '<div style="background:#e7f5ff;border:2px solid #339af0;padding:20px;margin:20px 0;border-radius:8px;font-family:sans-serif;">' .
+               '<h3 style="color:#1971c2;margin-top:0;">✅ Test Shortcode FP Restaurant Reservations</h3>' .
+               '<p><strong>Timestamp:</strong> ' . esc_html($timestamp) . '</p>' .
+               '<p><strong>Utente:</strong> ' . esc_html($user->user_login ?: 'Non loggato') . '</p>' .
+               '<p><strong>Sei amministratore:</strong> ' . $isAdmin . '</p>' .
+               '<p style="margin-bottom:0;"><strong>Stato:</strong> <span style="color:#2f9e44;font-weight:bold;">Lo shortcode funziona! ✅</span></p>' .
+               '</div>';
+    }
+
+    /**
      * Shortcode diagnostico: [fp_resv_debug]
      * Mostra informazioni sul database e gli endpoint REST
      */
     public static function renderDebug(): string
     {
-        // Solo admin possono vedere il debug
+        // Test semplice per vedere se lo shortcode viene eseguito
+        error_log('[FP-RESV-DEBUG] renderDebug() called');
+        
+        // Verifica permessi
         if (!current_user_can('manage_options')) {
-            return '<p style="color:red;">❌ Devi essere amministratore per vedere queste informazioni.</p>';
+            error_log('[FP-RESV-DEBUG] User does not have manage_options capability');
+            return '<div style="background:#fee;border:2px solid #c00;padding:20px;margin:20px 0;border-radius:8px;"><p style="color:#c00;font-weight:bold;">❌ Devi essere amministratore per vedere queste informazioni.</p><p>Utente corrente: ' . wp_get_current_user()->user_login . '</p></div>';
         }
 
-        global $wpdb;
+        error_log('[FP-RESV-DEBUG] User has permissions, proceeding with debug');
+        
+        // Wrap in try-catch per catturare qualsiasi errore
+        try {
+            global $wpdb;
         $table = $wpdb->prefix . 'fp_reservations';
         $customersTable = $wpdb->prefix . 'fp_customers';
 
@@ -549,6 +581,20 @@ final class Shortcodes
         </div>
         <?php
         
-        return ob_get_clean();
+        $output = ob_get_clean();
+        error_log('[FP-RESV-DEBUG] Generated output length: ' . strlen($output));
+        return $output;
+        
+        } catch (\Throwable $e) {
+            error_log('[FP-RESV-DEBUG] ERROR: ' . $e->getMessage());
+            error_log('[FP-RESV-DEBUG] Stack trace: ' . $e->getTraceAsString());
+            
+            return '<div style="background:#fee;border:2px solid #c00;padding:20px;margin:20px 0;border-radius:8px;">' .
+                   '<h3 style="color:#c00;margin-top:0;">❌ Errore nello shortcode di debug</h3>' .
+                   '<p><strong>Messaggio:</strong> ' . esc_html($e->getMessage()) . '</p>' .
+                   '<p><strong>File:</strong> ' . esc_html($e->getFile()) . ' <strong>Riga:</strong> ' . $e->getLine() . '</p>' .
+                   '<p><em>Controlla i log PHP per maggiori dettagli.</em></p>' .
+                   '</div>';
+        }
     }
 }
