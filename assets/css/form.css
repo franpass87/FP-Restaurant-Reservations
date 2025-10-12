@@ -2321,3 +2321,109 @@ form[data-fp-resv-form] {
     background-position: center;
     background-repeat: no-repeat;
 }
+
+/* === Party Input con Bottoni +/- === */
+.fp-resv-party-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.fp-resv-party-btn {
+    flex: 0 0 3rem;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #cbd5e1;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    padding: 0;
+    line-height: 1;
+}
+
+.fp-resv-party-btn:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+    color: #1e40af;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+}
+
+.fp-resv-party-btn:active {
+    transform: scale(0.95);
+    background: #dbeafe;
+}
+
+.fp-resv-party-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+.fp-resv-party-btn:disabled:hover {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    transform: none;
+}
+
+.fp-resv-party-btn:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.fp-resv-party-input {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    min-height: 3rem !important;
+    padding: 0.85rem 1rem !important;
+}
+
+/* Nascondi le frecce del campo number */
+.fp-resv-party-input::-webkit-outer-spin-button,
+.fp-resv-party-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.fp-resv-party-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .fp-resv-party-input-wrapper {
+        max-width: 280px;
+    }
+    
+    .fp-resv-party-btn {
+        flex: 0 0 2.75rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        font-size: 1.35rem;
+    }
+    
+    .fp-resv-party-input {
+        font-size: 1.15rem !important;
+    }
+}

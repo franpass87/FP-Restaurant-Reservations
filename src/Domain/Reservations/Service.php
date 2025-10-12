@@ -323,20 +323,29 @@ class Service
             'ip'          => Helpers::clientIp(),
         ]);
 
-        // DEBUG: Log email sending
-        Logging::log('mail', 'Tentativo invio email cliente', [
-            'reservation_id' => $reservationId,
-            'customer_email' => $sanitized['email'] ?? '',
-            'status' => $status,
-        ]);
+        // Invio email in un try-catch separato per non bloccare la risposta al cliente
+        // anche se l'invio email fallisce (la prenotazione è già salvata)
+        try {
+            $this->sendCustomerEmail($sanitized, $reservationId, $manageUrl, $status);
+        } catch (Throwable $emailException) {
+            Logging::log('mail', 'ERRORE invio email cliente', [
+                'reservation_id' => $reservationId,
+                'error' => $emailException->getMessage(),
+                'file' => $emailException->getFile(),
+                'line' => $emailException->getLine(),
+            ]);
+        }
         
-        $this->sendCustomerEmail($sanitized, $reservationId, $manageUrl, $status);
-        
-        Logging::log('mail', 'Tentativo invio notifiche staff', [
-            'reservation_id' => $reservationId,
-        ]);
-        
-        $this->sendStaffNotifications($sanitized, $reservationId, $manageUrl, $status, $reservation);
+        try {
+            $this->sendStaffNotifications($sanitized, $reservationId, $manageUrl, $status, $reservation);
+        } catch (Throwable $emailException) {
+            Logging::log('mail', 'ERRORE invio email staff', [
+                'reservation_id' => $reservationId,
+                'error' => $emailException->getMessage(),
+                'file' => $emailException->getFile(),
+                'line' => $emailException->getLine(),
+            ]);
+        }
 
         do_action('fp_resv_reservation_created', $reservationId, $sanitized, $reservation, $manageUrl);
 
@@ -765,16 +774,7 @@ class Service
         // per evitare di inviare due email alla stessa persona
         $webmasterRecipients = array_values(array_diff($webmasterRecipients, $restaurantRecipients));
 
-        Logging::log('mail', 'sendStaffNotifications - Destinatari', [
-            'reservation_id' => $reservationId,
-            'restaurant_recipients' => $restaurantRecipients,
-            'webmaster_recipients' => $webmasterRecipients,
-        ]);
-
         if ($restaurantRecipients === [] && $webmasterRecipients === []) {
-            Logging::log('mail', 'Nessun destinatario configurato per notifiche staff', [
-                'reservation_id' => $reservationId,
-            ]);
             return;
         }
 
@@ -824,13 +824,7 @@ class Service
             $subject = apply_filters('fp_resv_restaurant_email_subject', $subject, $context);
             $message = apply_filters('fp_resv_restaurant_email_message', $message, $context);
 
-            Logging::log('mail', 'Invio email restaurant notification', [
-                'reservation_id' => $reservationId,
-                'recipients' => $restaurantRecipients,
-                'subject' => $subject,
-            ]);
-
-            $sentRestaurant = $this->mailer->send(
+            $this->mailer->send(
                 implode(',', $restaurantRecipients),
                 $subject,
                 $message,
@@ -844,11 +838,6 @@ class Service
                     'ics_filename'   => sprintf('reservation-%d.ics', $reservationId),
                 ]
             );
-            
-            Logging::log('mail', 'Email restaurant notification sent', [
-                'reservation_id' => $reservationId,
-                'sent' => $sentRestaurant,
-            ]);
         }
 
         if ($webmasterRecipients !== []) {
@@ -872,13 +861,7 @@ class Service
             $subject = apply_filters('fp_resv_webmaster_email_subject', $subject, $context);
             $message = apply_filters('fp_resv_webmaster_email_message', $message, $context);
 
-            Logging::log('mail', 'Invio email webmaster notification', [
-                'reservation_id' => $reservationId,
-                'recipients' => $webmasterRecipients,
-                'subject' => $subject,
-            ]);
-
-            $sentWebmaster = $this->mailer->send(
+            $this->mailer->send(
                 implode(',', $webmasterRecipients),
                 $subject,
                 $message,
@@ -892,11 +875,6 @@ class Service
                     'ics_filename'   => sprintf('reservation-%d.ics', $reservationId),
                 ]
             );
-            
-            Logging::log('mail', 'Email webmaster notification sent', [
-                'reservation_id' => $reservationId,
-                'sent' => $sentWebmaster,
-            ]);
         }
     }
 
@@ -905,11 +883,6 @@ class Service
      */
     private function sendCustomerEmail(array $payload, int $reservationId, string $manageUrl, string $status): void
     {
-        Logging::log('mail', 'sendCustomerEmail - START', [
-            'reservation_id' => $reservationId,
-            'email' => $payload['email'] ?? '',
-        ]);
-        
         $notifications = $this->options->getGroup('fp_resv_notifications', [
             'sender_name'    => get_bloginfo('name'),
             'sender_email'   => get_bloginfo('admin_email'),
@@ -917,31 +890,12 @@ class Service
         ]);
 
         if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
-            Logging::log('mail', 'Using Brevo for confirmation', [
-                'reservation_id' => $reservationId,
-            ]);
             $this->sendBrevoConfirmationEvent($payload, $reservationId, $manageUrl, $status);
             return;
         }
 
-        $channel = $this->notificationSettings->channelValue(NotificationSettings::CHANNEL_CONFIRMATION);
-        Logging::log('mail', 'Channel confirmation', [
-            'channel' => $channel,
-            'should_use_plugin' => $this->notificationSettings->shouldUsePlugin(NotificationSettings::CHANNEL_CONFIRMATION),
-        ]);
-        
         if (!$this->notificationSettings->shouldUsePlugin(NotificationSettings::CHANNEL_CONFIRMATION)) {
-            Logging::log('mail', 'Plugin mailer disabilitato per confirmation', [
-                'reservation_id' => $reservationId,
-            ]);
             return;
-        }
-
-        if ($channel === 'brevo') {
-            Logging::log('mail', 'Brevo confirmation fallback to internal mailer', [
-                'reservation_id' => $reservationId,
-                'email'          => $payload['email'] ?? '',
-            ]);
         }
 
         $headers = $this->buildNotificationHeaders($notifications);

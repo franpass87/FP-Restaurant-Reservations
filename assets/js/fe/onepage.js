@@ -121,6 +121,7 @@ class FormApp {
         this.initializePhoneField();
         this.initializeMeals();
         this.initializeDateField();
+        this.initializePartyButtons();
         this.initializeAvailability();
         this.syncConsentState();
         this.updateSubmitState();
@@ -339,6 +340,59 @@ class FormApp {
 
         // Apri il calendario al click sull'input
         this.dateField.addEventListener('click', openPicker);
+    }
+
+    initializePartyButtons() {
+        const decrementBtn = this.form ? this.form.querySelector('[data-fp-resv-party-decrement]') : null;
+        const incrementBtn = this.form ? this.form.querySelector('[data-fp-resv-party-increment]') : null;
+
+        if (!decrementBtn || !incrementBtn || !this.partyField) {
+            return;
+        }
+
+        const updateButtonStates = () => {
+            const value = parseInt(this.partyField.value, 10) || 1;
+            const min = parseInt(this.partyField.getAttribute('min'), 10) || 1;
+            const max = parseInt(this.partyField.getAttribute('max'), 10) || 40;
+
+            decrementBtn.disabled = value <= min;
+            incrementBtn.disabled = value >= max;
+        };
+
+        decrementBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const currentValue = parseInt(this.partyField.value, 10) || 1;
+            const min = parseInt(this.partyField.getAttribute('min'), 10) || 1;
+            
+            if (currentValue > min) {
+                this.partyField.value = String(currentValue - 1);
+                // Trigger input event per aggiornare il form
+                this.partyField.dispatchEvent(new Event('input', { bubbles: true }));
+                this.partyField.dispatchEvent(new Event('change', { bubbles: true }));
+                updateButtonStates();
+            }
+        });
+
+        incrementBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const currentValue = parseInt(this.partyField.value, 10) || 1;
+            const max = parseInt(this.partyField.getAttribute('max'), 10) || 40;
+            
+            if (currentValue < max) {
+                this.partyField.value = String(currentValue + 1);
+                // Trigger input event per aggiornare il form
+                this.partyField.dispatchEvent(new Event('input', { bubbles: true }));
+                this.partyField.dispatchEvent(new Event('change', { bubbles: true }));
+                updateButtonStates();
+            }
+        });
+
+        // Aggiorna lo stato dei bottoni quando cambia il valore dell'input
+        this.partyField.addEventListener('input', updateButtonStates);
+        this.partyField.addEventListener('change', updateButtonStates);
+
+        // Imposta lo stato iniziale
+        updateButtonStates();
     }
 
     initializeAvailability() {

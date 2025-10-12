@@ -380,6 +380,26 @@ final class WidgetController
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
             font-weight: 700 !important;
         }
+        /* MASSIMA PRIORITÀ: Forza BIANCO su item attivo */
+        .fp-resv-widget .fp-progress__item[aria-current="step"],
+        .fp-resv-widget .fp-progress__item[aria-current="step"]::before,
+        .fp-resv-widget .fp-progress__item[aria-current="step"]::after,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] *,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] span,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] strong,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] em,
+        .fp-resv-widget .fp-progress__item[aria-current="step"] div,
+        #fp-resv-default .fp-progress__item[aria-current="step"],
+        #fp-resv-default .fp-progress__item[aria-current="step"]::before,
+        #fp-resv-default .fp-progress__item[aria-current="step"]::after,
+        #fp-resv-default .fp-progress__item[aria-current="step"] *,
+        #fp-resv-default .fp-progress__item[aria-current="step"] span,
+        #fp-resv-default .fp-progress__item[aria-current="step"] strong,
+        #fp-resv-default .fp-progress__item[aria-current="step"] em,
+        #fp-resv-default .fp-progress__item[aria-current="step"] div {
+            color: #ffffff !important;
+            background: transparent !important;
+        }
         /* Testo negli item - eredita colore */
         .fp-resv-widget .fp-progress__item span,
         .fp-resv-widget .fp-progress__item,
@@ -387,15 +407,6 @@ final class WidgetController
         #fp-resv-default .fp-progress__item {
             font-size: 0.95rem !important;
             line-height: 1.3 !important;
-        }
-        /* CRITICO: Forza BIANCO su item attivo (nero) */
-        .fp-resv-widget .fp-progress__item[aria-current="step"],
-        .fp-resv-widget .fp-progress__item[aria-current="step"] *,
-        .fp-resv-widget .fp-progress__item[aria-current="step"] span,
-        #fp-resv-default .fp-progress__item[aria-current="step"],
-        #fp-resv-default .fp-progress__item[aria-current="step"] *,
-        #fp-resv-default .fp-progress__item[aria-current="step"] span {
-            color: #ffffff !important;
         }
         /* Forza GRIGIO SCURO su item inattivi (bianchi) */
         .fp-resv-widget .fp-progress__item:not([aria-current="step"]),
