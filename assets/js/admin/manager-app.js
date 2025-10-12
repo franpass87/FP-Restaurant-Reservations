@@ -1087,12 +1087,13 @@ class ReservationManager {
             slotsHtml = '<p class="fp-no-slots">Nessuno slot disponibile per questi criteri.</p>';
         } else {
             slotsHtml = availableSlots.map(slot => {
-                const time = slot.time.substring(0, 5); // HH:MM
+                const time = slot.label || slot.start; // label è già in formato HH:MM
+                const capacity = slot.available_capacity || 0;
                 return `
                     <label class="fp-slot-option">
-                        <input type="radio" name="slot" value="${slot.time}" required />
-                        <span class="fp-slot-time">${time}</span>
-                        <span class="fp-slot-capacity">${slot.capacity} posti</span>
+                        <input type="radio" name="slot" value="${slot.start}" required />
+                        <span class="fp-slot-time">${this.escapeHtml(time)}</span>
+                        <span class="fp-slot-capacity">${capacity} posti</span>
                     </label>
                 `;
             }).join('');

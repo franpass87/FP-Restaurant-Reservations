@@ -821,8 +821,7 @@ final class StyleCss
 }
 CSS;
 
-        $scopeRepeated = str_repeat($scope . ' ', substr_count($layout, '%s'));
-        
-        return sprintf($layout, ...array_fill(0, substr_count($layout, '%s'), $scope));
+        // Use str_replace instead of sprintf to avoid issues with CSS values like "0.8s" being interpreted as format specifiers
+        return str_replace('%s', $scope, $layout);
     }
 }
