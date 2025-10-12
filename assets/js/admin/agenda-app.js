@@ -1,368 +1,312 @@
 /**
- * FP Reservations - Agenda Stile The Fork
- * Versione completamente rifatta da zero - Ottobre 2025
+ * FP Reservations - Agenda Moderna (Stile The Fork)
+ * Completamente rifatta da zero - Ottobre 2025
+ * 
+ * Architettura:
+ * - Classe ES6 moderna con state management
+ * - Fetch API nativa (zero dipendenze)
+ * - Performance ottimizzate con cache DOM
+ * - Error handling robusto
+ * - UI reattiva e fluida
  */
 
-class AgendaApp {
+class ModernAgenda {
     constructor() {
-        // Configurazione
-        this.settings = window.fpResvAgendaSettings || {};
-        this.restRoot = (this.settings.restRoot || '/wp-json/fp-resv/v1').replace(/\/$/, '');
-        this.nonce = this.settings.nonce || '';
+        // Configurazione base
+        this.config = {
+            restRoot: window.fpResvAgendaSettings?.restRoot || '/wp-json/fp-resv/v1',
+            nonce: window.fpResvAgendaSettings?.nonce || '',
+        };
         
-        // Stato dell'applicazione
+        // State centralizzato - single source of truth
         this.state = {
             currentDate: new Date(),
             currentView: 'day',
-            currentService: '',
+            selectedService: null,
             reservations: [],
+            meta: null,
+            stats: null,
             loading: false,
-            error: null
+            error: null,
         };
         
-        // Elementi DOM (saranno inizializzati in init)
-        this.elements = {};
+        // Cache DOM elements
+        this.dom = {};
         
-        // Inizializza l'app
+        // Bind methods
+        this.handleClick = this.handleClick.bind(this);
+        
+        // Avvia l'applicazione
         this.init();
     }
     
-    /**
-     * Inizializza l'applicazione
-     */
-    init() {
-        console.log('[Agenda] Inizializzazione...', {
-            settings: this.settings,
-            restRoot: this.restRoot,
-            hasNonce: !!this.nonce
-        });
+    // ============================================
+    // INIZIALIZZAZIONE
+    // ============================================
+    
+    async init() {
+        console.log('[Agenda] 🚀 Inizializzazione nuova agenda...');
         
-        // Verifica settings
-        if (!this.restRoot || !this.nonce) {
-            console.error('[Agenda] Errore: Configurazione mancante!', {
-                hasRestRoot: !!this.restRoot,
-                hasNonce: !!this.nonce,
-                settings: this.settings
-            });
+        // Verifica configurazione
+        if (!this.config.nonce) {
+            console.error('[Agenda] ❌ Configurazione mancante!');
             this.showError('Errore di configurazione. Ricarica la pagina.');
             return;
         }
         
         // Cache elementi DOM
-        this.cacheElements();
+        this.cacheDOM();
         
-        // Verifica che gli elementi esistano
-        if (!this.elements.datePicker) {
-            console.error('[Agenda] Errore: Elementi DOM non trovati!');
-            this.showError('Errore: Elementi pagina non trovati. Ricarica la pagina.');
+        // Verifica elementi essenziali
+        if (!this.dom.datePicker || !this.dom.container) {
+            console.error('[Agenda] ❌ Elementi DOM non trovati!');
+            this.showError('Errore di rendering. Ricarica la pagina.');
             return;
         }
         
-        console.log('[Agenda] Elementi DOM caricati:', {
-            datePicker: !!this.elements.datePicker,
-            serviceFilter: !!this.elements.serviceFilter,
-            timeline: !!this.elements.timelineEl,
-            viewButtons: this.elements.viewButtons.length
-        });
-        
         // Setup event listeners
-        this.setupEventListeners();
+        this.setupEvents();
         
         // Imposta data iniziale
-        this.elements.datePicker.value = this.formatDate(this.state.currentDate);
+        this.dom.datePicker.valueAsDate = this.state.currentDate;
         
-        // Inizializza vista di default (day) con pulsante attivo
-        this.setView('day');
+        // Carica dati iniziali
+        await this.loadData();
         
-        console.log('[Agenda] Inizializzazione completata');
+        console.log('[Agenda] ✅ Inizializzazione completata');
     }
     
-    /**
-     * Cache elementi DOM per performance
-     */
-    cacheElements() {
-        this.elements = {
+    cacheDOM() {
+        this.dom = {
+            // Controlli
             datePicker: document.querySelector('[data-role="date-picker"]'),
             serviceFilter: document.querySelector('[data-role="service-filter"]'),
-            summaryEl: document.querySelector('[data-role="summary"]'),
+            viewButtons: document.querySelectorAll('[data-action="set-view"]'),
+            
+            // Contenitori viste
+            container: document.querySelector('.fp-resv-agenda__container'),
+            timelineView: document.querySelector('[data-role="timeline"]'),
+            weekView: document.querySelector('[data-role="week-view"]'),
+            monthView: document.querySelector('[data-role="month-view"]'),
+            listView: document.querySelector('[data-role="list-view"]'),
+            
+            // Stati UI
             loadingEl: document.querySelector('[data-role="loading"]'),
             emptyEl: document.querySelector('[data-role="empty"]'),
-            timelineEl: document.querySelector('[data-role="timeline"]'),
-            weekViewEl: document.querySelector('[data-role="week-view"]'),
-            monthViewEl: document.querySelector('[data-role="month-view"]'),
-            listViewEl: document.querySelector('[data-role="list-view"]'),
-            viewButtons: document.querySelectorAll('[data-action="set-view"]')
+            
+            // Summary
+            summaryDate: document.querySelector('.fp-resv-agenda__summary-date'),
+            summaryStats: document.querySelector('.fp-resv-agenda__summary-stats'),
         };
     }
     
-    /**
-     * Setup event listeners
-     */
-    setupEventListeners() {
-        // Event delegation per i click
-        document.addEventListener('click', (e) => this.handleClick(e));
+    setupEvents() {
+        // Event delegation per click
+        document.addEventListener('click', this.handleClick);
         
         // Cambio data
-        this.elements.datePicker?.addEventListener('change', () => {
-            const [year, month, day] = this.elements.datePicker.value.split('-').map(Number);
-            this.state.currentDate = new Date(year, month - 1, day);
-            this.loadReservations();
+        this.dom.datePicker?.addEventListener('change', () => {
+            this.state.currentDate = this.dom.datePicker.valueAsDate || new Date();
+            this.loadData();
         });
         
-        // Cambio servizio
-        this.elements.serviceFilter?.addEventListener('change', () => {
-            this.state.currentService = this.elements.serviceFilter.value || '';
-            this.loadReservations();
+        // Filtro servizio
+        this.dom.serviceFilter?.addEventListener('change', () => {
+            this.state.selectedService = this.dom.serviceFilter.value || null;
+            this.loadData();
         });
     }
     
-    /**
-     * Handler principale per i click
-     */
     handleClick(e) {
-        const target = e.target.closest('[data-action]');
-        if (!target) return;
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
         
-        const action = target.getAttribute('data-action');
+        const action = btn.dataset.action;
         
+        // Router delle azioni
         switch (action) {
             case 'prev-period':
                 this.navigatePeriod(-1);
                 break;
-            case 'today':
-                this.navigateToToday();
-                break;
             case 'next-period':
                 this.navigatePeriod(1);
                 break;
+            case 'today':
+                this.goToToday();
+                break;
             case 'set-view':
-                const view = target.getAttribute('data-view');
-                if (view) this.setView(view);
+                const view = btn.dataset.view;
+                if (view) this.changeView(view);
                 break;
             case 'new-reservation':
                 this.openNewReservationModal();
                 break;
             case 'close-modal':
-                this.closeModal('[data-modal="new-reservation"]');
+                this.closeModal(e.target.closest('[data-modal]'));
                 break;
             case 'submit-reservation':
-                this.submitReservation();
-                break;
-            case 'close-details':
-                this.closeModal('[data-modal="reservation-details"]');
-                break;
-            case 'confirm-reservation':
-                this.updateReservationStatus('confirmed');
+                this.createReservation();
                 break;
             default:
-                // Gestisci quick party
-                if (target.hasAttribute('data-quickparty')) {
-                    const party = target.getAttribute('data-quickparty');
-                    const input = document.querySelector('[data-field="party"]');
-                    if (input) input.value = party;
-                }
-                // Gestisci view reservation
-                else if (action.startsWith('view-reservation-')) {
-                    const id = parseInt(action.replace('view-reservation-', ''));
-                    this.viewReservationDetails(id);
+                // Gestisci azioni dinamiche
+                if (action.startsWith('view-reservation-')) {
+                    const id = parseInt(action.replace('view-reservation-', ''), 10);
+                    this.viewReservation(id);
                 }
         }
     }
     
-    /**
-     * Naviga tra periodi (avanti/indietro)
-     */
-    navigatePeriod(offset) {
+    // ============================================
+    // NAVIGAZIONE
+    // ============================================
+    
+    navigatePeriod(direction) {
         const date = new Date(this.state.currentDate);
         
         switch (this.state.currentView) {
             case 'day':
-                date.setDate(date.getDate() + offset);
+                date.setDate(date.getDate() + direction);
                 break;
             case 'week':
-                date.setDate(date.getDate() + (offset * 7));
+                date.setDate(date.getDate() + (direction * 7));
                 break;
             case 'month':
-                date.setMonth(date.getMonth() + offset);
+                date.setMonth(date.getMonth() + direction);
                 break;
             case 'list':
-                date.setDate(date.getDate() + (offset * 7));
+                date.setDate(date.getDate() + (direction * 7));
                 break;
         }
         
         this.state.currentDate = date;
-        this.elements.datePicker.value = this.formatDate(date);
-        this.loadReservations();
+        this.dom.datePicker.valueAsDate = date;
+        this.loadData();
     }
     
-    /**
-     * Torna ad oggi
-     */
-    navigateToToday() {
+    goToToday() {
         this.state.currentDate = new Date();
-        this.elements.datePicker.value = this.formatDate(this.state.currentDate);
-        this.loadReservations();
+        this.dom.datePicker.valueAsDate = this.state.currentDate;
+        this.loadData();
     }
     
-    /**
-     * Cambia vista (giorno/settimana/mese/lista)
-     */
-    setView(view) {
-        console.log('[Agenda] Cambio vista:', view);
+    changeView(view) {
+        console.log('[Agenda] 📊 Cambio vista:', view);
         
         this.state.currentView = view;
         
-        // Aggiorna pulsanti
-        this.elements.viewButtons.forEach(btn => {
-            const isActive = btn.getAttribute('data-view') === view;
+        // Aggiorna pulsanti vista
+        this.dom.viewButtons.forEach(btn => {
+            const isActive = btn.dataset.view === view;
             btn.classList.toggle('button-primary', isActive);
             btn.classList.toggle('is-active', isActive);
-            if (!isActive) {
-                btn.classList.add('button');
-            }
         });
         
         // Ricarica dati
-        this.loadReservations();
+        this.loadData();
     }
     
-    /**
-     * Carica prenotazioni dal server
-     */
-    async loadReservations() {
-        console.log('[Agenda] Caricamento prenotazioni...', {
-            date: this.state.currentDate,
+    // ============================================
+    // CARICAMENTO DATI
+    // ============================================
+    
+    async loadData() {
+        console.log('[Agenda] 📥 Caricamento dati...', {
+            date: this.formatDate(this.state.currentDate),
             view: this.state.currentView,
-            service: this.state.currentService
         });
         
-        // Nascondi loading per evitare caricamento infinito
-        // Mostriamo direttamente i dati o empty state
-        this.hideLoading();
-        
-        const { startDate, endDate } = this.getDateRange();
-        const params = new URLSearchParams({
-            date: startDate,
-            ...(this.state.currentView === 'week' && { range: 'week' }),
-            ...(this.state.currentView === 'month' && { range: 'month' }),
-            ...(this.state.currentView === 'list' && { range: 'week' }),
-            ...(this.state.currentService && { service: this.state.currentService })
-        });
-        
-        console.log('[Agenda] Parametri richiesta:', params.toString());
+        this.state.loading = true;
+        this.hideAllViews();
         
         try {
-            const data = await this.apiRequest(`agenda?${params}`);
+            // Calcola range date
+            const { startDate, endDate } = this.getDateRange();
             
-            // Log dettagliato della risposta per debugging
-            console.log('[Agenda] ✓ Risposta ricevuta');
-            console.log('[Agenda] Tipo risposta:', typeof data);
-            console.log('[Agenda] È array?', Array.isArray(data));
-            console.log('[Agenda] È null?', data === null);
-            console.log('[Agenda] È undefined?', data === undefined);
+            // Costruisci parametri
+            const params = new URLSearchParams({
+                date: startDate,
+            });
             
-            // Log struttura oggetto se è un oggetto
-            if (data && typeof data === 'object' && !Array.isArray(data)) {
-                console.log('[Agenda] Chiavi oggetto:', Object.keys(data));
-                console.log('[Agenda] Ha reservations?', 'reservations' in data);
-                console.log('[Agenda] Ha data?', 'data' in data);
-                console.log('[Agenda] Ha meta?', 'meta' in data);
-                console.log('[Agenda] Ha stats?', 'stats' in data);
+            // Aggiungi range per viste multiple giorni
+            if (this.state.currentView === 'week') {
+                params.append('range', 'week');
+            } else if (this.state.currentView === 'month') {
+                params.append('range', 'month');
+            } else if (this.state.currentView === 'list') {
+                params.append('range', 'week');
             }
             
-            // Log completo (può essere grande)
-            console.log('[Agenda] Risposta completa:', data);
-            
-            // Gestisci diversi formati di risposta
-            let reservations = [];
-            
-            if (Array.isArray(data)) {
-                // Risposta diretta come array (vecchia API)
-                console.log('[Agenda] ✓ Formato: Array diretto');
-                reservations = data;
-            } else if (data && typeof data === 'object') {
-                console.log('[Agenda] ✓ Formato: Oggetto strutturato');
-                
-                // Nuova struttura The Fork - salva meta, stats e data se disponibili
-                if (data.meta) {
-                    this.state.meta = data.meta;
-                    console.log('[Agenda] Meta ricevuti dal backend:', data.meta);
-                }
-                if (data.stats) {
-                    this.state.stats = data.stats;
-                    console.log('[Agenda] Stats ricevuti dal backend:', data.stats);
-                }
-                if (data.data) {
-                    this.state.organizedData = data.data;
-                    console.log('[Agenda] Dati organizzati ricevuti dal backend:', data.data);
-                }
-                
-                // Estrai array di prenotazioni
-                if (Array.isArray(data.reservations)) {
-                    console.log('[Agenda] ✓ Trovato data.reservations (length: ' + data.reservations.length + ')');
-                    reservations = data.reservations;
-                } else if (Array.isArray(data.items)) {
-                    console.log('[Agenda] ✓ Trovato data.items (length: ' + data.items.length + ')');
-                    reservations = data.items;
-                } else {
-                    // Se non troviamo un array diretto, potrebbe essere che data.data contenga
-                    // la struttura organizzata (non un array piatto)
-                    // In questo caso, assumiamo array vuoto e usiamo i dati organizzati
-                    console.warn('[Agenda] ⚠ Nessun array diretto trovato, usando dati organizzati');
-                    reservations = [];
-                }
-            } else if (data === null || data === undefined) {
-                // Risposta vuota - consideriamo come array vuoto
-                console.warn('[Agenda] ⚠ Risposta API vuota, assumo nessuna prenotazione');
-                reservations = [];
-            } else {
-                console.error('[Agenda] ✗ ERRORE: Tipo di dato non supportato');
-                console.error('[Agenda] Tipo ricevuto:', typeof data);
-                console.error('[Agenda] Valore:', data);
-                throw new Error(`Risposta API non valida: ricevuto ${typeof data} invece di array o oggetto`);
+            // Filtro servizio
+            if (this.state.selectedService) {
+                params.append('service', this.state.selectedService);
             }
             
-            this.state.reservations = reservations;
-            this.state.error = null;
+            // Chiamata API
+            const response = await this.api(`agenda?${params}`);
             
-            console.log(`[Agenda] ✓ Caricate ${reservations.length} prenotazioni con successo`);
+            // Gestisci risposta
+            this.processResponse(response);
             
             // Renderizza
             this.render();
             
-            return reservations;
+            console.log('[Agenda] ✅ Dati caricati:', this.state.reservations.length, 'prenotazioni');
             
         } catch (error) {
-            console.error('[Agenda] ✗ Errore nel caricamento:', error);
-            console.error('[Agenda] ✗ Stack trace:', error.stack);
+            console.error('[Agenda] ❌ Errore caricamento:', error);
             this.state.error = error.message;
-            this.state.reservations = [];
             this.showError(error.message);
-            // NON rilancia l'errore per evitare che blocchi l'interfaccia
-            return [];
+        } finally {
+            this.state.loading = false;
         }
     }
     
-    /**
-     * Calcola range date in base alla vista
-     */
+    processResponse(data) {
+        // Supporta sia vecchio formato (array) che nuovo formato (oggetto strutturato)
+        if (Array.isArray(data)) {
+            // Formato vecchio: array diretto
+            this.state.reservations = data;
+            this.state.meta = null;
+            this.state.stats = null;
+        } else if (data && typeof data === 'object') {
+            // Formato nuovo: oggetto strutturato The Fork
+            this.state.reservations = data.reservations || [];
+            this.state.meta = data.meta || null;
+            this.state.stats = data.stats || null;
+            
+            // Dati pre-organizzati per performance
+            if (data.data) {
+                this.state.organizedData = data.data;
+            }
+        } else {
+            // Formato non valido
+            this.state.reservations = [];
+            this.state.meta = null;
+            this.state.stats = null;
+        }
+        
+        this.state.error = null;
+    }
+    
     getDateRange() {
         const start = new Date(this.state.currentDate);
         let end = new Date(this.state.currentDate);
         
         switch (this.state.currentView) {
             case 'week':
-                // Inizia da lunedì
-                const day = start.getDay();
-                const diff = day === 0 ? -6 : 1 - day;
+                // Lunedì - Domenica
+                const dayOfWeek = start.getDay();
+                const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
                 start.setDate(start.getDate() + diff);
                 end = new Date(start);
                 end.setDate(end.getDate() + 6);
                 break;
+                
             case 'month':
                 start.setDate(1);
                 end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
                 break;
+                
             case 'list':
                 end.setDate(end.getDate() + 6);
                 break;
@@ -370,29 +314,32 @@ class AgendaApp {
         
         return {
             startDate: this.formatDate(start),
-            endDate: this.formatDate(end)
+            endDate: this.formatDate(end),
         };
     }
     
-    /**
-     * Renderizza la vista corrente
-     */
+    // ============================================
+    // RENDERING
+    // ============================================
+    
     render() {
-        console.log('[Agenda] Rendering vista:', this.state.currentView, 'con', this.state.reservations.length, 'prenotazioni');
+        console.log('[Agenda] 🎨 Rendering vista:', this.state.currentView);
         
-        this.hideLoading();
+        // Aggiorna summary
+        this.updateSummary();
         
+        // Verifica se ci sono prenotazioni
         if (this.state.reservations.length === 0) {
             this.showEmpty();
             return;
         }
         
         // Nascondi empty state
-        if (this.elements.emptyEl) {
-            this.elements.emptyEl.hidden = true;
+        if (this.dom.emptyEl) {
+            this.dom.emptyEl.hidden = true;
         }
         
-        // Renderizza vista corrente
+        // Renderizza vista specifica
         switch (this.state.currentView) {
             case 'day':
                 this.renderDayView();
@@ -406,130 +353,109 @@ class AgendaApp {
             case 'list':
                 this.renderListView();
                 break;
-            default:
-                console.warn('[Agenda] Vista non riconosciuta:', this.state.currentView);
-                this.renderDayView();
         }
         
-        // Aggiorna summary
-        this.updateSummary();
-        
-        console.log('[Agenda] ✓ Rendering completato');
+        console.log('[Agenda] ✅ Rendering completato');
     }
     
-    /**
-     * Renderizza vista giornaliera
-     */
     renderDayView() {
-        if (!this.elements.timelineEl) return;
+        if (!this.dom.timelineView) return;
         
-        // Mostra solo timeline, nascondi altre viste
-        this.elements.timelineEl.hidden = false;
-        if (this.elements.weekViewEl) this.elements.weekViewEl.hidden = true;
-        if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
-        if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
+        // Mostra solo timeline
+        this.hideAllViews();
+        this.dom.timelineView.hidden = false;
         
-        // Usa slot pre-organizzati dal backend se disponibili, altrimenti raggruppa client-side
-        let slotsData;
-        if (this.state.organizedData?.slots) {
-            // Dati dal backend (The Fork style)
-            slotsData = this.state.organizedData.slots;
-            console.log('[Agenda] Usando slots dal backend:', slotsData.length);
-        } else if (this.state.organizedData?.timeline) {
-            // Alias alternativo
-            slotsData = this.state.organizedData.timeline;
-            console.log('[Agenda] Usando timeline dal backend:', slotsData.length);
-        } else {
-            // Fallback: raggruppa client-side
-            const groupedSlots = this.groupByTimeSlot(this.state.reservations);
-            slotsData = Object.keys(groupedSlots).sort().map(time => ({
-                time: time,
-                reservations: groupedSlots[time],
-                total_guests: groupedSlots[time].reduce((sum, r) => sum + (r.party || 0), 0)
-            }));
-            console.log('[Agenda] Raggruppando slots client-side');
-        }
+        // Raggruppa per slot orari
+        const slots = this.groupByTimeSlot(this.state.reservations);
+        
+        // Usa dati pre-organizzati se disponibili
+        const slotsData = this.state.organizedData?.slots || 
+                         Object.keys(slots).sort().map(time => ({
+                             time,
+                             reservations: slots[time],
+                             total_guests: slots[time].reduce((sum, r) => sum + (r.party || 0), 0)
+                         }));
         
         // Genera HTML
-        const html = slotsData.map(slot => {
-            const time = slot.time;
-            const reservations = slot.reservations || [];
-            const totalGuests = slot.total_guests || reservations.reduce((sum, r) => sum + (r.party || 0), 0);
-            
-            return `
-                <div class="fp-resv-timeline__slot">
-                    <div class="fp-resv-timeline__time">${time}</div>
-                    <div class="fp-resv-timeline__reservations">
-                        ${reservations.map(r => this.renderReservationCard(r)).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        const html = slotsData.length > 0 
+            ? slotsData.map(slot => this.renderSlot(slot)).join('')
+            : '<div class="fp-resv-timeline__empty">Nessuna prenotazione</div>';
         
-        this.elements.timelineEl.innerHTML = html;
+        this.dom.timelineView.innerHTML = html;
     }
     
-    /**
-     * Renderizza vista settimanale
-     */
+    renderSlot(slot) {
+        const cards = slot.reservations.map(r => this.renderCard(r)).join('');
+        
+        return `
+            <div class="fp-resv-timeline__slot">
+                <div class="fp-resv-timeline__time">${slot.time}</div>
+                <div class="fp-resv-timeline__reservations">${cards}</div>
+            </div>
+        `;
+    }
+    
+    renderCard(resv) {
+        const statusLabels = {
+            pending: 'In attesa',
+            confirmed: 'Confermata',
+            visited: 'Servita',
+            no_show: 'No-show',
+            cancelled: 'Annullata',
+        };
+        
+        const customer = resv.customer || {};
+        const name = this.getGuestName(resv);
+        
+        return `
+            <div class="fp-resv-card" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
+                <div class="fp-resv-card__header">
+                    <strong class="fp-resv-card__name">${this.escapeHtml(name)}</strong>
+                    <span class="fp-resv-card__badge">${statusLabels[resv.status] || resv.status}</span>
+                </div>
+                <div class="fp-resv-card__body">
+                    <div class="fp-resv-card__info">
+                        <span class="dashicons dashicons-groups"></span>
+                        <span>${resv.party} ${resv.party === 1 ? 'coperto' : 'coperti'}</span>
+                    </div>
+                    ${customer.phone ? `
+                    <div class="fp-resv-card__info">
+                        <span class="dashicons dashicons-phone"></span>
+                        <span>${this.escapeHtml(customer.phone)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
     renderWeekView() {
-        if (!this.elements.weekViewEl) return;
+        if (!this.dom.weekView) return;
         
-        // Mostra solo week view
-        if (this.elements.timelineEl) this.elements.timelineEl.hidden = true;
-        this.elements.weekViewEl.hidden = false;
-        if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
-        if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
+        this.hideAllViews();
+        this.dom.weekView.hidden = false;
         
-        let days = [];
-        
-        // Usa giorni pre-organizzati dal backend se disponibili, altrimenti organizza client-side
-        if (this.state.organizedData?.days && Array.isArray(this.state.organizedData.days)) {
-            // Dati dal backend (The Fork style)
-            days = this.state.organizedData.days.map(dayData => ({
-                date: new Date(dayData.date),
-                dateStr: dayData.date,
-                reservations: dayData.reservations || []
-            }));
-            console.log('[Agenda] Usando giorni dal backend per vista settimanale:', days.length);
-        } else {
-            // Fallback: organizza client-side
-            const { startDate } = this.getDateRange();
-            const weekStart = new Date(startDate);
-            
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(weekStart);
-                day.setDate(weekStart.getDate() + i);
-                const dayStr = this.formatDate(day);
-                const dayReservations = this.state.reservations.filter(r => r.date === dayStr);
-                
-                days.push({
-                    date: day,
-                    dateStr: dayStr,
-                    reservations: dayReservations
-                });
-            }
-            console.log('[Agenda] Organizzando giorni client-side per vista settimanale');
-        }
+        // Raggruppa per giorni
+        const days = this.groupByDays(this.state.reservations, 7);
         
         const html = `
-            <div class="fp-resv-week__grid">
+            <div class="fp-resv-week-grid">
                 ${days.map(day => `
-                    <div class="fp-resv-week__day">
-                        <div class="fp-resv-week__header">
-                            <div class="fp-resv-week__day-name">${this.getDayName(day.date)}</div>
-                            <div class="fp-resv-week__day-number">${day.date.getDate()}</div>
+                    <div class="fp-resv-week-day">
+                        <div class="fp-resv-week-day__header">
+                            <div class="fp-resv-week-day__name">${this.getDayName(day.date)}</div>
+                            <div class="fp-resv-week-day__number">${day.date.getDate()}</div>
                         </div>
-                        <div class="fp-resv-week__content">
-                            ${day.reservations.length ? 
-                                day.reservations.map(r => `
-                                    <div class="fp-resv-week__item" data-status="${r.status}" data-action="view-reservation-${r.id}">
-                                        <div class="fp-resv-week__time">${this.formatTime(r.time)}</div>
-                                        <div class="fp-resv-week__guest">${this.escapeHtml(this.getGuestName(r))}</div>
-                                        <div class="fp-resv-week__party">${r.party} ${r.party === 1 ? 'coperto' : 'coperti'}</div>
+                        <div class="fp-resv-week-day__body">
+                            ${day.reservations.length > 0
+                                ? day.reservations.map(r => `
+                                    <div class="fp-resv-week-item" data-status="${r.status}" data-action="view-reservation-${r.id}">
+                                        <div class="fp-resv-week-item__time">${this.formatTime(r.time)}</div>
+                                        <div class="fp-resv-week-item__guest">${this.escapeHtml(this.getGuestName(r))}</div>
+                                        <div class="fp-resv-week-item__party">${r.party} cop.</div>
                                     </div>
-                                `).join('') :
-                                '<div class="fp-resv-week__empty">Nessuna prenotazione</div>'
+                                `).join('')
+                                : '<div class="fp-resv-week-day__empty">Nessuna prenotazione</div>'
                             }
                         </div>
                     </div>
@@ -537,93 +463,71 @@ class AgendaApp {
             </div>
         `;
         
-        this.elements.weekViewEl.innerHTML = html;
+        this.dom.weekView.innerHTML = html;
     }
     
-    /**
-     * Renderizza vista mensile
-     */
     renderMonthView() {
-        if (!this.elements.monthViewEl) return;
+        if (!this.dom.monthView) return;
         
-        // Mostra solo month view
-        if (this.elements.timelineEl) this.elements.timelineEl.hidden = true;
-        if (this.elements.weekViewEl) this.elements.weekViewEl.hidden = true;
-        this.elements.monthViewEl.hidden = false;
-        if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
+        this.hideAllViews();
+        this.dom.monthView.hidden = false;
         
         const year = this.state.currentDate.getFullYear();
         const month = this.state.currentDate.getMonth();
+        
+        // Calcola calendario
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        
-        // Calcola griglia calendario
-        const startDay = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
+        
+        // Padding per iniziare lunedì
+        const startDay = firstDay.getDay();
         const gridStart = startDay === 0 ? -6 : 1 - startDay;
         
-        // Crea mappa dei giorni dal backend se disponibili
-        let daysMap = new Map();
-        if (this.state.organizedData?.days && Array.isArray(this.state.organizedData.days)) {
-            this.state.organizedData.days.forEach(dayData => {
-                daysMap.set(dayData.date, dayData.reservations || []);
-            });
-            console.log('[Agenda] Usando giorni dal backend per vista mensile:', daysMap.size);
-        }
+        // Raggruppa prenotazioni per data
+        const resvByDate = this.groupReservationsByDate();
         
-        const days = [];
+        // Genera giorni
+        const calendarDays = [];
         for (let i = gridStart; i <= daysInMonth; i++) {
             if (i < 1) {
-                days.push({ date: null, reservations: [] });
+                calendarDays.push({ date: null, reservations: [] });
             } else {
-                const day = new Date(year, month, i);
-                const dayStr = this.formatDate(day);
-                
-                // Usa dati dal backend se disponibili, altrimenti filtra client-side
-                const dayReservations = daysMap.has(dayStr) 
-                    ? daysMap.get(dayStr)
-                    : this.state.reservations.filter(r => r.date === dayStr);
-                
-                days.push({ date: day, dateStr: dayStr, reservations: dayReservations });
+                const date = new Date(year, month, i);
+                const dateStr = this.formatDate(date);
+                const reservations = resvByDate[dateStr] || [];
+                calendarDays.push({ date, dateStr, reservations });
             }
         }
         
-        if (!daysMap.size) {
-            console.log('[Agenda] Organizzando giorni client-side per vista mensile');
-        }
-        
         const html = `
-            <div class="fp-resv-month__header">
-                <div class="fp-resv-month__title">${this.getMonthYear(this.state.currentDate)}</div>
+            <div class="fp-resv-month-header">
+                <h3>${this.getMonthYear(this.state.currentDate)}</h3>
             </div>
-            <div class="fp-resv-month__calendar">
-                <div class="fp-resv-month__weekdays">
-                    <div>Lun</div>
-                    <div>Mar</div>
-                    <div>Mer</div>
-                    <div>Gio</div>
-                    <div>Ven</div>
-                    <div>Sab</div>
-                    <div>Dom</div>
+            <div class="fp-resv-month-calendar">
+                <div class="fp-resv-month-weekdays">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
-                <div class="fp-resv-month__grid">
-                    ${days.map(day => {
+                <div class="fp-resv-month-grid">
+                    ${calendarDays.map(day => {
                         if (!day.date) {
-                            return '<div class="fp-resv-month__day fp-resv-month__day--empty"></div>';
+                            return '<div class="fp-resv-month-day fp-resv-month-day--empty"></div>';
                         }
                         const isToday = this.formatDate(day.date) === this.formatDate(new Date());
                         return `
-                            <div class="fp-resv-month__day ${isToday ? 'fp-resv-month__day--today' : ''}">
-                                <div class="fp-resv-month__day-number">${day.date.getDate()}</div>
-                                ${day.reservations.length ? `
-                                    <div class="fp-resv-month__count">${day.reservations.length}</div>
-                                    <div class="fp-resv-month__items">
-                                        ${day.reservations.slice(0, 3).map(r => `
-                                            <div class="fp-resv-month__item" data-status="${r.status}" data-action="view-reservation-${r.id}">
+                            <div class="fp-resv-month-day ${isToday ? 'fp-resv-month-day--today' : ''}">
+                                <div class="fp-resv-month-day__number">${day.date.getDate()}</div>
+                                ${day.reservations.length > 0 ? `
+                                    <div class="fp-resv-month-day__count">${day.reservations.length}</div>
+                                    <div class="fp-resv-month-day__items">
+                                        ${day.reservations.slice(0, 2).map(r => `
+                                            <div class="fp-resv-month-item" data-action="view-reservation-${r.id}">
                                                 ${this.formatTime(r.time)} ${this.escapeHtml(this.getGuestName(r))}
                                             </div>
                                         `).join('')}
-                                        ${day.reservations.length > 3 ? `<div class="fp-resv-month__more">+${day.reservations.length - 3}</div>` : ''}
+                                        ${day.reservations.length > 2 ? `
+                                            <div class="fp-resv-month-more">+${day.reservations.length - 2}</div>
+                                        ` : ''}
                                     </div>
                                 ` : ''}
                             </div>
@@ -633,637 +537,336 @@ class AgendaApp {
             </div>
         `;
         
-        this.elements.monthViewEl.innerHTML = html;
+        this.dom.monthView.innerHTML = html;
     }
     
-    /**
-     * Renderizza vista lista
-     */
     renderListView() {
-        if (!this.elements.listViewEl) return;
+        if (!this.dom.listView) return;
         
-        // Mostra solo list view
-        if (this.elements.timelineEl) this.elements.timelineEl.hidden = true;
-        if (this.elements.weekViewEl) this.elements.weekViewEl.hidden = true;
-        if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
-        this.elements.listViewEl.hidden = false;
+        this.hideAllViews();
+        this.dom.listView.hidden = false;
         
-        // Ordina prenotazioni
+        // Ordina per data/ora
         const sorted = [...this.state.reservations].sort((a, b) => {
-            const dateA = a.date + ' ' + (a.time || '00:00');
-            const dateB = b.date + ' ' + (b.time || '00:00');
-            return dateA.localeCompare(dateB);
+            const dateTimeA = `${a.date} ${a.time}`;
+            const dateTimeB = `${b.date} ${b.time}`;
+            return dateTimeA.localeCompare(dateTimeB);
         });
         
         const statusLabels = {
-            'pending': 'In attesa',
-            'confirmed': 'Confermata',
-            'visited': 'Servita',
-            'no_show': 'No-show',
-            'cancelled': 'Annullata'
+            pending: 'In attesa',
+            confirmed: 'Confermata',
+            visited: 'Servita',
+            no_show: 'No-show',
+            cancelled: 'Annullata',
         };
         
         const html = `
-            <div class="fp-resv-list__table-wrapper">
-                <table class="fp-resv-list__table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Ora</th>
-                            <th>Cliente</th>
-                            <th>Coperti</th>
-                            <th>Telefono</th>
-                            <th>Stato</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sorted.map(r => {
-                            const customer = r.customer || {};
-                            return `
-                                <tr class="fp-resv-list__row" data-status="${r.status}" data-action="view-reservation-${r.id}">
-                                    <td>${this.formatDateShort(r.date)}</td>
-                                    <td><strong>${this.formatTime(r.time)}</strong></td>
-                                    <td>${this.escapeHtml(this.getGuestName(r))}</td>
-                                    <td>${r.party}</td>
-                                    <td>${this.escapeHtml(customer.phone || '-')}</td>
-                                    <td><span class="fp-resv-list__badge fp-resv-list__badge--${r.status}">${statusLabels[r.status] || r.status}</span></td>
-                                    <td><span class="fp-resv-list__notes">${this.escapeHtml((r.notes || '').substring(0, 40))}${r.notes && r.notes.length > 40 ? '...' : ''}</span></td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
+            <table class="fp-resv-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Ora</th>
+                        <th>Cliente</th>
+                        <th>Coperti</th>
+                        <th>Telefono</th>
+                        <th>Stato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map(r => {
+                        const customer = r.customer || {};
+                        return `
+                            <tr data-action="view-reservation-${r.id}" style="cursor: pointer;">
+                                <td>${this.formatDateShort(r.date)}</td>
+                                <td><strong>${this.formatTime(r.time)}</strong></td>
+                                <td>${this.escapeHtml(this.getGuestName(r))}</td>
+                                <td>${r.party}</td>
+                                <td>${this.escapeHtml(customer.phone || '-')}</td>
+                                <td><span class="fp-resv-badge fp-resv-badge--${r.status}">${statusLabels[r.status] || r.status}</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
         `;
         
-        this.elements.listViewEl.innerHTML = html;
+        this.dom.listView.innerHTML = html;
     }
     
-    /**
-     * Renderizza card prenotazione
-     */
-    renderReservationCard(resv) {
-        const statusLabels = {
-            'pending': 'In attesa',
-            'confirmed': 'Confermata',
-            'visited': 'Servita',
-            'no_show': 'No-show',
-            'cancelled': 'Annullata'
-        };
-        
-        const customer = resv.customer || {};
-        const name = this.getGuestName(resv);
-        const phone = customer.phone || '';
-        const notes = resv.notes || '';
-        
-        return `
-            <div class="fp-resv-reservation-card" data-status="${resv.status}" data-action="view-reservation-${resv.id}">
-                <div class="fp-resv-reservation-card__header">
-                    <div class="fp-resv-reservation-card__name">${this.escapeHtml(name)}</div>
-                    <div class="fp-resv-reservation-card__badge">${statusLabels[resv.status]}</div>
-                </div>
-                <div class="fp-resv-reservation-card__info">
-                    <div class="fp-resv-reservation-card__info-item">
-                        <span class="dashicons dashicons-groups"></span>
-                        <span>${resv.party} ${resv.party === 1 ? 'coperto' : 'coperti'}</span>
-                    </div>
-                    ${phone ? `
-                    <div class="fp-resv-reservation-card__info-item">
-                        <span class="dashicons dashicons-phone"></span>
-                        <span>${this.escapeHtml(phone)}</span>
-                    </div>
-                    ` : ''}
-                    ${notes ? `
-                    <div class="fp-resv-reservation-card__info-item">
-                        <span class="dashicons dashicons-info"></span>
-                        <span>${this.escapeHtml(notes.substring(0, 30))}${notes.length > 30 ? '...' : ''}</span>
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }
-    
-    /**
-     * Aggiorna summary
-     */
     updateSummary() {
-        if (!this.elements.summaryEl) return;
-        
-        const dateEl = this.elements.summaryEl.querySelector('.fp-resv-agenda__summary-date');
-        const statsEl = this.elements.summaryEl.querySelector('.fp-resv-agenda__summary-stats');
-        
-        if (dateEl) {
-            dateEl.textContent = this.formatDateLong(this.state.currentDate);
+        if (this.dom.summaryDate) {
+            this.dom.summaryDate.textContent = this.formatDateLong(this.state.currentDate);
         }
         
-        if (statsEl) {
-            // Usa stats pre-calcolate dal backend se disponibili, altrimenti calcola client-side
-            let total, confirmed, totalGuests;
+        if (this.dom.summaryStats) {
+            // Usa stats pre-calcolate se disponibili
+            const total = this.state.stats?.total_reservations || this.state.reservations.length;
+            const confirmed = this.state.stats?.by_status?.confirmed || 
+                            this.state.reservations.filter(r => r.status === 'confirmed').length;
+            const guests = this.state.stats?.total_guests || 
+                          this.state.reservations.reduce((sum, r) => sum + (r.party || 0), 0);
             
-            if (this.state.stats) {
-                // Dati dal backend (The Fork style)
-                total = this.state.stats.total_reservations || 0;
-                confirmed = this.state.stats.by_status?.confirmed || 0;
-                totalGuests = this.state.stats.total_guests || 0;
-                console.log('[Agenda] Usando stats dal backend:', this.state.stats);
-            } else {
-                // Calcolo client-side (fallback)
-                total = this.state.reservations.length;
-                confirmed = this.state.reservations.filter(r => r.status === 'confirmed').length;
-                totalGuests = this.state.reservations.reduce((sum, r) => sum + (r.party || 0), 0);
-                console.log('[Agenda] Calcolando stats client-side');
-            }
-            
-            statsEl.textContent = `${total} prenotazioni • ${confirmed} confermate • ${totalGuests} coperti`;
+            this.dom.summaryStats.textContent = `${total} prenotazioni • ${confirmed} confermate • ${guests} coperti`;
         }
     }
     
-    /**
-     * Mostra loading (NON USATO - manteniamo per compatibilità)
-     */
-    showLoading() {
-        // Non mostriamo mai il loading per evitare caricamento infinito
+    // ============================================
+    // STATI UI
+    // ============================================
+    
+    hideAllViews() {
+        if (this.dom.timelineView) this.dom.timelineView.hidden = true;
+        if (this.dom.weekView) this.dom.weekView.hidden = true;
+        if (this.dom.monthView) this.dom.monthView.hidden = true;
+        if (this.dom.listView) this.dom.listView.hidden = true;
+        if (this.dom.emptyEl) this.dom.emptyEl.hidden = true;
+        if (this.dom.loadingEl) this.dom.loadingEl.hidden = true;
     }
     
-    /**
-     * Nascondi loading
-     */
-    hideLoading() {
-        if (this.elements.loadingEl) {
-            this.elements.loadingEl.hidden = true;
-            this.elements.loadingEl.style.display = 'none';
+    showEmpty() {
+        this.hideAllViews();
+        if (this.dom.emptyEl) {
+            this.dom.emptyEl.hidden = false;
         }
     }
     
-    /**
-     * Mostra empty state
-     */
-    showEmpty(message = null) {
-        console.log('[Agenda] Mostrando empty state:', message);
-        
-        this.hideLoading();
-        
-        if (this.elements.emptyEl) {
-            this.elements.emptyEl.hidden = false;
-            
-            const messageEl = this.elements.emptyEl.querySelector('p');
-            if (messageEl) {
-                if (message) {
-                    messageEl.textContent = message;
-                    messageEl.style.color = '#d63638';
-                    messageEl.style.fontWeight = 'bold';
-                } else {
-                    // Ripristina il messaggio di default
-                    messageEl.textContent = 'Non ci sono prenotazioni per questo periodo';
-                    messageEl.style.color = '';
-                    messageEl.style.fontWeight = '';
-                }
-            }
-        }
-        
-        // Nascondi tutte le viste
-        if (this.elements.timelineEl) this.elements.timelineEl.hidden = true;
-        if (this.elements.weekViewEl) this.elements.weekViewEl.hidden = true;
-        if (this.elements.monthViewEl) this.elements.monthViewEl.hidden = true;
-        if (this.elements.listViewEl) this.elements.listViewEl.hidden = true;
-    }
-    
-    /**
-     * Mostra errore
-     */
     showError(message) {
-        this.showEmpty(`Errore: ${message}`);
-    }
-    
-    /**
-     * Mostra notifica di successo
-     */
-    showSuccessNotification(message) {
-        // Crea elemento notifica
-        const notification = document.createElement('div');
-        notification.className = 'notice notice-success is-dismissible';
-        notification.style.cssText = 'position: fixed; top: 32px; right: 20px; z-index: 999999; min-width: 300px;';
-        notification.innerHTML = `<p><strong>${this.escapeHtml(message)}</strong></p>`;
-        
-        // Aggiungi al DOM
-        document.body.appendChild(notification);
-        
-        // Auto-rimuovi dopo 3 secondi
-        setTimeout(() => {
-            notification.style.transition = 'opacity 0.3s';
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-        
-        // Rendi dismissible
-        notification.addEventListener('click', (e) => {
-            if (e.target.classList.contains('notice-dismiss')) {
-                notification.remove();
+        this.hideAllViews();
+        if (this.dom.emptyEl) {
+            this.dom.emptyEl.hidden = false;
+            const p = this.dom.emptyEl.querySelector('p');
+            if (p) {
+                p.textContent = `Errore: ${message}`;
+                p.style.color = '#d63638';
             }
-        });
+        }
     }
     
-    /**
-     * Apri modal nuova prenotazione
-     */
+    // ============================================
+    // MODALI & AZIONI
+    // ============================================
+    
     openNewReservationModal() {
         const modal = document.querySelector('[data-modal="new-reservation"]');
         if (!modal) return;
         
-        const form = modal.querySelector('[data-form="new-reservation"]');
+        const form = modal.querySelector('form');
         if (form) {
             form.reset();
-            
-            const dateInput = form.querySelector('[data-field="date"]');
-            const timeInput = form.querySelector('[data-field="time"]');
-            
+            const dateInput = form.querySelector('[name="date"]');
+            const timeInput = form.querySelector('[name="time"]');
             if (dateInput) dateInput.value = this.formatDate(this.state.currentDate);
             if (timeInput) timeInput.value = '19:30';
-            
-            const errorEl = form.querySelector('[data-role="form-error"]');
-            if (errorEl) errorEl.hidden = true;
         }
         
         this.openModal(modal);
     }
     
-    /**
-     * Submit nuova prenotazione
-     */
-    async submitReservation() {
+    async createReservation() {
         const form = document.querySelector('[data-form="new-reservation"]');
         if (!form || !form.checkValidity()) {
             form?.reportValidity();
             return;
         }
         
-        // Disabilita il pulsante per evitare doppi invii
-        const submitBtn = document.querySelector('[data-action="submit-reservation"]');
-        const originalText = submitBtn?.textContent;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Creazione in corso...';
-        }
-        
-        // Nascondi errori precedenti
-        const errorEl = document.querySelector('[data-role="form-error"]');
-        if (errorEl) errorEl.hidden = true;
-        
         const formData = new FormData(form);
-        const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
+        const data = Object.fromEntries(formData.entries());
         
         // Combina date e time
-        if (data.date && data.time) {
-            data.slot_start = `${data.date} ${data.time}`;
-        }
-        
+        data.slot_start = `${data.date} ${data.time}`;
         data.status = 'pending';
         
-        console.log('[Agenda] Creazione prenotazione con dati:', data);
-        
         try {
-            const response = await this.apiRequest('agenda/reservations', { method: 'POST', data });
-            console.log('[Agenda] Prenotazione creata con successo:', response);
-            
-            // Chiudi modale
-            this.closeModal('[data-modal="new-reservation"]');
-            
-            // Mostra notifica di successo
-            this.showSuccessNotification('Prenotazione creata con successo!');
-            
-            // Ricarica le prenotazioni
-            await this.loadReservations();
-            
-            console.log('[Agenda] Agenda aggiornata dopo creazione');
+            await this.api('agenda/reservations', { method: 'POST', body: data });
+            this.closeModal(document.querySelector('[data-modal="new-reservation"]'));
+            this.showNotification('Prenotazione creata con successo!');
+            await this.loadData();
         } catch (error) {
-            console.error('[Agenda] Errore creazione prenotazione:', error);
-            
-            if (errorEl) {
-                errorEl.textContent = error.message || 'Impossibile creare la prenotazione';
-                errorEl.hidden = false;
-            }
-        } finally {
-            // Riabilita il pulsante
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
+            alert(`Errore: ${error.message}`);
         }
     }
     
-    /**
-     * Visualizza dettagli prenotazione
-     */
-    viewReservationDetails(id) {
+    viewReservation(id) {
         const resv = this.state.reservations.find(r => r.id === id);
         if (!resv) return;
-        
-        this.currentReservationId = id;
         
         const modal = document.querySelector('[data-modal="reservation-details"]');
         if (!modal) return;
         
-        const contentEl = modal.querySelector('[data-role="details-content"]');
-        if (contentEl) {
-            contentEl.innerHTML = this.renderDetails(resv);
+        const content = modal.querySelector('[data-role="details-content"]');
+        if (content) {
+            content.innerHTML = this.renderDetails(resv);
         }
         
         this.openModal(modal);
     }
     
-    /**
-     * Renderizza dettagli prenotazione
-     */
     renderDetails(resv) {
         const customer = resv.customer || {};
-        const name = [customer.first_name, customer.last_name].filter(Boolean).join(' ') || 'N/D';
-        const statusLabels = {
-            'pending': 'In attesa',
-            'confirmed': 'Confermata',
-            'visited': 'Servita',
-            'no_show': 'No-show',
-            'cancelled': 'Annullata'
-        };
+        const name = this.getGuestName(resv);
         
         return `
-            <div class="fp-resv-details__section">
-                <h3 class="fp-resv-details__section-title">Informazioni prenotazione</h3>
-                <div class="fp-resv-details__grid">
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Nome cliente</div>
-                        <div class="fp-resv-details__value">${this.escapeHtml(name)}</div>
-                    </div>
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Stato</div>
-                        <div class="fp-resv-details__value">${statusLabels[resv.status] || resv.status}</div>
-                    </div>
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Data e ora</div>
-                        <div class="fp-resv-details__value">${this.formatDateTimeLong(resv.slot_start || resv.date)}</div>
-                    </div>
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Numero coperti</div>
-                        <div class="fp-resv-details__value">${resv.party || 0}</div>
-                    </div>
-                    ${customer.email ? `
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Email</div>
-                        <div class="fp-resv-details__value">${this.escapeHtml(customer.email)}</div>
-                    </div>
-                    ` : ''}
-                    ${customer.phone ? `
-                    <div class="fp-resv-details__item">
-                        <div class="fp-resv-details__label">Telefono</div>
-                        <div class="fp-resv-details__value">${this.escapeHtml(customer.phone)}</div>
-                    </div>
-                    ` : ''}
+            <div class="fp-resv-details">
+                <div class="fp-resv-details__section">
+                    <h3>Informazioni prenotazione</h3>
+                    <dl class="fp-resv-details__grid">
+                        <dt>Cliente</dt>
+                        <dd>${this.escapeHtml(name)}</dd>
+                        
+                        <dt>Data e ora</dt>
+                        <dd>${this.formatDateLong(new Date(resv.date))} - ${this.formatTime(resv.time)}</dd>
+                        
+                        <dt>Coperti</dt>
+                        <dd>${resv.party}</dd>
+                        
+                        ${customer.email ? `
+                        <dt>Email</dt>
+                        <dd>${this.escapeHtml(customer.email)}</dd>
+                        ` : ''}
+                        
+                        ${customer.phone ? `
+                        <dt>Telefono</dt>
+                        <dd>${this.escapeHtml(customer.phone)}</dd>
+                        ` : ''}
+                        
+                        ${resv.notes ? `
+                        <dt>Note</dt>
+                        <dd>${this.escapeHtml(resv.notes)}</dd>
+                        ` : ''}
+                    </dl>
                 </div>
-                ${resv.notes ? `
-                <div class="fp-resv-details__item" style="margin-top: 16px;">
-                    <div class="fp-resv-details__label">Note</div>
-                    <div class="fp-resv-details__value">${this.escapeHtml(resv.notes)}</div>
-                </div>
-                ` : ''}
             </div>
         `;
     }
     
-    /**
-     * Aggiorna stato prenotazione
-     */
-    async updateReservationStatus(status) {
-        if (!this.currentReservationId) {
-            console.error('Nessuna prenotazione selezionata');
-            return;
-        }
-        
-        try {
-            await this.apiRequest(`agenda/reservations/${this.currentReservationId}`, {
-                method: 'PATCH',
-                data: { status }
-            });
-            
-            this.closeModal('[data-modal="reservation-details"]');
-            this.currentReservationId = null;
-            this.loadReservations();
-        } catch (error) {
-            console.error('Errore aggiornamento stato:', error);
-            alert(error.message || 'Impossibile aggiornare lo stato');
-        }
-    }
-    
-    /**
-     * Apri modal
-     */
     openModal(modal) {
         if (!modal) return;
-        
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
-        
-        setTimeout(() => {
-            const firstInput = modal.querySelector('input, select, textarea');
-            if (firstInput) firstInput.focus();
-        }, 0);
-        
         document.body.style.overflow = 'hidden';
     }
     
-    /**
-     * Chiudi modal
-     */
-    closeModal(selector) {
-        const modal = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    closeModal(modal) {
         if (!modal) return;
-        
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
-        
-        if (modal.getAttribute('data-modal') === 'reservation-details') {
-            this.currentReservationId = null;
-        }
-        
         document.body.style.overflow = '';
     }
     
-    /**
-     * Effettua richiesta API
-     */
-    async apiRequest(path, options = {}) {
-        const url = path.startsWith('http') ? path : `${this.restRoot}/${path.replace(/^\//, '')}`;
+    showNotification(message) {
+        const notice = document.createElement('div');
+        notice.className = 'notice notice-success is-dismissible';
+        notice.style.cssText = 'position: fixed; top: 32px; right: 20px; z-index: 999999; min-width: 300px;';
+        notice.innerHTML = `<p><strong>${this.escapeHtml(message)}</strong></p>`;
         
-        console.log(`[API] ${options.method || 'GET'} ${url}`, options.data ? { data: options.data } : '');
+        document.body.appendChild(notice);
+        
+        setTimeout(() => {
+            notice.style.transition = 'opacity 0.3s';
+            notice.style.opacity = '0';
+            setTimeout(() => notice.remove(), 300);
+        }, 3000);
+    }
+    
+    // ============================================
+    // API
+    // ============================================
+    
+    async api(endpoint, options = {}) {
+        const url = `${this.config.restRoot}/${endpoint.replace(/^\//, '')}`;
         
         const config = {
             method: options.method || 'GET',
             headers: {
-                'X-WP-Nonce': this.nonce,
+                'X-WP-Nonce': this.config.nonce,
                 'Content-Type': 'application/json',
             },
             credentials: 'same-origin',
         };
         
-        if (options.data) {
-            config.body = JSON.stringify(options.data);
-            console.log('[API] Request body:', config.body);
-            if (!config.method || config.method === 'GET') {
-                config.method = 'POST';
-            }
+        if (options.body) {
+            config.body = JSON.stringify(options.body);
         }
         
-        try {
-            const response = await fetch(url, config);
-            
-            console.log(`[API] Status: ${response.status} ${response.statusText}`);
-            
-            if (!response.ok) {
-                let errorMsg = `Richiesta fallita con status ${response.status}`;
-                
-                try {
-                    const payload = await response.json();
-                    console.error('[API] Error payload:', payload);
-                    errorMsg = payload.message || payload.error || errorMsg;
-                    
-                    // Se c'è un errore di permessi, logga più dettagli
-                    if (response.status === 403) {
-                        console.error('[API] Errore permessi! Nonce:', this.nonce);
-                        console.error('[API] Headers:', Object.fromEntries(response.headers.entries()));
-                    }
-                } catch (e) {
-                    console.error('[API] Non posso fare parse dell\'errore:', e);
-                }
-                
-                throw new Error(errorMsg);
-            }
-            
-            if (response.status === 204) {
-                console.log('[API] ✓ 204 No Content');
-                return null;
-            }
-            
-            const text = await response.text();
-            console.log('[API] Response length:', text.length, 'bytes');
-            console.log('[API] Response preview (first 200 chars):', text.substring(0, 200));
-            
-            if (!text || text.trim() === '') {
-                console.warn('[API] ⚠ Empty response - ritorno oggetto vuoto valido');
-                // Ritorna una struttura vuota valida invece di null
-                const today = new Date();
-                const dateStr = today.getFullYear() + '-' + 
-                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(today.getDate()).padStart(2, '0');
-                
-                return {
-                    meta: {
-                        range: 'day',
-                        start_date: dateStr,
-                        end_date: dateStr,
-                        current_date: dateStr,
-                    },
-                    stats: {
-                        total_reservations: 0,
-                        total_guests: 0,
-                        by_status: {
-                            pending: 0,
-                            confirmed: 0,
-                            visited: 0,
-                            no_show: 0,
-                            cancelled: 0,
-                        },
-                        confirmed_percentage: 0,
-                    },
-                    data: { slots: [], timeline: [], days: [] },
-                    reservations: [],
-                };
-            }
-            
-            try {
-                // Verifica se la risposta inizia con caratteri non-JSON (es. HTML o PHP errors)
-                const trimmedText = text.trim();
-                if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
-                    console.error('[API] ✗ Risposta non sembra JSON valido');
-                    console.error('[API] Inizio risposta:', trimmedText.substring(0, 500));
-                    
-                    // Se contiene HTML o errori PHP
-                    if (trimmedText.includes('<!DOCTYPE') || trimmedText.includes('<html') || 
-                        trimmedText.includes('Fatal error') || trimmedText.includes('Warning:') ||
-                        trimmedText.includes('Notice:')) {
-                        throw new Error('Il server ha ritornato un errore HTML/PHP invece di JSON. Controlla i log del server per errori PHP.');
-                    }
-                    
-                    throw new Error('Risposta del server non è in formato JSON valido');
-                }
-                
-                const data = JSON.parse(text);
-                console.log('[API] ✓ JSON parsed, type:', Array.isArray(data) ? 'array' : typeof data);
-                
-                // Gestisci WP_Error - WordPress ritorna errori in questo formato
-                if (data && typeof data === 'object' && data.code && data.message) {
-                    console.error('[API] ✗ WP_Error ricevuto:', data);
-                    const errorMessage = data.message || 'Errore sconosciuto dal server';
-                    const errorDetails = data.data?.debug_trace ? `\n\nDettagli: ${data.data.debug_trace}` : '';
-                    throw new Error(errorMessage + errorDetails);
-                }
-                
-                if (data && typeof data === 'object' && !Array.isArray(data)) {
-                    console.log('[API] ✓ Object keys:', Object.keys(data).slice(0, 10).join(', '));
-                }
-                return data;
-            } catch (e) {
-                console.error('[API] ✗ Errore parsing JSON:', e);
-                console.error('[API] ✗ Response type:', typeof text);
-                console.error('[API] ✗ Response length:', text.length);
-                console.error('[API] ✗ First 500 chars:', text.substring(0, 500));
-                console.error('[API] ✗ Last 200 chars:', text.substring(Math.max(0, text.length - 200)));
-                
-                // Se l'errore è già quello che abbiamo creato, rilancialo
-                if (e.message.includes('HTML/PHP') || e.message.includes('non è in formato JSON')) {
-                    throw e;
-                }
-                
-                throw new Error(`Risposta JSON non valida dal server: ${e.message}`);
-            }
-        } catch (error) {
-            // Se è un errore di rete
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                console.error('[API] Errore di rete:', error);
-                throw new Error('Impossibile contattare il server. Controlla la connessione.');
-            }
-            
-            // Rilancia l'errore
-            throw error;
+        const response = await fetch(url, config);
+        
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Errore di rete' }));
+            throw new Error(error.message || `HTTP ${response.status}`);
         }
+        
+        if (response.status === 204) {
+            return null;
+        }
+        
+        const text = await response.text();
+        
+        // Risposta vuota = nessuna prenotazione
+        if (!text || text.trim() === '') {
+            return {
+                meta: { range: 'day', start_date: this.formatDate(this.state.currentDate), end_date: this.formatDate(this.state.currentDate) },
+                stats: { total_reservations: 0, total_guests: 0, by_status: {}, confirmed_percentage: 0 },
+                data: { slots: [], timeline: [], days: [] },
+                reservations: [],
+            };
+        }
+        
+        return JSON.parse(text);
     }
     
-    // ========== UTILITY FUNCTIONS ==========
+    // ============================================
+    // UTILITY
+    // ============================================
     
     groupByTimeSlot(reservations) {
         const slots = {};
         reservations.forEach(r => {
-            const time = this.formatTime(r.time || '12:00');
+            const time = this.formatTime(r.time);
             if (!slots[time]) slots[time] = [];
             slots[time].push(r);
         });
         return slots;
     }
     
+    groupByDays(reservations, numDays) {
+        const { startDate } = this.getDateRange();
+        const start = new Date(startDate);
+        const days = [];
+        
+        for (let i = 0; i < numDays; i++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+            const dateStr = this.formatDate(date);
+            const dayReservations = reservations.filter(r => r.date === dateStr);
+            days.push({ date, dateStr, reservations: dayReservations });
+        }
+        
+        return days;
+    }
+    
+    groupReservationsByDate() {
+        const map = {};
+        this.state.reservations.forEach(r => {
+            if (!map[r.date]) map[r.date] = [];
+            map[r.date].push(r);
+        });
+        return map;
+    }
+    
     formatDate(date) {
         const d = date instanceof Date ? date : new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        return d.toISOString().split('T')[0];
     }
     
     formatDateLong(date) {
         const d = date instanceof Date ? date : new Date(date);
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return d.toLocaleDateString('it-IT', options);
+        return d.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    
+    formatDateShort(dateStr) {
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
     }
     
     formatTime(timeStr) {
@@ -1271,23 +874,9 @@ class AgendaApp {
         return timeStr.substring(0, 5);
     }
     
-    formatDateTimeLong(dateTimeStr) {
-        if (!dateTimeStr) return 'N/D';
-        const dt = new Date(dateTimeStr);
-        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-        const timeOptions = { hour: '2-digit', minute: '2-digit' };
-        return `${dt.toLocaleDateString('it-IT', dateOptions)} alle ${dt.toLocaleTimeString('it-IT', timeOptions)}`;
-    }
-    
-    formatDateShort(dateStr) {
-        if (!dateStr) return '';
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-    }
-    
     escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text || '';
         return div.innerHTML;
     }
     
@@ -1309,9 +898,9 @@ class AgendaApp {
     }
 }
 
-// Inizializza l'app quando il DOM è pronto
+// Avvia l'applicazione
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new AgendaApp());
+    document.addEventListener('DOMContentLoaded', () => new ModernAgenda());
 } else {
-    new AgendaApp();
+    new ModernAgenda();
 }
