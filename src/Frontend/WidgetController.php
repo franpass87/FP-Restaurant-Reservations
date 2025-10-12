@@ -177,32 +177,23 @@ final class WidgetController
 
     private function shouldEnqueueAssets(): bool
     {
+        // Never load in admin or embeds
         if (is_admin() || is_embed()) {
             return false;
         }
 
-        $post = null;
-        $shouldEnqueue = false;
-
-        if (is_singular()) {
-            $post = get_post();
-            if ($post instanceof WP_Post) {
-                if (has_shortcode($post->post_content, 'fp_reservations')) {
-                    $shouldEnqueue = true;
-                }
-
-                if (function_exists('has_block') && has_block('fp-restaurant-reservations/form', $post)) {
-                    $shouldEnqueue = true;
-                }
-            }
-        }
+        // Always load assets in frontend by default
+        // The JavaScript will check if there are widgets to initialize
+        // This prevents white screen issues and ensures the shortcode always works
+        $shouldEnqueue = true;
 
         /**
          * Allow third parties to control whether the frontend assets should load.
          *
-         * @param bool          $shouldEnqueue Current decision.
-         * @param WP_Post|null  $post          The resolved post object, when available.
+         * @param bool          $shouldEnqueue Current decision (default: true in frontend).
+         * @param WP_Post|null  $post          The current post object, when available.
          */
+        $post = is_singular() ? get_post() : null;
         $shouldEnqueue = (bool) apply_filters('fp_resv_frontend_should_enqueue', $shouldEnqueue, $post);
 
         return $shouldEnqueue;
