@@ -516,6 +516,11 @@ final class Plugin
         $container->register(ReservationsREST::class, $reservationsRest);
         $container->register('reservations.rest', $reservationsRest);
 
+        // Endpoint diretto che bypassa WordPress REST per evitare interferenze
+        $directEndpoint = new \FP\Resv\Domain\Reservations\DirectEndpoint($reservationsRest);
+        $directEndpoint->register();
+        $container->register(\FP\Resv\Domain\Reservations\DirectEndpoint::class, $directEndpoint);
+
         $eventsRest = new EventsREST($eventsService);
         $eventsRest->register();
         $container->register(EventsREST::class, $eventsRest);
