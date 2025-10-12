@@ -434,8 +434,15 @@ final class REST
             'pets'              => $this->param($request, ['pets', 'fp_resv_pets']) ?? '',
         ];
 
+        Logging::log('api', '>>> Chiamo service->create()');
+        
         try {
             $result = $this->service->create($payload);
+            
+            Logging::log('api', '>>> service->create() completato', [
+                'result_keys' => is_array($result) ? array_keys($result) : 'not_array',
+                'result' => $result,
+            ]);
         } catch (InvalidArgumentException|RuntimeException $exception) {
             // Log l'errore di validazione
             Logging::log('api', 'Errore validazione prenotazione', [
@@ -481,12 +488,22 @@ final class REST
         if ($tracking !== []) {
             $payload['tracking'] = $tracking;
         }
+        
+        Logging::log('api', '>>> Costruisco risposta', [
+            'payload_keys' => array_keys($payload),
+            'has_reservation' => isset($payload['reservation']),
+            'reservation_id' => $payload['reservation']['id'] ?? null,
+        ]);
 
         $response = rest_ensure_response($payload);
 
         if ($response instanceof WP_REST_Response) {
             $response->set_status(201);
         }
+        
+        Logging::log('api', '>>> RETURN response', [
+            'status' => $response instanceof WP_REST_Response ? $response->get_status() : 'unknown',
+        ]);
 
         return $response;
     }

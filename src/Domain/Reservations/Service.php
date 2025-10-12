@@ -393,6 +393,12 @@ class Service
 
         $stopTimer();
 
+        Logging::log('reservations', '✅ RETURN result to REST endpoint', [
+            'id' => $result['id'] ?? null,
+            'status' => $result['status'] ?? null,
+            'has_manage_url' => isset($result['manage_url']),
+        ]);
+
         return $result;
     }
 
