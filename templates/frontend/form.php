@@ -7,9 +7,28 @@
 
 if (!isset($context) || !is_array($context)) {
     error_log('[FP-RESV] Template: context non valido o assente');
+    error_log('[FP-RESV] Template: context type: ' . gettype($context));
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        echo '<div style="background:#fee;border:2px solid #c33;padding:20px;margin:20px 0;border-radius:8px;">';
+        echo '<h3 style="color:#c33;">⚠️ Errore Template Form</h3>';
+        echo '<p>Il context non è disponibile o non è valido.</p>';
+        echo '</div>';
+    }
     return;
 }
+
 error_log('[FP-RESV] Template: inizia rendering form con context keys: ' . implode(', ', array_keys($context)));
+
+// Validate essential context data
+if (empty($context['config'])) {
+    error_log('[FP-RESV] Template: WARNING - config is empty');
+}
+if (empty($context['strings'])) {
+    error_log('[FP-RESV] Template: WARNING - strings is empty');
+}
+if (empty($context['steps'])) {
+    error_log('[FP-RESV] Template: WARNING - steps is empty');
+}
 
 $config     = $context['config'] ?? [];
 $strings    = $context['strings'] ?? [];
