@@ -39,6 +39,8 @@ final class Style
         return [
             'style_palette'          => 'brand',
             'style_primary_color'    => '#bb2649',
+            'style_button_bg'        => '#000000',
+            'style_button_text'      => '#ffffff',
             'style_font_family'      => '"Inter", sans-serif',
             'style_font_size'        => '16',
             'style_heading_weight'   => '600',
@@ -175,6 +177,8 @@ final class Style
 
         $base         = $palettes[$palette];
         $primary      = $this->normalizeHex((string) ($settings['style_primary_color'] ?? '#bb2649'));
+        $buttonBg     = $this->normalizeHex((string) ($settings['style_button_bg'] ?? '#000000'));
+        $buttonText   = $this->normalizeHex((string) ($settings['style_button_text'] ?? '#ffffff'));
         $background   = $this->normalizeHex($base['background']);
         $surface      = $this->normalizeHex($base['surface']);
         $text         = $this->normalizeHex($base['text']);
@@ -208,6 +212,8 @@ final class Style
             'primary'                => $primary,
             'on_primary'             => $onPrimary,
             'primary_soft'           => $slotHover,
+            'button_bg'              => $buttonBg,
+            'button_text'            => $buttonText,
             'background'             => $background,
             'surface'                => $surface,
             'surface_alt'            => $surfaceAlt,
@@ -333,6 +339,8 @@ final class Style
         $lines[] = '    --fp-resv-primary: ' . $tokens['primary'] . ';';
         $lines[] = '    --fp-resv-on-primary: ' . $tokens['on_primary'] . ';';
         $lines[] = '    --fp-resv-primary-soft: ' . $tokens['primary_soft'] . ';';
+        $lines[] = '    --fp-resv-button-bg: ' . $tokens['button_bg'] . ';';
+        $lines[] = '    --fp-resv-button-text: ' . $tokens['button_text'] . ';';
         $lines[] = '    --fp-resv-background: ' . $tokens['background'] . ';';
         $lines[] = '    --fp-resv-surface: ' . $tokens['surface'] . ';';
         $lines[] = '    --fp-resv-surface-alt: ' . $tokens['surface_alt'] . ';';
@@ -413,9 +421,9 @@ final class Style
         $entries = [
             [
                 'id'         => 'primary-button',
-                'label'      => __('Bottone principale', 'fp-restaurant-reservations'),
-                'foreground' => $tokens['on_primary'],
-                'background' => $tokens['primary'],
+                'label'      => __('Bottone "Continua"', 'fp-restaurant-reservations'),
+                'foreground' => $tokens['button_text'],
+                'background' => $tokens['button_bg'],
             ],
             [
                 'id'         => 'surface-text',

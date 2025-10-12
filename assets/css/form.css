@@ -148,7 +148,7 @@ form[data-fp-resv-form] {
 
 .fp-section {
     display: grid;
-    gap: clamp(1rem, 3vw, 1.75rem);
+    gap: clamp(0.75rem, 2.5vw, 1.25rem);
     min-width: 0;
 }
 
@@ -440,7 +440,7 @@ form[data-fp-resv-form] {
     box-shadow: 0 8px 18px -10px rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.45);
 }
 
-/* Stili per elementi progress bar attivi (aria-current="step") */
+/* Stili per elementi progress bar attivi (aria-current="step") - FORZA BIANCO SU NERO */
 .fp-resv-widget .fp-progress__item[aria-current="step"], 
 .fp-resv-widget .fp-progress__item[aria-current="step"]::before, 
 .fp-resv-widget .fp-progress__item[aria-current="step"]::after, 
@@ -459,16 +459,6 @@ form[data-fp-resv-form] {
 #fp-resv-default .fp-progress__item[aria-current="step"] div {
     color: #ffffff !important;
     background: #000000 !important;
-}
-
-/* Stili per elementi progress bar non attivi */
-.fp-resv-widget .fp-progress__item:not([aria-current="step"]), 
-.fp-resv-widget .fp-progress__item:not([aria-current="step"]) *, 
-.fp-resv-widget .fp-progress__item:not([aria-current="step"]) span, 
-#fp-resv-default .fp-progress__item:not([aria-current="step"]), 
-#fp-resv-default .fp-progress__item:not([aria-current="step"]) *, 
-#fp-resv-default .fp-progress__item:not([aria-current="step"]) span {
-    color: white !important;
 }
 
 .fp-meals {
@@ -756,7 +746,7 @@ form[data-fp-resv-form] {
 
 .fp-field {
     display: grid;
-    gap: 0.35rem;
+    gap: 0.25rem;
     min-width: 0;
 }
 
@@ -896,39 +886,39 @@ form[data-fp-resv-form] {
 
 .fp-resv-fields--grid {
     display: grid;
-    gap: 1.15rem;
+    gap: 0.75rem;
     grid-template-columns: 1fr;
 }
 
 /* Layout a 1 colonna per le richieste aggiuntive */
 .fp-resv-extra .fp-resv-fields--grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.65rem;
 }
 
 @media (min-width: 768px) {
     .fp-resv-fields--grid {
         grid-template-columns: 1fr;
-        gap: 1.35rem;
+        gap: 0.85rem;
     }
     
     /* Mantieni 1 colonna per le richieste aggiuntive anche su tablet */
     .fp-resv-extra .fp-resv-fields--grid {
         grid-template-columns: 1fr;
-        gap: 1.35rem;
+        gap: 0.85rem;
     }
 }
 
 @media (min-width: 960px) {
     .fp-resv-fields--grid {
         grid-template-columns: 1fr;
-        gap: 1.6rem;
+        gap: 1rem;
     }
     
     /* Mantieni 1 colonna per le richieste aggiuntive anche su desktop */
     .fp-resv-extra .fp-resv-fields--grid {
         grid-template-columns: 1fr;
-        gap: 1.6rem;
+        gap: 1rem;
     }
 }
 
@@ -1255,15 +1245,17 @@ form[data-fp-resv-form] {
 
 .fp-btn--primary,
 .fp-resv-button--primary {
-    background: linear-gradient(135deg, var(--fp-resv-color-primary) 0%, var(--fp-resv-color-primary-strong) 100%);
-    color: var(--fp-resv-on-primary, #ffffff);
+    background: var(--fp-resv-button-bg, #000000);
+    color: var(--fp-resv-button-text, #ffffff);
     border-color: transparent;
-    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .fp-btn--primary:hover,
 .fp-resv-button--primary:hover {
-    box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4), 0 4px 16px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: var(--fp-resv-button-bg, #000000);
+    filter: brightness(1.1);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .fp-btn--ghost,
@@ -2156,7 +2148,7 @@ form[data-fp-resv-form] {
     
     /* Spazio extra tra i campi del form */
     .fp-resv-manage .fp-resv-fields--grid {
-        gap: 1.25rem;
+        gap: 0.85rem;
     }
     
     /* Info box più compatto su mobile */

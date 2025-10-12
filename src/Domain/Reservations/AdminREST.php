@@ -60,14 +60,7 @@ final class AdminREST
 
     public function registerRoutes(): void
     {
-        error_log('[FP Resv AdminREST] === REGISTERING ROUTES ===');
-        error_log('[FP Resv AdminREST] Registering /fp-resv/v1/agenda endpoint');
-        
-        // Log su file
-        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - registerRoutes chiamato, registrazione endpoint /agenda' . PHP_EOL, FILE_APPEND);
-        
-        $routeRegistered = register_rest_route(
+        register_rest_route(
             'fp-resv/v1',
             '/agenda',
             [
@@ -86,30 +79,6 @@ final class AdminREST
                 ],
             ]
         );
-        
-        error_log('[FP Resv AdminREST] /fp-resv/v1/agenda registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED'));
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - Endpoint registered: ' . ($routeRegistered ? 'SUCCESS' : 'FAILED') . PHP_EOL, FILE_APPEND);
-
-        // TEST: Endpoint diagnostico semplificato
-        register_rest_route(
-            'fp-resv/v1',
-            '/agenda-test',
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => function() {
-                    $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
-                    @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - TEST endpoint chiamato!' . PHP_EOL, FILE_APPEND);
-                    
-                    return rest_ensure_response([
-                        'success' => true,
-                        'message' => 'Endpoint test funziona!',
-                        'timestamp' => current_time('mysql'),
-                        'user_id' => get_current_user_id(),
-                    ]);
-                },
-                'permission_callback' => '__return_true', // Nessuna auth richiesta
-            ]
-        );
 
         register_rest_route(
             'fp-resv/v1',
@@ -125,9 +94,16 @@ final class AdminREST
             'fp-resv/v1',
             '/agenda/reservations/(?P<id>\d+)',
             [
-                'methods'             => WP_REST_Server::EDITABLE,
-                'callback'            => [$this, 'handleUpdateReservation'],
-                'permission_callback' => [$this, 'checkPermissions'],
+                [
+                    'methods'             => WP_REST_Server::EDITABLE,
+                    'callback'            => [$this, 'handleUpdateReservation'],
+                    'permission_callback' => [$this, 'checkPermissions'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::DELETABLE,
+                    'callback'            => [$this, 'handleDeleteReservation'],
+                    'permission_callback' => [$this, 'checkPermissions'],
+                ],
             ]
         );
 
@@ -454,29 +430,14 @@ final class AdminREST
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Inizia output buffering IMMEDIATAMENTE per prevenire qualsiasi output inatteso
         ob_start();
         
-        // CRITICAL: Log con file_put_contents per assicurarsi che venga scritto
-        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - handleAgenda CHIAMATO' . PHP_EOL, FILE_APPEND);
-        
-        // Log iniziale per debug
-        error_log('[FP Resv Agenda] === INIZIO handleAgenda ===');
-        error_log('[FP Resv Agenda] Request method: ' . $request->get_method());
-        error_log('[FP Resv Agenda] Request route: ' . $request->get_route());
-        error_log('[FP Resv Agenda] Parametri richiesta: ' . print_r($request->get_params(), true));
-        
         try {
-            // Sanitizza e valida parametri
             $dateParam = $request->get_param('date');
-            error_log('[FP Resv Agenda] Date param grezzo: ' . var_export($dateParam, true));
-            
             $date = $this->sanitizeDate($dateParam);
             if ($date === null) {
                 $date = gmdate('Y-m-d');
             }
-            error_log('[FP Resv Agenda] Data sanitizzata: ' . $date);
 
             $range = $request->get_param('range');
             $rangeMode = is_string($range) ? strtolower($range) : 'day';
@@ -894,26 +855,53 @@ final class AdminREST
         ]);
     }
 
+    public function handleDeleteReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $id = absint((string) $request->get_param('id'));
+        if ($id <= 0) {
+            return new WP_Error('fp_resv_invalid_reservation_id', __('ID prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
+        }
+
+        // Verifica che la prenotazione esista
+        $entry = $this->reservations->findAgendaEntry($id);
+        if ($entry === null) {
+            return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
+        }
+
+        try {
+            // Elimina la prenotazione dal database
+            $deleted = $this->reservations->delete($id);
+            
+            if (!$deleted) {
+                throw new RuntimeException('Impossibile eliminare la prenotazione.');
+            }
+
+            // Trigger action per eventuali integrazioni
+            do_action('fp_resv_reservation_deleted', $id, $entry);
+
+            return rest_ensure_response([
+                'success' => true,
+                'id'      => $id,
+                'message' => __('Prenotazione eliminata con successo.', 'fp-restaurant-reservations'),
+            ]);
+        } catch (Throwable $exception) {
+            return new WP_Error(
+                'fp_resv_delete_failed',
+                sprintf(__('Impossibile eliminare la prenotazione: %s', 'fp-restaurant-reservations'), $exception->getMessage()),
+                ['status' => 500]
+            );
+        }
+    }
+
     private function checkPermissions(): bool
     {
-        $logFile = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/agenda-endpoint-calls.log' : '/tmp/agenda-endpoint-calls.log';
-        
         // Permette agli amministratori di accedere anche se non hanno la capability specifica
         // Questo allineamento con AdminController previene errori 403 quando gli admin
         // accedono all'agenda prima che la capability sia stata assegnata
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canManageOptions = current_user_can('manage_options');
-        $hasPermission = $canManage || $canManageOptions;
         
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' - checkPermissions chiamato: ' . 
-            'canManage=' . ($canManage ? 'true' : 'false') . ', ' .
-            'canManageOptions=' . ($canManageOptions ? 'true' : 'false') . ', ' .
-            'result=' . ($hasPermission ? 'true' : 'false') . ', ' .
-            'user_id=' . get_current_user_id() . PHP_EOL, FILE_APPEND);
-        
-        error_log('[FP Resv AdminREST] checkPermissions: ' . ($hasPermission ? 'ALLOWED' : 'DENIED') . ' for user ' . get_current_user_id());
-        
-        return $hasPermission;
+        return $canManage || $canManageOptions;
     }
 
     private function sanitizeDate(mixed $value): ?string
@@ -957,6 +945,7 @@ final class AdminREST
             'time'       => $time,
             'slot_start' => $date . ' ' . $time,
             'party'      => isset($row['party']) ? (int) $row['party'] : 2,
+            'meal'       => isset($row['meal']) ? (string) $row['meal'] : '',
             'notes'      => isset($row['notes']) ? (string) $row['notes'] : '',
             'allergies'  => isset($row['allergies']) ? (string) $row['allergies'] : '',
             'room_id'    => isset($row['room_id']) && $row['room_id'] !== null ? (int) $row['room_id'] : null,
@@ -981,6 +970,7 @@ final class AdminREST
             'date'       => $request->get_param('date') ?? '',
             'time'       => $request->get_param('time') ?? '',
             'party'      => $request->get_param('party') ?? 0,
+            'meal'       => $request->get_param('meal') ?? '',
             'first_name' => $request->get_param('first_name') ?? '',
             'last_name'  => $request->get_param('last_name') ?? '',
             'email'      => $request->get_param('email') ?? '',

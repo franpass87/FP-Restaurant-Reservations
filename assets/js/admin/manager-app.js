@@ -36,20 +36,18 @@ class ReservationManager {
     }
 
     async init() {
-        console.log('[Manager] 🚀 Inizializzazione...');
-        console.log('[Manager] Config:', this.config);
-        console.log('[Manager] REST Root:', this.config.restRoot);
-        console.log('[Manager] Nonce:', this.config.nonce ? 'Present' : 'MISSING');
-        
         // Verifica che la configurazione sia presente
         if (!this.config.restRoot || !this.config.nonce) {
-            console.error('[Manager] ❌ Configuration missing! Check that fpResvManagerSettings is loaded.');
+            console.error('[Manager] Configuration missing! Check that fpResvManagerSettings is loaded.');
             this.showError('Configurazione mancante. Ricarica la pagina.');
             return;
         }
         
         // Cache elementi DOM
         this.cacheDom();
+        
+        // Popola il filtro dei servizi con i meals configurati
+        this.populateServiceFilter();
         
         // Setup event listeners
         this.bindEvents();
@@ -60,8 +58,6 @@ class ReservationManager {
         // Carica dati iniziali
         await this.loadOverview();
         await this.loadReservations();
-        
-        console.log('[Manager] ✅ Inizializzazione completata');
     }
 
     cacheDom() {
@@ -81,8 +77,9 @@ class ReservationManager {
             
             // Views
             viewDay: document.getElementById('fp-view-day'),
-            viewList: document.getElementById('fp-view-list'),
+            viewWeek: document.getElementById('fp-view-week'),
             viewMonth: document.getElementById('fp-view-month'),
+            viewList: document.getElementById('fp-view-list'),
             
             // States
             loadingState: document.getElementById('fp-loading-state'),
@@ -92,14 +89,32 @@ class ReservationManager {
             
             // Content containers
             timeline: document.getElementById('fp-timeline'),
-            reservationsList: document.getElementById('fp-reservations-list'),
+            weekCalendar: document.getElementById('fp-week-calendar'),
             monthCalendar: document.getElementById('fp-month-calendar'),
+            reservationsList: document.getElementById('fp-reservations-list'),
             
             // Modal
             modal: document.getElementById('fp-reservation-modal'),
             modalTitle: document.getElementById('fp-modal-title'),
             modalBody: document.getElementById('fp-modal-body'),
         };
+    }
+
+    populateServiceFilter() {
+        if (!this.dom.serviceFilter) {
+            return;
+        }
+
+        // Mantieni l'opzione "Tutti i servizi" che è già presente nel template
+        // Aggiungi le opzioni dei meals configurati
+        if (this.config.meals && this.config.meals.length > 0) {
+            this.config.meals.forEach(meal => {
+                const option = document.createElement('option');
+                option.value = meal.key || '';
+                option.textContent = meal.label || meal.key || '';
+                this.dom.serviceFilter.appendChild(option);
+            });
+        }
     }
 
     bindEvents() {
@@ -227,8 +242,6 @@ class ReservationManager {
     // ============================================
 
     setView(view) {
-        console.log('[Manager] Switching view to:', view);
-        
         const previousView = this.state.currentView;
         this.state.currentView = view;
 
@@ -243,9 +256,12 @@ class ReservationManager {
             }
         });
 
-        // Se passiamo da/a vista mese, ricarica i dati con il range corretto
-        if ((previousView === 'month' && view !== 'month') || (previousView !== 'month' && view === 'month')) {
-            console.log('[Manager] View change requires data reload');
+        // Se passiamo tra viste che richiedono range diversi, ricarica i dati
+        const viewsRequiringReload = ['week', 'month'];
+        const previousNeedsRange = viewsRequiringReload.includes(previousView);
+        const currentNeedsRange = viewsRequiringReload.includes(view);
+        
+        if (previousNeedsRange !== currentNeedsRange || (previousNeedsRange && currentNeedsRange && previousView !== view)) {
             this.loadReservations();
         } else {
             // Altrimenti, semplicemente re-render
@@ -259,9 +275,6 @@ class ReservationManager {
 
     async loadOverview() {
         try {
-            console.log('[Manager] Loading overview from:', `${this.config.restRoot}/agenda/overview`);
-            
-            // Aggiungi timeout di 10 secondi
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
             
@@ -274,36 +287,22 @@ class ReservationManager {
             
             clearTimeout(timeoutId);
 
-            console.log('[Manager] Overview response status:', response.status);
-
             if (!response.ok) {
-                console.error('[Manager] Overview response not OK:', response.status, response.statusText);
-                // Non bloccare il caricamento per overview
                 return;
             }
 
-            // Check if response has content
             const text = await response.text();
-            console.log('[Manager] Overview response text length:', text.length);
-            
             if (!text || text.trim() === '') {
-                console.warn('[Manager] Overview response is empty');
                 return;
             }
 
-            // Parse JSON
             const data = JSON.parse(text);
-            console.log('[Manager] Overview data loaded:', data);
-            
             this.state.overview = data;
             this.renderStats();
         } catch (error) {
-            if (error.name === 'AbortError') {
-                console.warn('[Manager] Overview request timeout (10s)');
-            } else {
+            if (error.name !== 'AbortError') {
                 console.error('[Manager] Error loading overview:', error);
             }
-            // Non mostrare errore all'utente per le stats, sono opzionali
         }
     }
 
@@ -318,7 +317,23 @@ class ReservationManager {
             let startDate = dateStr;
             let endDate = dateStr;
             
-            if (this.state.currentView === 'month') {
+            if (this.state.currentView === 'week') {
+                // Per la vista settimana, carica 7 giorni partendo dal lunedì
+                const currentDate = this.state.currentDate;
+                const dayOfWeek = currentDate.getDay();
+                // Converti domenica (0) a 7 per calcolo corretto
+                const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                
+                const monday = new Date(currentDate);
+                monday.setDate(currentDate.getDate() - daysSinceMonday);
+                
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                
+                startDate = this.formatDate(monday);
+                endDate = this.formatDate(sunday);
+                range = 'week';
+            } else if (this.state.currentView === 'month') {
                 // Per la vista mese, carica tutto il mese
                 const currentDate = this.state.currentDate;
                 const year = currentDate.getFullYear();
@@ -334,10 +349,6 @@ class ReservationManager {
             
             const url = `${this.config.restRoot}/agenda?date=${startDate}&range=${range}`;
             
-            console.log('[Manager] Loading reservations from:', url);
-            console.log('[Manager] Date range:', startDate, 'to', endDate);
-            
-            // Aggiungi timeout di 15 secondi
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
             
@@ -350,21 +361,14 @@ class ReservationManager {
             
             clearTimeout(timeoutId);
 
-            console.log('[Manager] Reservations response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('[Manager] Reservations response error:', response.status, errorText);
                 throw new Error(`Errore ${response.status}: ${response.statusText}`);
             }
 
-            // Get response text first
             const text = await response.text();
-            console.log('[Manager] Reservations response text length:', text.length);
-            console.log('[Manager] Reservations response preview:', text.substring(0, 200));
-
             if (!text || text.trim() === '') {
-                console.warn('[Manager] Reservations response is empty');
                 this.state.reservations = [];
                 this.state.error = null;
                 this.hideLoading();
@@ -372,23 +376,15 @@ class ReservationManager {
                 return;
             }
 
-            // Parse JSON
             const data = JSON.parse(text);
-            console.log('[Manager] Reservations data loaded:', data);
-            console.log('[Manager] Reservations array:', data.reservations);
-            console.log('[Manager] Reservations count:', data.reservations ? data.reservations.length : 0);
-            
             this.state.reservations = data.reservations || [];
             this.state.error = null;
-            
-            console.log('[Manager] State reservations set to:', this.state.reservations.length, 'items');
-            console.log('[Manager] Current view:', this.state.currentView);
 
             this.hideLoading();
             this.renderCurrentView();
         } catch (error) {
             console.error('[Manager] Error loading reservations:', error);
-            this.hideLoading(); // IMPORTANTE: nascondi il loader anche in caso di errore
+            this.hideLoading();
             
             if (error.name === 'AbortError') {
                 this.showError('Timeout: il server impiega troppo tempo a rispondere.');
@@ -405,33 +401,25 @@ class ReservationManager {
     getFilteredReservations() {
         let filtered = [...this.state.reservations];
         
-        console.log('[Manager] Filtering from', filtered.length, 'reservations');
-        
-        // Filtra per servizio (meal)
+        // Filtra per servizio (meal) - usa il campo meal dalla prenotazione
         if (this.state.filters.service) {
-            const originalCount = filtered.length;
             filtered = filtered.filter(r => r.meal === this.state.filters.service);
-            console.log('[Manager] Service filter applied:', this.state.filters.service, '- reduced from', originalCount, 'to', filtered.length);
         }
         
         // Filtra per stato
         if (this.state.filters.status) {
-            const originalCount = filtered.length;
             filtered = filtered.filter(r => r.status === this.state.filters.status);
-            console.log('[Manager] Status filter applied:', this.state.filters.status, '- reduced from', originalCount, 'to', filtered.length);
         }
         
-        // Filtra per ricerca
+        // Filtra per ricerca - usa customer object
         if (this.state.filters.search) {
             const searchLower = this.state.filters.search.toLowerCase();
-            const originalCount = filtered.length;
             filtered = filtered.filter(r => {
-                const name = `${r.first_name || ''} ${r.last_name || ''}`.toLowerCase();
-                const email = (r.email || '').toLowerCase();
-                const phone = (r.phone || '').toLowerCase();
+                const name = `${r.customer.first_name || ''} ${r.customer.last_name || ''}`.toLowerCase();
+                const email = (r.customer.email || '').toLowerCase();
+                const phone = (r.customer.phone || '').toLowerCase();
                 return name.includes(searchLower) || email.includes(searchLower) || phone.includes(searchLower);
             });
-            console.log('[Manager] Search filter applied:', this.state.filters.search, '- reduced from', originalCount, 'to', filtered.length);
         }
         
         return filtered;
@@ -467,59 +455,49 @@ class ReservationManager {
     }
 
     renderCurrentView() {
-        console.log('[Manager] === Rendering view ===');
-        console.log('[Manager] Current view:', this.state.currentView);
-        console.log('[Manager] Total reservations in state:', this.state.reservations.length);
-        
         const filtered = this.getFilteredReservations();
-        console.log('[Manager] Filtered reservations:', filtered.length);
 
-        // Nascondi tutti gli stati (con protezioni)
+        // Nascondi tutti gli stati
         if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
         if (this.dom.errorState) this.dom.errorState.style.display = 'none';
         if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
 
         if (filtered.length === 0) {
-            console.log('[Manager] No filtered reservations - showing empty state');
-            // Mostra empty state ma lascia visibile il container della vista corrente
+            // Mostra empty state
             if (this.dom.emptyState) this.dom.emptyState.style.display = 'flex';
             
             // Nascondi tutte le viste
             if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
-            if (this.dom.viewList) this.dom.viewList.style.display = 'none';
+            if (this.dom.viewWeek) this.dom.viewWeek.style.display = 'none';
             if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
+            if (this.dom.viewList) this.dom.viewList.style.display = 'none';
             return;
         }
-
-        console.log('[Manager] Have reservations - hiding empty state, showing view');
         
         // Nascondi empty state
         if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
 
         // Mostra la vista corrente e nascondi le altre
         if (this.dom.viewDay) this.dom.viewDay.style.display = this.state.currentView === 'day' ? 'block' : 'none';
-        if (this.dom.viewList) this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
+        if (this.dom.viewWeek) this.dom.viewWeek.style.display = this.state.currentView === 'week' ? 'block' : 'none';
         if (this.dom.viewMonth) this.dom.viewMonth.style.display = this.state.currentView === 'month' ? 'block' : 'none';
-
-        console.log('[Manager] View visibility set, now rendering content');
+        if (this.dom.viewList) this.dom.viewList.style.display = this.state.currentView === 'list' ? 'block' : 'none';
         
         // Render della vista attiva
         switch (this.state.currentView) {
             case 'day':
-                console.log('[Manager] Rendering DAY view with', filtered.length, 'reservations');
                 this.renderDayView(filtered);
                 break;
-            case 'list':
-                console.log('[Manager] Rendering LIST view with', filtered.length, 'reservations');
-                this.renderListView(filtered);
+            case 'week':
+                this.renderWeekView();
                 break;
             case 'month':
-                console.log('[Manager] Rendering MONTH view');
                 this.renderMonthView();
                 break;
+            case 'list':
+                this.renderListView(filtered);
+                break;
         }
-
-        console.log('[Manager] ✅ View rendered successfully');
     }
 
     renderDayView(reservations) {
@@ -797,44 +775,193 @@ class ReservationManager {
         this.loadReservations();
     }
 
+    renderWeekView() {
+        const currentDate = this.state.currentDate;
+        const dayOfWeek = currentDate.getDay();
+        const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        
+        // Calcola lunedì e domenica della settimana
+        const monday = new Date(currentDate);
+        monday.setDate(currentDate.getDate() - daysSinceMonday);
+        
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        // Raggruppa prenotazioni per data
+        const reservationsByDate = {};
+        this.state.reservations.forEach(resv => {
+            const date = resv.date;
+            if (!reservationsByDate[date]) {
+                reservationsByDate[date] = [];
+            }
+            reservationsByDate[date].push(resv);
+        });
+        
+        // Nome giorni
+        const dayNames = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+        
+        // Header con navigazione settimana
+        const mondayStr = this.formatItalianDate(monday);
+        const sundayStr = this.formatItalianDate(sunday);
+        
+        let html = `
+            <div class="fp-week-header">
+                <h2>Settimana ${mondayStr} - ${sundayStr}</h2>
+                <div class="fp-week-nav">
+                    <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente">
+                        <span class="dashicons dashicons-arrow-left-alt2"></span>
+                    </button>
+                    <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week">
+                        Questa Settimana
+                    </button>
+                    <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva">
+                        <span class="dashicons dashicons-arrow-right-alt2"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="fp-week-grid">
+        `;
+        
+        // Giorni della settimana
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            const reservations = reservationsByDate[dateStr] || [];
+            const dayNumber = date.getDate();
+            
+            const isToday = dateStr === todayStr;
+            const isSelected = dateStr === this.formatDate(this.state.currentDate);
+            
+            let dayClass = 'fp-week-day';
+            if (isToday) dayClass += ' fp-week-day--today';
+            if (isSelected) dayClass += ' fp-week-day--selected';
+            if (reservations.length > 0) dayClass += ' fp-week-day--has-reservations';
+            
+            // Calcola stats
+            const totalGuests = reservations.reduce((sum, r) => sum + (r.party || 0), 0);
+            const byMeal = {};
+            reservations.forEach(r => {
+                const meal = r.meal || 'other';
+                byMeal[meal] = (byMeal[meal] || 0) + 1;
+            });
+            
+            html += `
+                <div class="${dayClass}" data-date="${dateStr}">
+                    <div class="fp-week-day__header">
+                        <div class="fp-week-day__name">${dayNames[i]}</div>
+                        <div class="fp-week-day__number">${dayNumber}</div>
+                    </div>
+                    ${reservations.length > 0 ? `
+                        <div class="fp-week-day__stats">
+                            <div class="fp-week-day__count">${reservations.length} pren.</div>
+                            <div class="fp-week-day__guests">${totalGuests} coperti</div>
+                        </div>
+                        <div class="fp-week-day__reservations">
+                            ${reservations.slice(0, 3).map(resv => {
+                                const statusColors = {
+                                    confirmed: '#10b981',
+                                    pending: '#f59e0b',
+                                    visited: '#3b82f6',
+                                    no_show: '#ef4444',
+                                    cancelled: '#6b7280',
+                                };
+                                const statusColor = statusColors[resv.status] || '#6b7280';
+                                const guestName = `${resv.customer.first_name} ${resv.customer.last_name}`.trim() || resv.customer.email;
+                                
+                                return `
+                                    <div class="fp-week-reservation" data-id="${resv.id}" data-action="view-reservation">
+                                        <div class="fp-week-reservation__time">${resv.time}</div>
+                                        <div class="fp-week-reservation__name">${this.escapeHtml(guestName)}</div>
+                                        <div class="fp-week-reservation__party" style="border-left: 3px solid ${statusColor}">
+                                            ${resv.party}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            ${reservations.length > 3 ? `
+                                <div class="fp-week-day__more">
+                                    +${reservations.length - 3} altre
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : `
+                        <div class="fp-week-day__empty">Nessuna prenotazione</div>
+                    `}
+                </div>
+            `;
+        }
+        
+        html += `
+            </div>
+        `;
+        
+        this.dom.weekCalendar.innerHTML = html;
+        
+        // Bind eventi
+        this.bindWeekViewEvents();
+    }
+
+    bindWeekViewEvents() {
+        // Click su giorno per vedere dettagli
+        this.dom.weekCalendar.querySelectorAll('.fp-week-day').forEach(day => {
+            day.addEventListener('click', (e) => {
+                // Se ha cliccato su una prenotazione, non cambiare giorno
+                if (e.target.closest('[data-action="view-reservation"]')) {
+                    return;
+                }
+                const dateStr = day.dataset.date;
+                this.setDate(new Date(dateStr + 'T12:00:00'));
+                this.setView('day'); // Passa alla vista giorno
+            });
+        });
+
+        // Click sulle prenotazioni
+        this.dom.weekCalendar.querySelectorAll('[data-action="view-reservation"]').forEach(card => {
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = parseInt(card.dataset.id);
+                this.openReservationModal(id);
+            });
+        });
+
+        // Navigazione settimana
+        this.dom.weekCalendar.querySelector('[data-action="prev-week"]')?.addEventListener('click', () => {
+            this.navigateWeek(-1);
+        });
+
+        this.dom.weekCalendar.querySelector('[data-action="next-week"]')?.addEventListener('click', () => {
+            this.navigateWeek(1);
+        });
+
+        this.dom.weekCalendar.querySelector('[data-action="this-week"]')?.addEventListener('click', () => {
+            this.setDate(new Date());
+        });
+    }
+
+    navigateWeek(weeks) {
+        const newDate = new Date(this.state.currentDate);
+        newDate.setDate(newDate.getDate() + (weeks * 7));
+        this.state.currentDate = newDate;
+        this.updateDatePicker();
+        
+        // Ricarica le prenotazioni per la nuova settimana
+        this.loadReservations();
+    }
+
+    formatItalianDate(date) {
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        return `${day}/${month}`;
+    }
+
     // ============================================
     // FILTERING
     // ============================================
-
-    getFilteredReservations() {
-        let filtered = [...this.state.reservations];
-
-        // Filter by service
-        if (this.state.filters.service) {
-            filtered = filtered.filter(resv => {
-                const hour = parseInt(resv.time.split(':')[0]);
-                if (this.state.filters.service === 'lunch') {
-                    return hour >= 12 && hour < 17;
-                } else if (this.state.filters.service === 'dinner') {
-                    return hour >= 19 && hour <= 23;
-                }
-                return true;
-            });
-        }
-
-        // Filter by status
-        if (this.state.filters.status) {
-            filtered = filtered.filter(resv => resv.status === this.state.filters.status);
-        }
-
-        // Filter by search
-        if (this.state.filters.search) {
-            const search = this.state.filters.search;
-            filtered = filtered.filter(resv => {
-                const name = `${resv.customer.first_name} ${resv.customer.last_name}`.toLowerCase();
-                const email = resv.customer.email.toLowerCase();
-                const phone = resv.customer.phone.toLowerCase();
-                return name.includes(search) || email.includes(search) || phone.includes(search);
-            });
-        }
-
-        return filtered;
-    }
 
     filterReservations() {
         this.renderCurrentView();
@@ -995,9 +1122,28 @@ class ReservationManager {
     }
 
     async deleteReservation(id) {
-        // TODO: Implement delete endpoint
-        console.log('[Manager] Delete reservation:', id);
-        alert('Funzione di eliminazione in fase di sviluppo');
+        try {
+            const response = await fetch(`${this.config.restRoot}/agenda/reservations/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-WP-Nonce': this.config.nonce,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Errore nell\'eliminazione della prenotazione');
+            }
+
+            this.closeModal();
+            await this.loadReservations();
+            await this.loadOverview();
+            
+            // Mostra messaggio di successo
+            alert('Prenotazione eliminata con successo');
+        } catch (error) {
+            alert('Errore nell\'eliminazione della prenotazione: ' + error.message);
+        }
     }
 
     async openNewReservationModal() {
@@ -1401,7 +1547,78 @@ class ReservationManager {
     // ============================================
 
     exportReservations() {
-        alert('Funzione di export in fase di sviluppo');
+        const reservations = this.getFilteredReservations();
+        
+        if (reservations.length === 0) {
+            alert('Nessuna prenotazione da esportare');
+            return;
+        }
+
+        // Prepara i dati CSV
+        const csvHeaders = [
+            'ID',
+            'Data',
+            'Ora',
+            'Stato',
+            'Coperti',
+            'Servizio',
+            'Nome',
+            'Cognome',
+            'Email',
+            'Telefono',
+            'Note',
+            'Allergie'
+        ];
+
+        const csvRows = reservations.map(resv => [
+            resv.id,
+            resv.date,
+            resv.time,
+            resv.status,
+            resv.party,
+            resv.meal || '',
+            this.escapeCsv(resv.customer.first_name),
+            this.escapeCsv(resv.customer.last_name),
+            this.escapeCsv(resv.customer.email),
+            this.escapeCsv(resv.customer.phone),
+            this.escapeCsv(resv.notes),
+            this.escapeCsv(resv.allergies)
+        ]);
+
+        // Crea il contenuto CSV
+        let csvContent = csvHeaders.join(',') + '\n';
+        csvRows.forEach(row => {
+            csvContent += row.join(',') + '\n';
+        });
+
+        // Crea il file e scaricalo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        const filename = `prenotazioni_${dateStr}.csv`;
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+    }
+
+    escapeCsv(value) {
+        if (!value) return '';
+        const str = String(value);
+        // Escape virgolette e wrappa in virgolette se contiene virgole, newline o virgolette
+        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
     }
 
     // ============================================
@@ -1413,8 +1630,9 @@ class ReservationManager {
         if (this.dom.errorState) this.dom.errorState.style.display = 'none';
         if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
         if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
-        if (this.dom.viewList) this.dom.viewList.style.display = 'none';
+        if (this.dom.viewWeek) this.dom.viewWeek.style.display = 'none';
         if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
+        if (this.dom.viewList) this.dom.viewList.style.display = 'none';
     }
 
     hideLoading() {

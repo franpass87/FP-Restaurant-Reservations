@@ -754,6 +754,18 @@ final class PagesConfig
                 'type'        => 'color',
                 'default'     => '#bb2649',
             ],
+            'style_button_bg' => [
+                'label'       => __('Sfondo bottone "Continua"', 'fp-restaurant-reservations'),
+                'type'        => 'color',
+                'default'     => '#000000',
+                'description' => __('Colore di sfondo per il bottone primario "Continua".', 'fp-restaurant-reservations'),
+            ],
+            'style_button_text' => [
+                'label'       => __('Testo bottone "Continua"', 'fp-restaurant-reservations'),
+                'type'        => 'color',
+                'default'     => '#ffffff',
+                'description' => __('Colore del testo per il bottone primario "Continua".', 'fp-restaurant-reservations'),
+            ],
             'style_border_radius' => [
                 'label'       => __('Raggio bordi (px)', 'fp-restaurant-reservations'),
                 'type'        => 'integer',

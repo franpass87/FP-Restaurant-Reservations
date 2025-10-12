@@ -117,13 +117,17 @@ $headingId = 'fp-resv-manager-title';
                         <span class="dashicons dashicons-clock"></span>
                         <span><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button type="button" class="fp-view-btn" data-view="list" data-action="set-view">
-                        <span class="dashicons dashicons-list-view"></span>
-                        <span><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
+                    <button type="button" class="fp-view-btn" data-view="week" data-action="set-view">
+                        <span class="dashicons dashicons-calendar"></span>
+                        <span><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></span>
                     </button>
                     <button type="button" class="fp-view-btn" data-view="month" data-action="set-view">
                         <span class="dashicons dashicons-calendar-alt"></span>
                         <span><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
+                    </button>
+                    <button type="button" class="fp-view-btn" data-view="list" data-action="set-view">
+                        <span class="dashicons dashicons-list-view"></span>
+                        <span><?php esc_html_e('Lista', 'fp-restaurant-reservations'); ?></span>
                     </button>
                 </div>
             </div>
@@ -132,8 +136,7 @@ $headingId = 'fp-resv-manager-title';
                 <!-- Filters -->
                 <select class="fp-filter-select" data-role="service-filter" aria-label="<?php esc_attr_e('Filtra per servizio', 'fp-restaurant-reservations'); ?>">
                     <option value=""><?php esc_html_e('Tutti i servizi', 'fp-restaurant-reservations'); ?></option>
-                    <option value="lunch"><?php esc_html_e('Pranzo', 'fp-restaurant-reservations'); ?></option>
-                    <option value="dinner"><?php esc_html_e('Cena', 'fp-restaurant-reservations'); ?></option>
+                    <!-- Le opzioni dei servizi verranno popolate dinamicamente via JavaScript -->
                 </select>
 
                 <select class="fp-filter-select" data-role="status-filter" aria-label="<?php esc_attr_e('Filtra per stato', 'fp-restaurant-reservations'); ?>">
@@ -193,10 +196,10 @@ $headingId = 'fp-resv-manager-title';
                 </div>
             </div>
 
-            <!-- List View -->
-            <div class="fp-view fp-view--list" id="fp-view-list" style="display: none;">
-                <div class="fp-reservations-list" id="fp-reservations-list">
-                    <!-- Reservation cards will be rendered here by JavaScript -->
+            <!-- Week View -->
+            <div class="fp-view fp-view--week" id="fp-view-week" style="display: none;">
+                <div class="fp-week-calendar" id="fp-week-calendar">
+                    <!-- Week calendar will be rendered here by JavaScript -->
                 </div>
             </div>
 
@@ -204,6 +207,13 @@ $headingId = 'fp-resv-manager-title';
             <div class="fp-view fp-view--month" id="fp-view-month" style="display: none;">
                 <div class="fp-month-calendar" id="fp-month-calendar">
                     <!-- Month calendar will be rendered here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div class="fp-view fp-view--list" id="fp-view-list" style="display: none;">
+                <div class="fp-reservations-list" id="fp-reservations-list">
+                    <!-- Reservation cards will be rendered here by JavaScript -->
                 </div>
             </div>
         </div>

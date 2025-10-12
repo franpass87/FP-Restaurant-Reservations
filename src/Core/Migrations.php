@@ -9,7 +9,7 @@ use wpdb;
 final class Migrations
 {
     private const OPTION_KEY = 'fp_resv_db_version';
-    private const DB_VERSION = '2025.10.09';
+    private const DB_VERSION = '2025.10.12';
 
     public static function run(): void
     {
@@ -47,6 +47,7 @@ CREATE TABLE {$reservationsTable} (
     date DATE NOT NULL,
     time TIME NOT NULL,
     party SMALLINT UNSIGNED NOT NULL,
+    meal VARCHAR(100) DEFAULT NULL,
     room_id BIGINT UNSIGNED DEFAULT NULL,
     table_id BIGINT UNSIGNED DEFAULT NULL,
     customer_id BIGINT UNSIGNED DEFAULT NULL,
@@ -73,6 +74,7 @@ CREATE TABLE {$reservationsTable} (
     KEY customer_id (customer_id),
     KEY room_table (room_id, table_id),
     KEY lang (lang),
+    KEY meal (meal),
     KEY calendar_event_id (calendar_event_id),
     KEY request_id (request_id)
 ) {$charsetCollate};

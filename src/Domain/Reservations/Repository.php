@@ -294,6 +294,21 @@ final class Repository
         return true;
     }
 
+    public function delete(int $id): bool
+    {
+        if ($id <= 0) {
+            return false;
+        }
+
+        $result = $this->wpdb->delete($this->tableName(), ['id' => $id], ['%d']);
+        
+        if ($result === false) {
+            throw new \RuntimeException($this->wpdb->last_error ?: 'Unable to delete reservation.');
+        }
+
+        return $result > 0;
+    }
+
     /**
      * @param array<string, mixed> $entry
      */

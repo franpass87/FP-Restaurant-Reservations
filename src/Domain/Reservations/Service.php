@@ -249,6 +249,7 @@ class Service
             'date'      => $sanitized['date'],
             'time'      => $sanitized['time'] . ':00',
             'party'     => $sanitized['party'],
+            'meal'      => $sanitized['meal'],
             'notes'     => $sanitized['notes'],
             'allergies' => $sanitized['allergies'],
             'utm_source'   => $sanitized['utm_source'],
