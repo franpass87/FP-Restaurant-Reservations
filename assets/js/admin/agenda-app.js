@@ -655,12 +655,86 @@ class ModernAgenda {
         if (form) {
             form.reset();
             const dateInput = form.querySelector('[name="date"]');
-            const timeInput = form.querySelector('[name="time"]');
-            if (dateInput) dateInput.value = this.formatDate(this.state.currentDate);
-            if (timeInput) timeInput.value = '19:30';
+            const partyInput = form.querySelector('[name="party"]');
+            const timeSelect = form.querySelector('[data-role="time-slots"]');
+            
+            // Imposta la data corrente
+            if (dateInput) {
+                dateInput.value = this.formatDate(this.state.currentDate);
+            }
+            
+            // Setup listeners per caricare slot quando cambiano data/party
+            const loadSlots = () => this.loadAvailableSlots(form);
+            
+            if (dateInput) {
+                dateInput.removeEventListener('change', loadSlots);
+                dateInput.addEventListener('change', loadSlots);
+            }
+            
+            if (partyInput) {
+                partyInput.removeEventListener('change', loadSlots);
+                partyInput.addEventListener('change', loadSlots);
+            }
+            
+            // Carica slot iniziali
+            this.loadAvailableSlots(form);
         }
         
         this.openModal(modal);
+    }
+    
+    async loadAvailableSlots(form) {
+        const dateInput = form.querySelector('[name="date"]');
+        const partyInput = form.querySelector('[name="party"]');
+        const timeSelect = form.querySelector('[data-role="time-slots"]');
+        
+        if (!dateInput || !partyInput || !timeSelect) return;
+        
+        const date = dateInput.value;
+        const party = parseInt(partyInput.value, 10) || 2;
+        
+        if (!date) {
+            timeSelect.innerHTML = '<option value="">Seleziona prima una data</option>';
+            timeSelect.disabled = true;
+            return;
+        }
+        
+        // Mostra loading
+        timeSelect.innerHTML = '<option value="">Caricamento slot...</option>';
+        timeSelect.disabled = true;
+        
+        try {
+            console.log('[Agenda] 🕐 Caricamento slot disponibili...', { date, party });
+            
+            // Chiamata all'endpoint di disponibilità
+            const params = new URLSearchParams({ date, party: party.toString() });
+            const response = await this.apiPublic(`availability?${params}`);
+            
+            console.log('[Agenda] ✅ Slot caricati:', response);
+            
+            // Popola il select con gli slot disponibili
+            if (response.slots && Array.isArray(response.slots) && response.slots.length > 0) {
+                timeSelect.innerHTML = '<option value="">Seleziona un orario</option>';
+                
+                response.slots.forEach(slot => {
+                    if (slot.available) {
+                        const option = document.createElement('option');
+                        option.value = slot.time;
+                        option.textContent = `${slot.time} - ${slot.capacity} posti disponibili`;
+                        timeSelect.appendChild(option);
+                    }
+                });
+                
+                timeSelect.disabled = false;
+            } else {
+                timeSelect.innerHTML = '<option value="">Nessun orario disponibile per questa data</option>';
+                timeSelect.disabled = true;
+            }
+        } catch (error) {
+            console.error('[Agenda] ❌ Errore caricamento slot:', error);
+            timeSelect.innerHTML = '<option value="">Errore nel caricamento degli slot</option>';
+            timeSelect.disabled = true;
+        }
     }
     
     async createReservation() {
@@ -673,16 +747,30 @@ class ModernAgenda {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
-        // Combina date e time
-        data.slot_start = `${data.date} ${data.time}`;
-        data.status = 'pending';
+        console.log('[Agenda] 📝 Creazione prenotazione...', data);
+        
+        // Assicurati che lo status sia impostato se non presente
+        if (!data.status) {
+            data.status = 'pending';
+        }
         
         try {
-            await this.api('agenda/reservations', { method: 'POST', body: data });
+            const response = await this.api('agenda/reservations', { method: 'POST', body: data });
+            console.log('[Agenda] ✅ Prenotazione creata:', response);
+            
             this.closeModal(document.querySelector('[data-modal="new-reservation"]'));
             this.showNotification('Prenotazione creata con successo!');
+            
+            // Se la prenotazione è per una data diversa da quella corrente, naviga a quella data
+            if (data.date && data.date !== this.formatDate(this.state.currentDate)) {
+                this.state.currentDate = new Date(data.date + 'T12:00:00');
+                this.dom.datePicker.valueAsDate = this.state.currentDate;
+            }
+            
+            // Ricarica i dati
             await this.loadData();
         } catch (error) {
+            console.error('[Agenda] ❌ Errore creazione:', error);
             alert(`Errore: ${error.message}`);
         }
     }
@@ -743,14 +831,20 @@ class ModernAgenda {
     openModal(modal) {
         if (!modal) return;
         modal.hidden = false;
-        modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        
+        // Focus trap: trova il primo elemento focalizzabile e dagli il focus
+        const focusable = modal.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) {
+            focusable[0].focus();
+        }
     }
     
     closeModal(modal) {
         if (!modal) return;
         modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
     
@@ -813,6 +907,32 @@ class ModernAgenda {
         }
         
         return JSON.parse(text);
+    }
+    
+    async apiPublic(endpoint, options = {}) {
+        // API pubblica (senza autenticazione) per disponibilità
+        const url = `${this.config.restRoot}/${endpoint.replace(/^\//, '')}`;
+        
+        const config = {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+        };
+        
+        if (options.body) {
+            config.body = JSON.stringify(options.body);
+        }
+        
+        const response = await fetch(url, config);
+        
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Errore di rete' }));
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+        
+        return response.json();
     }
     
     // ============================================
