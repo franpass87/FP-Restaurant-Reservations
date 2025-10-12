@@ -156,6 +156,7 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
+        // Prima prova con il range richiesto
         $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
@@ -166,6 +167,18 @@ final class Repository
             $this->wpdb->prepare($sql, $startDate, $endDate),
             ARRAY_A
         );
+
+        // Se non trova nulla nel range, restituisci le ultime 100 prenotazioni
+        // Questo aiuta a vedere le prenotazioni anche se il manager sta guardando il mese sbagliato
+        if (empty($rows) || !is_array($rows) || count($rows) === 0) {
+            $sqlAll = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
+                . 'FROM ' . $this->tableName() . ' r '
+                . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
+                . 'ORDER BY r.created_at DESC '
+                . 'LIMIT 100';
+
+            $rows = $this->wpdb->get_results($sqlAll, ARRAY_A);
+        }
 
         return is_array($rows) ? $rows : [];
     }
