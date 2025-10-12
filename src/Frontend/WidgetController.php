@@ -189,16 +189,23 @@ final class WidgetController
         #fp-resv-default {
             padding: clamp(1.5rem, 4vw, 2.5rem) !important;
         }
+        /* Mobile: padding 0 */
+        @media (max-width: 640px) {
+            .fp-resv-widget,
+            #fp-resv-default {
+                padding: 0px !important;
+            }
+        }
         .fp-resv-widget .fp-resv-step,
         #fp-resv-default .fp-resv-step {
             padding: 2rem clamp(1.5rem, 5vw, 2.5rem) !important;
             margin-bottom: 1.5rem !important;
         }
-        /* Spacing tra sezioni */
+        /* Spacing tra sezioni - PADDING 20PX */
         .fp-resv-widget .fp-section,
         #fp-resv-default .fp-section {
             margin-bottom: 1.5rem !important;
-            padding: 0 !important;
+            padding: 20px !important;
         }
         /* Spacing tra campi del form */
         .fp-resv-widget .fp-resv-field,
@@ -371,16 +378,23 @@ final class WidgetController
             min-height: 2.75rem !important;
             min-width: 2.75rem !important;
         }
-        /* Progress bar items - stato attivo NERO CON TESTO BIANCO */
+        /* Progress bar items - mobile a tutta larghezza */
+        @media (max-width: 640px) {
+            .fp-resv-widget .fp-progress__item,
+            #fp-resv-default .fp-progress__item {
+                min-width: 100% !important;
+            }
+        }
+        /* Progress bar items - stato attivo BIANCO CON TESTO NERO */
         .fp-resv-widget .fp-progress__item[aria-current="step"],
         #fp-resv-default .fp-progress__item[aria-current="step"] {
-            background: #000000 !important;
+            background: #ffffff !important;
             border-color: #000000 !important;
-            color: #ffffff !important;
+            color: #000000 !important;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
             font-weight: 700 !important;
         }
-        /* MASSIMA PRIORITÀ: Forza BIANCO su item attivo */
+        /* MASSIMA PRIORITÀ: Forza NERO su item attivo */
         .fp-resv-widget .fp-progress__item[aria-current="step"],
         .fp-resv-widget .fp-progress__item[aria-current="step"]::before,
         .fp-resv-widget .fp-progress__item[aria-current="step"]::after,
@@ -397,7 +411,7 @@ final class WidgetController
         #fp-resv-default .fp-progress__item[aria-current="step"] strong,
         #fp-resv-default .fp-progress__item[aria-current="step"] em,
         #fp-resv-default .fp-progress__item[aria-current="step"] div {
-            color: #ffffff !important;
+            color: black !important;
             background: transparent !important;
         }
         /* Testo negli item - eredita colore */
