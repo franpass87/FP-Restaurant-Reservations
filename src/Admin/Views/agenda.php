@@ -174,11 +174,19 @@ $headingId   = 'fp-resv-agenda-title';
                 <div class="fp-resv-form__row">
                     <label>
                         <span><?php esc_html_e('Data', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="date" name="date" min="<?php echo esc_attr(gmdate('Y-m-d')); ?>" required />
+                        <input type="date" name="date" min="<?php echo esc_attr(gmdate('Y-m-d')); ?>" required data-trigger="load-slots" />
                     </label>
                     <label>
-                        <span><?php esc_html_e('Ora', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="time" name="time" step="900" required />
+                        <span><?php esc_html_e('Numero coperti', 'fp-restaurant-reservations'); ?> *</span>
+                        <input type="number" name="party" min="1" max="50" value="2" required data-trigger="load-slots" />
+                    </label>
+                </div>
+                <div class="fp-resv-form__row">
+                    <label style="grid-column: 1 / -1;">
+                        <span><?php esc_html_e('Orario', 'fp-restaurant-reservations'); ?> *</span>
+                        <select name="time" required data-role="time-slots">
+                            <option value=""><?php esc_html_e('Seleziona data e coperti per vedere gli slot disponibili', 'fp-restaurant-reservations'); ?></option>
+                        </select>
                     </label>
                 </div>
                 <div class="fp-resv-form__row">
@@ -199,12 +207,6 @@ $headingId   = 'fp-resv-agenda-title';
                     <label>
                         <span><?php esc_html_e('Telefono', 'fp-restaurant-reservations'); ?></span>
                         <input type="tel" name="phone" />
-                    </label>
-                </div>
-                <div class="fp-resv-form__row">
-                    <label>
-                        <span><?php esc_html_e('Numero coperti', 'fp-restaurant-reservations'); ?> *</span>
-                        <input type="number" name="party" min="1" max="50" value="2" required />
                     </label>
                 </div>
                 <div class="fp-resv-form__row">
