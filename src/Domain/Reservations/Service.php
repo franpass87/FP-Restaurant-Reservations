@@ -108,12 +108,22 @@ class Service
      */
     public function create(array $payload): array
     {
+        Logging::log('reservations', '=== CREAZIONE PRENOTAZIONE START ===', [
+            'email' => $payload['email'] ?? '',
+            'date' => $payload['date'] ?? '',
+            'time' => $payload['time'] ?? '',
+            'party' => $payload['party'] ?? 0,
+        ]);
+        
         $stopTimer = Metrics::timer('reservation.create', [
             'party' => $payload['party'] ?? 0,
         ]);
 
         $sanitized = $this->sanitizePayload($payload);
+        Logging::log('reservations', 'Payload sanitizzato OK');
+        
         $this->assertPayload($sanitized);
+        Logging::log('reservations', 'Payload validato OK');
 
         // Controllo anti-duplicati: previene doppi submit della stessa prenotazione
         // Cerca prenotazioni recenti (ultimi 60 secondi) con stessa email, data e ora
@@ -215,6 +225,8 @@ class Service
                 $sanitized['meal'],
                 $status
             );
+            
+            Logging::log('reservations', 'Disponibilità verificata OK, procedo con insert');
 
         // Append extras into notes for staff visibility
         $extrasNoteParts = [];
@@ -252,15 +264,30 @@ class Service
             'request_id'   => $sanitized['request_id'],
         ];
 
+            Logging::log('reservations', 'Pronto per INSERT nel database', [
+                'date' => $reservationData['date'],
+                'time' => $reservationData['time'],
+                'party' => $reservationData['party'],
+            ]);
+
             $reservationId = $this->repository->insert($reservationData);
+
+            Logging::log('reservations', '✅ PRENOTAZIONE SALVATA NEL DB', [
+                'reservation_id' => $reservationId,
+            ]);
 
             $reservation = $this->repository->find($reservationId);
             if ($reservation === null) {
+                Logging::log('reservations', '❌ ERRORE: Prenotazione salvata ma non trovata!', [
+                    'reservation_id' => $reservationId,
+                ]);
                 throw new RuntimeException('Reservation created but could not be retrieved.');
             }
             
             // Commit della transazione solo se tutto è andato a buon fine
             $this->repository->commit();
+            
+            Logging::log('reservations', '✅ TRANSAZIONE COMMITTATA');
         } catch (Throwable $exception) {
             // Rollback in caso di errore
             $this->repository->rollback();
