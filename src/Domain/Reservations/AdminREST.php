@@ -210,62 +210,76 @@ final class AdminREST
      */
     public function handleStats(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $dateParam = $request->get_param('date');
-        $date = $this->sanitizeDate($dateParam);
-        if ($date === null) {
-            $date = gmdate('Y-m-d');
-        }
-
-        $range = $request->get_param('range');
-        $rangeMode = is_string($range) ? strtolower($range) : 'day';
-        if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
-            $rangeMode = 'day';
-        }
-
-        $timezone = wp_timezone();
-        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
-        if ($start === false) {
-            $start = new DateTimeImmutable($date, $timezone);
-        }
-        
-        // Calcola range
-        if ($rangeMode === 'week') {
-            $dayOfWeek = (int)$start->format('N');
-            $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
-            $end = $start->add(new DateInterval('P6D'));
-        } elseif ($rangeMode === 'month') {
-            $start = $start->modify('first day of this month');
-            $end = $start->modify('last day of this month');
-        } else {
-            $end = $start;
-        }
-
-        // Recupera prenotazioni
-        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
-        
-        if (!is_array($rows)) {
-            $rows = [];
-        }
-        
-        $reservations = [];
-        foreach ($rows as $row) {
-            if (!is_array($row)) {
-                continue;
+        try {
+            $dateParam = $request->get_param('date');
+            $date = $this->sanitizeDate($dateParam);
+            if ($date === null) {
+                $date = gmdate('Y-m-d');
             }
-            $reservations[] = $this->mapAgendaReservation($row);
+
+            $range = $request->get_param('range');
+            $rangeMode = is_string($range) ? strtolower($range) : 'day';
+            if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
+                $rangeMode = 'day';
+            }
+
+            $timezone = wp_timezone();
+            $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
+            if ($start === false) {
+                $start = new DateTimeImmutable($date, $timezone);
+            }
+            
+            // Calcola range
+            if ($rangeMode === 'week') {
+                $dayOfWeek = (int)$start->format('N');
+                $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
+                $end = $start->add(new DateInterval('P6D'));
+            } elseif ($rangeMode === 'month') {
+                $start = $start->modify('first day of this month');
+                $end = $start->modify('last day of this month');
+            } else {
+                $end = $start;
+            }
+
+            // Recupera prenotazioni
+            $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            
+            if (!is_array($rows)) {
+                $rows = [];
+            }
+            
+            $reservations = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                try {
+                    $reservations[] = $this->mapAgendaReservation($row);
+                } catch (Throwable $e) {
+                    error_log('[FP Resv Stats] Errore mapping prenotazione: ' . $e->getMessage());
+                    continue;
+                }
+            }
+
+            // Calcola statistiche dettagliate
+            $stats = $this->calculateDetailedStats($reservations, $rangeMode);
+
+            return rest_ensure_response([
+                'range' => [
+                    'mode'  => $rangeMode,
+                    'start' => $start->format('Y-m-d'),
+                    'end'   => $end->format('Y-m-d'),
+                ],
+                'stats' => $stats,
+            ]);
+        } catch (Throwable $e) {
+            error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
+            return new WP_Error(
+                'fp_resv_stats_error',
+                sprintf(__('Errore nel caricamento delle statistiche: %s', 'fp-restaurant-reservations'), $e->getMessage()),
+                ['status' => 500]
+            );
         }
-
-        // Calcola statistiche dettagliate
-        $stats = $this->calculateDetailedStats($reservations, $rangeMode);
-
-        return rest_ensure_response([
-            'range' => [
-                'mode'  => $rangeMode,
-                'start' => $start->format('Y-m-d'),
-                'end'   => $end->format('Y-m-d'),
-            ],
-            'stats' => $stats,
-        ]);
     }
 
     /**
@@ -273,8 +287,9 @@ final class AdminREST
      */
     public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        $timezone = wp_timezone();
-        $today = new DateTimeImmutable('today', $timezone);
+        try {
+            $timezone = wp_timezone();
+            $today = new DateTimeImmutable('today', $timezone);
         
         // Oggi
         $todayRows = $this->reservations->findAgendaRange(
@@ -303,93 +318,123 @@ final class AdminREST
         $weekReservations = array_map([$this, 'mapAgendaReservation'], is_array($weekRows) ? $weekRows : []);
         $monthReservations = array_map([$this, 'mapAgendaReservation'], is_array($monthRows) ? $monthRows : []);
 
-        return rest_ensure_response([
-            'today' => [
-                'date' => $today->format('Y-m-d'),
-                'stats' => $this->calculateStats($todayReservations),
-            ],
-            'week' => [
-                'start' => $weekStart->format('Y-m-d'),
-                'end' => $weekEnd->format('Y-m-d'),
-                'stats' => $this->calculateStats($weekReservations),
-            ],
-            'month' => [
-                'start' => $monthStart->format('Y-m-d'),
-                'end' => $monthEnd->format('Y-m-d'),
-                'stats' => $this->calculateStats($monthReservations),
-            ],
-            'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
-        ]);
+            return rest_ensure_response([
+                'today' => [
+                    'date' => $today->format('Y-m-d'),
+                    'stats' => $this->calculateStats($todayReservations),
+                ],
+                'week' => [
+                    'start' => $weekStart->format('Y-m-d'),
+                    'end' => $weekEnd->format('Y-m-d'),
+                    'stats' => $this->calculateStats($weekReservations),
+                ],
+                'month' => [
+                    'start' => $monthStart->format('Y-m-d'),
+                    'end' => $monthEnd->format('Y-m-d'),
+                    'stats' => $this->calculateStats($monthReservations),
+                ],
+                'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
+            ]);
+        } catch (Throwable $e) {
+            error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
+            return new WP_Error(
+                'fp_resv_overview_error',
+                sprintf(__('Errore nel caricamento della panoramica: %s', 'fp-restaurant-reservations'), $e->getMessage()),
+                ['status' => 500]
+            );
+        }
     }
 
     public function handleAgenda(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Sanitizza e valida parametri
-        $dateParam = $request->get_param('date');
-        $date = $this->sanitizeDate($dateParam);
-        if ($date === null) {
-            $date = gmdate('Y-m-d');
-        }
+        try {
+            // Sanitizza e valida parametri
+            $dateParam = $request->get_param('date');
+            $date = $this->sanitizeDate($dateParam);
+            if ($date === null) {
+                $date = gmdate('Y-m-d');
+            }
 
-        $range = $request->get_param('range');
-        $rangeMode = is_string($range) ? strtolower($range) : 'day';
-        if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
-            $rangeMode = 'day';
-        }
+            $range = $request->get_param('range');
+            $rangeMode = is_string($range) ? strtolower($range) : 'day';
+            if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
+                $rangeMode = 'day';
+            }
 
-        $timezone = wp_timezone();
-        $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
-        if ($start === false) {
-            $start = new DateTimeImmutable($date, $timezone);
-        }
-        
-        // Calcola range in base alla vista
-        if ($rangeMode === 'week') {
-            // Inizia dal lunedì
-            $dayOfWeek = (int)$start->format('N');
-            $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
-            $end = $start->add(new DateInterval('P6D'));
-        } elseif ($rangeMode === 'month') {
-            $start = $start->modify('first day of this month');
-            $end = $start->modify('last day of this month');
-        } else {
-            $end = $start;
-        }
-
-        // Recupera prenotazioni dal database
-        $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
-        
-        // Assicurati che sia un array
-        if (!is_array($rows)) {
-            $rows = [];
-        }
-        
-        // Mappa le prenotazioni
-        $reservations = [];
-        foreach ($rows as $row) {
-            if (!is_array($row)) {
-                continue;
+            $timezone = wp_timezone();
+            $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
+            if ($start === false) {
+                $start = new DateTimeImmutable($date, $timezone);
             }
             
-            $reservations[] = $this->mapAgendaReservation($row);
-        }
+            // Calcola range in base alla vista
+            if ($rangeMode === 'week') {
+                // Inizia dal lunedì
+                $dayOfWeek = (int)$start->format('N');
+                $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
+                $end = $start->add(new DateInterval('P6D'));
+            } elseif ($rangeMode === 'month') {
+                $start = $start->modify('first day of this month');
+                $end = $start->modify('last day of this month');
+            } else {
+                $end = $start;
+            }
 
-        // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
-        // - meta: informazioni sulla richiesta
-        // - stats: statistiche aggregate calcolate server-side
-        // - data: dati organizzati per vista (slots per day, days per week/month)
-        // - reservations: array piatto per backward compatibility
-        return rest_ensure_response([
-            'meta' => [
-                'range' => $rangeMode,
-                'start_date' => $start->format('Y-m-d'),
-                'end_date' => $end->format('Y-m-d'),
-                'current_date' => $date,
-            ],
-            'stats' => $this->calculateStats($reservations),
-            'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
-            'reservations' => $reservations,
-        ]);
+            // Recupera prenotazioni dal database
+            $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+            
+            // Assicurati che sia un array
+            if (!is_array($rows)) {
+                $rows = [];
+            }
+            
+            // Mappa le prenotazioni
+            $reservations = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                
+                try {
+                    $reservations[] = $this->mapAgendaReservation($row);
+                } catch (Throwable $e) {
+                    // Log l'errore ma continua con le altre prenotazioni
+                    error_log('[FP Resv Agenda] Errore mapping prenotazione ID ' . ($row['id'] ?? 'unknown') . ': ' . $e->getMessage());
+                    continue;
+                }
+            }
+
+            // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
+            // - meta: informazioni sulla richiesta
+            // - stats: statistiche aggregate calcolate server-side
+            // - data: dati organizzati per vista (slots per day, days per week/month)
+            // - reservations: array piatto per backward compatibility
+            return rest_ensure_response([
+                'meta' => [
+                    'range' => $rangeMode,
+                    'start_date' => $start->format('Y-m-d'),
+                    'end_date' => $end->format('Y-m-d'),
+                    'current_date' => $date,
+                ],
+                'stats' => $this->calculateStats($reservations),
+                'data' => $this->organizeByView($reservations, $rangeMode, $start, $end),
+                'reservations' => $reservations,
+            ]);
+        } catch (Throwable $e) {
+            // Log l'errore completo per debugging
+            error_log('[FP Resv Agenda] Errore critico in handleAgenda: ' . $e->getMessage());
+            error_log('[FP Resv Agenda] Stack trace: ' . $e->getTraceAsString());
+            
+            // Ritorna un errore strutturato invece di permettere che l'eccezione corrompa la risposta JSON
+            return new WP_Error(
+                'fp_resv_agenda_error',
+                sprintf(
+                    __('Errore nel caricamento dell\'agenda: %s', 'fp-restaurant-reservations'),
+                    $e->getMessage()
+                ),
+                ['status' => 500, 'debug_trace' => WP_DEBUG ? $e->getTraceAsString() : null]
+            );
+        }
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
