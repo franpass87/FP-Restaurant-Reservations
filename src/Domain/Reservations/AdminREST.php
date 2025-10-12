@@ -54,11 +54,15 @@ final class AdminREST
 
     public function register(): void
     {
+        error_log('[FP Resv AdminREST] register() chiamato - aggiungendo hook rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
     }
 
     public function registerRoutes(): void
     {
+        error_log('[FP Resv AdminREST] === REGISTERING ROUTES ===');
+        error_log('[FP Resv AdminREST] Registering /fp-resv/v1/agenda endpoint');
+        
         register_rest_route(
             'fp-resv/v1',
             '/agenda',
@@ -78,6 +82,8 @@ final class AdminREST
                 ],
             ]
         );
+        
+        error_log('[FP Resv AdminREST] /fp-resv/v1/agenda registered successfully');
 
         register_rest_route(
             'fp-resv/v1',
@@ -394,6 +400,8 @@ final class AdminREST
     {
         // Log iniziale per debug
         error_log('[FP Resv Agenda] === INIZIO handleAgenda ===');
+        error_log('[FP Resv Agenda] Request method: ' . $request->get_method());
+        error_log('[FP Resv Agenda] Request route: ' . $request->get_route());
         error_log('[FP Resv Agenda] Parametri richiesta: ' . print_r($request->get_params(), true));
         
         // Inizia output buffering per prevenire qualsiasi output inatteso che corromperebbe il JSON
@@ -503,8 +511,37 @@ final class AdminREST
             }
             
             error_log('[FP Resv Agenda] Chiamata rest_ensure_response...');
+            
+            // Assicurati che la risposta sia sempre valida
+            if (empty($responseData) || !is_array($responseData)) {
+                error_log('[FP Resv Agenda] WARNING: responseData è vuoto o non valido, forzo risposta vuota ma valida');
+                $responseData = [
+                    'meta' => [
+                        'range' => 'day',
+                        'start_date' => gmdate('Y-m-d'),
+                        'end_date' => gmdate('Y-m-d'),
+                        'current_date' => gmdate('Y-m-d'),
+                    ],
+                    'stats' => [
+                        'total_reservations' => 0,
+                        'total_guests' => 0,
+                        'by_status' => [
+                            'pending' => 0,
+                            'confirmed' => 0,
+                            'visited' => 0,
+                            'no_show' => 0,
+                            'cancelled' => 0,
+                        ],
+                        'confirmed_percentage' => 0,
+                    ],
+                    'data' => ['slots' => [], 'timeline' => []],
+                    'reservations' => [],
+                ];
+            }
+            
             $response = rest_ensure_response($responseData);
             error_log('[FP Resv Agenda] rest_ensure_response completato. Tipo: ' . gettype($response));
+            error_log('[FP Resv Agenda] Response status: ' . $response->get_status());
             error_log('[FP Resv Agenda] === FINE handleAgenda SUCCESS ===');
             
             return $response;
@@ -519,7 +556,7 @@ final class AdminREST
             error_log('[FP Resv Agenda] === FINE handleAgenda ERROR ===');
             
             // Ritorna un errore strutturato invece di permettere che l'eccezione corrompa la risposta JSON
-            return new WP_Error(
+            $error = new WP_Error(
                 'fp_resv_agenda_error',
                 sprintf(
                     __('Errore nel caricamento dell\'agenda: %s', 'fp-restaurant-reservations'),
@@ -527,6 +564,11 @@ final class AdminREST
                 ),
                 ['status' => 500, 'debug_trace' => WP_DEBUG ? $e->getTraceAsString() : null]
             );
+            
+            // Log prima di ritornare l'errore
+            error_log('[FP Resv Agenda] Ritorno WP_Error: ' . json_encode($error));
+            
+            return $error;
         }
     }
 
