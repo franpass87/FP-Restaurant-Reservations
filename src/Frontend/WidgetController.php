@@ -45,9 +45,10 @@ final class WidgetController
         // Force WPBakery to process our shortcode in text blocks
         add_filter('the_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
         
-        // WPBakery specific hooks
+        // WPBakery specific hooks - prevent HTML escaping for our shortcode
         add_filter('vc_shortcode_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
         add_filter('vc_raw_html_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
+        add_filter('wpb_js_composer_shortcode_content', [$this, 'preventWPBakeryEscape'], 10, 2);
         
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
@@ -293,5 +294,19 @@ final class WidgetController
         
         // Process shortcode explicitly
         return do_shortcode($content);
+    }
+
+    /**
+     * Prevent WPBakery from escaping HTML in our shortcode output
+     */
+    public function preventWPBakeryEscape(string $content, string $shortcodeTag): string
+    {
+        // Only for text blocks that might contain our shortcode
+        if (strpos($content, '[fp_reservations') !== false || strpos($content, 'fp-resv-widget') !== false) {
+            error_log('[FP-RESV] WPBakery escape prevention - processing content');
+            // WPBakery text blocks sometimes wrap content in esc_html, we prevent that
+            return do_shortcode($content);
+        }
+        return $content;
     }
 }

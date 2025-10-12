@@ -1358,22 +1358,22 @@ class ReservationManager {
     // ============================================
 
     showLoading() {
-        this.dom.loadingState.style.display = 'flex';
-        this.dom.errorState.style.display = 'none';
-        this.dom.emptyState.style.display = 'none';
-        this.dom.viewDay.style.display = 'none';
-        this.dom.viewList.style.display = 'none';
-        this.dom.viewCalendar.style.display = 'none';
+        if (this.dom.loadingState) this.dom.loadingState.style.display = 'flex';
+        if (this.dom.errorState) this.dom.errorState.style.display = 'none';
+        if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
+        if (this.dom.viewDay) this.dom.viewDay.style.display = 'none';
+        if (this.dom.viewList) this.dom.viewList.style.display = 'none';
+        if (this.dom.viewMonth) this.dom.viewMonth.style.display = 'none';
     }
 
     hideLoading() {
-        this.dom.loadingState.style.display = 'none';
+        if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
     }
 
     showError(message) {
-        this.dom.loadingState.style.display = 'none';
-        this.dom.errorState.style.display = 'flex';
-        this.dom.errorMessage.textContent = message;
+        if (this.dom.loadingState) this.dom.loadingState.style.display = 'none';
+        if (this.dom.errorState) this.dom.errorState.style.display = 'flex';
+        if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
     }
 
     // Nota: showEmpty e hideEmpty ora sono gestiti direttamente in renderCurrentView

@@ -35,8 +35,15 @@ final class Shortcodes
         error_log('[FP-RESV] Current URL: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
         error_log('[FP-RESV] Is main query: ' . (function_exists('is_main_query') ? (is_main_query() ? 'YES' : 'NO') : 'N/A'));
         
-        // Test immediato: restituisce qualcosa anche se fallisce tutto
-        $debugMode = defined('WP_DEBUG') && WP_DEBUG;
+        // Temporarily disable wpautop and other filters that might break HTML
+        $removedFilters = [];
+        $filtersToRemove = ['wpautop', 'wptexturize', 'convert_chars'];
+        foreach ($filtersToRemove as $filter) {
+            if (has_filter('the_content', $filter)) {
+                remove_filter('the_content', $filter);
+                $removedFilters[] = $filter;
+            }
+        }
         
         try {
             $atts = shortcode_atts(
@@ -127,6 +134,18 @@ final class Shortcodes
             error_log('[FP-RESV] Output contiene fp-resv-widget: ' . (strpos($output, 'fp-resv-widget') !== false ? 'SI' : 'NO'));
             error_log('[FP-RESV] Output contiene data-fp-resv-app: ' . (strpos($output, 'data-fp-resv-app') !== false ? 'SI' : 'NO'));
             error_log('[FP-RESV] ========================================');
+            
+            // Re-add filters that were removed
+            foreach ($removedFilters as $filter) {
+                if ($filter === 'wpautop') {
+                    add_filter('the_content', 'wpautop');
+                } elseif ($filter === 'wptexturize') {
+                    add_filter('the_content', 'wptexturize');
+                } elseif ($filter === 'convert_chars') {
+                    add_filter('the_content', 'convert_chars');
+                }
+            }
+            
             return $output;
         } catch (\Throwable $e) {
             // Log error in development/debug mode
@@ -136,6 +155,17 @@ final class Shortcodes
             error_log('[FP-RESV] Stack trace: ' . $e->getTraceAsString());
             error_log('[FP-RESV] File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             error_log('[FP-RESV] ========================================');
+            
+            // Re-add filters even on error
+            foreach ($removedFilters as $filter) {
+                if ($filter === 'wpautop') {
+                    add_filter('the_content', 'wpautop');
+                } elseif ($filter === 'wptexturize') {
+                    add_filter('the_content', 'wptexturize');
+                } elseif ($filter === 'convert_chars') {
+                    add_filter('the_content', 'convert_chars');
+                }
+            }
             
             // Return visible error ALWAYS when there's an exception
             $errorMsg = 'Errore nel rendering del form: ' . $e->getMessage();
