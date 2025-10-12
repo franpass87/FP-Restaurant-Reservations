@@ -657,13 +657,14 @@ final class AdminREST
                 error_log('[FP Resv Admin] WARNING: Prenotazione creata ma non trovata con findAgendaEntry');
             }
             
-            // Pulisci output inatteso
+            // Pulisci output inatteso SENZA usare ob_clean che cancella tutto
+            $unexpectedOutput = '';
             if (ob_get_level() > 0) {
                 $unexpectedOutput = ob_get_contents();
                 if ($unexpectedOutput !== false && !empty(trim($unexpectedOutput))) {
-                    error_log('[FP Resv Admin] WARNING: Output inatteso rimosso: ' . substr($unexpectedOutput, 0, 200));
+                    error_log('[FP Resv Admin] WARNING: Output inatteso rilevato: ' . substr($unexpectedOutput, 0, 200));
+                    // NON usare ob_clean() qui - lascia che WordPress gestisca il buffer
                 }
-                ob_clean();
             }
             
             $responseData = [
@@ -671,7 +672,13 @@ final class AdminREST
                 'result'      => $result,
             ];
             
+            error_log('[FP Resv Admin] Response data: ' . json_encode($responseData));
             error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA ===');
+            
+            // Chiudi il buffer solo DOPO aver creato la risposta
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
             
             return rest_ensure_response($responseData);
             

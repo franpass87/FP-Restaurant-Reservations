@@ -90,6 +90,7 @@ final class AdminController
         wp_localize_script($scriptHandle, 'fpResvManagerSettings', [
             'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),
             'nonce'     => wp_create_nonce('wp_rest'),
+            'publicNonce' => wp_create_nonce('fp_resv_submit'), // Nonce per l'endpoint pubblico
             'meals'     => $meals, // Aggiunto!
             'links'     => [
                 'settings' => esc_url_raw(admin_url('admin.php?page=fp-resv-settings')),
