@@ -113,7 +113,7 @@ $headingId = 'fp-resv-manager-title';
 
                 <!-- View Switcher -->
                 <div class="fp-view-switcher" role="group" aria-label="<?php esc_attr_e('Modalità visualizzazione', 'fp-restaurant-reservations'); ?>">
-                    <button type="button" class="fp-view-btn is-active" data-view="day" data-action="set-view">
+                    <button type="button" class="fp-view-btn" data-view="day" data-action="set-view">
                         <span class="dashicons dashicons-clock"></span>
                         <span><?php esc_html_e('Giorno', 'fp-restaurant-reservations'); ?></span>
                     </button>
@@ -121,7 +121,7 @@ $headingId = 'fp-resv-manager-title';
                         <span class="dashicons dashicons-calendar"></span>
                         <span><?php esc_html_e('Settimana', 'fp-restaurant-reservations'); ?></span>
                     </button>
-                    <button type="button" class="fp-view-btn" data-view="month" data-action="set-view">
+                    <button type="button" class="fp-view-btn is-active" data-view="month" data-action="set-view">
                         <span class="dashicons dashicons-calendar-alt"></span>
                         <span><?php esc_html_e('Mese', 'fp-restaurant-reservations'); ?></span>
                     </button>

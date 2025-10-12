@@ -54,7 +54,6 @@ final class AdminREST
 
     public function register(): void
     {
-        error_log('[FP Resv AdminREST] register() chiamato - aggiungendo hook rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
     }
 
@@ -444,7 +443,6 @@ final class AdminREST
             if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
                 $rangeMode = 'day';
             }
-            error_log('[FP Resv Agenda] Range mode: ' . $rangeMode);
 
             $timezone = wp_timezone();
             $start = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
@@ -454,7 +452,6 @@ final class AdminREST
             
             // Calcola range in base alla vista
             if ($rangeMode === 'week') {
-                // Inizia dal lunedì
                 $dayOfWeek = (int)$start->format('N');
                 $start = $start->modify('-' . ($dayOfWeek - 1) . ' days');
                 $end = $start->add(new DateInterval('P6D'));
@@ -464,67 +461,28 @@ final class AdminREST
             } else {
                 $end = $start;
             }
-            
-            error_log('[FP Resv Agenda] Range calcolato: ' . $start->format('Y-m-d') . ' to ' . $end->format('Y-m-d'));
 
-            // Recupera prenotazioni dal database
-            error_log('[FP Resv Agenda] Chiamata findAgendaRange...');
             $rows = $this->reservations->findAgendaRange($start->format('Y-m-d'), $end->format('Y-m-d'));
-            error_log('[FP Resv Agenda] findAgendaRange completato. Tipo: ' . gettype($rows) . ', Count: ' . (is_array($rows) ? count($rows) : 'N/A'));
             
-            // Assicurati che sia un array
             if (!is_array($rows)) {
-                error_log('[FP Resv Agenda] WARNING: findAgendaRange non ha ritornato un array, tipo: ' . gettype($rows));
                 $rows = [];
             }
             
-            // Mappa le prenotazioni
-            error_log('[FP Resv Agenda] Inizio mapping ' . count($rows) . ' righe...');
             $reservations = [];
-            $mappingErrors = 0;
-            
-            foreach ($rows as $index => $row) {
+            foreach ($rows as $row) {
                 if (!is_array($row)) {
-                    error_log('[FP Resv Agenda] WARNING: Row #' . $index . ' non è un array, tipo: ' . gettype($row));
                     continue;
                 }
-                
-                error_log('[FP Resv Agenda] Mapping row #' . $index . ' - ID: ' . ($row['id'] ?? 'N/A') . ', Date: ' . ($row['date'] ?? 'N/A'));
                 
                 try {
-                    $mapped = $this->mapAgendaReservation($row);
-                    $reservations[] = $mapped;
-                    error_log('[FP Resv Agenda] ✓ Row #' . $index . ' mappata con successo');
+                    $reservations[] = $this->mapAgendaReservation($row);
                 } catch (Throwable $e) {
-                    // Log l'errore ma continua con le altre prenotazioni
-                    $mappingErrors++;
-                    error_log('[FP Resv Agenda] ✗ Errore mapping row #' . $index . ' (ID: ' . ($row['id'] ?? 'unknown') . '): ' . $e->getMessage());
-                    error_log('[FP Resv Agenda] Stack trace: ' . $e->getTraceAsString());
                     continue;
                 }
             }
-            
-            error_log('[FP Resv Agenda] Mapping completato: ' . count($reservations) . ' prenotazioni mappate, ' . $mappingErrors . ' errori');
 
-            // STRUTTURA THE FORK: Restituisce dati pre-organizzati dal backend
-            // - meta: informazioni sulla richiesta
-            // - stats: statistiche aggregate calcolate server-side
-            // - data: dati organizzati per vista (slots per day, days per week/month)
-            // - reservations: array piatto per backward compatibility
-            error_log('[FP Resv Agenda] Calcolo stats con ' . count($reservations) . ' prenotazioni...');
             $stats = $this->calculateStats($reservations);
-            error_log('[FP Resv Agenda] Stats calcolate: ' . json_encode($stats));
-            
-            error_log('[FP Resv Agenda] Organizzazione dati per vista: ' . $rangeMode);
             $data = $this->organizeByView($reservations, $rangeMode, $start, $end);
-            error_log('[FP Resv Agenda] Dati organizzati. Keys: ' . implode(', ', array_keys($data)));
-            
-            if (isset($data['slots'])) {
-                error_log('[FP Resv Agenda] Numero slots organizzati: ' . count($data['slots']));
-            }
-            if (isset($data['days'])) {
-                error_log('[FP Resv Agenda] Numero giorni organizzati: ' . count($data['days']));
-            }
             
             $responseData = [
                 'meta' => [

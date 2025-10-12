@@ -16,7 +16,7 @@ class ReservationManager {
         // State management
         this.state = {
             currentDate: new Date(),
-            currentView: 'day',
+            currentView: 'month', // Inizia con vista mese per vedere più prenotazioni
             filters: {
                 service: '',
                 status: '',
@@ -379,6 +379,15 @@ class ReservationManager {
             const data = JSON.parse(text);
             this.state.reservations = data.reservations || [];
             this.state.error = null;
+            
+            // Log per debugging (rimovere dopo verifica)
+            if (this.state.reservations.length === 0) {
+                console.warn('[Manager] No reservations found. Response:', {
+                    meta: data.meta,
+                    stats: data.stats,
+                    reservationsCount: data.reservations ? data.reservations.length : 0
+                });
+            }
 
             this.hideLoading();
             this.renderCurrentView();

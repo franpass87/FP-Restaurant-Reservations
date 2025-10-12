@@ -440,27 +440,6 @@ form[data-fp-resv-form] {
     box-shadow: 0 8px 18px -10px rgba(var(--fp-resv-color-primary-rgb, 59, 130, 246), 0.45);
 }
 
-/* Stili per elementi progress bar attivi (aria-current="step") - FORZA BIANCO SU NERO */
-.fp-resv-widget .fp-progress__item[aria-current="step"], 
-.fp-resv-widget .fp-progress__item[aria-current="step"]::before, 
-.fp-resv-widget .fp-progress__item[aria-current="step"]::after, 
-.fp-resv-widget .fp-progress__item[aria-current="step"] *, 
-.fp-resv-widget .fp-progress__item[aria-current="step"] span, 
-.fp-resv-widget .fp-progress__item[aria-current="step"] strong, 
-.fp-resv-widget .fp-progress__item[aria-current="step"] em, 
-.fp-resv-widget .fp-progress__item[aria-current="step"] div, 
-#fp-resv-default .fp-progress__item[aria-current="step"], 
-#fp-resv-default .fp-progress__item[aria-current="step"]::before, 
-#fp-resv-default .fp-progress__item[aria-current="step"]::after, 
-#fp-resv-default .fp-progress__item[aria-current="step"] *, 
-#fp-resv-default .fp-progress__item[aria-current="step"] span, 
-#fp-resv-default .fp-progress__item[aria-current="step"] strong, 
-#fp-resv-default .fp-progress__item[aria-current="step"] em, 
-#fp-resv-default .fp-progress__item[aria-current="step"] div {
-    color: #ffffff !important;
-    background: #000000 !important;
-}
-
 .fp-meals {
     border: 1.5px solid var(--fp-resv-divider, rgba(148, 163, 184, 0.28));
     border-radius: calc(var(--fp-resv-radius-lg) * 0.85);
@@ -2249,8 +2228,74 @@ form[data-fp-resv-form] {
 }
 
 /* === Overrides UI: consensi, overflow testo, CTA sticky === */
-/* Cache bust: 2025-01-06 12:30 */
+/* Cache bust: 2025-10-12 15:11:25 - FORCED REFRESH */
 /* Migliora robustezza layout consensi e testo lungo su schermi stretti */
+
+/* === FORCE REDUCED SPACING FOR CONTACT FORM FIELDS === */
+/* Override con maggiore specificità per assicurare che le modifiche siano visibili */
+.fp-resv-widget .fp-resv-fields--grid,
+.fp-resv .fp-resv-fields--grid,
+div.fp-resv-widget .fp-resv-fields--grid,
+#fp-resv-default .fp-resv-fields--grid {
+    gap: 0.75rem !important;
+}
+
+.fp-resv-widget .fp-field,
+.fp-resv .fp-field,
+div.fp-resv-widget .fp-field,
+#fp-resv-default .fp-field {
+    gap: 0.25rem !important;
+}
+
+.fp-resv-widget .fp-section,
+.fp-resv .fp-section,
+div.fp-resv-widget .fp-section,
+#fp-resv-default .fp-section {
+    gap: clamp(0.75rem, 2.5vw, 1.25rem) !important;
+}
+
+@media (min-width: 768px) {
+    .fp-resv-widget .fp-resv-fields--grid,
+    .fp-resv .fp-resv-fields--grid,
+    div.fp-resv-widget .fp-resv-fields--grid,
+    #fp-resv-default .fp-resv-fields--grid {
+        gap: 0.85rem !important;
+    }
+}
+
+@media (min-width: 960px) {
+    .fp-resv-widget .fp-resv-fields--grid,
+    .fp-resv .fp-resv-fields--grid,
+    div.fp-resv-widget .fp-resv-fields--grid,
+    #fp-resv-default .fp-resv-fields--grid {
+        gap: 1rem !important;
+    }
+}
+
+/* === SPECIFIC OVERRIDES FOR CONTACT FORM STEP === */
+/* Targeting specificamente il form dei dati di contatto */
+.fp-resv-step[data-step="contact"] .fp-resv-fields--grid,
+.fp-resv-step[data-step="details"] .fp-resv-fields--grid,
+.fp-resv-widget [data-step="contact"] .fp-resv-fields--grid,
+.fp-resv-widget [data-step="details"] .fp-resv-fields--grid {
+    gap: 0.65rem !important;
+}
+
+.fp-resv-step[data-step="contact"] .fp-field,
+.fp-resv-step[data-step="details"] .fp-field,
+.fp-resv-widget [data-step="contact"] .fp-field,
+.fp-resv-widget [data-step="details"] .fp-field {
+    gap: 0.2rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Riduce ulteriormente lo spazio tra label e input */
+.fp-resv-step[data-step="contact"] .fp-field > label,
+.fp-resv-step[data-step="details"] .fp-field > label,
+.fp-resv-widget [data-step="contact"] .fp-field > label,
+.fp-resv-widget [data-step="details"] .fp-field > label {
+    gap: 0.3rem !important;
+}
 .fp-resv .fp-resv-field--consent {
     grid-template-columns: auto 1fr;
     align-items: flex-start;
@@ -2471,4 +2516,70 @@ input.fp-resv-party-input {
     .fp-resv-party-input {
         font-size: 1.15rem !important;
     }
+}
+
+/* ============================================================================
+   OVERRIDE FINALE - PROGRESS BAR SFONDO NERO
+   Questi stili DEVONO essere alla fine per sovrascrivere tutti gli altri
+   ============================================================================ */
+
+/* Stili per elementi progress bar NON attivi - FORZA COLORE BIANCO */
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]), 
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) *, 
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) span, 
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) strong,
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) em,
+.fp-resv-widget .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) div,
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]), 
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) *, 
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) span,
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) strong,
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) em,
+#fp-resv-default .fp-progress__item:not([aria-current="step"]):not([data-state="active"]) div {
+    color: white !important;
+}
+
+/* Stili per elementi progress bar attivi - FORZA BIANCO SU NERO */
+.fp-resv-widget .fp-progress__item[aria-current="step"], 
+.fp-resv-widget .fp-progress__item[data-state="active"],
+.fp-resv-widget .fp-progress__item[aria-current="step"]::before, 
+.fp-resv-widget .fp-progress__item[data-state="active"]::before,
+.fp-resv-widget .fp-progress__item[aria-current="step"]::after, 
+.fp-resv-widget .fp-progress__item[data-state="active"]::after,
+.fp-resv-widget .fp-progress__item[aria-current="step"] *, 
+.fp-resv-widget .fp-progress__item[data-state="active"] *,
+.fp-resv-widget .fp-progress__item[aria-current="step"] span, 
+.fp-resv-widget .fp-progress__item[data-state="active"] span,
+.fp-resv-widget .fp-progress__item[aria-current="step"] strong, 
+.fp-resv-widget .fp-progress__item[data-state="active"] strong,
+.fp-resv-widget .fp-progress__item[aria-current="step"] em, 
+.fp-resv-widget .fp-progress__item[data-state="active"] em,
+.fp-resv-widget .fp-progress__item[aria-current="step"] div, 
+.fp-resv-widget .fp-progress__item[data-state="active"] div,
+.fp-resv-widget .fp-progress__item[aria-current="step"] .fp-progress__index,
+.fp-resv-widget .fp-progress__item[data-state="active"] .fp-progress__index,
+.fp-resv-widget .fp-progress__item[aria-current="step"] .fp-progress__label,
+.fp-resv-widget .fp-progress__item[data-state="active"] .fp-progress__label,
+#fp-resv-default .fp-progress__item[aria-current="step"], 
+#fp-resv-default .fp-progress__item[data-state="active"],
+#fp-resv-default .fp-progress__item[aria-current="step"]::before, 
+#fp-resv-default .fp-progress__item[data-state="active"]::before,
+#fp-resv-default .fp-progress__item[aria-current="step"]::after, 
+#fp-resv-default .fp-progress__item[data-state="active"]::after,
+#fp-resv-default .fp-progress__item[aria-current="step"] *, 
+#fp-resv-default .fp-progress__item[data-state="active"] *,
+#fp-resv-default .fp-progress__item[aria-current="step"] span, 
+#fp-resv-default .fp-progress__item[data-state="active"] span,
+#fp-resv-default .fp-progress__item[aria-current="step"] strong, 
+#fp-resv-default .fp-progress__item[data-state="active"] strong,
+#fp-resv-default .fp-progress__item[aria-current="step"] em, 
+#fp-resv-default .fp-progress__item[data-state="active"] em,
+#fp-resv-default .fp-progress__item[aria-current="step"] div,
+#fp-resv-default .fp-progress__item[data-state="active"] div,
+#fp-resv-default .fp-progress__item[aria-current="step"] .fp-progress__index,
+#fp-resv-default .fp-progress__item[data-state="active"] .fp-progress__index,
+#fp-resv-default .fp-progress__item[aria-current="step"] .fp-progress__label,
+#fp-resv-default .fp-progress__item[data-state="active"] .fp-progress__label {
+    color: #ffffff !important;
+    background: #000000 !important;
 }

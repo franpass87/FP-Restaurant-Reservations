@@ -156,36 +156,16 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        error_log('[FP Resv Repository] === findAgendaRange chiamato ===');
-        error_log('[FP Resv Repository] Start date: ' . $startDate);
-        error_log('[FP Resv Repository] End date: ' . $endDate);
-        error_log('[FP Resv Repository] Tabella prenotazioni: ' . $this->tableName());
-        error_log('[FP Resv Repository] Tabella clienti: ' . $this->customersTableName());
-        
         $sql = 'SELECT r.*, c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.date BETWEEN %s AND %s '
             . 'ORDER BY r.date ASC, r.time ASC';
 
-        $preparedSql = $this->wpdb->prepare($sql, $startDate, $endDate);
-        error_log('[FP Resv Repository] Query SQL preparata: ' . $preparedSql);
-        
-        $rows = $this->wpdb->get_results($preparedSql, ARRAY_A);
-        
-        error_log('[FP Resv Repository] Tipo risultato: ' . gettype($rows));
-        error_log('[FP Resv Repository] Numero righe trovate: ' . (is_array($rows) ? count($rows) : 'NOT_ARRAY'));
-        
-        if ($this->wpdb->last_error) {
-            error_log('[FP Resv Repository] ERRORE SQL: ' . $this->wpdb->last_error);
-        }
-        
-        if (is_array($rows) && count($rows) > 0) {
-            error_log('[FP Resv Repository] Prima prenotazione trovata - ID: ' . ($rows[0]['id'] ?? 'N/A'));
-            error_log('[FP Resv Repository] Prima prenotazione data: ' . ($rows[0]['date'] ?? 'N/A'));
-        }
-        
-        error_log('[FP Resv Repository] === findAgendaRange completato ===');
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, $startDate, $endDate),
+            ARRAY_A
+        );
 
         return is_array($rows) ? $rows : [];
     }
