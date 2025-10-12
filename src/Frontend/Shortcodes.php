@@ -21,6 +21,7 @@ final class Shortcodes
     {
         error_log('[FP-RESV-SHORTCODE] register() method called');
         add_shortcode('fp_reservations', [self::class, 'render']);
+        add_shortcode('fp_resv_debug', [self::class, 'renderDebug']);
         error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_reservations") executed');
     }
 
@@ -209,5 +210,345 @@ final class Shortcodes
         ];
 
         return self::render($atts);
+    }
+
+    /**
+     * Shortcode diagnostico: [fp_resv_debug]
+     * Mostra informazioni sul database e gli endpoint REST
+     */
+    public static function renderDebug(): string
+    {
+        // Solo admin possono vedere il debug
+        if (!current_user_can('manage_options')) {
+            return '<p style="color:red;">❌ Devi essere amministratore per vedere queste informazioni.</p>';
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'fp_reservations';
+        $customersTable = $wpdb->prefix . 'fp_customers';
+
+        ob_start();
+        ?>
+        <style>
+            .fp-debug-panel {
+                background: white;
+                border: 2px solid #0073aa;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            .fp-debug-panel h2 {
+                margin-top: 0;
+                color: #0073aa;
+                border-bottom: 2px solid #0073aa;
+                padding-bottom: 10px;
+            }
+            .fp-debug-panel h3 {
+                color: #23282d;
+                margin-top: 20px;
+            }
+            .fp-debug-stat {
+                background: #f8f9fa;
+                padding: 15px;
+                margin: 10px 0;
+                border-left: 4px solid #0073aa;
+            }
+            .fp-debug-success { color: #46b450; font-weight: bold; }
+            .fp-debug-error { color: #dc3232; font-weight: bold; }
+            .fp-debug-warning { color: #ffb900; font-weight: bold; }
+            .fp-debug-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+            }
+            .fp-debug-table th,
+            .fp-debug-table td {
+                padding: 10px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+            .fp-debug-table th {
+                background: #f1f1f1;
+                font-weight: 600;
+            }
+            .fp-debug-table tr:hover {
+                background: #f9f9f9;
+            }
+            .fp-debug-code {
+                background: #23282d;
+                color: #46b450;
+                padding: 15px;
+                border-radius: 4px;
+                overflow-x: auto;
+                font-family: 'Courier New', monospace;
+                font-size: 13px;
+            }
+        </style>
+
+        <div class="fp-debug-panel">
+            <h2>🔍 Diagnostica FP Restaurant Reservations</h2>
+            
+            <?php
+            // ============================================================================
+            // VERIFICA TABELLA
+            // ============================================================================
+            ?>
+            <h3>1️⃣ Verifica Tabella Database</h3>
+            <?php
+            $tableExists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+            
+            if (!$tableExists) {
+                echo '<p class="fp-debug-error">❌ ERRORE: La tabella ' . esc_html($table) . ' NON ESISTE!</p>';
+                echo '<p>Il plugin non è installato correttamente. Disattiva e riattiva il plugin.</p>';
+                echo '</div>';
+                return ob_get_clean();
+            }
+            ?>
+            <p class="fp-debug-success">✅ Tabella <?php echo esc_html($table); ?> esiste</p>
+
+            <?php
+            // ============================================================================
+            // STATISTICHE PRENOTAZIONI
+            // ============================================================================
+            ?>
+            <h3>2️⃣ Statistiche Prenotazioni</h3>
+            <?php
+            $totalCount = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table");
+            $today = date('Y-m-d');
+            $todayCount = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE date = %s", $today));
+            $futureCount = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE date >= %s", $today));
+            ?>
+            
+            <div class="fp-debug-stat">
+                <strong>Totale prenotazioni:</strong> 
+                <span class="<?php echo $totalCount > 0 ? 'fp-debug-success' : 'fp-debug-error'; ?>">
+                    <?php echo $totalCount; ?>
+                </span>
+            </div>
+            
+            <?php if ($totalCount === 0): ?>
+                <div class="fp-debug-stat">
+                    <p class="fp-debug-error"><strong>❌ PROBLEMA TROVATO!</strong></p>
+                    <p>Non ci sono prenotazioni nel database. Questo significa che:</p>
+                    <ul>
+                        <li>Il form NON sta salvando i dati nel database</li>
+                        <li>Le email partono ma il record non viene scritto</li>
+                        <li>C'è un errore durante il salvataggio</li>
+                    </ul>
+                </div>
+            <?php else: ?>
+                <div class="fp-debug-stat">
+                    <strong>Prenotazioni oggi:</strong> <?php echo $todayCount; ?><br>
+                    <strong>Prenotazioni future:</strong> <?php echo $futureCount; ?>
+                </div>
+                
+                <?php
+                // Statistiche per stato
+                $statusStats = $wpdb->get_results("
+                    SELECT status, COUNT(*) as count
+                    FROM $table
+                    GROUP BY status
+                    ORDER BY count DESC
+                ", ARRAY_A);
+                
+                if ($statusStats):
+                ?>
+                    <table class="fp-debug-table">
+                        <thead>
+                            <tr>
+                                <th>Stato</th>
+                                <th>Numero</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($statusStats as $stat): ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html(strtoupper($stat['status'])); ?></strong></td>
+                                    <td><?php echo (int) $stat['count']; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php
+            // ============================================================================
+            // ULTIME PRENOTAZIONI
+            // ============================================================================
+            if ($totalCount > 0):
+            ?>
+                <h3>3️⃣ Ultime 5 Prenotazioni</h3>
+                <?php
+                $recentReservations = $wpdb->get_results("
+                    SELECT 
+                        r.id,
+                        r.date,
+                        r.time,
+                        r.party,
+                        r.status,
+                        r.created_at,
+                        c.first_name,
+                        c.last_name,
+                        c.email
+                    FROM $table r
+                    LEFT JOIN $customersTable c ON r.customer_id = c.id
+                    ORDER BY r.created_at DESC
+                    LIMIT 5
+                ", ARRAY_A);
+                
+                if ($recentReservations):
+                ?>
+                    <table class="fp-debug-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Data/Ora</th>
+                                <th>Persone</th>
+                                <th>Stato</th>
+                                <th>Cliente</th>
+                                <th>Creato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recentReservations as $r): ?>
+                                <tr>
+                                    <td>#<?php echo (int) $r['id']; ?></td>
+                                    <td><?php echo esc_html($r['date'] . ' ' . substr($r['time'], 0, 5)); ?></td>
+                                    <td><?php echo (int) $r['party']; ?></td>
+                                    <td><strong><?php echo esc_html(strtoupper($r['status'])); ?></strong></td>
+                                    <td>
+                                        <?php 
+                                        if ($r['first_name'] || $r['last_name']) {
+                                            echo esc_html($r['first_name'] . ' ' . $r['last_name']);
+                                            if ($r['email']) {
+                                                echo '<br><small>' . esc_html($r['email']) . '</small>';
+                                            }
+                                        } else {
+                                            echo '<em>N/A</em>';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td><?php echo esc_html($r['created_at']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php
+            // ============================================================================
+            // TEST ENDPOINT REST
+            // ============================================================================
+            ?>
+            <h3>4️⃣ Test Endpoint REST /agenda</h3>
+            <?php
+            $testDate = date('Y-m-d');
+            $restUrl = rest_url('fp-resv/v1/agenda');
+            $fullUrl = add_query_arg(['date' => $testDate, 'range' => 'month'], $restUrl);
+            ?>
+            <p><strong>Endpoint:</strong><br>
+            <code><?php echo esc_html($fullUrl); ?></code></p>
+            
+            <?php
+            // Simula chiamata REST
+            $request = new \WP_REST_Request('GET', '/fp-resv/v1/agenda');
+            $request->set_query_params(['date' => $testDate, 'range' => 'month']);
+            $response = rest_do_request($request);
+            
+            if (is_wp_error($response)) {
+                echo '<p class="fp-debug-error">❌ Errore: ' . esc_html($response->get_error_message()) . '</p>';
+            } else {
+                $data = $response->get_data();
+                $statusCode = $response->get_status();
+                
+                echo '<p><strong>Status Code:</strong> <span class="' . ($statusCode === 200 ? 'fp-debug-success' : 'fp-debug-error') . '">' . $statusCode . '</span></p>';
+                
+                if ($statusCode === 200) {
+                    if (isset($data['reservations']) && is_array($data['reservations'])) {
+                        $reservationsInResponse = count($data['reservations']);
+                        echo '<p><strong>Prenotazioni nella risposta:</strong> ' . $reservationsInResponse . '</p>';
+                        
+                        if ($reservationsInResponse === 0 && $totalCount > 0) {
+                            echo '<div class="fp-debug-stat">';
+                            echo '<p class="fp-debug-error"><strong>❌ PROBLEMA TROVATO!</strong></p>';
+                            echo '<p>Ci sono ' . $totalCount . ' prenotazioni nel DB ma l\'endpoint ne restituisce 0.</p>';
+                            echo '<p><strong>Possibili cause:</strong></p>';
+                            echo '<ul>';
+                            echo '<li>Le prenotazioni sono in date diverse dal mese corrente</li>';
+                            echo '<li>C\'è un filtro che esclude le prenotazioni</li>';
+                            echo '<li>Problema nella query SQL dell\'endpoint</li>';
+                            echo '</ul>';
+                            echo '</div>';
+                        } else if ($reservationsInResponse > 0) {
+                            echo '<p class="fp-debug-success">✅ L\'endpoint restituisce correttamente ' . $reservationsInResponse . ' prenotazioni!</p>';
+                        }
+                    } else {
+                        echo '<p class="fp-debug-warning">⚠️ La risposta non contiene l\'array "reservations"</p>';
+                    }
+                }
+            }
+            ?>
+
+            <?php
+            // ============================================================================
+            // RANGE DATE
+            // ============================================================================
+            if ($totalCount > 0):
+            ?>
+                <h3>5️⃣ Range Date Prenotazioni</h3>
+                <?php
+                $dateRange = $wpdb->get_row("
+                    SELECT 
+                        MIN(date) as prima_data,
+                        MAX(date) as ultima_data
+                    FROM $table
+                ", ARRAY_A);
+                
+                if ($dateRange):
+                ?>
+                    <div class="fp-debug-stat">
+                        <strong>Prima prenotazione:</strong> <?php echo esc_html($dateRange['prima_data']); ?><br>
+                        <strong>Ultima prenotazione:</strong> <?php echo esc_html($dateRange['ultima_data']); ?>
+                        
+                        <?php if ($dateRange['ultima_data'] && strtotime($dateRange['ultima_data']) < strtotime($today)): ?>
+                            <p class="fp-debug-warning">⚠️ <strong>ATTENZIONE:</strong> Tutte le prenotazioni sono nel passato!</p>
+                            <p>Il manager di default mostra il mese corrente, quindi non vedrà prenotazioni vecchie.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <hr style="margin: 30px 0;">
+            
+            <h3>📋 Riepilogo</h3>
+            <?php
+            $hasReservations = $totalCount > 0;
+            $endpointWorks = $statusCode === 200;
+            $reservationsInResponse = isset($reservationsInResponse) ? $reservationsInResponse : 0;
+            
+            if (!$hasReservations) {
+                echo '<p class="fp-debug-error"><strong>❌ PROBLEMA: Nessuna prenotazione nel database</strong></p>';
+                echo '<p>Il form non salva i dati. Controlla i log PHP per errori durante l\'invio del form.</p>';
+            } else if ($reservationsInResponse === 0 && $hasReservations) {
+                echo '<p class="fp-debug-error"><strong>❌ PROBLEMA: L\'endpoint non restituisce prenotazioni</strong></p>';
+                echo '<p>Ci sono dati nel DB ma l\'endpoint /agenda non li restituisce. Problema nella query o nei filtri.</p>';
+            } else if ($reservationsInResponse > 0) {
+                echo '<p class="fp-debug-success"><strong>✅ TUTTO OK dal lato server!</strong></p>';
+                echo '<p>Database e endpoint funzionano. Se il manager non mostra nulla:</p>';
+                echo '<ul>';
+                echo '<li>Apri la <strong>Console JavaScript</strong> del browser (F12)</li>';
+                echo '<li>Cerca errori JavaScript</li>';
+                echo '<li>Verifica che il nonce sia valido</li>';
+                echo '<li>Cancella la cache del browser</li>';
+                echo '</ul>';
+            }
+            ?>
+        </div>
+        <?php
+        
+        return ob_get_clean();
     }
 }
