@@ -74,22 +74,22 @@ final class AdminREST
         
         try {
             $result = register_rest_route(
-                'fp-resv/v1',
-                '/agenda',
-                [
-                    'methods'             => WP_REST_Server::READABLE,
+            'fp-resv/v1',
+            '/agenda',
+            [
+                'methods'             => WP_REST_Server::READABLE,
                     'callback'            => [$this, 'handleAgendaV2'],
                     'permission_callback' => '__return_true', // TEMPORANEO: Bypassa permissions
-                    'args'                => [
-                        'date' => [
-                            'type'     => 'string',
-                            'required' => false,
-                        ],
-                        'range' => [
-                            'type'     => 'string',
-                            'required' => false,
-                        ],
+                'args'                => [
+                    'date' => [
+                        'type'     => 'string',
+                        'required' => false,
                     ],
+                    'range' => [
+                        'type'     => 'string',
+                        'required' => false,
+                    ],
+                ],
                 ]
             );
             
@@ -115,7 +115,7 @@ final class AdminREST
                 'permission_callback' => '__return_true', // Pubblico per test
             ]
         );
-        
+
         register_rest_route(
             'fp-resv/v1',
             '/agenda/reservations',
@@ -431,14 +431,14 @@ final class AdminREST
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                 $date = gmdate('Y-m-d');
             }
-            
+
             // STEP 4: Range
             $step = 4;
             $rangeMode = is_string($rangeParam) ? strtolower($rangeParam) : 'day';
             if (!in_array($rangeMode, ['day', 'week', 'month'], true)) {
                 $rangeMode = 'day';
             }
-            
+
             // STEP 5: DateTimeImmutable
             $step = 5;
             $start = new \DateTimeImmutable($date);
@@ -472,7 +472,7 @@ final class AdminREST
             $step = 8;
             $reservations = [];
             if (is_array($rows)) {
-                foreach ($rows as $row) {
+            foreach ($rows as $row) {
                     if (!is_array($row)) continue;
                     
                     $reservations[] = [
@@ -501,11 +501,11 @@ final class AdminREST
             $totalGuests = $totalReservations > 0 ? array_sum(array_column($reservations, 'party')) : 0;
             
             $statusCounts = [
-                'pending' => 0,
-                'confirmed' => 0,
-                'visited' => 0,
-                'no_show' => 0,
-                'cancelled' => 0,
+                            'pending' => 0,
+                            'confirmed' => 0,
+                            'visited' => 0,
+                            'no_show' => 0,
+                            'cancelled' => 0,
             ];
             
             foreach ($reservations as $r) {
@@ -823,15 +823,35 @@ final class AdminREST
 
             error_log('[FP Resv] === ELIMINAZIONE COMPLETATA CON SUCCESSO ===');
             
-            $response = [
+            $responseData = [
                 'success' => true,
                 'id'      => $id,
                 'message' => __('Prenotazione eliminata con successo.', 'fp-restaurant-reservations'),
             ];
             
-            error_log('[FP Resv] Restituisco risposta: ' . json_encode($response));
+            error_log('[FP Resv] Restituisco risposta: ' . json_encode($responseData));
             
-            return rest_ensure_response($response);
+            // Crea risposta REST esplicita
+            $response = new WP_REST_Response($responseData, 200);
+            $response->set_headers([
+                'Content-Type' => 'application/json; charset=UTF-8',
+                'X-FP-Delete-Success' => 'true',
+                'X-FP-Reservation-ID' => (string) $id,
+            ]);
+            
+            error_log('[FP Resv] Headers impostati, returnando response object');
+            error_log('[FP Resv] Response data type: ' . gettype($response));
+            error_log('[FP Resv] Response data class: ' . get_class($response));
+            error_log('[FP Resv] Response status: ' . $response->get_status());
+            error_log('[FP Resv] Response data: ' . json_encode($response->get_data()));
+            
+            // Verifica se ci sono filter attivi
+            $filters = $GLOBALS['wp_filter']['rest_pre_serve_request'] ?? null;
+            if ($filters) {
+                error_log('[FP Resv] ATTENZIONE: Ci sono ' . count($filters->callbacks ?? []) . ' filter su rest_pre_serve_request');
+            }
+            
+            return $response;
         } catch (Throwable $exception) {
             error_log('[FP Resv] ERRORE ELIMINAZIONE: ' . $exception->getMessage());
             error_log('[FP Resv] Stack trace: ' . $exception->getTraceAsString());

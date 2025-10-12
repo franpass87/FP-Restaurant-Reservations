@@ -411,7 +411,12 @@ class ReservationManager {
     }
 
     formatDate(date) {
-        return date.toISOString().split('T')[0];
+        // NON usare toISOString() perché converte in UTC causando problemi timezone!
+        // Usa invece getFullYear, getMonth, getDate per ottenere la data locale
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // ============================================
@@ -419,6 +424,8 @@ class ReservationManager {
     // ============================================
 
     setView(view) {
+        console.log('[Manager] 🔄 SET VIEW:', view, 'da', this.state.currentView);
+        
         const previousView = this.state.currentView;
         this.state.currentView = view;
 
@@ -441,9 +448,13 @@ class ReservationManager {
         const previousNeedsRange = viewsRequiringReload.includes(previousView);
         const currentNeedsRange = viewsRequiringReload.includes(view);
         
+        console.log('[Manager] Previous needs range:', previousNeedsRange, '| Current needs range:', currentNeedsRange);
+        
         if (previousNeedsRange !== currentNeedsRange || (previousNeedsRange && currentNeedsRange && previousView !== view)) {
+            console.log('[Manager] 🔄 Ricarico prenotazioni per cambio vista');
             this.loadReservations();
         } else {
+            console.log('[Manager] 🎨 Solo re-render, nessun reload');
             // Altrimenti, semplicemente re-render
             this.renderCurrentView();
         }
@@ -864,24 +875,43 @@ class ReservationManager {
         const reservationsByDate = {};
         let totalReservationsInMonth = 0;
         
-        this.state.reservations.forEach(resv => {
+        console.log('[Manager] === INIZIO RAGGRUPPAMENTO PRENOTAZIONI ===');
+        console.log('[Manager] Totale prenotazioni da processare:', this.state.reservations.length);
+        
+        if (this.state.reservations.length === 0) {
+            console.warn('[Manager] ⚠️⚠️⚠️ NESSUNA PRENOTAZIONE IN STATE! ⚠️⚠️⚠️');
+        }
+        
+        this.state.reservations.forEach((resv, index) => {
             const date = resv.date;
-            console.log('[Manager] Prenotazione #' + resv.id + ' data:', date);
+            console.log(`[Manager] [${index + 1}/${this.state.reservations.length}] Prenotazione #${resv.id}:`, {
+                date: date,
+                time: resv.time,
+                party: resv.party,
+                status: resv.status,
+                inRange: date >= firstDayStr && date <= lastDayStr
+            });
             
             // Verifica se la prenotazione è nel range del mese
             if (date >= firstDayStr && date <= lastDayStr) {
+                console.log(`[Manager] ✅ Prenotazione #${resv.id} È nel range del mese`);
                 totalReservationsInMonth++;
                 if (!reservationsByDate[date]) {
                     reservationsByDate[date] = [];
                 }
                 reservationsByDate[date].push(resv);
             } else {
-                console.log('[Manager] ⚠️ Prenotazione FUORI dal range del mese:', date);
+                console.log(`[Manager] ❌ Prenotazione #${resv.id} FUORI dal range:`);
+                console.log(`[Manager]    Data: ${date} | Range: ${firstDayStr} - ${lastDayStr}`);
+                console.log(`[Manager]    date >= firstDayStr: ${date >= firstDayStr}`);
+                console.log(`[Manager]    date <= lastDayStr: ${date <= lastDayStr}`);
             }
         });
         
+        console.log('[Manager] === FINE RAGGRUPPAMENTO ===');
         console.log('[Manager] Prenotazioni nel mese corrente:', totalReservationsInMonth);
         console.log('[Manager] Giorni con prenotazioni:', Object.keys(reservationsByDate).length);
+        console.log('[Manager] Giorni:', Object.keys(reservationsByDate).sort());
         console.log('[Manager] reservationsByDate:', reservationsByDate);
         
         // Header
@@ -1420,8 +1450,15 @@ class ReservationManager {
             console.log('[Manager] DELETE Response OK:', response.ok);
             console.log('[Manager] DELETE Response Headers:', {
                 'content-type': response.headers.get('content-type'),
-                'content-length': response.headers.get('content-length')
+                'content-length': response.headers.get('content-length'),
+                'x-fp-delete-success': response.headers.get('x-fp-delete-success'),
+                'x-fp-reservation-id': response.headers.get('x-fp-reservation-id')
             });
+            
+            console.log('[Manager] ALL Response Headers:');
+            for (let [key, value] of response.headers.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
 
             // Leggi il body come testo prima
             const responseText = await response.text();
