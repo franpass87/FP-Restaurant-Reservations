@@ -539,12 +539,6 @@ final class REST
             'reservation_id' => $payload['reservation']['id'] ?? null,
         ]);
 
-        $response = rest_ensure_response($payload);
-
-        if ($response instanceof WP_REST_Response) {
-            $response->set_status(201);
-        }
-        
         // Pulisce output buffer e verifica se c'era contenuto indesiderato
         $unwantedOutput = ob_get_clean();
         if (!empty($unwantedOutput)) {
@@ -554,12 +548,13 @@ final class REST
             ]);
         }
         
-        Logging::log('api', '>>> RETURN response', [
-            'status' => $response instanceof WP_REST_Response ? $response->get_status() : 'unknown',
-            'has_unwanted_output' => !empty($unwantedOutput),
-        ]);
-
-        return $response;
+        Logging::log('api', '>>> OUTPUT DIRETTO invece di WP_REST_Response');
+        
+        // Output diretto per evitare interferenze di WordPress
+        header('Content-Type: application/json; charset=UTF-8');
+        http_response_code(201);
+        echo wp_json_encode($payload);
+        exit;
     }
 
     private function consentGiven(WP_REST_Request $request): bool
