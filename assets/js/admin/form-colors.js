@@ -3,6 +3,8 @@
  * Live preview and color picker functionality
  */
 
+/* global fpResvFormColors */
+
 (function() {
     'use strict';
 

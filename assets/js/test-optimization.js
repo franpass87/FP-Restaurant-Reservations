@@ -19,7 +19,7 @@ async function testModuleImports() {
     
     for (const module of modules) {
         try {
-            const imported = await import(module);
+            await import(module);
             console.log(`✅ ${module} imported successfully`);
             results.push({ module, status: 'success' });
         } catch (error) {
@@ -39,7 +39,6 @@ function testCoreFunctionality() {
         {
             name: 'FormState class',
             test: () => {
-                // eslint-disable-next-line no-undef
                 const { FormState } = require('./components/form-state.js');
                 const state = new FormState();
                 return state.getState() !== null;
@@ -48,7 +47,6 @@ function testCoreFunctionality() {
         {
             name: 'DOM helpers',
             test: () => {
-                // eslint-disable-next-line no-undef
                 const { closestWithAttribute } = require('./utils/dom-helpers.js');
                 return typeof closestWithAttribute === 'function';
             }
@@ -56,7 +54,6 @@ function testCoreFunctionality() {
         {
             name: 'Validation utilities',
             test: () => {
-                // eslint-disable-next-line no-undef
                 const { toNumber } = require('./utils/validation.js');
                 return typeof toNumber === 'function' && toNumber('123') === 123;
             }
@@ -64,7 +61,6 @@ function testCoreFunctionality() {
         {
             name: 'Tracking utilities',
             test: () => {
-                // eslint-disable-next-line no-undef
                 const { pushDataLayerEvent } = require('./utils/tracking.js');
                 return typeof pushDataLayerEvent === 'function';
             }
@@ -137,17 +133,7 @@ function testPerformance() {
     
     const startTime = performance.now();
     
-    // Simula il caricamento dei moduli
-    const modules = [
-        'dom-helpers',
-        'validation', 
-        'tracking',
-        'form-state',
-        'form-validation',
-        'form-navigation'
-    ];
-    
-    // Simula l'inizializzazione
+    // Simula il caricamento dei moduli e l'inizializzazione
     for (let i = 0; i < 1000; i++) {
         // Simula operazioni di inizializzazione
         Math.random();
@@ -218,9 +204,9 @@ if (typeof window !== 'undefined' && window.location.pathname.includes('test-opt
 }
 
 // Esporta le funzioni per uso esterno
-// eslint-disable-next-line no-undef
+ 
 if (typeof module !== 'undefined' && module.exports) {
-    // eslint-disable-next-line no-undef
+     
     module.exports = {
         testModuleImports,
         testCoreFunctionality,

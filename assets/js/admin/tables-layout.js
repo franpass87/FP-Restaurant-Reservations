@@ -117,8 +117,8 @@
     };
 
     // Modal management
-    let currentModal = null;
-
+    let currentModal = null; // eslint-disable-line no-unused-vars
+    
     const createModal = (title, fields, onSubmit) => {
         const modal = document.createElement('div');
         modal.className = 'fp-resv-tables-modal';

@@ -317,7 +317,6 @@ class ReservationManager {
             // Determina il range in base alla vista corrente
             let range = 'day';
             let startDate = dateStr;
-            let endDate = dateStr;
             
             if (this.state.currentView === 'week') {
                 // Per la vista settimana, carica 7 giorni partendo dal lunedì
@@ -333,7 +332,6 @@ class ReservationManager {
                 sunday.setDate(monday.getDate() + 6);
                 
                 startDate = this.formatDate(monday);
-                endDate = this.formatDate(sunday);
                 range = 'week';
             } else if (this.state.currentView === 'month') {
                 // Per la vista mese, carica tutto il mese
@@ -342,10 +340,8 @@ class ReservationManager {
                 const month = currentDate.getMonth();
                 
                 const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
                 
                 startDate = this.formatDate(firstDay);
-                endDate = this.formatDate(lastDay);
                 range = 'month';
             }
             

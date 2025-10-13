@@ -385,12 +385,13 @@ class ReservationManager {
                 break;
             case 'day':
             case 'list':
-            default:
+            default: {
                 // Naviga per giorni
                 const newDate = new Date(this.state.currentDate);
                 newDate.setDate(newDate.getDate() + direction);
                 this.setDate(newDate);
                 break;
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
 import { formatDebugMessage } from './debug.js';
 import { parseDataset, parseJsonAttribute, toNumber } from './utils/data.js';
-import { closestWithAttribute, firstFocusable } from './utils/dom.js';
+import { closestWithAttribute } from './utils/dom.js';
 import { setAriaDisabled } from './utils/a11y.js';
 import { resolveEndpoint, safeJson } from './utils/net.js';
 import { pushDataLayerEvent } from './tracking/dataLayer.js';
