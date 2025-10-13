@@ -632,7 +632,10 @@ class ReservationManager {
             
             if (this.state.reservations.length > 0) {
                 console.log('[Manager] Prima prenotazione:', this.state.reservations[0]);
-                console.log('[Manager] Ultima prenotazione:', this.state.reservations[this.state.reservations.length - 1]);
+                const lastIndex = this.state.reservations.length - 1;
+                if (lastIndex >= 0) {
+                    console.log('[Manager] Ultima prenotazione:', this.state.reservations[lastIndex]);
+                }
             }
             
             // Aggiorna statistiche nelle card
