@@ -20,10 +20,13 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 
 = Sicurezza e Qualità =
 * Audit di sicurezza completato (Ottobre 2025): 5/5 problemi risolti
+* Code quality audit (Ottobre 2025): 58/58 bug risolti in 8 sessioni
 * Protezione CSRF su tutti i form pubblici
 * Validazione input centralizzata e sanitization
 * Rate limiting su API REST
-* Zero vulnerabilità npm note
+* Zero vulnerabilità npm e zero errori ESLint
+* Protezione completa da SQL injection e XSS
+* REST API authentication su tutti gli endpoint sensibili
 
 == Features ==
 * Form single-page con progress bar responsiva che rimane su una sola riga su desktop e scrolla su mobile.
@@ -61,6 +64,20 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 0.1.11 - 2025-10-13 =
+* Risolti 58 bug attraverso 8 sessioni intensive di code quality audit
+* **Sicurezza**: Risolti 7 bug critici (SQL injection, XSS, API non protette, JSON parsing non sicuro)
+* **Robustezza**: Risolti 22 bug importanti (12 unhandled promises, 8 parseInt senza radix, null checks)
+* **Code Quality**: Risolti 29 bug minori (ESLint errors, variabili non usate, import puliti)
+* Protetto endpoint REST /agenda con permission_callback
+* Protetto endpoint debug /agenda-debug (solo WP_DEBUG + admin)
+* Aggiunta sanitizzazione input in file di debug e log viewer
+* Convertite query SQL dirette a prepared statements PDO
+* Aggiunta gestione errori try-catch su tutti i gestori async
+* Configurazione ESLint migliorata per supporto multi-environment
+* ESLint: 0 errori, 0 warning (prima: 29 problemi)
+* Sicurezza: 0 vulnerabilità (prima: 7 critiche)
 
 = 0.1.6 - 2025-10-07 =
 * Risolti 5 problemi di sicurezza identificati nell'audit (Ottobre 2025)

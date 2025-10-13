@@ -44,6 +44,8 @@
 
 ### Sicurezza e Audit
 - **[SECURITY-REPORT.md](SECURITY-REPORT.md)** - Report sicurezza
+- **[CODE-AUDIT-2025-10-13.md](CODE-AUDIT-2025-10-13.md)** - Audit code quality (58 bug risolti)
+- **[BUGFIX-SUMMARY-2025-10-13.md](BUGFIX-SUMMARY-2025-10-13.md)** - Riepilogo dettagliato bug fix
 - **[HARDENING-*.md](HARDENING-*.md)** - Guide hardening
 - **[QA-AUDIT.md](QA-AUDIT.md)** - Audit QA
 
