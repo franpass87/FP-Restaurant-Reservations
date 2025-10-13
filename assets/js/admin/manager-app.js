@@ -1276,8 +1276,13 @@ class ReservationManager {
     }
 
     openReservationModal(id) {
+        console.log('[Manager] Opening reservation modal for ID:', id);
+        
         const resv = this.state.reservations.find(r => r.id === id);
-        if (!resv) return;
+        if (!resv) {
+            console.error('[Manager] Reservation not found with ID:', id);
+            return;
+        }
 
         const customer = this.getCustomerData(resv);
         const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
@@ -1286,8 +1291,13 @@ class ReservationManager {
         this.dom.modalBody.innerHTML = this.renderReservationDetails(resv);
         this.dom.modal.style.display = 'flex';
 
-        // Bind modal actions
-        this.bindModalActions(resv);
+        console.log('[Manager] Modal HTML updated, now binding actions...');
+        
+        // Assicuriamoci che il DOM sia aggiornato prima di collegare gli eventi
+        // Usiamo requestAnimationFrame per garantire che il browser abbia renderizzato il nuovo HTML
+        requestAnimationFrame(() => {
+            this.bindModalActions(resv);
+        });
     }
 
     renderReservationDetails(resv) {
@@ -1392,29 +1402,80 @@ class ReservationManager {
     }
 
     bindModalActions(resv) {
-        this.dom.modalBody.querySelector('[data-modal-action="save"]')?.addEventListener('click', async () => {
-            await this.saveReservation(resv);
-        });
+        console.log('[Manager] Binding modal actions for reservation ID:', resv.id);
+        
+        // Salva modifiche
+        const saveBtn = this.dom.modalBody.querySelector('[data-modal-action="save"]');
+        if (saveBtn) {
+            console.log('[Manager] ✅ Save button found');
+            saveBtn.addEventListener('click', async () => {
+                await this.saveReservation(resv);
+            });
+        } else {
+            console.warn('[Manager] ❌ Save button NOT found');
+        }
 
-        this.dom.modalBody.querySelector('[data-modal-action="cancel"]')?.addEventListener('click', () => {
-            this.closeModal();
-        });
+        // Chiudi modale (pulsante secondario)
+        const closeBtn = this.dom.modalBody.querySelector('[data-modal-action="close"]');
+        if (closeBtn) {
+            console.log('[Manager] ✅ Close button found');
+            closeBtn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        } else {
+            console.warn('[Manager] ❌ Close button NOT found');
+        }
 
-        this.dom.modalBody.querySelector('[data-modal-action="cancel-reservation"]')?.addEventListener('click', async () => {
-            if (confirm('Sei sicuro di voler annullare questa prenotazione?')) {
-                await this.cancelReservation(resv.id);
-            }
-        });
+        // Annulla prenotazione
+        const cancelReservationBtn = this.dom.modalBody.querySelector('[data-modal-action="cancel-reservation"]');
+        if (cancelReservationBtn) {
+            console.log('[Manager] ✅ Cancel reservation button found');
+            cancelReservationBtn.addEventListener('click', async () => {
+                if (confirm('Sei sicuro di voler annullare questa prenotazione?')) {
+                    await this.cancelReservation(resv.id);
+                }
+            });
+        } else {
+            console.log('[Manager] ℹ️ Cancel reservation button NOT found (might be hidden for cancelled reservations)');
+        }
 
-        this.dom.modalBody.querySelector('[data-modal-action="delete"]')?.addEventListener('click', async () => {
-            if (confirm('Sei sicuro di voler eliminare definitivamente questa prenotazione?')) {
-                await this.deleteReservation(resv.id);
-            }
-        });
+        // Elimina definitivamente
+        const deleteBtn = this.dom.modalBody.querySelector('[data-modal-action="delete"]');
+        if (deleteBtn) {
+            console.log('[Manager] ✅ Delete button found and binding event listener');
+            deleteBtn.addEventListener('click', async (e) => {
+                console.log('[Manager] Delete button clicked!', e);
+                if (confirm('Sei sicuro di voler eliminare definitivamente questa prenotazione?')) {
+                    console.log('[Manager] User confirmed deletion');
+                    await this.deleteReservation(resv.id);
+                } else {
+                    console.log('[Manager] User cancelled deletion');
+                }
+            });
+            console.log('[Manager] Delete button event listener attached successfully');
+        } else {
+            console.error('[Manager] ❌ DELETE BUTTON NOT FOUND! This is the issue!');
+            console.error('[Manager] Modal body HTML:', this.dom.modalBody.innerHTML.substring(0, 500));
+        }
+        
+        console.log('[Manager] Finished binding modal actions');
     }
 
     async saveReservation(resv) {
-        const status = this.dom.modalBody.querySelector('[data-field="status"]').value;
+        console.log('[Manager] Saving reservation ID:', resv.id);
+        
+        const status = this.dom.modalBody.querySelector('[data-field="status"]')?.value;
+        const party = this.dom.modalBody.querySelector('[data-field="party"]')?.value;
+        const notes = this.dom.modalBody.querySelector('[data-field="notes"]')?.value;
+        const allergies = this.dom.modalBody.querySelector('[data-field="allergies"]')?.value;
+
+        const updates = {};
+        if (status) updates.status = status;
+        if (party) updates.party = parseInt(party, 10);
+        if (notes !== undefined) updates.notes = notes;
+        if (allergies !== undefined) updates.allergies = allergies;
+
+        console.log('[Manager] Updates to save:', updates);
 
         try {
             const response = await fetch(this.buildRestUrl(`agenda/reservations/${resv.id}`), {
@@ -1423,17 +1484,23 @@ class ReservationManager {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': this.config.nonce,
                 },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify(updates),
             });
 
-            if (!response.ok) throw new Error('Failed to update reservation');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update reservation');
+            }
 
+            console.log('[Manager] Reservation saved successfully');
             this.closeModal();
             await this.loadReservations();
             await this.loadOverview();
+            
+            alert('Prenotazione salvata con successo');
         } catch (error) {
             console.error('[Manager] Error saving reservation:', error);
-            alert('Errore nel salvataggio della prenotazione');
+            alert('Errore nel salvataggio della prenotazione: ' + error.message);
         }
     }
 
