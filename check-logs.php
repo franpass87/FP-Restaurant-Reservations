@@ -119,8 +119,8 @@ header('Content-Type: text/html; charset=utf-8');
     $lines = array_reverse($lines); // Mostra i più recenti per primi
     
     // Filtri
-    $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
-    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $filter = isset($_GET['filter']) ? sanitize_text_field($_GET['filter']) : 'all';
+    $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
     
     echo "<div class='filter'>";

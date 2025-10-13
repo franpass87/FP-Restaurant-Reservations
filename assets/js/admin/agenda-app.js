@@ -1100,7 +1100,11 @@ class ReservationManager {
 
     bindModalActions(resv) {
         this.dom.modalBody.querySelector('[data-modal-action="save"]')?.addEventListener('click', async () => {
-            await this.saveReservation(resv);
+            try {
+                await this.saveReservation(resv);
+            } catch (error) {
+                console.error('Error saving reservation:', error);
+            }
         });
 
         this.dom.modalBody.querySelector('[data-modal-action="cancel"]')?.addEventListener('click', () => {
@@ -1109,13 +1113,22 @@ class ReservationManager {
 
         this.dom.modalBody.querySelector('[data-modal-action="delete"]')?.addEventListener('click', async () => {
             if (confirm('Sei sicuro di voler eliminare questa prenotazione?')) {
-                await this.deleteReservation(resv.id);
+                try {
+                    await this.deleteReservation(resv.id);
+                } catch (error) {
+                    console.error('Error deleting reservation:', error);
+                }
             }
         });
     }
 
     async saveReservation(resv) {
-        const status = this.dom.modalBody.querySelector('[data-field="status"]').value;
+        const statusField = this.dom.modalBody.querySelector('[data-field="status"]');
+        if (!statusField) {
+            console.error('Status field not found');
+            return;
+        }
+        const status = statusField.value;
 
         try {
             const response = await fetch(this.buildRestUrl(`agenda/reservations/${resv.id}`), {
@@ -1250,7 +1263,12 @@ class ReservationManager {
 
             // Salva i dati e passa allo step 2
             this.newReservationData = { meal, date, party };
-            await this.showNewReservationStep2();
+            try {
+                await this.showNewReservationStep2();
+            } catch (error) {
+                console.error('Error loading step 2:', error);
+                alert('Errore nel caricamento degli slot disponibili');
+            }
         });
 
         this.dom.modalBody.querySelector('[data-action="cancel-new"]')?.addEventListener('click', () => {
@@ -1490,11 +1508,19 @@ class ReservationManager {
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await this.createNewReservation();
+            try {
+                await this.createNewReservation();
+            } catch (error) {
+                console.error('Error creating reservation:', error);
+            }
         });
 
         this.dom.modalBody.querySelector('[data-action="back-step2"]')?.addEventListener('click', async () => {
-            await this.showNewReservationStep2();
+            try {
+                await this.showNewReservationStep2();
+            } catch (error) {
+                console.error('Error going back to step 2:', error);
+            }
         });
     }
 
