@@ -203,18 +203,19 @@ $weekAgo = date('Y-m-d', strtotime('-7 days'));
 $monthAgo = date('Y-m-d', strtotime('-30 days'));
 
 $queries = [
-    'Oggi' => "SELECT COUNT(*) as count FROM $tableName WHERE date = '$today'",
-    'Ieri' => "SELECT COUNT(*) as count FROM $tableName WHERE date = '$yesterday'",
-    'Ultimi 7 giorni' => "SELECT COUNT(*) as count FROM $tableName WHERE date >= '$weekAgo'",
-    'Ultimi 30 giorni' => "SELECT COUNT(*) as count FROM $tableName WHERE date >= '$monthAgo'",
-    'Future' => "SELECT COUNT(*) as count FROM $tableName WHERE date >= '$today'",
+    'Oggi' => ['SELECT COUNT(*) as count FROM ' . $tableName . ' WHERE date = ?', [$today]],
+    'Ieri' => ['SELECT COUNT(*) as count FROM ' . $tableName . ' WHERE date = ?', [$yesterday]],
+    'Ultimi 7 giorni' => ['SELECT COUNT(*) as count FROM ' . $tableName . ' WHERE date >= ?', [$weekAgo]],
+    'Ultimi 30 giorni' => ['SELECT COUNT(*) as count FROM ' . $tableName . ' WHERE date >= ?', [$monthAgo]],
+    'Future' => ['SELECT COUNT(*) as count FROM ' . $tableName . ' WHERE date >= ?', [$today]],
 ];
 
 echo "<table><tr><th>Periodo</th><th>Numero Prenotazioni</th></tr>";
-foreach ($queries as $label => $query) {
-    $stmt = $pdo->query($query);
+foreach ($queries as $label => $queryData) {
+    $stmt = $pdo->prepare($queryData[0]);
+    $stmt->execute($queryData[1]);
     $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-    echo "<tr><td>$label</td><td><strong>$count</strong></td></tr>";
+    echo "<tr><td>" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</td><td><strong>" . htmlspecialchars($count, ENT_QUOTES, 'UTF-8') . "</strong></td></tr>";
 }
 echo "</table>";
 
