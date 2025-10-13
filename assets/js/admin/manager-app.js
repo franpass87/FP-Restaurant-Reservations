@@ -1208,7 +1208,7 @@ class ReservationManager {
         this.dom.weekCalendar.querySelectorAll('[data-action="view-reservation"]').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const id = parseInt(card.dataset.id);
+                const id = parseInt(card.dataset.id, 10);
                 this.openReservationModal(id);
             });
         });
@@ -1275,7 +1275,7 @@ class ReservationManager {
     bindReservationCards() {
         document.querySelectorAll('[data-action="view-reservation"]').forEach(card => {
             card.addEventListener('click', () => {
-                const id = parseInt(card.dataset.id);
+                const id = parseInt(card.dataset.id, 10);
                 this.openReservationModal(id);
             });
         });
