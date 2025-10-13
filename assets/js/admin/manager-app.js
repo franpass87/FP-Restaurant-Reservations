@@ -1698,7 +1698,7 @@ class ReservationManager {
             
             const meal = document.getElementById('new-meal').value;
             const date = document.getElementById('new-date').value;
-            const party = parseInt(document.getElementById('new-party').value);
+            const party = parseInt(document.getElementById('new-party').value, 10);
 
             if (!meal || !date || !party) {
                 alert('Compila tutti i campi obbligatori');

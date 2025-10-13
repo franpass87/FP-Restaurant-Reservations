@@ -288,7 +288,7 @@ export class FormApp {
 
                 if (!availableDays.includes(dayOfWeek)) {
                     const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d, 10)]).join(', ');
                     const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
                     
                     event.target.setCustomValidity(errorMessage);
