@@ -2,7 +2,6 @@
  * Gestione della validazione del form
  */
 
-import { toNumber } from '../utils/validation.js';
 import { buildPayload, isValidLocal } from '../phone.js';
 
 export class FormValidation {

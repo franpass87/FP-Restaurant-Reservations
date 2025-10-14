@@ -361,8 +361,13 @@ class ReservationManager {
             if (pullDistance > refreshThreshold && mainContent.scrollTop === 0) {
                 // Trigger refresh
                 mainContent.classList.add('pull-to-refresh-loading');
-                await this.loadReservations();
-                mainContent.classList.remove('pull-to-refresh-loading');
+                try {
+                    await this.loadReservations();
+                } catch (error) {
+                    console.error('[Manager] Error refreshing reservations:', error);
+                } finally {
+                    mainContent.classList.remove('pull-to-refresh-loading');
+                }
             }
 
             mainContent.classList.remove('pull-to-refresh-ready');
@@ -385,12 +390,13 @@ class ReservationManager {
                 break;
             case 'day':
             case 'list':
-            default:
+            default: {
                 // Naviga per giorni
                 const newDate = new Date(this.state.currentDate);
                 newDate.setDate(newDate.getDate() + direction);
                 this.setDate(newDate);
                 break;
+            }
         }
     }
 
@@ -626,7 +632,10 @@ class ReservationManager {
             
             if (this.state.reservations.length > 0) {
                 console.log('[Manager] Prima prenotazione:', this.state.reservations[0]);
-                console.log('[Manager] Ultima prenotazione:', this.state.reservations[this.state.reservations.length - 1]);
+                const lastIndex = this.state.reservations.length - 1;
+                if (lastIndex >= 0) {
+                    console.log('[Manager] Ultima prenotazione:', this.state.reservations[lastIndex]);
+                }
             }
             
             // Aggiorna statistiche nelle card
@@ -1202,7 +1211,7 @@ class ReservationManager {
         this.dom.weekCalendar.querySelectorAll('[data-action="view-reservation"]').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const id = parseInt(card.dataset.id);
+                const id = parseInt(card.dataset.id, 10);
                 this.openReservationModal(id);
             });
         });
@@ -1269,7 +1278,7 @@ class ReservationManager {
     bindReservationCards() {
         document.querySelectorAll('[data-action="view-reservation"]').forEach(card => {
             card.addEventListener('click', () => {
-                const id = parseInt(card.dataset.id);
+                const id = parseInt(card.dataset.id, 10);
                 this.openReservationModal(id);
             });
         });
@@ -1409,7 +1418,11 @@ class ReservationManager {
         if (saveBtn) {
             console.log('[Manager] ✅ Save button found');
             saveBtn.addEventListener('click', async () => {
-                await this.saveReservation(resv);
+                try {
+                    await this.saveReservation(resv);
+                } catch (error) {
+                    console.error('[Manager] Error saving reservation:', error);
+                }
             });
         } else {
             console.warn('[Manager] ❌ Save button NOT found');
@@ -1432,7 +1445,11 @@ class ReservationManager {
             console.log('[Manager] ✅ Cancel reservation button found');
             cancelReservationBtn.addEventListener('click', async () => {
                 if (confirm('Sei sicuro di voler annullare questa prenotazione?')) {
-                    await this.cancelReservation(resv.id);
+                    try {
+                        await this.cancelReservation(resv.id);
+                    } catch (error) {
+                        console.error('[Manager] Error cancelling reservation:', error);
+                    }
                 }
             });
         } else {
@@ -1447,7 +1464,11 @@ class ReservationManager {
                 console.log('[Manager] Delete button clicked!', e);
                 if (confirm('Sei sicuro di voler eliminare definitivamente questa prenotazione?')) {
                     console.log('[Manager] User confirmed deletion');
-                    await this.deleteReservation(resv.id);
+                    try {
+                        await this.deleteReservation(resv.id);
+                    } catch (error) {
+                        console.error('[Manager] Error deleting reservation:', error);
+                    }
                 } else {
                     console.log('[Manager] User cancelled deletion');
                 }
@@ -1677,7 +1698,7 @@ class ReservationManager {
             
             const meal = document.getElementById('new-meal').value;
             const date = document.getElementById('new-date').value;
-            const party = parseInt(document.getElementById('new-party').value);
+            const party = parseInt(document.getElementById('new-party').value, 10);
 
             if (!meal || !date || !party) {
                 alert('Compila tutti i campi obbligatori');
@@ -1686,7 +1707,12 @@ class ReservationManager {
 
             // Salva i dati e passa allo step 2
             this.newReservationData = { meal, date, party };
-            await this.showNewReservationStep2();
+            try {
+                await this.showNewReservationStep2();
+            } catch (error) {
+                console.error('[Manager] Error loading step 2:', error);
+                alert('Errore nel caricamento degli slot disponibili');
+            }
         });
 
         this.dom.modalBody.querySelector('[data-action="cancel-new"]')?.addEventListener('click', () => {
@@ -1926,11 +1952,19 @@ class ReservationManager {
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await this.createNewReservation();
+            try {
+                await this.createNewReservation();
+            } catch (error) {
+                console.error('[Manager] Error creating reservation:', error);
+            }
         });
 
         this.dom.modalBody.querySelector('[data-action="back-step2"]')?.addEventListener('click', async () => {
-            await this.showNewReservationStep2();
+            try {
+                await this.showNewReservationStep2();
+            } catch (error) {
+                console.error('[Manager] Error going back to step 2:', error);
+            }
         });
     }
 

@@ -2,8 +2,6 @@
  * Gestione della navigazione del form
  */
 
-import { closestSection, firstFocusable } from '../utils/dom-helpers.js';
-
 export class FormNavigation {
     constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState, widgetRoot, form = null, copy = {}) {
         this.sections = sections;
@@ -221,8 +219,8 @@ export class FormNavigation {
         }
 
         this.state.unlocked[key] = true;
-        const eventName = this.events.section_unlocked || 'section_unlocked';
         // Qui dovresti chiamare pushDataLayerEvent se disponibile
+        // const eventName = this.events.section_unlocked || 'section_unlocked';
         // pushDataLayerEvent(eventName, { section: key });
     }
 

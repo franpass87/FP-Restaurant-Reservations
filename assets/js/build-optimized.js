@@ -247,10 +247,8 @@ function buildOptimized() {
 }
 
 // Esegui build se chiamato direttamente
-// eslint-disable-next-line no-undef
 if (import.meta.url.endsWith(process.argv[1])) {
     const success = buildOptimized();
-    // eslint-disable-next-line no-undef
     process.exit(success ? 0 : 1);
 }
 
