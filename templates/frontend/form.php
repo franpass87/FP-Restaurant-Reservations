@@ -77,6 +77,7 @@ $dataset = [
     'steps'   => $steps,
     'events'  => $events,
     'privacy' => $privacy,
+    'meals'   => $meals,
 ];
 
 $datasetJson = wp_json_encode($dataset);
@@ -281,6 +282,7 @@ if ($styleCss !== '') {
                                                 $mealHint  = isset($meal['hint']) ? (string) $meal['hint'] : '';
                                                 $mealNotice = isset($meal['notice']) ? (string) $meal['notice'] : '';
                                                 $mealPrice  = isset($meal['price']) ? (string) $meal['price'] : '';
+                                                $mealAvailableDays = isset($meal['available_days']) && is_array($meal['available_days']) ? wp_json_encode($meal['available_days']) : '[]';
                                                 $isActive  = !empty($meal['active']);
                                                 ?>
                                                 <button
@@ -291,6 +293,7 @@ if ($styleCss !== '') {
                                                     data-meal-notice="<?php echo esc_attr($mealNotice); ?>"
                                                     data-meal-default-notice="<?php echo esc_attr($mealNotice); ?>"
                                                     data-meal-price="<?php echo esc_attr($mealPrice); ?>"
+                                                    data-meal-available-days="<?php echo esc_attr($mealAvailableDays); ?>"
                                                     <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
                                                 >
                                                     <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>

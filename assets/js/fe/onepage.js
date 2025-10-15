@@ -204,6 +204,11 @@ class FormApp {
 
             if (button.hasAttribute('data-active') && _this.hiddenMeal) {
                 _this.applyMealSelection(button);
+                // Imposta i giorni disponibili per il meal di default
+                const mealKey = button.getAttribute('data-fp-resv-meal') || '';
+                if (mealKey) {
+                    _this.updateAvailableDaysForMeal(mealKey);
+                }
             }
         });
     }
@@ -763,7 +768,7 @@ class FormApp {
         }
 
         // Trova il meal selezionato dall'array dei meals
-        const meals = this.config && this.config.meals ? this.config.meals : [];
+        const meals = this.dataset && this.dataset.meals ? this.dataset.meals : [];
         const selectedMeal = meals.find(meal => meal.key === mealKey);
 
         // Se il meal ha giorni disponibili specifici, usali

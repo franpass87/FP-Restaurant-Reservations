@@ -12,19 +12,19 @@ function C(n) {
   const t = Z(n);
   return t === "" ? "" : t.replace(/^0+/, "");
 }
-function T(n) {
+function D(n) {
   return Z(n);
 }
 function ut(n, t) {
-  const e = C(n), i = T(t);
+  const e = C(n), i = D(t);
   return e === "" || i === "" ? "" : "+" + e + i;
 }
 function H(n) {
-  const t = T(n);
+  const t = D(n);
   return t.length >= 6 && t.length <= 15;
 }
 function ht(n) {
-  const t = T(n);
+  const t = D(n);
   if (t === "")
     return { masked: "", digits: "" };
   const e = [3, 4], i = [];
@@ -42,10 +42,10 @@ function z(n, t) {
     const a = i.length - e.length, r = Math.max(0, s + a);
     n.setSelectionRange(r, r);
   }
-  n.setAttribute("data-phone-local", T(n.value)), n.setAttribute("data-phone-cc", C(t));
+  n.setAttribute("data-phone-local", D(n.value)), n.setAttribute("data-phone-cc", C(t));
 }
-function D(n, t) {
-  const e = T(n.value), i = C(t);
+function T(n, t) {
+  const e = D(n.value), i = C(t);
   return {
     e164: ut(i, e),
     local: e,
@@ -244,9 +244,13 @@ class et {
         const i = e.getAttribute("data-meal-notice") || "";
         i !== "" && e.setAttribute("data-meal-default-notice", i);
       }
-      e.addEventListener("click", function(i) {
+      if (e.addEventListener("click", function(i) {
         i.preventDefault(), t.handleFirstInteraction(), t.handleMealSelection(e);
-      }), e.hasAttribute("data-active") && t.hiddenMeal && t.applyMealSelection(e);
+      }), e.hasAttribute("data-active") && t.hiddenMeal) {
+        t.applyMealSelection(e);
+        const i = e.getAttribute("data-fp-resv-meal") || "";
+        i && t.updateAvailableDaysForMeal(i);
+      }
     });
   }
   initializePhoneField() {
@@ -478,7 +482,7 @@ class et {
   updateAvailableDaysForMeal(t) {
     if (!this.dateField || !t)
       return;
-    const i = (this.config && this.config.meals ? this.config.meals : []).find((a) => a.key === t);
+    const i = (this.dataset && this.dataset.meals ? this.dataset.meals : []).find((a) => a.key === t);
     i && i.available_days && i.available_days.length > 0 ? this.currentAvailableDays = i.available_days : this.currentAvailableDays = this.config && this.config.available_days ? this.config.available_days : [];
     const s = this.dateField.value;
     if (s && this.currentAvailableDays.length > 0) {
@@ -691,7 +695,7 @@ class et {
       }
       let r = !1, o = "";
       if (s && typeof s.checkValidity == "function" && !s.checkValidity() && (r = !0, o = e[i] || ""), i === "email" && s && s.value && s.value.trim() !== "" && s.checkValidity() && (r = !1, o = ""), i === "phone" && this.phoneField) {
-        const d = D(this.phoneField, this.getPhoneCountryCode());
+        const d = T(this.phoneField, this.getPhoneCountryCode());
         d.local && !H(d.local) && (r = !0, o = this.copy.invalidPhone);
       }
       i === "consent" && s && s.checked && (r = !1, o = ""), r ? (a.textContent = o, a.hidden = !1, s && s.setAttribute && s.setAttribute("aria-invalid", "true")) : (a.textContent = "", a.hidden = !0, s && s.removeAttribute && s.removeAttribute("aria-invalid"));
@@ -730,10 +734,10 @@ class et {
     const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), a = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), d = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), m = this.form.querySelector('[data-fp-resv-field="pets"]');
     let k = "";
     s && s.value && (k = s.value.trim()), a && a.value && (k = (k + " " + a.value.trim()).trim());
-    let P = "";
-    if (r && r.value && (P = r.value.trim()), o && o.value) {
+    let F = "";
+    if (r && r.value && (F = r.value.trim()), o && o.value) {
       const S = this.getPhoneCountryCode(), I = (S ? "+" + S + " " : "") + o.value.trim();
-      P = P !== "" ? P + " / " + I : I;
+      F = F !== "" ? F + " / " + I : I;
     }
     const w = [];
     h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && w.push("Seggioloni: " + parseInt(h.value, 10)), v && "checked" in v && v.checked && w.push("Tavolo accessibile per sedia a rotelle"), m && "checked" in m && m.checked && w.push("Animali domestici");
@@ -753,7 +757,7 @@ class et {
           S.textContent = k;
           break;
         case "contact":
-          S.textContent = P;
+          S.textContent = F;
           break;
         case "notes":
           S.textContent = d && d.value ? d.value : "";
@@ -806,8 +810,8 @@ class et {
         let m;
         try {
           m = h ? JSON.parse(h) : {};
-        } catch (P) {
-          console.error("[FP-RESV] Errore parsing risposta errore:", P), m = { message: "Risposta non valida dal server" };
+        } catch (F) {
+          console.error("[FP-RESV] Errore parsing risposta errore:", F), m = { message: "Risposta non valida dal server" };
         }
         if (console.error("[FP-RESV] Errore API:", {
           status: d.status,
@@ -815,9 +819,9 @@ class et {
           errorPayload: m
         }), d.status === 403 && !this.state.nonceRetried) {
           console.warn("[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce..."), await new Promise((w) => setTimeout(w, 500));
-          const P = await this.refreshNonce();
-          if (console.log("[FP-RESV] Nonce fresco ottenuto:", P ? P.substring(0, 10) + "..." : "FALLITO"), P) {
-            this.state.nonceRetried = !0, s.fp_resv_nonce = P, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((b) => setTimeout(b, 200));
+          const F = await this.refreshNonce();
+          if (console.log("[FP-RESV] Nonce fresco ottenuto:", F ? F.substring(0, 10) + "..." : "FALLITO"), F) {
+            this.state.nonceRetried = !0, s.fp_resv_nonce = F, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((b) => setTimeout(b, 200));
             const w = await fetch(a, {
               method: "POST",
               headers: {
@@ -907,7 +911,7 @@ class et {
       i ? (console.log("[FP-RESV] Nonce trovato nel DOM:", i.value.substring(0, 10) + "..."), e.fp_resv_nonce = i.value) : console.error("[FP-RESV] Campo nonce non trovato nel DOM!");
     }
     if (this.phoneField) {
-      const i = D(this.phoneField, this.getPhoneCountryCode());
+      const i = T(this.phoneField, this.getPhoneCountryCode());
       i.e164 && (e.fp_resv_phone = i.e164), i.country && (e.fp_resv_phone_cc = i.country), i.local && (e.fp_resv_phone_local = i.local);
     }
     if (this.phonePrefixField && this.phonePrefixField.value && !e.fp_resv_phone_cc) {
@@ -951,13 +955,13 @@ class et {
   preparePhonePayload() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = T(this.phoneField, this.getPhoneCountryCode());
     this.hiddenPhoneE164 && (this.hiddenPhoneE164.value = t.e164), this.hiddenPhoneCc && (this.hiddenPhoneCc.value = t.country), this.hiddenPhoneLocal && (this.hiddenPhoneLocal.value = t.local);
   }
   validatePhoneField() {
     if (!this.phoneField)
       return;
-    const t = D(this.phoneField, this.getPhoneCountryCode());
+    const t = T(this.phoneField, this.getPhoneCountryCode());
     if (t.local === "") {
       this.phoneField.setCustomValidity(""), this.phoneField.removeAttribute("aria-invalid");
       return;
@@ -1293,8 +1297,8 @@ document.addEventListener("fp-resv:tracking:push", function(n) {
   const i = t.payload || t.data || {};
   g(e, i && typeof i == "object" ? i : {});
 });
-const Et = 400, wt = 6e4, Pt = 3, Y = 600;
-function Ft(n, t) {
+const Et = 400, wt = 6e4, Ft = 3, Y = 600;
+function Pt(n, t) {
   let e;
   try {
     e = new URL(n, window.location.origin);
@@ -1317,10 +1321,10 @@ function Ct(n) {
     const u = l.trim().toLowerCase();
     if (u === "")
       return "";
-    const f = ((A) => typeof A.normalize == "function" ? A.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : A)(u), y = (A) => A.some((c) => f.startsWith(c)), F = (A) => A.some((c) => f.includes(c));
-    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : u === "waitlist" || u === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || F(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : u;
+    const f = ((A) => typeof A.normalize == "function" ? A.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : A)(u), y = (A) => A.some((c) => f.startsWith(c)), P = (A) => A.some((c) => f.includes(c));
+    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : u === "waitlist" || u === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || P(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : u;
   }
-  function P(l, u) {
+  function F(l, u) {
     const p = Array.isArray(l) ? l : [], f = p.length;
     if (f === 0)
       return u === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
@@ -1355,7 +1359,7 @@ function Ct(n) {
   }
   function q(l) {
     s && (s.hidden = !1);
-    const u = l && typeof l == "object", p = u && typeof l.meal == "string" ? l.meal.trim() : "", f = u && typeof l.date == "string" ? l.date.trim() : "", y = u && typeof l.party < "u" ? String(l.party).trim() : "", F = u && !!l.requiresMeal, A = p !== "", E = f !== "" && (y !== "" && y !== "0") && (!F || A), _ = F && !A ? n.strings && n.strings.selectMeal || "" : E && n.strings && n.strings.slotsEmpty || "";
+    const u = l && typeof l == "object", p = u && typeof l.meal == "string" ? l.meal.trim() : "", f = u && typeof l.date == "string" ? l.date.trim() : "", y = u && typeof l.party < "u" ? String(l.party).trim() : "", P = u && !!l.requiresMeal, A = p !== "", E = f !== "" && (y !== "" && y !== "0") && (!P || A), _ = P && !A ? n.strings && n.strings.selectMeal || "" : E && n.strings && n.strings.slotsEmpty || "";
     b(_, "idle"), i && B(i), w(l, { state: E ? "unavailable" : "unknown", slots: 0 });
   }
   function I() {
@@ -1395,12 +1399,12 @@ function Ct(n) {
       q(u);
       return;
     }
-    f.forEach((F) => {
+    f.forEach((P) => {
       const A = document.createElement("li"), c = document.createElement("button");
-      c.type = "button", c.textContent = F.label || "", c.dataset.slot = F.start || "", c.dataset.slotStatus = F.status || "", c.setAttribute("aria-pressed", v && v.start === F.start ? "true" : "false"), c.addEventListener("click", () => nt(F, c)), A.appendChild(c), i.appendChild(A);
+      c.type = "button", c.textContent = P.label || "", c.dataset.slot = P.start || "", c.dataset.slotStatus = P.status || "", c.setAttribute("aria-pressed", v && v.start === P.start ? "true" : "false"), c.addEventListener("click", () => nt(P, c)), A.appendChild(c), i.appendChild(A);
     }), b(n.strings && n.strings.slotsUpdated || "", !1);
     const y = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
-    w(u, P(f, y));
+    w(u, F(f, y));
   }
   function M(l, u) {
     if (h = l, !l || !l.date || !l.party) {
@@ -1413,8 +1417,8 @@ function Ct(n) {
       return;
     }
     W(), I(), S(), b(n.strings && n.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), w(l, { state: "loading", slots: 0 });
-    const F = Ft(n.endpoint, l), A = performance.now();
-    fetch(F, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
+    const P = Pt(n.endpoint, l), A = performance.now();
+    fetch(P, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((c) => c.json().catch(() => ({})).then((x) => {
       if (!c.ok) {
         const E = new Error("availability_error");
         E.status = c.status, E.payload = x;
@@ -1444,7 +1448,7 @@ function Ct(n) {
         const L = Number.parseInt(E.retry_after, 10);
         Number.isFinite(L) && (R = L);
       }
-      if (u >= Pt - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+      if (u >= Ft - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
         const L = u + 1;
         typeof n.onRetry == "function" && n.onRetry(L);
         const ct = R > 0 ? Math.max(R * 1e3, Y) : Y * Math.pow(2, u);
