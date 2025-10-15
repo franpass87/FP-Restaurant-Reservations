@@ -3,6 +3,8 @@
  * Live preview and color picker functionality
  */
 
+/* global fpResvFormColors */
+
 (function() {
     'use strict';
 
@@ -165,8 +167,17 @@
             presetBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const colors = JSON.parse(btn.getAttribute('data-colors'));
-                    this.applyPreset(colors);
+                    try {
+                        const colorsAttr = btn.getAttribute('data-colors');
+                        if (!colorsAttr) {
+                            console.error('Missing data-colors attribute');
+                            return;
+                        }
+                        const colors = JSON.parse(colorsAttr);
+                        this.applyPreset(colors);
+                    } catch (error) {
+                        console.error('Error parsing preset colors:', error);
+                    }
                 });
             });
         },

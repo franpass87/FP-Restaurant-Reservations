@@ -291,7 +291,7 @@ class et {
       if (this.currentAvailableDays.length > 0 && s) {
         const r = new Date(s).getDay().toString();
         if (!this.currentAvailableDays.includes(r)) {
-          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], h = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((v) => o[parseInt(v)]).join(", ")}.`;
+          const o = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], h = `Questo giorno non è disponibile. Giorni disponibili: ${this.currentAvailableDays.map((v) => o[parseInt(v, 10)]).join(", ")}.`;
           i.target.setCustomValidity(h), i.target.setAttribute("aria-invalid", "true"), window.console && window.console.warn && console.warn("[FP-RESV] " + h), setTimeout(() => {
             i.target.value = "";
           }, 100);

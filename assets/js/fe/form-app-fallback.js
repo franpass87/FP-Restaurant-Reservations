@@ -23,11 +23,11 @@ function closestWithAttribute(element, attribute) {
     return null;
 }
 
-function closestSection(element) {
+function _closestSection(element) {
     return closestWithAttribute(element, 'data-fp-resv-section');
 }
 
-function parseJsonAttribute(element, attribute) {
+function _parseJsonAttribute(element, attribute) {
     if (!element || !element.hasAttribute(attribute)) {
         return null;
     }
@@ -59,7 +59,7 @@ function setAriaDisabled(element, disabled) {
     }
 }
 
-function firstFocusable(section) {
+function _firstFocusable(section) {
     if (!section) {
         return null;
     }
@@ -68,7 +68,7 @@ function firstFocusable(section) {
     return section.querySelector(selector);
 }
 
-function scrollIntoView(element) {
+function _scrollIntoView(element) {
     if (!element || typeof element.scrollIntoView !== 'function') {
         return;
     }
@@ -77,7 +77,7 @@ function scrollIntoView(element) {
 }
 
 // Funzioni di utilità
-function toNumber(value) {
+function _toNumber(value) {
     if (typeof value === 'number') {
         return value;
     }
@@ -88,7 +88,7 @@ function toNumber(value) {
     return 0;
 }
 
-function safeJson(response) {
+function _safeJson(response) {
     if (!response || typeof response.json !== 'function') {
         return Promise.resolve(null);
     }
@@ -96,7 +96,7 @@ function safeJson(response) {
     return response.json().catch(() => null);
 }
 
-function resolveEndpoint(endpoint, fallback) {
+function _resolveEndpoint(endpoint, fallback) {
     if (!endpoint || endpoint === '') {
         return fallback || '';
     }

@@ -3,15 +3,14 @@
  * Versione modulare per migliorare la manutenibilità
  */
 
-import { closestSection, parseJsonAttribute, setAriaDisabled, firstFocusable } from './utils/dom-helpers.js';
-import { toNumber, safeJson, resolveEndpoint } from './utils/validation.js';
+import { closestSection, setAriaDisabled } from './utils/dom-helpers.js';
 import { pushDataLayerEvent, parseDataset } from './utils/tracking.js';
 import { FormState } from './components/form-state.js';
 import { FormValidation } from './components/form-validation.js';
 import { FormNavigation } from './components/form-navigation.js';
-import { applyMask, buildPayload, isValidLocal, normalizeCountryCode } from './phone.js';
+import { applyMask } from './phone.js';
 import { formatDebugMessage } from './debug.js';
-import { STEP_ORDER, idleCallback, loadAvailabilityModule } from './constants.js';
+import { STEP_ORDER, idleCallback } from './constants.js';
 
 export class FormApp {
     constructor(root) {
@@ -289,7 +288,7 @@ export class FormApp {
 
                 if (!availableDays.includes(dayOfWeek)) {
                     const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d)]).join(', ');
+                    const availableDayNames = availableDays.map(d => dayNames[parseInt(d, 10)]).join(', ');
                     const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
                     
                     event.target.setCustomValidity(errorMessage);

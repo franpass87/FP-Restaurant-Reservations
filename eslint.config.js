@@ -6,6 +6,21 @@ export default [
     ignores: ["node_modules/**", "vendor/**", "build/**", "dist/**"]
   },
   {
+    files: ["assets/js/build-*.js", "assets/js/test-*.js"],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: "module",
+      globals: {
+        ...globals.node
+      }
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      "no-unused-vars": ["warn", { "args": "none", "caughtErrors": "none", "varsIgnorePattern": "^_" }],
+      "no-useless-escape": "off"
+    }
+  },
+  {
     files: ["assets/js/**/*.{js,ts}", "scripts/**/*.{js,ts}"],
     languageOptions: {
       ecmaVersion: 2020,
