@@ -124,87 +124,84 @@ final class REST
             ]
         );
         
-        // DEBUG ENDPOINT
-        register_rest_route(
-            'fp-resv/v1',
-            '/test',
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => function() {
-                    return new WP_REST_Response([
-                        'success' => true,
-                        'message' => 'REST API funziona!',
-                        'timestamp' => time(),
-                    ], 200);
-                },
-                'permission_callback' => '__return_true',
-            ]
-        );
-        
-        // TEST OUTPUT ENDPOINT
-        register_rest_route(
-            'fp-resv/v1',
-            '/test-output',
-            [
-                'methods'             => WP_REST_Server::CREATABLE,
-                'callback'            => function(WP_REST_Request $request) {
-                    $data = [
-                        'success' => true,
-                        'message' => 'Test output funziona!',
-                        'timestamp' => time(),
-                        'payload' => $request->get_json_params(),
-                    ];
-                    
-                    // Test diretto senza WP_REST_Response
-                    header('Content-Type: application/json');
-                    http_response_code(200);
-                    echo wp_json_encode($data);
-                    exit;
-                },
-                'permission_callback' => '__return_true',
-            ]
-        );
-
-        // Test endpoint con die() invece di exit()
-        register_rest_route(
-            'fp-resv/v1',
-            '/test-die',
-            [
-                'methods'             => WP_REST_Server::CREATABLE,
-                'callback'            => function(WP_REST_Request $request) {
-                    $data = [
-                        'success' => true,
-                        'message' => 'Test die() funziona!',
-                        'timestamp' => time(),
-                        'method' => 'die()',
-                    ];
-                    header('Content-Type: application/json');
-                    http_response_code(200);
-                    echo wp_json_encode($data);
-                    die(); // Forza terminazione
-                },
-                'permission_callback' => '__return_true',
-            ]
-        );
-
-        // Test endpoint che bypassa completamente WordPress
-        register_rest_route(
-            'fp-resv/v1',
-            '/test-raw',
-            [
-                'methods'             => WP_REST_Server::CREATABLE,
-                'callback'            => function(WP_REST_Request $request) {
-                    // Bypassa completamente WordPress
-                    if (!headers_sent()) {
+        // DEBUG ENDPOINTS - Solo in modalità debug per sviluppo
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            register_rest_route(
+                'fp-resv/v1',
+                '/test',
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => function() {
+                        return new WP_REST_Response([
+                            'success' => true,
+                            'message' => 'REST API funziona!',
+                            'timestamp' => time(),
+                        ], 200);
+                    },
+                    'permission_callback' => '__return_true',
+                ]
+            );
+            
+            register_rest_route(
+                'fp-resv/v1',
+                '/test-output',
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => function(WP_REST_Request $request) {
+                        $data = [
+                            'success' => true,
+                            'message' => 'Test output funziona!',
+                            'timestamp' => time(),
+                            'payload' => $request->get_json_params(),
+                        ];
+                        
                         header('Content-Type: application/json');
                         http_response_code(200);
-                    }
-                    echo '{"success":true,"message":"Raw output","timestamp":' . time() . '}';
-                    die();
-                },
-                'permission_callback' => '__return_true',
-            ]
-        );
+                        echo wp_json_encode($data);
+                        exit;
+                    },
+                    'permission_callback' => '__return_true',
+                ]
+            );
+
+            register_rest_route(
+                'fp-resv/v1',
+                '/test-die',
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => function(WP_REST_Request $request) {
+                        $data = [
+                            'success' => true,
+                            'message' => 'Test die() funziona!',
+                            'timestamp' => time(),
+                            'method' => 'die()',
+                        ];
+                        header('Content-Type: application/json');
+                        http_response_code(200);
+                        echo wp_json_encode($data);
+                        die();
+                    },
+                    'permission_callback' => '__return_true',
+                ]
+            );
+
+            register_rest_route(
+                'fp-resv/v1',
+                '/test-raw',
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => function(WP_REST_Request $request) {
+                        if (!headers_sent()) {
+                            header('Content-Type: application/json');
+                            http_response_code(200);
+                        }
+                        echo '{"success":true,"message":"Raw output","timestamp":' . time() . '}';
+                        die();
+                    },
+                    'permission_callback' => '__return_true',
+                ]
+            );
+        }
     }
 
     public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
