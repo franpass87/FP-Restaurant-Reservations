@@ -21,26 +21,44 @@ final class Roles
     public const MANAGE_RESERVATIONS = 'manage_fp_reservations';
 
     /**
+     * Capability per visualizzare solo il manager delle prenotazioni.
+     */
+    public const VIEW_RESERVATIONS_MANAGER = 'view_fp_reservations_manager';
+
+    /**
      * Slug del ruolo Restaurant Manager.
      */
     public const RESTAURANT_MANAGER = 'fp_restaurant_manager';
+
+    /**
+     * Slug del ruolo Reservations Viewer (solo accesso al manager).
+     */
+    public const RESERVATIONS_VIEWER = 'fp_reservations_viewer';
 
     /**
      * Crea i ruoli personalizzati del plugin.
      */
     public static function create(): void
     {
-        // Rimuove il ruolo se esiste già (per aggiornare le capabilities)
+        // Rimuove i ruoli se esistono già (per aggiornare le capabilities)
         remove_role(self::RESTAURANT_MANAGER);
+        remove_role(self::RESERVATIONS_VIEWER);
 
-        // Crea il ruolo Restaurant Manager con le capabilities base
+        // Crea il ruolo Restaurant Manager con le capabilities complete
         add_role(
             self::RESTAURANT_MANAGER,
             __('Restaurant Manager', 'fp-restaurant-reservations'),
             self::getRestaurantManagerCapabilities()
         );
 
-        // Aggiungi la capability anche agli amministratori
+        // Crea il ruolo Reservations Viewer (solo accesso al manager)
+        add_role(
+            self::RESERVATIONS_VIEWER,
+            __('Reservations Viewer', 'fp-restaurant-reservations'),
+            self::getReservationsViewerCapabilities()
+        );
+
+        // Aggiungi le capability anche agli amministratori
         self::addCapabilityToAdministrators();
     }
 
@@ -50,11 +68,13 @@ final class Roles
     public static function remove(): void
     {
         remove_role(self::RESTAURANT_MANAGER);
+        remove_role(self::RESERVATIONS_VIEWER);
         
-        // Rimuove la capability dagli amministratori
+        // Rimuove le capability dagli amministratori
         $adminRole = get_role('administrator');
         if ($adminRole !== null) {
             $adminRole->remove_cap(self::MANAGE_RESERVATIONS);
+            $adminRole->remove_cap(self::VIEW_RESERVATIONS_MANAGER);
         }
     }
 
@@ -74,8 +94,11 @@ final class Roles
     private static function getRestaurantManagerCapabilities(): array
     {
         return [
-            // Capability principale del plugin
+            // Capability principale del plugin (accesso completo)
             self::MANAGE_RESERVATIONS => true,
+
+            // Capability per visualizzare il manager
+            self::VIEW_RESERVATIONS_MANAGER => true,
 
             // Capabilities base di lettura (necessarie per accedere al backend)
             'read' => true,
@@ -86,15 +109,35 @@ final class Roles
     }
 
     /**
-     * Aggiunge la capability agli amministratori.
+     * Ottiene le capabilities per il ruolo Reservations Viewer.
+     * Questo ruolo ha accesso SOLO al manager delle prenotazioni.
+     * 
+     * @return array<string, bool>
+     */
+    private static function getReservationsViewerCapabilities(): array
+    {
+        return [
+            // Solo la capability per visualizzare il manager
+            self::VIEW_RESERVATIONS_MANAGER => true,
+
+            // Capability base di lettura (necessaria per accedere al backend)
+            'read' => true,
+        ];
+    }
+
+    /**
+     * Aggiunge le capability agli amministratori.
      */
     private static function addCapabilityToAdministrators(): void
     {
         $adminRole = get_role('administrator');
         if ($adminRole !== null) {
-            // Verifica se la capability è già presente prima di aggiungerla
+            // Verifica se le capability sono già presenti prima di aggiungerle
             if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
                 $adminRole->add_cap(self::MANAGE_RESERVATIONS);
+            }
+            if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
+                $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
             }
         }
     }
@@ -107,8 +150,13 @@ final class Roles
     public static function ensureAdminCapabilities(): void
     {
         $adminRole = get_role('administrator');
-        if ($adminRole !== null && !$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
-            $adminRole->add_cap(self::MANAGE_RESERVATIONS);
+        if ($adminRole !== null) {
+            if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
+                $adminRole->add_cap(self::MANAGE_RESERVATIONS);
+            }
+            if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
+                $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
+            }
         }
     }
 }

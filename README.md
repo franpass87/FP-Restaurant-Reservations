@@ -89,6 +89,15 @@ Tutte le schermate dell'area di amministrazione condividono un layout coerente (
 - **Impostazioni** – Schede per generali, notifiche, pagamenti Stripe, Brevo, Google Calendar, privacy e lingua.
 - **Eventi** – Custom post type incluso nel menu del plugin per gestire degustazioni e serate speciali.
 
+## Ruoli e permessi
+
+Il plugin introduce due ruoli personalizzati con livelli di accesso differenziati:
+
+- **Restaurant Manager** (`fp_restaurant_manager`) – Accesso completo a tutte le funzionalità del plugin (Manager, Impostazioni, Chiusure, Tavoli, Report, Diagnostica) senza poter accedere ad altre aree di WordPress.
+- **Reservations Viewer** (`fp_reservations_viewer`) – Accesso limitato **solo al Manager delle prenotazioni**, ideale per receptionist o staff che deve gestire prenotazioni senza modificare configurazioni. ⭐ **NUOVO**
+
+Gli amministratori WordPress mantengono sempre l'accesso completo a tutte le funzionalità. Per maggiori dettagli sulla configurazione e i casi d'uso, consulta la [guida completa ai ruoli](NUOVO-RUOLO-RESERVATIONS-VIEWER.md).
+
 ## API, sicurezza e performance
 
 - Endpoint REST namespaced `fp-resv/v1` con `no-store`, sanitizzazione parametri, nonce/capability dove richiesto e rate limit sugli slot.

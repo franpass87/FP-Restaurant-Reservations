@@ -9,6 +9,7 @@ use FP\Resv\Core\Roles;
 use FP\Resv\Core\ErrorLogger;
 use function __;
 use function add_action;
+use function add_menu_page;
 use function add_submenu_page;
 use function admin_url;
 use function current_user_can;
@@ -48,19 +49,40 @@ final class AdminController
         // Assicura che gli amministratori abbiano sempre la capability necessaria
         Roles::ensureAdminCapabilities();
         
-        // Determina la capability appropriata: usa manage_options per admin se manage_fp_reservations non è disponibile
-        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
-            ? 'manage_options' 
-            : self::CAPABILITY;
+        // Determina la capability appropriata
+        // Priorità: manage_options (admin) > manage_fp_reservations (Restaurant Manager) > view_fp_reservations_manager (Reservations Viewer)
+        if (current_user_can('manage_options') && !current_user_can(self::CAPABILITY)) {
+            $capability = 'manage_options';
+        } elseif (current_user_can(self::CAPABILITY)) {
+            $capability = self::CAPABILITY;
+        } else {
+            $capability = Roles::VIEW_RESERVATIONS_MANAGER;
+        }
         
-        $this->pageHook = add_submenu_page(
-            'fp-resv-settings',
-            __('Manager Prenotazioni', 'fp-restaurant-reservations'),
-            __('Manager', 'fp-restaurant-reservations'),
-            $capability,
-            self::PAGE_SLUG,
-            [$this, 'renderPage']
-        ) ?: null;
+        // Se l'utente ha solo la capability VIEW_RESERVATIONS_MANAGER, crea un menu principale
+        // Altrimenti aggiunge come submenu
+        if (current_user_can(Roles::VIEW_RESERVATIONS_MANAGER) && !current_user_can(self::CAPABILITY) && !current_user_can('manage_options')) {
+            // Crea un menu principale per gli utenti con accesso limitato
+            $this->pageHook = add_menu_page(
+                __('Prenotazioni', 'fp-restaurant-reservations'),
+                __('Prenotazioni', 'fp-restaurant-reservations'),
+                $capability,
+                self::PAGE_SLUG,
+                [$this, 'renderPage'],
+                'dashicons-clipboard',
+                56
+            ) ?: null;
+        } else {
+            // Aggiungi come submenu per gli utenti con accesso completo
+            $this->pageHook = add_submenu_page(
+                'fp-resv-settings',
+                __('Manager Prenotazioni', 'fp-restaurant-reservations'),
+                __('Manager', 'fp-restaurant-reservations'),
+                $capability,
+                self::PAGE_SLUG,
+                [$this, 'renderPage']
+            ) ?: null;
+        }
     }
 
     public function addMobileViewportMeta(): void

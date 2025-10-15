@@ -880,11 +880,13 @@ final class AdminREST
         // DEBUG: Log controllo permessi
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
+        $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
         $canManageOptions = current_user_can('manage_options');
-        $result = $canManage || $canManageOptions;
+        $result = $canManage || $canView || $canManageOptions;
         
         error_log('[FP Resv Permissions] User ID: ' . $userId);
         error_log('[FP Resv Permissions] Can manage reservations: ' . ($canManage ? 'YES' : 'NO'));
+        error_log('[FP Resv Permissions] Can view manager: ' . ($canView ? 'YES' : 'NO'));
         error_log('[FP Resv Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
         error_log('[FP Resv Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
         
