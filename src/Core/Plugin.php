@@ -100,12 +100,6 @@ final class Plugin
      */
     public static function assetVersion(): string
     {
-        // TEMPORARY FIX: Force cache bust for JavaScript recompilation
-        // TODO: Remove this after verifying fix works in production
-        return self::VERSION . '.' . time();
-        
-        // Original code (commented out temporarily)
-        /*
         // In debug mode, always use current timestamp to bust cache
         if (defined('WP_DEBUG') && WP_DEBUG) {
             return self::VERSION . '.' . time();
@@ -127,7 +121,6 @@ final class Plugin
         }
         
         return self::VERSION . '.' . (int) $upgradeTime;
-        */
     }
 
     /**
