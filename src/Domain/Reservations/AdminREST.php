@@ -994,22 +994,25 @@ final class AdminREST
 
     /**
      * Verifica permessi per endpoint di scrittura (POST/PUT/DELETE)
-     * Permette accesso SOLO a: admin e manager (NO viewer!)
+     * Permette accesso a: admin, manager E viewer
+     * Il viewer ha accesso completo alle operazioni del Manager
      */
     public function checkManagePermissions(): bool
     {
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
+        $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
         $canManageOptions = current_user_can('manage_options');
-        $result = $canManage || $canManageOptions;
+        $result = $canManage || $canView || $canManageOptions;
         
         error_log('[FP Resv Manage Permissions] User ID: ' . $userId);
         error_log('[FP Resv Manage Permissions] Can manage reservations: ' . ($canManage ? 'YES' : 'NO'));
+        error_log('[FP Resv Manage Permissions] Can view manager: ' . ($canView ? 'YES' : 'NO'));
         error_log('[FP Resv Manage Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
         error_log('[FP Resv Manage Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
         
         if (!$result) {
-            error_log('[FP Resv Manage Permissions] ❌ ACCESSO NEGATO! Utente viewer non può modificare.');
+            error_log('[FP Resv Manage Permissions] ❌ ACCESSO NEGATO!');
         }
         
         return $result;
