@@ -567,30 +567,77 @@ final class AdminREST
                 'time' => $payload['time'] ?? 'N/A',
                 'party' => $payload['party'] ?? 'N/A',
                 'meal' => $payload['meal'] ?? 'N/A',
+                'first_name' => $payload['first_name'] ?? 'N/A',
+                'email' => $payload['email'] ?? 'N/A',
             ]));
 
             $result = $this->service->create($payload);
             
-            error_log('[FP Resv Admin] Prenotazione creata con ID: ' . ($result['id'] ?? 'N/A'));
+            $reservationId = (int) ($result['id'] ?? 0);
             
-            $entry = $this->reservations->findAgendaEntry((int) $result['id']);
-            
-            if ($entry === null) {
-                error_log('[FP Resv Admin] WARNING: Prenotazione creata ma non trovata con findAgendaEntry');
+            if ($reservationId <= 0) {
+                throw new RuntimeException('Prenotazione creata ma ID non valido');
             }
             
-            $responseData = [
-                'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
-                'result'      => $result,
-            ];
+            error_log('[FP Resv Admin] Prenotazione creata con ID: ' . $reservationId);
             
-            error_log('[FP Resv Admin] Response data: ' . json_encode($responseData));
+            // Tenta di recuperare la prenotazione appena creata con retry
+            $entry = null;
+            $maxRetries = 3;
+            for ($i = 0; $i < $maxRetries; $i++) {
+                $entry = $this->reservations->findAgendaEntry($reservationId);
+                if ($entry !== null) {
+                    break;
+                }
+                // Piccolo delay prima di riprovare (WordPress potrebbe avere cache)
+                if ($i < $maxRetries - 1) {
+                    usleep(50000); // 50ms
+                    error_log('[FP Resv Admin] Retry ' . ($i + 1) . ' per trovare prenotazione #' . $reservationId);
+                }
+            }
+            
+            if ($entry === null) {
+                error_log('[FP Resv Admin] ERRORE: Prenotazione #' . $reservationId . ' creata ma NON trovata dopo ' . $maxRetries . ' tentativi');
+                error_log('[FP Resv Admin] Dettagli result: ' . json_encode($result));
+                
+                // La prenotazione esiste ma non riusciamo a recuperarla - restituiamo comunque successo
+                // con i dati minimi necessari
+                $responseData = [
+                    'reservation' => [
+                        'id' => $reservationId,
+                        'status' => $result['status'] ?? 'pending',
+                        'date' => $payload['date'] ?? '',
+                        'time' => $payload['time'] ?? '',
+                        'party' => $payload['party'] ?? 0,
+                        'meal' => $payload['meal'] ?? '',
+                        'customer' => [
+                            'first_name' => $payload['first_name'] ?? '',
+                            'last_name' => $payload['last_name'] ?? '',
+                            'email' => $payload['email'] ?? '',
+                            'phone' => $payload['phone'] ?? '',
+                        ],
+                    ],
+                    'result' => $result,
+                    'warning' => 'Prenotazione creata ma recupero dati ritardato',
+                ];
+            } else {
+                $responseData = [
+                    'reservation' => $this->mapAgendaReservation($entry),
+                    'result'      => $result,
+                ];
+            }
+            
+            error_log('[FP Resv Admin] Response data: ' . json_encode([
+                'has_reservation' => isset($responseData['reservation']),
+                'reservation_id' => $responseData['reservation']['id'] ?? null,
+            ]));
             error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA ===');
             
             return rest_ensure_response($responseData);
             
         } catch (InvalidArgumentException|RuntimeException $exception) {
             error_log('[FP Resv Admin] Errore validazione: ' . $exception->getMessage());
+            error_log('[FP Resv Admin] Stack trace: ' . $exception->getTraceAsString());
             
             return new WP_Error(
                 'fp_resv_admin_reservation_invalid',
@@ -987,6 +1034,15 @@ final class AdminREST
 
         if ($request->offsetExists('visited') && in_array(strtolower((string) $request->get_param('visited')), ['1', 'true', 'yes', 'on'], true)) {
             $payload['status'] = 'visited';
+        }
+        
+        // Validazione campi obbligatori per prenotazioni manuali dal manager
+        if (empty($payload['email']) || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException(__('Email non valida o mancante', 'fp-restaurant-reservations'));
+        }
+        
+        if (empty($payload['first_name']) && empty($payload['last_name'])) {
+            throw new InvalidArgumentException(__('Specificare almeno nome o cognome', 'fp-restaurant-reservations'));
         }
 
         return $payload;

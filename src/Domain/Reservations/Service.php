@@ -211,6 +211,16 @@ class Service
             'consent_ts'        => $sanitized['consent_timestamp'],
             'consent_version'   => $sanitized['policy_version'],
         ]);
+        
+        if ($customerId <= 0) {
+            Logging::log('reservations', 'ERRORE: customer_id non valido dopo upsert', [
+                'email' => $sanitized['email'],
+                'customer_id' => $customerId,
+            ]);
+            throw new RuntimeException('Impossibile creare o recuperare il cliente');
+        }
+        
+        Logging::log('reservations', 'Cliente creato/trovato con ID: ' . $customerId);
 
         // Verifica atomica della disponibilità dentro una transazione
         // per prevenire race conditions quando arrivano prenotazioni simultanee
@@ -272,18 +282,33 @@ class Service
             ]);
 
             $reservationId = $this->repository->insert($reservationData);
+            
+            if ($reservationId <= 0) {
+                Logging::log('reservations', '❌ ERRORE: Insert ha restituito ID non valido', [
+                    'reservation_id' => $reservationId,
+                    'data' => $reservationData,
+                ]);
+                throw new RuntimeException('Impossibile salvare la prenotazione nel database');
+            }
 
             Logging::log('reservations', '✅ PRENOTAZIONE SALVATA NEL DB', [
                 'reservation_id' => $reservationId,
+                'customer_id' => $reservationData['customer_id'],
             ]);
 
             $reservation = $this->repository->find($reservationId);
             if ($reservation === null) {
                 Logging::log('reservations', '❌ ERRORE: Prenotazione salvata ma non trovata!', [
                     'reservation_id' => $reservationId,
+                    'customer_id' => $reservationData['customer_id'],
                 ]);
-                throw new RuntimeException('Reservation created but could not be retrieved.');
+                throw new RuntimeException('Prenotazione creata ma impossibile recuperarla. ID: ' . $reservationId);
             }
+            
+            Logging::log('reservations', '✅ Prenotazione trovata e verificata', [
+                'reservation_id' => $reservation->id,
+                'status' => $reservation->status,
+            ]);
             
             // Commit della transazione solo se tutto è andato a buon fine
             $this->repository->commit();
