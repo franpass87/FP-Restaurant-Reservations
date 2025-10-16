@@ -179,29 +179,35 @@ final class Repository
         }
 
         // STEP 2: Arricchisci con dati customers SOLO se ci sono prenotazioni
-        // Ottieni tutti i customer_id unici
-        $customerIds = array_filter(
-            array_unique(array_column($reservations, 'customer_id')),
-            fn($id) => $id !== null && $id > 0
-        );
+        // Ottieni tutti i customer_id unici (compatibile PHP 7.0+)
+        $customerIds = [];
+        foreach ($reservations as $reservation) {
+            $customerId = isset($reservation['customer_id']) ? (int) $reservation['customer_id'] : 0;
+            if ($customerId > 0 && !in_array($customerId, $customerIds, true)) {
+                $customerIds[] = $customerId;
+            }
+        }
 
         // Carica tutti i customers in un'unica query
         $customers = [];
         if (!empty($customerIds)) {
-            $placeholders = implode(',', array_fill(0, count($customerIds), '%d'));
+            // Sanitizza manualmente gli ID (sono già int da sopra, ma doppia sicurezza)
+            $safeIds = array_map('intval', $customerIds);
+            $idsString = implode(',', $safeIds);
+            
+            // Query diretta con ID già sanitizzati (int cast) - sicuro contro SQL injection
             $customersSql = 'SELECT id, first_name, last_name, email, phone, lang '
                 . 'FROM ' . $this->customersTableName() . ' '
-                . 'WHERE id IN (' . $placeholders . ')';
+                . 'WHERE id IN (' . $idsString . ')';
             
-            $customersRows = $this->wpdb->get_results(
-                $this->wpdb->prepare($customersSql, ...$customerIds),
-                ARRAY_A
-            );
+            $customersRows = $this->wpdb->get_results($customersSql, ARRAY_A);
             
             if (is_array($customersRows)) {
                 // Indicizza per customer_id per lookup veloce
                 foreach ($customersRows as $customer) {
-                    $customers[$customer['id']] = $customer;
+                    if (isset($customer['id'])) {
+                        $customers[(int) $customer['id']] = $customer;
+                    }
                 }
             }
         }
@@ -209,15 +215,15 @@ final class Repository
         // STEP 3: Combina reservations + customers
         $result = [];
         foreach ($reservations as $reservation) {
-            $customerId = $reservation['customer_id'] ?? null;
-            $customer = $customers[$customerId] ?? null;
+            $customerId = isset($reservation['customer_id']) ? (int) $reservation['customer_id'] : 0;
+            $customer = isset($customers[$customerId]) ? $customers[$customerId] : null;
             
             // Aggiungi campi customer alla reservation
-            $reservation['first_name'] = $customer['first_name'] ?? '';
-            $reservation['last_name'] = $customer['last_name'] ?? '';
-            $reservation['email'] = $customer['email'] ?? '';
-            $reservation['phone'] = $customer['phone'] ?? '';
-            $reservation['customer_lang'] = $customer['lang'] ?? 'it';
+            $reservation['first_name'] = ($customer && isset($customer['first_name'])) ? $customer['first_name'] : '';
+            $reservation['last_name'] = ($customer && isset($customer['last_name'])) ? $customer['last_name'] : '';
+            $reservation['email'] = ($customer && isset($customer['email'])) ? $customer['email'] : '';
+            $reservation['phone'] = ($customer && isset($customer['phone'])) ? $customer['phone'] : '';
+            $reservation['customer_lang'] = ($customer && isset($customer['lang'])) ? $customer['lang'] : 'it';
             
             $result[] = $reservation;
         }
