@@ -469,7 +469,17 @@ final class AdminREST
             $startDate = $start->format('Y-m-d');
             $endDate = $end->format('Y-m-d');
             
+            error_log('[FP Admin handleAgendaV2] Chiamata findAgendaRange con startDate=' . $startDate . ' endDate=' . $endDate);
+            
             $rows = $this->reservations->findAgendaRange($startDate, $endDate);
+            
+            error_log('[FP Admin handleAgendaV2] findAgendaRange ha restituito: ' . (is_array($rows) ? count($rows) : 'NULL') . ' righe');
+            
+            if (is_array($rows) && count($rows) > 0) {
+                error_log('[FP Admin handleAgendaV2] Prima riga: ' . wp_json_encode($rows[0]));
+            } else {
+                error_log('[FP Admin handleAgendaV2] ⚠️⚠️⚠️ NESSUNA RIGA RESTITUITA DA findAgendaRange! ⚠️⚠️⚠️');
+            }
             
             // STEP 8: Mappa prenotazioni
             $step = 8;
