@@ -125,7 +125,7 @@ final class AdminREST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [$this, 'handleCreateReservation'],
-                'permission_callback' => [$this, 'checkPermissions'],
+                'permission_callback' => [$this, 'checkManagePermissions'],
             ]
         );
 
@@ -136,12 +136,12 @@ final class AdminREST
                 [
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => [$this, 'handleUpdateReservation'],
-                    'permission_callback' => [$this, 'checkPermissions'],
+                    'permission_callback' => [$this, 'checkManagePermissions'],
                 ],
                 [
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => [$this, 'handleDeleteReservation'],
-                    'permission_callback' => [$this, 'checkPermissions'],
+                    'permission_callback' => [$this, 'checkManagePermissions'],
                 ],
             ]
         );
@@ -152,7 +152,7 @@ final class AdminREST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [$this, 'handleMoveReservation'],
-                'permission_callback' => [$this, 'checkPermissions'],
+                'permission_callback' => [$this, 'checkManagePermissions'],
             ]
         );
 
@@ -571,7 +571,14 @@ final class AdminREST
                 'email' => $payload['email'] ?? 'N/A',
             ]));
 
+            // Cattura eventuali output indesiderati da hook durante la creazione
+            ob_start();
             $result = $this->service->create($payload);
+            $hookOutput = ob_get_clean();
+            
+            if ($hookOutput) {
+                error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante creazione: ' . $hookOutput);
+            }
             
             $reservationId = (int) ($result['id'] ?? 0);
             
@@ -741,6 +748,9 @@ final class AdminREST
 
         $entry = $this->reservations->findAgendaEntry($id);
 
+        // Cattura eventuali output indesiderati da hook durante l'update
+        ob_start();
+        
         if (is_array($entry)) {
             $previousStatus = (string) ($original['status'] ?? '');
             $currentStatus  = (string) ($entry['status'] ?? $previousStatus);
@@ -754,6 +764,12 @@ final class AdminREST
         }
 
         do_action('fp_resv_reservation_updated', $id, $entry, $updates, $original);
+        
+        $hookOutput = ob_get_clean();
+        
+        if ($hookOutput) {
+            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante update: ' . $hookOutput);
+        }
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
@@ -814,7 +830,14 @@ final class AdminREST
 
         $entry = $this->reservations->findAgendaEntry($id);
 
+        // Cattura eventuali output indesiderati da hook durante il move
+        ob_start();
         do_action('fp_resv_reservation_moved', $id, $entry, $updates);
+        $hookOutput = ob_get_clean();
+        
+        if ($hookOutput) {
+            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante move: ' . $hookOutput);
+        }
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
@@ -924,9 +947,12 @@ final class AdminREST
         }
     }
 
+    /**
+     * Verifica permessi per endpoint di sola lettura (GET)
+     * Permette accesso a: admin, manager, viewer
+     */
     private function checkPermissions(): bool
     {
-        // DEBUG: Log controllo permessi
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
@@ -941,6 +967,29 @@ final class AdminREST
         
         if (!$result) {
             error_log('[FP Resv Permissions] ❌ ACCESSO NEGATO! Endpoint bloccato.');
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Verifica permessi per endpoint di scrittura (POST/PUT/DELETE)
+     * Permette accesso SOLO a: admin e manager (NO viewer!)
+     */
+    private function checkManagePermissions(): bool
+    {
+        $userId = get_current_user_id();
+        $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
+        $canManageOptions = current_user_can('manage_options');
+        $result = $canManage || $canManageOptions;
+        
+        error_log('[FP Resv Manage Permissions] User ID: ' . $userId);
+        error_log('[FP Resv Manage Permissions] Can manage reservations: ' . ($canManage ? 'YES' : 'NO'));
+        error_log('[FP Resv Manage Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
+        error_log('[FP Resv Manage Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
+        
+        if (!$result) {
+            error_log('[FP Resv Manage Permissions] ❌ ACCESSO NEGATO! Utente viewer non può modificare.');
         }
         
         return $result;
