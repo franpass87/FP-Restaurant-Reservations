@@ -577,14 +577,8 @@ final class AdminREST
 
             error_log('[FP Resv Admin] STEP 3: Chiamata service->create()...');
             
-            // Cattura eventuali output indesiderati da hook durante la creazione
-            ob_start();
+            // NON usiamo più ob_start() perché potrebbe causare problemi con la risposta REST
             $result = $this->service->create($payload);
-            $hookOutput = ob_get_clean();
-            
-            if ($hookOutput) {
-                error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante creazione: ' . $hookOutput);
-            }
             
             error_log('[FP Resv Admin] STEP 4: service->create() completato con successo');
             error_log('[FP Resv Admin] Result keys: ' . implode(', ', array_keys($result ?? [])));
@@ -651,6 +645,15 @@ final class AdminREST
             
             error_log('[FP Resv Admin] STEP 7: Chiamata rest_ensure_response()...');
             $response = rest_ensure_response($responseData);
+            
+            // Aggiungi header personalizzati per il debug
+            if ($response instanceof WP_REST_Response) {
+                $response->set_headers([
+                    'X-FP-Resv-Debug' => 'creation-success',
+                    'X-FP-Resv-ID' => (string) $reservationId,
+                    'X-FP-Resv-Timestamp' => (string) time(),
+                ]);
+            }
             
             error_log('[FP Resv Admin] STEP 8: Response creata: ' . get_class($response));
             error_log('[FP Resv Admin] Response status: ' . ($response instanceof WP_REST_Response ? $response->get_status() : 'N/A'));
@@ -993,7 +996,7 @@ final class AdminREST
      * Verifica permessi per endpoint di scrittura (POST/PUT/DELETE)
      * Permette accesso SOLO a: admin e manager (NO viewer!)
      */
-    private function checkManagePermissions(): bool
+    public function checkManagePermissions(): bool
     {
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
