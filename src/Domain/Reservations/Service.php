@@ -749,6 +749,7 @@ class Service
         
         $validator->assertValidDate($payload['date']);
         $validator->assertValidTime($payload['time']);
+        $validator->assertValidDateTime($payload['date'], $payload['time']); // Controlla che data+ora non sia nel passato
         
         $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
         $validator->assertValidParty($payload['party'], $maxCapacity);

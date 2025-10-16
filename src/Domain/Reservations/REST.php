@@ -106,6 +106,37 @@ final class REST
 
         register_rest_route(
             'fp-resv/v1',
+            '/available-days',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAvailableDays'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'from' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'validate_callback' => static function ($value): bool {
+                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+                        },
+                    ],
+                    'to' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'validate_callback' => static function ($value): bool {
+                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+                        },
+                    ],
+                    'meal' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
             '/reservations',
             [
                 'methods'             => WP_REST_Server::CREATABLE,
@@ -347,6 +378,94 @@ final class REST
     private function createError(string $code, string $message, array $data = []): WP_Error
     {
         return new WP_Error($code, $message, $data);
+    }
+
+    public function handleAvailableDays(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        try {
+            $from = $request->get_param('from');
+            $to = $request->get_param('to');
+            $meal = $request->get_param('meal');
+
+            if (!is_string($from) || !is_string($to)) {
+                return new WP_Error(
+                    'fp_resv_invalid_params',
+                    __('Parametri non validi.', 'fp-restaurant-reservations'),
+                    ['status' => 400]
+                );
+            }
+
+            // Valida formato date
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+                return new WP_Error(
+                    'fp_resv_invalid_date_format',
+                    __('Formato data non valido. Usare YYYY-MM-DD.', 'fp-restaurant-reservations'),
+                    ['status' => 400]
+                );
+            }
+
+            // Limita il range a massimo 90 giorni
+            try {
+                $fromDate = new \DateTimeImmutable($from);
+                $toDate = new \DateTimeImmutable($to);
+                $diff = $fromDate->diff($toDate);
+                
+                if ($diff->days > 90) {
+                    return new WP_Error(
+                        'fp_resv_range_too_large',
+                        __('Il range di date richiesto è troppo ampio (massimo 90 giorni).', 'fp-restaurant-reservations'),
+                        ['status' => 400]
+                    );
+                }
+            } catch (\Exception $e) {
+                return new WP_Error(
+                    'fp_resv_invalid_date',
+                    __('Date non valide.', 'fp-restaurant-reservations'),
+                    ['status' => 400]
+                );
+            }
+
+            // Passa le stringhe - findAvailableDaysForAllMeals gestirà il timezone corretto
+            $availableDays = $this->availability->findAvailableDaysForAllMeals($from, $to);
+
+            // Se è specificato un meal, filtra solo per quel meal
+            if (is_string($meal) && $meal !== '') {
+                $filteredDays = [];
+                foreach ($availableDays as $date => $info) {
+                    $mealAvailable = isset($info['meals'][$meal]) && $info['meals'][$meal];
+                    $filteredDays[$date] = [
+                        'available' => $mealAvailable,
+                        'meal' => $meal,
+                    ];
+                }
+                $availableDays = $filteredDays;
+            }
+
+            // Cache per 5 minuti
+            $response = new WP_REST_Response([
+                'days' => $availableDays,
+                'from' => $from,
+                'to' => $to,
+                'meal' => $meal ?? null,
+            ], 200);
+
+            $response->set_headers([
+                'Cache-Control' => 'public, max-age=300',
+            ]);
+
+            return $response;
+        } catch (\Exception $e) {
+            Logging::log('availability', 'Errore in handleAvailableDays', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new WP_Error(
+                'fp_resv_availability_days_error',
+                __('Errore nel recupero dei giorni disponibili.', 'fp-restaurant-reservations'),
+                ['status' => 500]
+            );
+        }
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error

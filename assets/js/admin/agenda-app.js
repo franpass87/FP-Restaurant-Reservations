@@ -28,6 +28,8 @@ class ReservationManager {
             overview: null,
             loading: false,
             error: null,
+            availableDaysCache: {},
+            availableDaysLoading: false,
         };
 
         // Cache DOM
@@ -403,6 +405,54 @@ class ReservationManager {
             } else {
                 this.showError(error.message || 'Errore nel caricamento delle prenotazioni');
             }
+        }
+    }
+
+    async loadAvailableDaysForManager(meal = null) {
+        if (this.state.availableDaysLoading) {
+            return;
+        }
+
+        this.state.availableDaysLoading = true;
+
+        const today = new Date();
+        const future = new Date();
+        future.setDate(future.getDate() + 90); // 90 giorni nel futuro
+
+        const from = this.formatDate(today);
+        const to = this.formatDate(future);
+
+        const params = new URLSearchParams({
+            from,
+            to,
+        });
+
+        if (meal) {
+            params.set('meal', meal);
+        }
+
+        const url = this.buildRestUrl(`available-days?${params.toString()}`);
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-WP-Nonce': this.config.nonce,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Errore nel caricamento dei giorni disponibili');
+            }
+
+            const data = await response.json();
+            
+            if (data && data.days) {
+                this.state.availableDaysCache = data.days;
+            }
+        } catch (error) {
+            console.warn('[Manager] Errore nel caricamento dei giorni disponibili:', error);
+        } finally {
+            this.state.availableDaysLoading = false;
         }
     }
 
@@ -1249,6 +1299,58 @@ class ReservationManager {
         const form = document.getElementById('fp-new-reservation-form-step1');
         if (!form) return;
 
+        const mealSelect = document.getElementById('new-meal');
+        const dateInput = document.getElementById('new-date');
+
+        // Carica i giorni disponibili quando cambia il meal
+        if (mealSelect) {
+            mealSelect.addEventListener('change', () => {
+                const selectedMeal = mealSelect.value;
+                if (selectedMeal) {
+                    this.loadAvailableDaysForManager(selectedMeal);
+                }
+            });
+        }
+
+        // Valida la data quando cambia
+        if (dateInput) {
+            dateInput.addEventListener('change', () => {
+                const selectedDate = dateInput.value;
+                const selectedMeal = mealSelect ? mealSelect.value : '';
+                
+                // Se la cache sta ancora caricando, avvisa l'utente
+                if (selectedDate && selectedMeal && Object.keys(this.state.availableDaysCache).length === 0 && this.state.availableDaysLoading) {
+                    alert('Caricamento giorni disponibili in corso. Attendere...');
+                    dateInput.value = '';
+                    return;
+                }
+                
+                if (selectedDate && selectedMeal && this.state.availableDaysCache[selectedDate] !== undefined) {
+                    const dayInfo = this.state.availableDaysCache[selectedDate];
+                    
+                    // Determina se il giorno è disponibile
+                    let isAvailable = false;
+                    if (dayInfo.meals) {
+                        // Formato con tutti i meals
+                        isAvailable = dayInfo.meals[selectedMeal] === true;
+                    } else {
+                        // Formato filtrato per singolo meal
+                        isAvailable = dayInfo.available === true;
+                    }
+                    
+                    // Controlla se il giorno è disponibile per il meal selezionato
+                    if (!isAvailable) {
+                        alert('Questo servizio non è disponibile nel giorno selezionato. Scegli un altro giorno.');
+                        dateInput.value = '';
+                        return;
+                    }
+                } else if (selectedDate && !selectedMeal) {
+                    alert('Seleziona prima un servizio.');
+                    dateInput.value = '';
+                }
+            });
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1259,6 +1361,26 @@ class ReservationManager {
             if (!meal || !date || !party) {
                 alert('Compila tutti i campi obbligatori');
                 return;
+            }
+
+            // Valida finale la disponibilità
+            if (this.state.availableDaysCache[date] !== undefined) {
+                const dayInfo = this.state.availableDaysCache[date];
+                
+                // Determina se il giorno è disponibile
+                let isAvailable = false;
+                if (dayInfo.meals) {
+                    // Formato con tutti i meals
+                    isAvailable = dayInfo.meals[meal] === true;
+                } else {
+                    // Formato filtrato per singolo meal
+                    isAvailable = dayInfo.available === true;
+                }
+                
+                if (!isAvailable) {
+                    alert('Questo servizio non è disponibile nel giorno selezionato.');
+                    return;
+                }
             }
 
             // Salva i dati e passa allo step 2

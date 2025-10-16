@@ -307,6 +307,29 @@ class Availability
             }
         }
 
+        // FILTRO SLOT PASSATI: Rimuove slot nel passato per la data di oggi
+        $now = new DateTimeImmutable('now', $timezone);
+        $today = $now->format('Y-m-d');
+        $requestedDate = $dayStart->format('Y-m-d');
+        
+        if ($requestedDate === $today) {
+            // Se la data richiesta è oggi, filtra gli slot passati
+            $slots = array_values(array_filter($slots, function ($slot) use ($now, $timezone) {
+                if (!isset($slot['start'])) {
+                    return true; // Mantieni slot senza orario di inizio (non dovrebbe accadere)
+                }
+                
+                // Parsing della stringa data-ora dello slot con timezone corretto
+                try {
+                    $slotDateTime = new DateTimeImmutable($slot['start'], $timezone);
+                    // Mantieni solo slot futuri
+                    return $slotDateTime > $now;
+                } catch (\Exception $e) {
+                    return true; // In caso di errore parsing, mantieni lo slot
+                }
+            }));
+        }
+
         return [
             'date' => $dayStart->format('Y-m-d'),
             'timezone' => $timezone->getName(),
@@ -316,6 +339,77 @@ class Availability
                 'has_availability' => $this->hasAvailability($slots),
             ],
         ];
+    }
+
+    /**
+     * Find available days for all configured meals in a date range.
+     * Returns an array of dates with availability information.
+     * 
+     * @param string|DateTimeImmutable $from Date string (Y-m-d) or DateTimeImmutable
+     * @param string|DateTimeImmutable $to Date string (Y-m-d) or DateTimeImmutable
+     * @return array<string, array{available:bool, meals:array<string, bool>}>
+     */
+    public function findAvailableDaysForAllMeals(string|DateTimeImmutable $from, string|DateTimeImmutable $to): array
+    {
+        $timezone = $this->resolveTimezone();
+        
+        // Convert strings to DateTimeImmutable with correct timezone
+        if (is_string($from)) {
+            $from = new DateTimeImmutable($from . ' 00:00:00', $timezone);
+        }
+        if (is_string($to)) {
+            $to = new DateTimeImmutable($to . ' 23:59:59', $timezone);
+        }
+        
+        $stopTimer = Metrics::timer('availability.days_check', [
+            'days' => $from->diff($to)->days + 1,
+        ]);
+        $meals = $this->getMealPlan();
+        
+        // Se non ci sono meal configurati, usa lo schedule di default
+        $mealsToCheck = [];
+        if (empty($meals)) {
+            $mealsToCheck['default'] = [];
+        } else {
+            foreach ($meals as $mealKey => $mealData) {
+                $mealsToCheck[$mealKey] = $mealData;
+            }
+        }
+
+        $results = [];
+        $current = $from;
+
+        while ($current <= $to) {
+            $dateKey = $current->format('Y-m-d');
+            $dayKey = strtolower($current->format('D'));
+            $hasAnyAvailability = false;
+            $mealAvailability = [];
+
+            // Controlla ogni meal per questo giorno
+            foreach ($mealsToCheck as $mealKey => $mealData) {
+                $mealSettings = $this->resolveMealSettings($mealKey);
+                $schedule = $this->resolveScheduleForDay($current, $mealSettings['schedule']);
+                
+                // Un giorno è disponibile per un meal se ha almeno uno schedule configurato
+                $isAvailable = !empty($schedule);
+                $mealAvailability[$mealKey] = $isAvailable;
+                
+                if ($isAvailable) {
+                    $hasAnyAvailability = true;
+                }
+            }
+
+            $results[$dateKey] = [
+                'available' => $hasAnyAvailability,
+                'meals' => $mealAvailability,
+            ];
+
+            $current = $current->add(new DateInterval('P1D'));
+        }
+
+        $stopTimer();
+
+        return $results;
     }
 
     /**
@@ -505,6 +599,29 @@ class Availability
                     $suggestions
                 );
             }
+        }
+
+        // FILTRO SLOT PASSATI: Rimuove slot nel passato per la data di oggi
+        $now = new DateTimeImmutable('now', $timezone);
+        $today = $now->format('Y-m-d');
+        $requestedDate = $dayStart->format('Y-m-d');
+        
+        if ($requestedDate === $today) {
+            // Se la data richiesta è oggi, filtra gli slot passati
+            $slots = array_values(array_filter($slots, function ($slot) use ($now, $timezone) {
+                if (!isset($slot['start'])) {
+                    return true; // Mantieni slot senza orario di inizio (non dovrebbe accadere)
+                }
+                
+                // Parsing della stringa data-ora dello slot con timezone corretto
+                try {
+                    $slotDateTime = new DateTimeImmutable($slot['start'], $timezone);
+                    // Mantieni solo slot futuri
+                    return $slotDateTime > $now;
+                } catch (\Exception $e) {
+                    return true; // In caso di errore parsing, mantieni lo slot
+                }
+            }));
         }
 
         $result = [

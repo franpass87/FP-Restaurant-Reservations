@@ -24,6 +24,7 @@ class ReservationValidator
 
         $this->validateDate($payload['date'] ?? '');
         $this->validateTime($payload['time'] ?? '');
+        $this->validateDateTime($payload['date'] ?? '', $payload['time'] ?? '');
         $this->validateParty($payload['party'] ?? 0);
         $this->validateContact($payload);
 
@@ -56,7 +57,10 @@ class ReservationValidator
             );
         }
 
-        $dt = DateTimeImmutable::createFromFormat('Y-m-d', $date);
+        // Usa il timezone di WordPress per confronti corretti
+        $timezone = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone('UTC');
+        
+        $dt = DateTimeImmutable::createFromFormat('Y-m-d', $date, $timezone);
         if (!$dt instanceof DateTimeImmutable || $dt->format('Y-m-d') !== $date) {
             throw new InvalidDateException(
                 __('La data specificata non è valida.', 'fp-restaurant-reservations'),
@@ -64,8 +68,8 @@ class ReservationValidator
             );
         }
 
-        // Controlla che la data non sia nel passato
-        $today = new DateTimeImmutable('today');
+        // Controlla che la data non sia nel passato (usa timezone corretto)
+        $today = new DateTimeImmutable('today', $timezone);
         if ($dt < $today) {
             throw new InvalidDateException(
                 __('Non è possibile prenotare per giorni passati.', 'fp-restaurant-reservations'),
@@ -94,6 +98,43 @@ class ReservationValidator
             throw new InvalidTimeException(
                 __('Orario non valido.', 'fp-restaurant-reservations'),
                 ['time' => $time]
+            );
+        }
+    }
+
+    /**
+     * Controlla che la combinazione data+ora non sia nel passato
+     * 
+     * @throws InvalidDateException|InvalidTimeException
+     */
+    public function assertValidDateTime(string $date, string $time): void
+    {
+        // Verifica formati base (senza lanciare eccezioni se già invalidi)
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return; // Errore già gestito da assertValidDate
+        }
+        if (!preg_match('/^\d{2}:\d{2}$/', $time)) {
+            return; // Errore già gestito da assertValidTime
+        }
+
+        // Usa il timezone di WordPress per confronti corretti
+        $timezone = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone('UTC');
+
+        // Crea DateTime combinando data e ora con timezone corretto
+        $dateTimeString = $date . ' ' . $time . ':00';
+        $reservationDateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $dateTimeString, $timezone);
+        
+        if (!$reservationDateTime instanceof DateTimeImmutable) {
+            return; // Formato non valido, errore già gestito
+        }
+
+        // Confronta con ora corrente nel timezone del ristorante
+        $now = new DateTimeImmutable('now', $timezone);
+        
+        if ($reservationDateTime < $now) {
+            throw new InvalidDateException(
+                __('Non è possibile prenotare per orari passati.', 'fp-restaurant-reservations'),
+                ['date' => $date, 'time' => $time]
             );
         }
     }
@@ -167,6 +208,18 @@ class ReservationValidator
     {
         try {
             $this->assertValidTime($time);
+        } catch (InvalidTimeException $exception) {
+            $this->errors['time'] = $exception->getMessage();
+        }
+    }
+
+    private function validateDateTime(string $date, string $time): void
+    {
+        try {
+            $this->assertValidDateTime($date, $time);
+        } catch (InvalidDateException $exception) {
+            // Errore di data+ora passata (sovrascrive l'errore di data se presente)
+            $this->errors['date'] = $exception->getMessage();
         } catch (InvalidTimeException $exception) {
             $this->errors['time'] = $exception->getMessage();
         }

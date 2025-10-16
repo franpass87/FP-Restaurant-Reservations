@@ -283,8 +283,15 @@ class FormApp {
         const today = new Date().toISOString().split('T')[0];
         this.dateField.setAttribute('min', today);
 
-        // Ottieni i giorni disponibili dalla configurazione (inizialmente tutti i giorni aggregati)
-        this.currentAvailableDays = this.config && this.config.available_days ? this.config.available_days : [];
+        // Cache per i giorni disponibili
+        this.availableDaysCache = {};
+        this.availableDaysLoading = false;
+        this.availableDaysCachedMeal = null;
+
+        // Carica inizialmente i giorni disponibili per i prossimi 90 giorni
+        // Se c'è già un meal selezionato, carica per quel meal, altrimenti carica tutti
+        const initialMeal = this.getSelectedMeal();
+        this.loadAvailableDays(initialMeal || undefined);
 
         // Aggiungi validazione per date passate e giorni disponibili
         this.dateField.addEventListener('change', (event) => {
@@ -296,35 +303,92 @@ class FormApp {
                 return;
             }
 
-            // Se ci sono giorni disponibili configurati, valida la selezione
-            if (this.currentAvailableDays.length > 0 && selectedDate) {
-                const date = new Date(selectedDate);
-                const dayOfWeek = date.getDay().toString(); // 0 = domenica, 1 = lunedì, ecc.
-
-                if (!this.currentAvailableDays.includes(dayOfWeek)) {
-                    const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-                    const availableDayNames = this.currentAvailableDays.map(d => dayNames[parseInt(d, 10)]).join(', ');
-                    const errorMessage = `Questo giorno non è disponibile. Giorni disponibili: ${availableDayNames}.`;
-                    
-                    event.target.setCustomValidity(errorMessage);
-                    event.target.setAttribute('aria-invalid', 'true');
-                    
-                    // Mostra il messaggio di errore
-                    if (window.console && window.console.warn) {
-                        console.warn('[FP-RESV] ' + errorMessage);
+            // Valida se il giorno è disponibile per il meal selezionato
+            if (selectedDate && Object.keys(this.availableDaysCache).length === 0 && this.availableDaysLoading) {
+                // Cache ancora in caricamento - validazione rimandata
+                // Lo Step 2 (availability endpoint) farà la validazione definitiva
+                const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
+                if (statusEl) {
+                    statusEl.textContent = 'Verifica disponibilità in corso...';
+                    statusEl.hidden = false;
+                }
+                // Non blocchiamo l'utente, ma lo avvisiamo
+                return;
+            }
+            
+            if (selectedDate && this.availableDaysCache[selectedDate] !== undefined) {
+                const selectedMeal = this.getSelectedMeal();
+                const dayInfo = this.availableDaysCache[selectedDate];
+                
+                // Determina se il giorno è disponibile
+                let isAvailable = false;
+                
+                if (selectedMeal) {
+                    // Se c'è un meal selezionato
+                    if (dayInfo.meals) {
+                        // Formato con tutti i meals
+                        isAvailable = dayInfo.meals[selectedMeal] === true;
+                    } else {
+                        // Formato filtrato per singolo meal (dall'API con parametro meal)
+                        isAvailable = dayInfo.available === true;
                     }
                     
-                    // Resetta il campo
-                    setTimeout(() => {
-                        event.target.value = '';
-                    }, 100);
-                    
-                    return;
+                    if (!isAvailable) {
+                        const errorMessage = 'Questo servizio non è disponibile nel giorno selezionato. Scegli un altro giorno.';
+                        
+                        event.target.setCustomValidity(errorMessage);
+                        event.target.setAttribute('aria-invalid', 'true');
+                        
+                        // Mostra il messaggio di errore
+                        const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
+                        if (statusEl) {
+                            statusEl.textContent = errorMessage;
+                            statusEl.hidden = false;
+                        }
+                        
+                        // Resetta il campo dopo un breve ritardo
+                        setTimeout(() => {
+                            event.target.value = '';
+                            if (statusEl) {
+                                statusEl.hidden = true;
+                            }
+                        }, 2000);
+                        
+                        return;
+                    }
+                } else {
+                    // Se non c'è un meal selezionato, controlla se c'è almeno un meal disponibile
+                    if (!dayInfo.available) {
+                        const errorMessage = 'Nessun servizio disponibile per questo giorno. Scegli un altro giorno.';
+                        
+                        event.target.setCustomValidity(errorMessage);
+                        event.target.setAttribute('aria-invalid', 'true');
+                        
+                        const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
+                        if (statusEl) {
+                            statusEl.textContent = errorMessage;
+                            statusEl.hidden = false;
+                        }
+                        
+                        setTimeout(() => {
+                            event.target.value = '';
+                            if (statusEl) {
+                                statusEl.hidden = true;
+                            }
+                        }, 2000);
+                        
+                        return;
+                    }
                 }
             }
 
             event.target.setCustomValidity('');
             event.target.setAttribute('aria-invalid', 'false');
+            
+            const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
+            if (statusEl) {
+                statusEl.hidden = true;
+            }
         });
 
         const openPicker = () => {
@@ -345,6 +409,84 @@ class FormApp {
 
         // Apri il calendario al click sull'input
         this.dateField.addEventListener('click', openPicker);
+    }
+
+    loadAvailableDays(meal = null) {
+        // Se stiamo già caricando lo stesso meal, skip
+        if (this.availableDaysLoading && this.availableDaysCachedMeal === meal) {
+            return;
+        }
+
+        this.availableDaysLoading = true;
+        this.availableDaysCachedMeal = meal;
+
+        const today = new Date();
+        const future = new Date();
+        future.setDate(future.getDate() + 90); // 90 giorni nel futuro
+
+        const from = today.toISOString().split('T')[0];
+        const to = future.toISOString().split('T')[0];
+
+        const endpoint = this.getRestRoot() + '/available-days';
+        const url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('from', from);
+        url.searchParams.set('to', to);
+        
+        if (meal) {
+            url.searchParams.set('meal', meal);
+        }
+
+        fetch(url.toString(), {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.days) {
+                this.availableDaysCache = data.days;
+                this.applyDateRestrictions();
+            }
+        })
+        .catch(error => {
+            console.warn('[FP-RESV] Errore nel caricamento dei giorni disponibili:', error);
+        })
+        .finally(() => {
+            this.availableDaysLoading = false;
+        });
+    }
+
+    applyDateRestrictions() {
+        // Se il browser supporta il controllo avanzato del datepicker, applica le restrizioni
+        if (!this.dateField || !this.availableDaysCache) {
+            return;
+        }
+
+        // Non possiamo disabilitare direttamente i singoli giorni in un input type="date" HTML5
+        // La validazione avviene al momento del change
+        // Tuttavia possiamo usare il pattern per comunicare visivamente
+        
+        const selectedMeal = this.getSelectedMeal();
+        if (selectedMeal) {
+            // Ricarica i giorni disponibili per il meal selezionato
+            this.loadAvailableDays(selectedMeal);
+        }
+    }
+
+    getRestRoot() {
+        if (this.dataset && this.dataset.restRoot) {
+            return this.dataset.restRoot;
+        }
+        if (window.fpResvSettings && window.fpResvSettings.restRoot) {
+            return window.fpResvSettings.restRoot;
+        }
+        return '/wp-json/fp-resv/v1';
+    }
+
+    getSelectedMeal() {
+        if (this.hiddenMeal && this.hiddenMeal.value) {
+            return this.hiddenMeal.value;
+        }
+        return null;
     }
 
     initializePartyButtons() {
@@ -767,32 +909,43 @@ class FormApp {
             return;
         }
 
-        // Trova il meal selezionato dall'array dei meals
-        const meals = this.dataset && this.dataset.meals ? this.dataset.meals : [];
-        const selectedMeal = meals.find(meal => meal.key === mealKey);
-
-        // Se il meal ha giorni disponibili specifici, usali
-        if (selectedMeal && selectedMeal.available_days && selectedMeal.available_days.length > 0) {
-            this.currentAvailableDays = selectedMeal.available_days;
-        } else {
-            // Altrimenti usa i giorni disponibili globali
-            this.currentAvailableDays = this.config && this.config.available_days ? this.config.available_days : [];
+        // Ricarica i giorni disponibili per il meal selezionato
+        // Solo se è diverso dal meal attualmente in cache
+        if (this.availableDaysCachedMeal !== mealKey) {
+            this.loadAvailableDays(mealKey);
         }
 
         // Valida la data attualmente selezionata (se presente)
         const currentDate = this.dateField.value;
-        if (currentDate && this.currentAvailableDays.length > 0) {
-            const date = new Date(currentDate);
-            const dayOfWeek = date.getDay().toString();
+        if (currentDate && this.availableDaysCache[currentDate] !== undefined) {
+            const dayInfo = this.availableDaysCache[currentDate];
 
-            // Se il giorno non è più disponibile con il nuovo meal, resetta il campo
-            if (!this.currentAvailableDays.includes(dayOfWeek)) {
-                const dayNames = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-                const availableDayNames = this.currentAvailableDays.map(d => dayNames[parseInt(d)]).join(', ');
-                
+            // Determina se il giorno è disponibile per questo meal
+            let isAvailable = false;
+            if (dayInfo.meals) {
+                // Formato con tutti i meals
+                isAvailable = dayInfo.meals[mealKey] === true;
+            } else {
+                // Formato filtrato per singolo meal
+                isAvailable = dayInfo.available === true;
+            }
+
+            // Se il giorno non è disponibile per questo meal, resetta il campo
+            if (!isAvailable) {
                 // Mostra un messaggio informativo
                 if (window.console && window.console.warn) {
-                    console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio. Giorni disponibili: ${availableDayNames}.`);
+                    console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio.`);
+                }
+                
+                // Mostra messaggio all'utente
+                const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
+                if (statusEl) {
+                    statusEl.textContent = 'Questo servizio non è disponibile nel giorno selezionato.';
+                    statusEl.hidden = false;
+                    
+                    setTimeout(() => {
+                        statusEl.hidden = true;
+                    }, 3000);
                 }
                 
                 // Resetta il campo data
@@ -801,8 +954,8 @@ class FormApp {
                 this.dateField.setAttribute('aria-invalid', 'false');
                 
                 // Resetta anche gli slot se presenti
-                if (this.availabilityController && typeof this.availabilityController.clear === 'function') {
-                    this.availabilityController.clear();
+                if (this.availabilityController && typeof this.availabilityController.clearSelection === 'function') {
+                    this.availabilityController.clearSelection();
                 }
             }
         }
