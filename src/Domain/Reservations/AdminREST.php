@@ -125,7 +125,7 @@ final class AdminREST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [$this, 'handleCreateReservation'],
-                'permission_callback' => [$this, 'checkPermissions'],
+                'permission_callback' => [$this, 'checkManagePermissions'],
             ]
         );
 
@@ -136,12 +136,12 @@ final class AdminREST
                 [
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => [$this, 'handleUpdateReservation'],
-                    'permission_callback' => [$this, 'checkPermissions'],
+                    'permission_callback' => [$this, 'checkManagePermissions'],
                 ],
                 [
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => [$this, 'handleDeleteReservation'],
-                    'permission_callback' => [$this, 'checkPermissions'],
+                    'permission_callback' => [$this, 'checkManagePermissions'],
                 ],
             ]
         );
@@ -152,7 +152,7 @@ final class AdminREST
             [
                 'methods'             => WP_REST_Server::CREATABLE,
                 'callback'            => [$this, 'handleMoveReservation'],
-                'permission_callback' => [$this, 'checkPermissions'],
+                'permission_callback' => [$this, 'checkManagePermissions'],
             ]
         );
 
@@ -947,9 +947,12 @@ final class AdminREST
         }
     }
 
+    /**
+     * Verifica permessi per endpoint di sola lettura (GET)
+     * Permette accesso a: admin, manager, viewer
+     */
     private function checkPermissions(): bool
     {
-        // DEBUG: Log controllo permessi
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
@@ -964,6 +967,29 @@ final class AdminREST
         
         if (!$result) {
             error_log('[FP Resv Permissions] ❌ ACCESSO NEGATO! Endpoint bloccato.');
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Verifica permessi per endpoint di scrittura (POST/PUT/DELETE)
+     * Permette accesso SOLO a: admin e manager (NO viewer!)
+     */
+    private function checkManagePermissions(): bool
+    {
+        $userId = get_current_user_id();
+        $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
+        $canManageOptions = current_user_can('manage_options');
+        $result = $canManage || $canManageOptions;
+        
+        error_log('[FP Resv Manage Permissions] User ID: ' . $userId);
+        error_log('[FP Resv Manage Permissions] Can manage reservations: ' . ($canManage ? 'YES' : 'NO'));
+        error_log('[FP Resv Manage Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
+        error_log('[FP Resv Manage Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
+        
+        if (!$result) {
+            error_log('[FP Resv Manage Permissions] ❌ ACCESSO NEGATO! Utente viewer non può modificare.');
         }
         
         return $result;
