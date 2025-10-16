@@ -623,6 +623,18 @@ class ReservationManager {
             }
 
             const data = JSON.parse(text);
+            
+            console.log('[Manager] 📦 Dati ricevuti dall\'endpoint:', {
+                hasReservations: !!data.reservations,
+                reservationsIsArray: Array.isArray(data.reservations),
+                reservationsLength: data.reservations ? data.reservations.length : 'NULL',
+                hasMeta: !!data.meta,
+                hasStats: !!data.stats,
+                dataKeys: Object.keys(data)
+            });
+            
+            console.log('[Manager] 📄 Risposta completa (primi 500 char):', JSON.stringify(data).substring(0, 500));
+            
             this.state.reservations = data.reservations || [];
             this.state.error = null;
             

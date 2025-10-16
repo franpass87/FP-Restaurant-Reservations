@@ -156,32 +156,73 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        $sql = 'SELECT r.*, '
-            . 'COALESCE(c.first_name, "") as first_name, '
-            . 'COALESCE(c.last_name, "") as last_name, '
-            . 'COALESCE(c.email, "") as email, '
-            . 'COALESCE(c.phone, "") as phone, '
-            . 'COALESCE(c.lang, "it") as customer_lang '
-            . 'FROM ' . $this->tableName() . ' r '
-            . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
-            . 'WHERE r.date BETWEEN %s AND %s '
-            . 'AND r.status != "cancelled" '
+        // STEP 1: Query semplificata - prima prendiamo solo le prenotazioni
+        // Questo elimina il rischio che il JOIN con customers fallisca
+        $sql = 'SELECT r.* FROM ' . $this->tableName() . ' r '
+            . 'WHERE r.date >= %s AND r.date <= %s '
+            . 'AND (r.status IS NULL OR r.status != %s) '
             . 'ORDER BY r.date ASC, r.time ASC';
 
-        $rows = $this->wpdb->get_results(
-            $this->wpdb->prepare($sql, $startDate, $endDate),
+        $reservations = $this->wpdb->get_results(
+            $this->wpdb->prepare($sql, $startDate, $endDate, 'cancelled'),
             ARRAY_A
         );
-        
-        // Log per debug
-        error_log('[FP Repository] findAgendaRange chiamato con startDate=' . $startDate . ' endDate=' . $endDate);
-        error_log('[FP Repository] Query trovato ' . (is_array($rows) ? count($rows) : 0) . ' prenotazioni');
-        
-        if (is_array($rows) && count($rows) > 0) {
-            error_log('[FP Repository] Prima prenotazione: ID=' . ($rows[0]['id'] ?? 'N/A') . ' Date=' . ($rows[0]['date'] ?? 'N/A'));
+
+        // Se la query fallisce completamente, restituisci array vuoto
+        if (!is_array($reservations)) {
+            return [];
         }
 
-        return is_array($rows) ? $rows : [];
+        // Se non ci sono prenotazioni, restituisci array vuoto
+        if (count($reservations) === 0) {
+            return [];
+        }
+
+        // STEP 2: Arricchisci con dati customers SOLO se ci sono prenotazioni
+        // Ottieni tutti i customer_id unici
+        $customerIds = array_filter(
+            array_unique(array_column($reservations, 'customer_id')),
+            fn($id) => $id !== null && $id > 0
+        );
+
+        // Carica tutti i customers in un'unica query
+        $customers = [];
+        if (!empty($customerIds)) {
+            $placeholders = implode(',', array_fill(0, count($customerIds), '%d'));
+            $customersSql = 'SELECT id, first_name, last_name, email, phone, lang '
+                . 'FROM ' . $this->customersTableName() . ' '
+                . 'WHERE id IN (' . $placeholders . ')';
+            
+            $customersRows = $this->wpdb->get_results(
+                $this->wpdb->prepare($customersSql, ...$customerIds),
+                ARRAY_A
+            );
+            
+            if (is_array($customersRows)) {
+                // Indicizza per customer_id per lookup veloce
+                foreach ($customersRows as $customer) {
+                    $customers[$customer['id']] = $customer;
+                }
+            }
+        }
+
+        // STEP 3: Combina reservations + customers
+        $result = [];
+        foreach ($reservations as $reservation) {
+            $customerId = $reservation['customer_id'] ?? null;
+            $customer = $customers[$customerId] ?? null;
+            
+            // Aggiungi campi customer alla reservation
+            $reservation['first_name'] = $customer['first_name'] ?? '';
+            $reservation['last_name'] = $customer['last_name'] ?? '';
+            $reservation['email'] = $customer['email'] ?? '';
+            $reservation['phone'] = $customer['phone'] ?? '';
+            $reservation['customer_lang'] = $customer['lang'] ?? 'it';
+            
+            $result[] = $reservation;
+        }
+
+        return $result;
     }
 
     /**
