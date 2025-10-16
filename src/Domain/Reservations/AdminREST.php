@@ -558,11 +558,15 @@ final class AdminREST
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE DAL MANAGER START ===');
+        error_log('[FP Resv Admin] Request method: ' . $request->get_method());
+        error_log('[FP Resv Admin] Request route: ' . $request->get_route());
+        error_log('[FP Resv Admin] Request params: ' . wp_json_encode($request->get_params()));
         
         try {
+            error_log('[FP Resv Admin] STEP 1: Estrazione payload...');
             $payload = $this->extractReservationPayload($request);
             
-            error_log('[FP Resv Admin] Payload estratto: ' . json_encode([
+            error_log('[FP Resv Admin] STEP 2: Payload estratto con successo: ' . wp_json_encode([
                 'date' => $payload['date'] ?? 'N/A',
                 'time' => $payload['time'] ?? 'N/A',
                 'party' => $payload['party'] ?? 'N/A',
@@ -571,6 +575,8 @@ final class AdminREST
                 'email' => $payload['email'] ?? 'N/A',
             ]));
 
+            error_log('[FP Resv Admin] STEP 3: Chiamata service->create()...');
+            
             // Cattura eventuali output indesiderati da hook durante la creazione
             ob_start();
             $result = $this->service->create($payload);
@@ -579,6 +585,9 @@ final class AdminREST
             if ($hookOutput) {
                 error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante creazione: ' . $hookOutput);
             }
+            
+            error_log('[FP Resv Admin] STEP 4: service->create() completato con successo');
+            error_log('[FP Resv Admin] Result keys: ' . implode(', ', array_keys($result ?? [])));
             
             $reservationId = (int) ($result['id'] ?? 0);
             
@@ -634,13 +643,21 @@ final class AdminREST
                 ];
             }
             
-            error_log('[FP Resv Admin] Response data: ' . json_encode([
+            error_log('[FP Resv Admin] STEP 6: Costruzione risposta...');
+            error_log('[FP Resv Admin] Response data: ' . wp_json_encode([
                 'has_reservation' => isset($responseData['reservation']),
                 'reservation_id' => $responseData['reservation']['id'] ?? null,
             ]));
-            error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA ===');
             
-            return rest_ensure_response($responseData);
+            error_log('[FP Resv Admin] STEP 7: Chiamata rest_ensure_response()...');
+            $response = rest_ensure_response($responseData);
+            
+            error_log('[FP Resv Admin] STEP 8: Response creata: ' . get_class($response));
+            error_log('[FP Resv Admin] Response status: ' . ($response instanceof WP_REST_Response ? $response->get_status() : 'N/A'));
+            error_log('[FP Resv Admin] Response data size: ' . strlen(wp_json_encode($response->get_data())));
+            error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA - RITORNO RESPONSE ===');
+            
+            return $response;
             
         } catch (InvalidArgumentException|RuntimeException $exception) {
             error_log('[FP Resv Admin] Errore validazione: ' . $exception->getMessage());
@@ -1057,6 +1074,10 @@ final class AdminREST
      */
     private function extractReservationPayload(WP_REST_Request $request): array
     {
+        error_log('[FP Resv Admin] extractReservationPayload() START');
+        error_log('[FP Resv Admin] Request has body params: ' . ($request->get_body_params() ? 'YES' : 'NO'));
+        error_log('[FP Resv Admin] Request has JSON params: ' . ($request->get_json_params() ? 'YES' : 'NO'));
+        
         $payload = [
             'date'       => $request->get_param('date') ?? '',
             'time'       => $request->get_param('time') ?? '',
@@ -1081,19 +1102,26 @@ final class AdminREST
             'value'      => $request->get_param('value') ?? null,
         ];
 
+        error_log('[FP Resv Admin] Payload base costruito, email: ' . ($payload['email'] ?? 'EMPTY'));
+
         if ($request->offsetExists('visited') && in_array(strtolower((string) $request->get_param('visited')), ['1', 'true', 'yes', 'on'], true)) {
             $payload['status'] = 'visited';
         }
         
+        error_log('[FP Resv Admin] Validazione email...');
         // Validazione campi obbligatori per prenotazioni manuali dal manager
         if (empty($payload['email']) || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
+            error_log('[FP Resv Admin] ERRORE: Email non valida: ' . ($payload['email'] ?? 'EMPTY'));
             throw new InvalidArgumentException(__('Email non valida o mancante', 'fp-restaurant-reservations'));
         }
         
+        error_log('[FP Resv Admin] Validazione nome/cognome...');
         if (empty($payload['first_name']) && empty($payload['last_name'])) {
+            error_log('[FP Resv Admin] ERRORE: Nome e cognome mancanti');
             throw new InvalidArgumentException(__('Specificare almeno nome o cognome', 'fp-restaurant-reservations'));
         }
 
+        error_log('[FP Resv Admin] extractReservationPayload() OK - payload valido');
         return $payload;
     }
 
