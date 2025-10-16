@@ -156,6 +156,10 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
+        // TEST DIAGNOSTICO: Conta tutte le prenotazioni nella tabella
+        $totalInDb = $this->wpdb->get_var('SELECT COUNT(*) FROM ' . $this->tableName());
+        error_log('[FP Repository findAgendaRange] 🔢 Totale prenotazioni nel database: ' . $totalInDb);
+        
         // STEP 1: Query semplificata - prima prendiamo solo le prenotazioni
         // Questo elimina il rischio che il JOIN con customers fallisca
         $sql = 'SELECT r.* FROM ' . $this->tableName() . ' r '
@@ -163,20 +167,48 @@ final class Repository
             . 'AND (r.status IS NULL OR r.status != %s) '
             . 'ORDER BY r.date ASC, r.time ASC';
 
+        error_log('[FP Repository findAgendaRange] 📅 Range richiesto: ' . $startDate . ' -> ' . $endDate);
+        error_log('[FP Repository findAgendaRange] 🔍 Query SQL: ' . $sql);
+        
         $reservations = $this->wpdb->get_results(
             $this->wpdb->prepare($sql, $startDate, $endDate, 'cancelled'),
             ARRAY_A
         );
+        
+        // Check errori SQL
+        if ($this->wpdb->last_error) {
+            error_log('[FP Repository findAgendaRange] ❌ ERRORE SQL: ' . $this->wpdb->last_error);
+            error_log('[FP Repository findAgendaRange] Query eseguita: ' . $this->wpdb->last_query);
+            return [];
+        }
+        
+        error_log('[FP Repository findAgendaRange] 📊 Query eseguita: ' . $this->wpdb->last_query);
+        error_log('[FP Repository findAgendaRange] 📦 Risultati trovati: ' . (is_array($reservations) ? count($reservations) : 'NULL'));
 
         // Se la query fallisce completamente, restituisci array vuoto
         if (!is_array($reservations)) {
+            error_log('[FP Repository findAgendaRange] ⚠️ get_results() ha restituito NULL/FALSE');
             return [];
         }
 
         // Se non ci sono prenotazioni, restituisci array vuoto
         if (count($reservations) === 0) {
+            error_log('[FP Repository findAgendaRange] ⚠️ Nessuna prenotazione trovata nel range specificato');
+            
+            // TEST DIAGNOSTICO EXTRA: Conta prenotazioni nel range SENZA filtro status
+            $testCount = $this->wpdb->get_var(
+                $this->wpdb->prepare(
+                    'SELECT COUNT(*) FROM ' . $this->tableName() . ' WHERE date >= %s AND date <= %s',
+                    $startDate,
+                    $endDate
+                )
+            );
+            error_log('[FP Repository findAgendaRange] 🧪 Prenotazioni nel range (TUTTI gli status): ' . $testCount);
+            
             return [];
         }
+        
+        error_log('[FP Repository findAgendaRange] ✅ Trovate ' . count($reservations) . ' prenotazioni valide');
 
         // STEP 2: Arricchisci con dati customers SOLO se ci sono prenotazioni
         // Ottieni tutti i customer_id unici (compatibile PHP 7.0+)

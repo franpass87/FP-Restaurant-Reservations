@@ -981,7 +981,7 @@ final class AdminREST
      * Verifica permessi per endpoint di sola lettura (GET)
      * Permette accesso a: admin, manager, viewer
      */
-    private function checkPermissions(): bool
+    public function checkPermissions(): bool
     {
         $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
