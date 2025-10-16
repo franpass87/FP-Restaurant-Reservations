@@ -571,7 +571,14 @@ final class AdminREST
                 'email' => $payload['email'] ?? 'N/A',
             ]));
 
+            // Cattura eventuali output indesiderati da hook durante la creazione
+            ob_start();
             $result = $this->service->create($payload);
+            $hookOutput = ob_get_clean();
+            
+            if ($hookOutput) {
+                error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante creazione: ' . $hookOutput);
+            }
             
             $reservationId = (int) ($result['id'] ?? 0);
             
@@ -741,6 +748,9 @@ final class AdminREST
 
         $entry = $this->reservations->findAgendaEntry($id);
 
+        // Cattura eventuali output indesiderati da hook durante l'update
+        ob_start();
+        
         if (is_array($entry)) {
             $previousStatus = (string) ($original['status'] ?? '');
             $currentStatus  = (string) ($entry['status'] ?? $previousStatus);
@@ -754,6 +764,12 @@ final class AdminREST
         }
 
         do_action('fp_resv_reservation_updated', $id, $entry, $updates, $original);
+        
+        $hookOutput = ob_get_clean();
+        
+        if ($hookOutput) {
+            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante update: ' . $hookOutput);
+        }
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
@@ -814,7 +830,14 @@ final class AdminREST
 
         $entry = $this->reservations->findAgendaEntry($id);
 
+        // Cattura eventuali output indesiderati da hook durante il move
+        ob_start();
         do_action('fp_resv_reservation_moved', $id, $entry, $updates);
+        $hookOutput = ob_get_clean();
+        
+        if ($hookOutput) {
+            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante move: ' . $hookOutput);
+        }
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
