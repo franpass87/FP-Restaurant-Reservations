@@ -1,20 +1,14 @@
 /**
  * FP Restaurant Reservations - Progress Bar
- * Indicatore di progresso multi-step
+ * Design minimal e coerente (solo desktop)
+ * Version: 2.1
  */
 
 /* ==================== PROGRESS CONTAINER ==================== */
 
 .fp-resv-progress {
-  position: sticky;
-  top: 0;
-  z-index: var(--fp-z-sticky);
-  padding: var(--fp-space-md);
-  margin: 0 0 var(--fp-space-lg);
-  background: var(--fp-color-surface);
-  border-radius: var(--fp-radius-xl);
-  border: 1px solid var(--fp-color-border-light);
-  box-shadow: var(--fp-shadow-sm);
+  /* Nascosto su mobile - visibile solo su desktop */
+  display: none;
 }
 
 /* ==================== PROGRESS LIST ==================== */
@@ -26,120 +20,80 @@
   position: relative;
 }
 
-/* Barra di progresso orizzontale (mobile) */
-.fp-progress::before {
-  content: '';
-  display: block;
-  width: 100%;
-  height: 4px;
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: var(--fp-radius-full);
-  margin-bottom: var(--fp-space-sm);
-}
-
-/* Fill della progress bar */
-.fp-progress::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 4px;
-  width: var(--fp-progress-fill, 0%);
-  background: var(--fp-color-primary);
-  border-radius: var(--fp-radius-full);
-  transition: width 0.3s ease;
-}
-
 /* ==================== PROGRESS ITEMS ==================== */
 
 .fp-progress__item {
-  display: none; /* Nascondi tutti di default */
-}
-
-/* Mostra solo lo step attivo su mobile */
-.fp-progress__item[data-state="active"],
-.fp-progress__item[aria-current="step"] {
-  display: flex;
-  align-items: center;
-  gap: var(--fp-space-sm);
+  position: relative;
 }
 
 /* ==================== PROGRESS INDEX (numero) ==================== */
 
 .fp-progress__index {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 var(--fp-space-xs);
-  border-radius: var(--fp-radius-md);
-  background: var(--fp-color-primary);
-  color: white;
-  font-size: var(--fp-text-sm);
-  font-weight: var(--fp-font-bold);
-  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 /* ==================== PROGRESS LABEL ==================== */
 
 .fp-progress__label {
-  flex: 1;
-  font-size: var(--fp-text-base);
-  font-weight: var(--fp-font-semibold);
-  color: var(--fp-color-text);
   line-height: var(--fp-leading-tight);
 }
 
 /* ==================== DESKTOP VIEW ==================== */
 
 @media (min-width: 768px) {
+  .fp-resv-progress {
+    /* Mostra la progress bar solo su desktop */
+    display: block;
+    padding: var(--fp-space-lg) var(--fp-space-md);
+    margin: 0 0 var(--fp-space-lg);
+    background: var(--fp-color-surface);
+    border-radius: var(--fp-radius-lg);
+    border: 1px solid var(--fp-color-border-light);
+  }
+
   .fp-progress {
     display: flex;
     align-items: center;
-    gap: var(--fp-space-xs);
-    padding-top: var(--fp-space-sm);
+    justify-content: space-between;
+    gap: 0;
   }
   
-  /* Nascondi la barra orizzontale su desktop */
-  .fp-progress::before,
-  .fp-progress::after {
-    display: none;
-  }
-  
-  /* Mostra tutti gli step su desktop */
+  /* Mostra tutti gli step */
   .fp-progress__item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--fp-space-xs);
     flex: 1;
-    cursor: default;
+    position: relative;
   }
   
-  /* Step cliccabili */
-  .fp-progress__item:not([aria-disabled="true"]) {
-    cursor: pointer;
-  }
-  
-  /* Index circolare su desktop */
+  /* Index circolare minimal */
   .fp-progress__index {
     width: 2.5rem;
     height: 2.5rem;
+    min-width: 2.5rem;
     border-radius: 50%;
     background: var(--fp-color-surface);
     border: 2px solid var(--fp-color-border);
     color: var(--fp-color-text-muted);
+    font-size: var(--fp-text-sm);
+    font-weight: var(--fp-font-semibold);
   }
   
-  /* Label più piccola su desktop */
+  /* Label minimal */
   .fp-progress__label {
     font-size: var(--fp-text-xs);
+    font-weight: var(--fp-font-medium);
     text-align: center;
     color: var(--fp-color-text-muted);
+    max-width: 100px;
   }
   
-  /* Step attivo su desktop */
+  /* Step attivo - pulito e chiaro */
   .fp-progress__item[data-state="active"] .fp-progress__index,
   .fp-progress__item[aria-current="step"] .fp-progress__index {
     background: var(--fp-color-primary);
@@ -149,15 +103,15 @@
   
   .fp-progress__item[data-state="active"] .fp-progress__label,
   .fp-progress__item[aria-current="step"] .fp-progress__label {
-    color: var(--fp-color-primary);
-    font-weight: var(--fp-font-bold);
+    color: var(--fp-color-text);
+    font-weight: var(--fp-font-semibold);
   }
   
-  /* Step completato su desktop */
+  /* Step completato - verde discreto */
   .fp-progress__item[data-completed="true"] .fp-progress__index,
   .fp-progress__item[data-progress-state="done"] .fp-progress__index {
-    background: var(--fp-color-primary);
-    border-color: var(--fp-color-primary);
+    background: #10b981;
+    border-color: #10b981;
     color: white;
   }
   
@@ -166,20 +120,22 @@
     color: var(--fp-color-text);
   }
   
-  /* Connettore tra gli step */
+  /* Connettore tra gli step - linea sottile */
   .fp-progress__item:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 1.25rem;
     left: calc(50% + 1.25rem);
-    right: calc(-50% + 1.25rem);
+    width: calc(100% - 2.5rem);
     height: 2px;
-    background: var(--fp-color-border);
+    background: var(--fp-color-border-light);
     z-index: -1;
+    transition: background 0.3s ease;
   }
   
+  /* Connettore colorato per step completati */
   .fp-progress__item[data-completed="true"]:not(:last-child)::after {
-    background: var(--fp-color-primary);
+    background: #10b981;
   }
 }
 
@@ -191,26 +147,10 @@
   pointer-events: none;
 }
 
-/* Completed step icon */
-.fp-progress__item[data-completed="true"] .fp-progress__index::before,
-.fp-progress__item[data-progress-state="done"] .fp-progress__index::before {
+/* Completed step icon - checkmark */
+.fp-progress__item[data-completed="true"] .fp-progress__index::after,
+.fp-progress__item[data-progress-state="done"] .fp-progress__index::after {
   content: '✓';
-}
-
-/* ==================== CUSTOM PROGRESS INDICATOR ==================== */
-
-.fp-progress--dots .fp-progress__index {
-  width: 0.75rem;
-  height: 0.75rem;
-  min-width: 0;
-  padding: 0;
-  font-size: 0;
-  background: var(--fp-color-border);
-}
-
-.fp-progress--dots .fp-progress__item[data-state="active"] .fp-progress__index {
-  background: var(--fp-color-primary);
-  width: 2rem;
-  border-radius: var(--fp-radius-full);
+  font-size: 1rem;
 }
 
