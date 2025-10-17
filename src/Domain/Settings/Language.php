@@ -418,7 +418,7 @@ final class Language
                         'consent'    => "Acconsento al trattamento dei dati secondo l'informativa privacy.",
                     ],
                     'meals' => [
-                        'title'    => 'Scegli il servizio',
+                        'title'    => '',
                         'subtitle' => '',
                     ],
                     'actions' => [
@@ -678,7 +678,7 @@ final class Language
                         'consent'    => 'I consent to the processing of my data according to the privacy policy.',
                     ],
                     'meals' => [
-                        'title'    => 'Choose your service',
+                        'title'    => '',
                         'subtitle' => '',
                     ],
                     'actions' => [
