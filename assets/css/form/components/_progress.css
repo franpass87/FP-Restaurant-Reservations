@@ -1,156 +1,37 @@
 /**
  * FP Restaurant Reservations - Progress Bar
- * Design minimal e coerente (solo desktop)
- * Version: 2.1
+ * Nascosta su tutti i dispositivi
+ * Version: 2.2
  */
 
 /* ==================== PROGRESS CONTAINER ==================== */
 
 .fp-resv-progress {
-  /* Nascosto su mobile - visibile solo su desktop */
-  display: none;
+  /* Nascosta completamente su mobile e desktop */
+  display: none !important;
 }
 
 /* ==================== PROGRESS LIST ==================== */
 
 .fp-progress {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  position: relative;
+  display: none !important;
 }
 
 /* ==================== PROGRESS ITEMS ==================== */
 
 .fp-progress__item {
-  position: relative;
+  display: none !important;
 }
 
 /* ==================== PROGRESS INDEX (numero) ==================== */
 
 .fp-progress__index {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  display: none !important;
 }
 
 /* ==================== PROGRESS LABEL ==================== */
 
 .fp-progress__label {
-  line-height: var(--fp-leading-tight);
-}
-
-/* ==================== DESKTOP VIEW ==================== */
-
-@media (min-width: 768px) {
-  .fp-resv-progress {
-    /* Mostra la progress bar solo su desktop */
-    display: block;
-    padding: var(--fp-space-lg) var(--fp-space-md);
-    margin: 0 0 var(--fp-space-lg);
-    background: var(--fp-color-surface);
-    border-radius: var(--fp-radius-lg);
-    border: 1px solid var(--fp-color-border-light);
-  }
-
-  .fp-progress {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0;
-  }
-  
-  /* Mostra tutti gli step */
-  .fp-progress__item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--fp-space-xs);
-    flex: 1;
-    position: relative;
-  }
-  
-  /* Index circolare minimal */
-  .fp-progress__index {
-    width: 2.5rem;
-    height: 2.5rem;
-    min-width: 2.5rem;
-    border-radius: 50%;
-    background: var(--fp-color-surface);
-    border: 2px solid var(--fp-color-border);
-    color: var(--fp-color-text-muted);
-    font-size: var(--fp-text-sm);
-    font-weight: var(--fp-font-semibold);
-  }
-  
-  /* Label minimal */
-  .fp-progress__label {
-    font-size: var(--fp-text-xs);
-    font-weight: var(--fp-font-medium);
-    text-align: center;
-    color: var(--fp-color-text-muted);
-    max-width: 100px;
-  }
-  
-  /* Step attivo - pulito e chiaro */
-  .fp-progress__item[data-state="active"] .fp-progress__index,
-  .fp-progress__item[aria-current="step"] .fp-progress__index {
-    background: var(--fp-color-primary);
-    border-color: var(--fp-color-primary);
-    color: white;
-  }
-  
-  .fp-progress__item[data-state="active"] .fp-progress__label,
-  .fp-progress__item[aria-current="step"] .fp-progress__label {
-    color: var(--fp-color-text);
-    font-weight: var(--fp-font-semibold);
-  }
-  
-  /* Step completato - verde discreto */
-  .fp-progress__item[data-completed="true"] .fp-progress__index,
-  .fp-progress__item[data-progress-state="done"] .fp-progress__index {
-    background: #10b981;
-    border-color: #10b981;
-    color: white;
-  }
-  
-  .fp-progress__item[data-completed="true"] .fp-progress__label,
-  .fp-progress__item[data-progress-state="done"] .fp-progress__label {
-    color: var(--fp-color-text);
-  }
-  
-  /* Connettore tra gli step - linea sottile */
-  .fp-progress__item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 1.25rem;
-    left: calc(50% + 1.25rem);
-    width: calc(100% - 2.5rem);
-    height: 2px;
-    background: var(--fp-color-border-light);
-    z-index: -1;
-    transition: background 0.3s ease;
-  }
-  
-  /* Connettore colorato per step completati */
-  .fp-progress__item[data-completed="true"]:not(:last-child)::after {
-    background: #10b981;
-  }
-}
-
-/* ==================== PROGRESS STATES ==================== */
-
-/* Locked step */
-.fp-progress__item[data-state="locked"] {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Completed step icon - checkmark */
-.fp-progress__item[data-completed="true"] .fp-progress__index::after,
-.fp-progress__item[data-progress-state="done"] .fp-progress__index::after {
-  content: '✓';
-  font-size: 1rem;
+  display: none !important;
 }
 
