@@ -288,6 +288,9 @@ class FormApp {
         this.availableDaysLoading = false;
         this.availableDaysCachedMeal = null;
 
+        // Crea elemento per mostrare i giorni disponibili
+        this.createAvailableDaysHint();
+
         // Carica inizialmente i giorni disponibili per i prossimi 90 giorni
         // Se c'è già un meal selezionato, carica per quel meal, altrimenti carica tutti
         const initialMeal = this.getSelectedMeal();
@@ -445,6 +448,7 @@ class FormApp {
             if (data && data.days) {
                 this.availableDaysCache = data.days;
                 this.applyDateRestrictions();
+                this.updateAvailableDaysHint();
             }
         })
         .catch(error => {
@@ -456,7 +460,7 @@ class FormApp {
     }
 
     applyDateRestrictions() {
-        // Se il browser supporta il controllo avanzato del datepicker, applica le restrizioni
+        // Se il browser supporta il controllo avanzato del datepicker, applica le restrictions
         if (!this.dateField || !this.availableDaysCache) {
             return;
         }
@@ -470,6 +474,103 @@ class FormApp {
             // Ricarica i giorni disponibili per il meal selezionato
             this.loadAvailableDays(selectedMeal);
         }
+        
+        // Aggiorna il messaggio con i giorni disponibili
+        this.updateAvailableDaysHint();
+    }
+
+    createAvailableDaysHint() {
+        if (!this.dateField) {
+            return;
+        }
+
+        // Crea elemento per il messaggio
+        const hint = document.createElement('div');
+        hint.className = 'fp-resv-available-days-hint';
+        hint.style.cssText = 'margin-top: 8px; padding: 10px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 14px; color: #0369a1; display: none;';
+        hint.setAttribute('aria-live', 'polite');
+        hint.setAttribute('data-fp-resv-days-hint', '');
+
+        // Inserisci dopo il campo data
+        const dateContainer = this.dateField.closest('[data-fp-resv-field-container]') || this.dateField.parentElement;
+        if (dateContainer) {
+            dateContainer.appendChild(hint);
+        }
+
+        this.availableDaysHintElement = hint;
+    }
+
+    updateAvailableDaysHint() {
+        if (!this.availableDaysHintElement || !this.availableDaysCache) {
+            return;
+        }
+
+        // Analizza i giorni disponibili per determinare quali giorni della settimana sono disponibili
+        const availableDaysOfWeek = new Set();
+        const selectedMeal = this.getSelectedMeal();
+        
+        Object.entries(this.availableDaysCache).forEach(([date, info]) => {
+            if (!info) {
+                return;
+            }
+            
+            let isAvailable = false;
+            
+            // Formato con tutti i meals: { meals: { 'lunch': true, 'dinner': false } }
+            if (info.meals) {
+                if (selectedMeal) {
+                    isAvailable = info.meals[selectedMeal] === true;
+                } else {
+                    // Se non c'è meal selezionato, controlla se almeno uno è disponibile
+                    isAvailable = Object.values(info.meals).some(available => available === true);
+                }
+            } 
+            // Formato filtrato per singolo meal: { available: true, meal: 'lunch' }
+            else {
+                isAvailable = info.available === true;
+            }
+            
+            if (isAvailable) {
+                // Calcola il giorno della settimana (0=Dom, 1=Lun, ..., 6=Sab)
+                const d = new Date(date + 'T12:00:00');
+                const dayOfWeek = d.getDay();
+                availableDaysOfWeek.add(dayOfWeek);
+            }
+        });
+
+        if (availableDaysOfWeek.size === 0) {
+            // Nessun giorno disponibile - nascondi il messaggio
+            this.availableDaysHintElement.style.display = 'none';
+            return;
+        }
+
+        // Se tutti i giorni sono disponibili (0-6), non mostrare il messaggio
+        if (availableDaysOfWeek.size === 7) {
+            this.availableDaysHintElement.style.display = 'none';
+            return;
+        }
+
+        // Mappa giorni della settimana
+        const dayNames = {
+            0: 'Domenica',
+            1: 'Lunedì',
+            2: 'Martedì',
+            3: 'Mercoledì',
+            4: 'Giovedì',
+            5: 'Venerdì',
+            6: 'Sabato'
+        };
+
+        // Ordina i giorni (0=Dom -> 6=Sab)
+        const sortedDays = Array.from(availableDaysOfWeek).sort((a, b) => a - b);
+        const daysList = sortedDays.map(day => dayNames[day]).join(', ');
+
+        // Aggiorna il messaggio
+        this.availableDaysHintElement.innerHTML = `
+            <strong>📅 Giorni disponibili:</strong> ${daysList}<br>
+            <span style="font-size: 12px; opacity: 0.8;">Seleziona una di queste giornate dal calendario</span>
+        `;
+        this.availableDaysHintElement.style.display = 'block';
     }
 
     getRestRoot() {
