@@ -1,20 +1,21 @@
 /**
- * FP Restaurant Reservations - Spaziature Aumentate
+ * FP Restaurant Reservations - Spaziature Bilanciate
  * 
- * Fix: I box erano troppo attaccati, ora hanno più respiro
+ * Fix: Ridotte le spaziature eccessive per un layout più compatto
  * 
  * Data: 12 Ottobre 2025
+ * Ultimo aggiornamento: 18 Ottobre 2025
  */
 
 /* ==================== MARGINI GENERALI PIÙ AMPI ==================== */
 
 .fp-resv {
-  padding: 2.5rem !important;
-  gap: 2rem !important;
+  padding: 1.5rem !important;
+  gap: 1rem !important;
 }
 
 .fp-section {
-  gap: 1.5rem !important;
+  gap: 1rem !important;
 }
 
 /* ==================== CARD E BOX PIÙ ARIOSI ==================== */
@@ -25,18 +26,18 @@
 .fp-resv-slots,
 .fp-resv-step,
 .fp-resv-extra {
-  padding: 2rem !important;
-  margin-bottom: 2rem !important;
+  padding: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
 }
 
 /* ==================== FIELD SPACING ==================== */
 
 .fp-field {
-  margin-bottom: 1.5rem !important;
+  margin-bottom: 1rem !important;
 }
 
 .fp-resv-fields--grid {
-  gap: 1.5rem !important;
+  gap: 1rem !important;
 }
 
 /* ==================== INPUT PIÙ COMODI ==================== */
@@ -44,88 +45,88 @@
 .fp-input,
 .fp-select,
 .fp-textarea {
-  padding: 1rem 1.25rem !important;
+  padding: 0.75rem 1rem !important;
 }
 
 /* ==================== BOTTONI PIÙ SPAZIOSI ==================== */
 
 .fp-btn,
 .fp-resv-button {
-  padding: 1rem 2rem !important;
+  padding: 0.75rem 1.5rem !important;
 }
 
 .fp-btn-group {
-  gap: 1rem !important;
+  gap: 0.75rem !important;
 }
 
 /* ==================== PILLS PIÙ COMODE ==================== */
 
 .fp-pill,
 .fp-meal-pill {
-  padding: 1rem 1.75rem !important;
-  margin: 0.5rem !important;
+  padding: 0.75rem 1.25rem !important;
+  margin: 0.25rem !important;
 }
 
 .fp-pills-list,
 .fp-meals__list {
-  gap: 1rem !important;
+  gap: 0.75rem !important;
 }
 
 /* ==================== SLOT ORARI PIÙ DISTANZIATI ==================== */
 
 .fp-slots__list,
 .fp-resv-slots__list {
-  gap: 1rem !important;
+  gap: 0.75rem !important;
 }
 
 .fp-slots__list button,
 .fp-resv-slots__list button {
-  padding: 1rem 1.5rem !important;
+  padding: 0.75rem 1rem !important;
 }
 
 /* ==================== STEP PIÙ AMPI ==================== */
 
 .fp-resv-step__header {
-  padding-bottom: 1.5rem !important;
-  margin-bottom: 1.5rem !important;
+  padding-bottom: 1rem !important;
+  margin-bottom: 1rem !important;
 }
 
 .fp-resv-step__body {
-  padding: 1rem 0 !important;
+  padding: 0.75rem 0 !important;
 }
 
 .fp-resv-step__footer {
-  padding-top: 2rem !important;
-  margin-top: 2rem !important;
-  gap: 1rem !important;
+  padding-top: 1.25rem !important;
+  margin-top: 1.25rem !important;
+  gap: 0.75rem !important;
 }
 
 /* ==================== TOPBAR PIÙ ARIOSO ==================== */
 
 .fp-topbar {
-  padding-bottom: 2rem !important;
-  margin-bottom: 1.5rem !important;
-  gap: 1.5rem !important;
+  padding-bottom: 1.25rem !important;
+  margin-bottom: 1rem !important;
+  gap: 1rem !important;
 }
 
 /* ==================== RESPONSIVE - MANTIENI PADDING ANCHE SU MOBILE ==================== */
 
 @media (max-width: 640px) {
   .fp-resv {
-    padding: 1.5rem !important;
+    padding: 1rem !important;
   }
   
   .fp-card,
   .fp-meals,
   .fp-slots,
   .fp-resv-step {
-    padding: 1.25rem !important;
+    padding: 1rem !important;
   }
   
   .fp-input,
   .fp-select,
   .fp-textarea {
-    padding: 0.875rem 1rem !important;
+    padding: 0.75rem 0.875rem !important;
   }
 }
 
