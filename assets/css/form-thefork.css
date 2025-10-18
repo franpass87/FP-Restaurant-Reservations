@@ -229,7 +229,7 @@
   margin-bottom: var(--fp-space-md);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  line-height: 1.5;
+  line-height: 1;
 }
 
 .fp-resv-step__title {
