@@ -120,7 +120,7 @@
 .fp-resv-step__footer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
   gap: var(--fp-space-sm);
   margin-top: var(--fp-space-md);
   padding-top: var(--fp-space-sm);
@@ -133,11 +133,6 @@
     margin-top: var(--fp-space-lg);
     padding-top: var(--fp-space-md);
   }
-}
-
-/* Bottone "Indietro" allineato a sinistra */
-.fp-resv-step__footer [data-fp-resv-nav="prev"] {
-  margin-inline-end: auto;
 }
 
 /* ==================== STEP ANIMATION - RIMOSSA ==================== */
