@@ -57,6 +57,11 @@
 
 /* Aggiungi qui eventuali personalizzazioni rapide */
 
+/* Nascondi paragrafi nei widget di prenotazione */
+.fp-resv-widget p, #fp-resv-default p {
+    display: none;
+}
+
 /* Esempio - Cambia il colore primario:
 :root {
   --fp-color-primary: #ff6b6b;
