@@ -40,6 +40,17 @@
   gap: 1rem !important;
 }
 
+/* Mobile: riduci spacing tra campi */
+@media (max-width: 640px) {
+  .fp-field {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .fp-resv-fields--grid {
+    gap: 0.5rem !important;
+  }
+}
+
 /* ==================== INPUT PIÙ COMODI ==================== */
 
 .fp-input,
@@ -120,13 +131,13 @@
   .fp-meals,
   .fp-slots,
   .fp-resv-step {
-    padding: 1rem !important;
+    padding: 0.875rem !important;
   }
   
   .fp-input,
   .fp-select,
   .fp-textarea {
-    padding: 0.75rem 0.875rem !important;
+    padding: 0.625rem 0.75rem !important;
   }
 }
 
