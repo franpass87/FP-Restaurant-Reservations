@@ -95,8 +95,9 @@
 /* ==================== MEALS LIST ==================== */
 
 .fp-meals__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
