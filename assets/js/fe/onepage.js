@@ -1191,8 +1191,8 @@ class FormApp {
             this.state.sectionStates[nextKey] = 'active';
             this.updateSectionAttributes(nextSection, 'active');
             this.dispatchSectionUnlocked(nextKey);
-            // Scroll all'inizio del widget quando si avanza allo step successivo
-            this.scrollIntoView(nextSection);
+            // Non fare scroll automatico per evitare salti quando si avanza
+            // this.scrollIntoView(nextSection);
         }
     }
 

@@ -638,7 +638,7 @@ class et {
     if (!a)
       return;
     const r = a.getAttribute("data-step") || String(s + 1);
-    this.state.sectionStates[r] !== "completed" && (this.state.sectionStates[r] = "active", this.updateSectionAttributes(a, "active"), this.dispatchSectionUnlocked(r), this.scrollIntoView(a));
+    this.state.sectionStates[r] !== "completed" && (this.state.sectionStates[r] = "active", this.updateSectionAttributes(a, "active"), this.dispatchSectionUnlocked(r));
   }
   navigateToPrevious(t) {
     const e = this.sections.indexOf(t);
