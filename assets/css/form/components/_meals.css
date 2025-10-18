@@ -8,16 +8,16 @@
 .fp-meals {
   border: 1px solid var(--fp-color-border);
   border-radius: var(--fp-radius-md);
-  padding: var(--fp-space-md);
+  padding: 0.875rem;
   background: #ffffff;
   box-shadow: none;
-  margin-bottom: var(--fp-space-md);
+  margin-bottom: 0.875rem;
 }
 
 @media (min-width: 768px) {
   .fp-meals {
-    padding: var(--fp-space-lg);
-    margin-bottom: var(--fp-space-lg);
+    padding: 1rem;
+    margin-bottom: 1rem;
   }
 }
 
@@ -26,8 +26,8 @@
 .fp-meals__header {
   display: flex;
   flex-direction: column;
-  gap: var(--fp-space-xs);
-  margin-bottom: var(--fp-space-md);
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .fp-meals__title {
@@ -96,8 +96,8 @@
 
 .fp-meals__list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--fp-space-md);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
 }
 
 @media (max-width: 640px) {
@@ -111,12 +111,12 @@
 .fp-meals__notice {
   display: flex;
   align-items: flex-start;
-  gap: var(--fp-space-sm);
-  margin: var(--fp-space-md) 0 0;
-  padding: var(--fp-space-sm);
+  gap: 0.5rem;
+  margin: 0.625rem 0 0;
+  padding: 0.5rem 0.625rem;
   background: rgba(0, 0, 0, 0.03);
   border-radius: var(--fp-radius-md);
-  font-size: var(--fp-text-sm);
+  font-size: 0.8125rem;
   color: var(--fp-color-text-secondary);
 }
 
