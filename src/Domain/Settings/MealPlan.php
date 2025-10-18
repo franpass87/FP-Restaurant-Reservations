@@ -176,6 +176,7 @@ final class MealPlan
                     'price'   => $parts[3] ?? '',
                     'badge'   => $parts[4] ?? '',
                     'badge_icon' => $parts[5] ?? '',
+                    'icon'    => $parts[6] ?? '',
                     'active'  => $isDefault,
                 ],
                 $attributes
@@ -236,6 +237,10 @@ final class MealPlan
 
         if (!empty($entry['notice'])) {
             $meal['notice'] = sanitize_text_field((string) $entry['notice']);
+        }
+
+        if (!empty($entry['icon'])) {
+            $meal['icon'] = wp_strip_all_tags((string) $entry['icon']);
         }
 
         if (!empty($entry['badge'])) {
