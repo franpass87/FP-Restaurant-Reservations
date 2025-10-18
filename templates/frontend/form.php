@@ -424,7 +424,8 @@ if ($styleCss !== '') {
                                 $phoneInputId = $formId . '-phone';
                                 $phonePrefixLabel = $strings['fields']['phone_prefix'] ?? __('Prefisso', 'fp-restaurant-reservations');
                                 ?>
-                                <div class="fp-resv-fields fp-resv-fields--grid">
+                                <!-- Nome e Cognome su 2 colonne -->
+                                <div class="fp-resv-fields fp-resv-fields--grid fp-resv-fields--2col">
                                     <label class="fp-resv-field fp-field">
                                         <span><?php echo esc_html($strings['fields']['first_name'] ?? ''); ?></span>
                                         <input class="fp-input" type="text" name="fp_resv_first_name" data-fp-resv-field="first_name" required>
@@ -441,51 +442,55 @@ if ($styleCss !== '') {
                                             <small class="fp-hint"><?php echo esc_html($hints['last_name']); ?></small>
                                         <?php endif; ?>
                                     </label>
-                                    <label class="fp-resv-field fp-field fp-resv-field--email">
-                                        <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
-                                        <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required>
-                                        <small class="fp-error" data-fp-resv-error="email" aria-live="polite" hidden></small>
-                                    </label>
-                                    <label class="fp-resv-field fp-field fp-resv-field--phone">
-                                        <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
-                                        <div class="fp-resv-phone-input" data-fp-resv-phone>
-                                            <input
-                                                class="fp-input"
-                                                type="tel"
-                                                id="<?php echo esc_attr($phoneInputId); ?>"
-                                                name="fp_resv_phone"
-                                                data-fp-resv-field="phone"
-                                                inputmode="tel"
-                                                autocomplete="tel"
-                                                required
-                                            >
-                                            <?php if ($phonePrefixes !== []) : ?>
-                                                <select
-                                                    class="fp-input fp-input--prefix"
-                                                    id="<?php echo esc_attr($phonePrefixId); ?>"
-                                                    name="fp_resv_phone_prefix"
-                                                    data-fp-resv-field="phone_prefix"
-                                                    aria-label="<?php echo esc_attr($phonePrefixLabel); ?>"
-                                                >
-                                                    <?php foreach ($phonePrefixes as $prefixOption) :
-                                                        $optionValue = (string) ($prefixOption['value'] ?? '');
-                                                        $optionLabel = (string) ($prefixOption['label'] ?? $optionValue);
-                                                        ?>
-                                                        <option value="<?php echo esc_attr($optionValue); ?>" <?php selected($optionValue === $defaultPhoneCode); ?>>
-                                                            <?php echo esc_html($optionLabel); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            <?php else : ?>
-                                                <span class="fp-resv-phone-input__static" aria-hidden="true">+<?php echo esc_html($defaultPhoneCode); ?></span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <small class="fp-error" data-fp-resv-error="phone" aria-live="polite" hidden></small>
-                                        <?php if (!empty($hints['phone'] ?? '')) : ?>
-                                            <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
-                                        <?php endif; ?>
-                                    </label>
                                 </div>
+                                
+                                <!-- Email full-width -->
+                                <label class="fp-resv-field fp-field fp-resv-field--email">
+                                    <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
+                                    <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required>
+                                    <small class="fp-error" data-fp-resv-error="email" aria-live="polite" hidden></small>
+                                </label>
+                                
+                                <!-- Telefono full-width -->
+                                <label class="fp-resv-field fp-field fp-resv-field--phone">
+                                    <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
+                                    <div class="fp-resv-phone-input" data-fp-resv-phone>
+                                        <input
+                                            class="fp-input"
+                                            type="tel"
+                                            id="<?php echo esc_attr($phoneInputId); ?>"
+                                            name="fp_resv_phone"
+                                            data-fp-resv-field="phone"
+                                            inputmode="tel"
+                                            autocomplete="tel"
+                                            required
+                                        >
+                                        <?php if ($phonePrefixes !== []) : ?>
+                                            <select
+                                                class="fp-input fp-input--prefix"
+                                                id="<?php echo esc_attr($phonePrefixId); ?>"
+                                                name="fp_resv_phone_prefix"
+                                                data-fp-resv-field="phone_prefix"
+                                                aria-label="<?php echo esc_attr($phonePrefixLabel); ?>"
+                                            >
+                                                <?php foreach ($phonePrefixes as $prefixOption) :
+                                                    $optionValue = (string) ($prefixOption['value'] ?? '');
+                                                    $optionLabel = (string) ($prefixOption['label'] ?? $optionValue);
+                                                    ?>
+                                                    <option value="<?php echo esc_attr($optionValue); ?>" <?php selected($optionValue === $defaultPhoneCode); ?>>
+                                                        <?php echo esc_html($optionLabel); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php else : ?>
+                                            <span class="fp-resv-phone-input__static" aria-hidden="true">+<?php echo esc_html($defaultPhoneCode); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <small class="fp-error" data-fp-resv-error="phone" aria-live="polite" hidden></small>
+                                    <?php if (!empty($hints['phone'] ?? '')) : ?>
+                                        <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
+                                    <?php endif; ?>
+                                </label>
                                 <label class="fp-resv-field fp-field">
                                     <span><?php echo esc_html($strings['fields']['notes'] ?? ''); ?></span>
                                     <textarea class="fp-textarea" name="fp_resv_notes" data-fp-resv-field="notes" rows="3"></textarea>
