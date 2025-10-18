@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Form The Fork Style</title>
+    <link rel="stylesheet" href="assets/css/form.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .test-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .test-header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+        }
+        
+        .test-header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>🍴 The Fork Style Form</h1>
+        <p>Design completamente ricreato - Test Preview</p>
+    </div>
+
+    <div class="fp-resv-widget" id="fp-resv-test" data-fp-resv='{}'>
+        <form class="fp-resv-widget__form" data-fp-resv-form>
+            <!-- Topbar -->
+            <div class="fp-resv-widget__topbar">
+                <div class="fp-resv-widget__titles">
+                    <h2 class="fp-resv-widget__headline">Prenota il tuo tavolo</h2>
+                    <p class="fp-resv-widget__subheadline">Scegli data, orario e numero di persone per la tua prenotazione</p>
+                </div>
+                <a href="#" class="fp-resv-widget__pdf fp-btn fp-btn--ghost">
+                    📄 Vedi il menu
+                </a>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="fp-resv-progress">
+                <ul class="fp-progress">
+                    <li class="fp-progress__item" data-state="active">
+                        <span class="fp-progress__index">01</span>
+                        <span class="fp-progress__label">Servizio</span>
+                    </li>
+                    <li class="fp-progress__item" data-state="locked">
+                        <span class="fp-progress__index">02</span>
+                        <span class="fp-progress__label">Data & Persone</span>
+                    </li>
+                    <li class="fp-progress__item" data-state="locked">
+                        <span class="fp-progress__index">03</span>
+                        <span class="fp-progress__label">Orario</span>
+                    </li>
+                    <li class="fp-progress__item" data-state="locked">
+                        <span class="fp-progress__index">04</span>
+                        <span class="fp-progress__label">I tuoi dati</span>
+                    </li>
+                    <li class="fp-progress__item" data-state="locked">
+                        <span class="fp-progress__index">05</span>
+                        <span class="fp-progress__label">Conferma</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Alert Info Example -->
+            <aside class="fp-alert fp-alert--info">
+                <p><strong>ℹ️ Nota:</strong> Le prenotazioni sono confermate entro 2 ore dalla richiesta.</p>
+            </aside>
+
+            <!-- Steps -->
+            <ol class="fp-resv-widget__steps">
+                <!-- Step 1: Servizio -->
+                <li class="fp-resv-step" data-step="service" data-state="active">
+                    <header class="fp-resv-step__header">
+                        <span class="fp-resv-step__label">Step 1</span>
+                        <h3 class="fp-resv-step__title">Scegli il servizio</h3>
+                        <p class="fp-resv-step__description">Seleziona pranzo o cena per vedere le disponibilità</p>
+                    </header>
+                    
+                    <div class="fp-resv-step__body">
+                        <section class="fp-meals">
+                            <div class="fp-meals__list">
+                                <button type="button" class="fp-meal-pill" data-active="true">
+                                    <span class="fp-meal-pill__label">
+                                        <span class="fp-meal-pill__icon">☀️</span>
+                                        Pranzo
+                                    </span>
+                                    <span class="fp-badge">Disponibile</span>
+                                    <span class="fp-hint">12:00 - 15:00</span>
+                                </button>
+                                
+                                <button type="button" class="fp-meal-pill">
+                                    <span class="fp-meal-pill__label">
+                                        <span class="fp-meal-pill__icon">🌙</span>
+                                        Cena
+                                    </span>
+                                    <span class="fp-badge">Disponibile</span>
+                                    <span class="fp-hint">19:00 - 23:00</span>
+                                </button>
+                            </div>
+                            
+                            <p class="fp-meals__notice">
+                                <span class="fp-meals__notice-icon">i</span>
+                                <em class="fp-meals__notice-text">Il servizio pranzo include menù degustazione.</em>
+                            </p>
+                        </section>
+                    </div>
+                    
+                    <footer class="fp-resv-step__footer">
+                        <button type="button" class="fp-btn fp-btn--primary">Continua</button>
+                    </footer>
+                </li>
+
+                <!-- Step 2: Data & Party (Hidden example) -->
+                <li class="fp-resv-step" data-step="date" data-state="locked" hidden>
+                    <header class="fp-resv-step__header">
+                        <span class="fp-resv-step__label">Step 2</span>
+                        <h3 class="fp-resv-step__title">Data e numero di persone</h3>
+                    </header>
+                    
+                    <div class="fp-resv-step__body">
+                        <div class="fp-resv-field fp-field">
+                            <label>
+                                <span>Seleziona la data</span>
+                                <input class="fp-input" type="date" name="date" required>
+                            </label>
+                        </div>
+                        
+                        <div class="fp-resv-field fp-field">
+                            <label>
+                                <span>Numero di persone</span>
+                                <div class="fp-resv-party-input-wrapper">
+                                    <button type="button" class="fp-resv-party-btn">−</button>
+                                    <input class="fp-input fp-resv-party-input" type="number" value="2" min="1" max="20">
+                                    <button type="button" class="fp-resv-party-btn">+</button>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <footer class="fp-resv-step__footer">
+                        <button type="button" class="fp-btn fp-btn--ghost">Indietro</button>
+                        <button type="button" class="fp-btn fp-btn--primary">Continua</button>
+                    </footer>
+                </li>
+
+                <!-- Step 3: Slots (Hidden) -->
+                <li class="fp-resv-step" data-step="slots" data-state="locked" hidden>
+                    <header class="fp-resv-step__header">
+                        <span class="fp-resv-step__label">Step 3</span>
+                        <h3 class="fp-resv-step__title">Scegli l'orario</h3>
+                    </header>
+                    
+                    <div class="fp-resv-step__body">
+                        <div class="fp-resv-slots">
+                            <p class="fp-resv-slots__status">Seleziona uno degli orari disponibili</p>
+                            <ul class="fp-resv-slots__list">
+                                <li><button type="button">12:00</button></li>
+                                <li><button type="button">12:30</button></li>
+                                <li><button type="button" aria-pressed="true">13:00</button></li>
+                                <li><button type="button">13:30</button></li>
+                                <li><button type="button">14:00</button></li>
+                                <li><button type="button" data-slot-status="limited">14:30</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <footer class="fp-resv-step__footer">
+                        <button type="button" class="fp-btn fp-btn--ghost">Indietro</button>
+                        <button type="button" class="fp-btn fp-btn--primary">Continua</button>
+                    </footer>
+                </li>
+
+                <!-- Step 4: Details (Hidden) -->
+                <li class="fp-resv-step" data-step="details" data-state="locked" hidden>
+                    <header class="fp-resv-step__header">
+                        <span class="fp-resv-step__label">Step 4</span>
+                        <h3 class="fp-resv-step__title">I tuoi dati</h3>
+                    </header>
+                    
+                    <div class="fp-resv-step__body">
+                        <div class="fp-resv-fields fp-resv-fields--grid">
+                            <div class="fp-resv-field fp-field">
+                                <label>
+                                    <span>Nome</span>
+                                    <input class="fp-input" type="text" required placeholder="Mario">
+                                </label>
+                            </div>
+                            
+                            <div class="fp-resv-field fp-field">
+                                <label>
+                                    <span>Cognome</span>
+                                    <input class="fp-input" type="text" required placeholder="Rossi">
+                                </label>
+                            </div>
+                            
+                            <div class="fp-resv-field fp-field">
+                                <label>
+                                    <span>Email</span>
+                                    <input class="fp-input" type="email" required placeholder="mario@esempio.it">
+                                </label>
+                            </div>
+                            
+                            <div class="fp-resv-field fp-field">
+                                <label>
+                                    <span>Telefono</span>
+                                    <div class="fp-resv-phone-input">
+                                        <span class="fp-resv-phone-input__static">+39</span>
+                                        <input type="tel" placeholder="333 1234567">
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="fp-resv-field fp-field">
+                            <label>
+                                <span>Note (opzionale)</span>
+                                <textarea class="fp-textarea" rows="3" placeholder="Eventuali richieste speciali..."></textarea>
+                            </label>
+                        </div>
+                        
+                        <div class="fp-resv-field fp-resv-field--consent fp-field">
+                            <label>
+                                <input class="fp-checkbox" type="checkbox" required>
+                                <span class="fp-resv-consent__text">
+                                    <span class="fp-resv-consent__copy">
+                                        Accetto i termini e condizioni e la <a href="#">privacy policy</a>
+                                    </span>
+                                    <span class="fp-resv-consent__meta fp-resv-consent__meta--required">Obbligatorio</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <footer class="fp-resv-step__footer">
+                        <button type="button" class="fp-btn fp-btn--ghost">Indietro</button>
+                        <button type="button" class="fp-btn fp-btn--primary">Continua</button>
+                    </footer>
+                </li>
+
+                <!-- Step 5: Summary (Hidden) -->
+                <li class="fp-resv-step" data-step="confirm" data-state="locked" hidden>
+                    <header class="fp-resv-step__header">
+                        <span class="fp-resv-step__label">Step 5</span>
+                        <h3 class="fp-resv-step__title">Conferma la prenotazione</h3>
+                    </header>
+                    
+                    <div class="fp-resv-step__body">
+                        <section class="fp-resv-summary">
+                            <h4 class="fp-resv-summary__title">Riepilogo prenotazione</h4>
+                            <dl class="fp-resv-summary__list">
+                                <div>
+                                    <dt>Data</dt>
+                                    <dd>Sabato 19 Ottobre 2025</dd>
+                                </div>
+                                <div>
+                                    <dt>Orario</dt>
+                                    <dd>13:00</dd>
+                                </div>
+                                <div>
+                                    <dt>Persone</dt>
+                                    <dd>2 persone</dd>
+                                </div>
+                                <div>
+                                    <dt>Nome</dt>
+                                    <dd>Mario Rossi</dd>
+                                </div>
+                                <div>
+                                    <dt>Contatto</dt>
+                                    <dd>mario@esempio.it • +39 333 1234567</dd>
+                                </div>
+                            </dl>
+                            <p class="fp-resv-summary__disclaimer">
+                                Riceverai una conferma via email entro 2 ore dalla richiesta.
+                            </p>
+                        </section>
+                    </div>
+                    
+                    <footer class="fp-resv-step__footer">
+                        <button type="button" class="fp-btn fp-btn--ghost">Indietro</button>
+                    </footer>
+                </li>
+            </ol>
+
+            <!-- Submit Area -->
+            <div class="fp-resv-widget__actions">
+                <button type="submit" class="fp-resv-button fp-resv-button--submit fp-btn fp-btn--primary">
+                    <span class="fp-btn__label">Completa i campi richiesti</span>
+                </button>
+                <p class="fp-resv-widget__submit-hint fp-hint">
+                    Completa tutti i passaggi per confermare la prenotazione
+                </p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Simple demo interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Meal selector
+            const mealButtons = document.querySelectorAll('.fp-meal-pill');
+            mealButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    mealButtons.forEach(b => {
+                        b.removeAttribute('data-active');
+                        b.setAttribute('aria-pressed', 'false');
+                    });
+                    this.setAttribute('data-active', 'true');
+                    this.setAttribute('aria-pressed', 'true');
+                });
+            });
+
+            // Party buttons
+            const partyInput = document.querySelector('.fp-resv-party-input');
+            if (partyInput) {
+                document.querySelectorAll('.fp-resv-party-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const isIncrement = this.textContent.trim() === '+';
+                        let value = parseInt(partyInput.value) || 2;
+                        if (isIncrement && value < 20) {
+                            partyInput.value = value + 1;
+                        } else if (!isIncrement && value > 1) {
+                            partyInput.value = value - 1;
+                        }
+                    });
+                });
+            }
+
+            // Time slots
+            const slotButtons = document.querySelectorAll('.fp-resv-slots__list button');
+            slotButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    slotButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+                    this.setAttribute('aria-pressed', 'true');
+                });
+            });
+
+            console.log('✅ The Fork Form Test loaded successfully!');
+        });
+    </script>
+</body>
+</html>

@@ -1,88 +1,83 @@
 /**
  * FP Restaurant Reservations - Form Styles
- * Sistema CSS Modulare v2.0
+ * The Fork Style Edition v3.0
  * 
- * Questo file importa il sistema modulare completo.
- * Il vecchio CSS monolitico è stato salvato in form.css.backup
+ * Design completamente ricreato con estetica ispirata a The Fork
+ * Mantenendo tutte le funzionalità e la compatibilità JS esistenti
  * 
- * @version 2.0.0
+ * @version 3.0.0
  * @author Francesco
- * @date 2025-10-12
+ * @date 2025-10-18
  */
 
-/* ==================== SISTEMA MODULARE ==================== */
+/* ==================== THE FORK STYLE ==================== */
 
-/* Importa tutto il sistema CSS modulare */
-@import './form/main.css';
+/* Importa il sistema completo The Fork Style */
+@import './form-thefork.css';
 
 /* ==================== NOTE IMPORTANTI ==================== */
 
 /*
- * STRUTTURA DEL NUOVO SISTEMA:
+ * NUOVO DESIGN THE FORK STYLE:
  * 
- * assets/css/form/
- * ├── main.css              # File principale (importato qui sopra)
- * ├── _variables.css        # Variabili CSS e design tokens
- * ├── _base.css             # Reset e stili base
- * ├── _layout.css           # Grid, spacing, containers
- * ├── _typography.css       # Font, headings, testo
- * ├── _utilities.css        # Classi utility
- * ├── _animations.css       # Keyframes e animazioni
- * ├── _responsive.css       # Media queries
- * └── components/           # Componenti modulari
- *     ├── _buttons.css
- *     ├── _inputs.css
- *     ├── _pills.css
- *     ├── _badges.css
- *     ├── _alerts.css
- *     ├── _progress.css
- *     ├── _steps.css
- *     ├── _meals.css
- *     ├── _slots.css
- *     └── _summary.css
+ * Caratteristiche principali:
+ * - Colore primario verde (#2db77e) ispirato a The Fork
+ * - Design spazioso e arioso con padding generosi
+ * - Card con ombre leggere e border-radius arrotondati
+ * - Input alti (56px) per migliore usabilità mobile
+ * - Bottoni pill-shaped con transizioni smooth
+ * - Tipografia moderna con Inter/SF Pro
+ * - Spazi bianchi generosi tra gli elementi
+ * - Progress bar con pills invece di linee
+ * - Meal selector con card hover effects
+ * - Sistema di colori premium e pulito
+ * 
+ * File principali:
+ * - form-thefork.css         # CSS principale con tutti gli stili
+ * - form/_variables-thefork.css  # Variabili The Fork style
  * 
  * COME PERSONALIZZARE:
  * 
- * 1. Per modificare variabili globali (colori, spacing, ecc):
- *    Modifica: form/_variables.css
+ * 1. Per modificare i colori (es. cambiare il verde):
+ *    Modifica: form/_variables-thefork.css
+ *    Variabile: --fp-color-primary
  * 
- * 2. Per aggiungere/modificare componenti:
- *    Crea/modifica: form/components/_nome-componente.css
- *    Poi importa in: form/main.css
+ * 2. Per regolare gli spazi:
+ *    Modifica: form/_variables-thefork.css
+ *    Variabili: --fp-space-*
  * 
- * 3. Per override veloci, aggiungi sotto questo commento:
+ * 3. Per cambiare border-radius:
+ *    Modifica: form/_variables-thefork.css
+ *    Variabili: --fp-radius-*
+ * 
+ * 4. Per override veloci, aggiungi sotto:
  */
 
 /* ==================== CUSTOM OVERRIDES ==================== */
 
-/* Aggiungi qui eventuali override personalizzati */
+/* Aggiungi qui eventuali personalizzazioni rapide */
 
-/* Esempio:
+/* Esempio - Cambia il colore primario:
 :root {
   --fp-color-primary: #ff6b6b;
-  --fp-radius-lg: 20px;
-}
-
-.fp-btn--custom {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  --fp-color-primary-hover: #ff5252;
 }
 */
 
 /* ==================== BACKWARD COMPATIBILITY ==================== */
 
 /* 
- * Se necessario, aggiungi qui classi legacy per retrocompatibilità
- * con template o shortcode che usano il vecchio sistema
+ * Tutti gli attributi data-* sono stati mantenuti per la compatibilità
+ * con il JavaScript esistente. Il form funziona esattamente come prima,
+ * solo con un aspetto completamente nuovo.
  */
 
 /* ==================== FINE ==================== */
 
 /*
- * Per tornare al vecchio sistema:
- * 1. Rimuovi la riga @import './form/main.css';
- * 2. Ripristina il contenuto da form.css.backup
+ * Per tornare al vecchio design:
+ * 1. Cambia @import './form-thefork.css' in @import './form/main.css'
+ * 2. Ricarica gli assets
  * 
- * Per supporto o domande:
- * - Leggi la documentazione: form/README.md
- * - Controlla le variabili: form/_variables.css
+ * Tutti i file originali sono ancora presenti nella cartella form/
  */
