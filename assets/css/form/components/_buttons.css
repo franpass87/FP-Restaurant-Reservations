@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--fp-space-sm);
+  text-align: center;
   
   /* Sizing - Più generosi per mobile */
   min-height: var(--fp-button-height-md);
@@ -25,6 +26,7 @@
   text-decoration: none;
   white-space: nowrap;
   letter-spacing: -0.01em;
+  vertical-align: middle;
   
   /* Visual - Design minimal */
   border-radius: var(--fp-radius-md);
