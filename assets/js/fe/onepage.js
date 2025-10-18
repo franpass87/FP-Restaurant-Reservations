@@ -279,14 +279,31 @@ class FormApp {
             return;
         }
 
-        // Imposta la data minima a oggi per impedire la selezione di date passate
-        const today = new Date().toISOString().split('T')[0];
-        this.dateField.setAttribute('min', today);
+        // Verifica che Flatpickr sia disponibile
+        if (typeof window.flatpickr === 'undefined') {
+            console.error('[FP-RESV] Flatpickr non è disponibile. Impossibile inizializzare il calendario.');
+            return;
+        }
 
         // Cache per i giorni disponibili
         this.availableDaysCache = {};
         this.availableDaysLoading = false;
         this.availableDaysCachedMeal = null;
+
+        // Inizializza Flatpickr
+        this.flatpickrInstance = window.flatpickr(this.dateField, {
+            minDate: 'today',
+            dateFormat: 'Y-m-d',
+            locale: window.flatpickr.l10ns.it || 'it',
+            enable: [], // Inizialmente nessun giorno abilitato, lo aggiorneremo dopo il caricamento
+            allowInput: false,
+            disableMobile: false, // Usa il calendario nativo su mobile se preferito
+            onChange: (selectedDates, dateStr, instance) => {
+                // Trigger evento change per mantenere la compatibilità con il resto del codice
+                const event = new Event('change', { bubbles: true });
+                this.dateField.dispatchEvent(event);
+            }
+        });
 
         // Crea elemento per mostrare i giorni disponibili
         this.createAvailableDaysHint();
@@ -296,122 +313,21 @@ class FormApp {
         const initialMeal = this.getSelectedMeal();
         this.loadAvailableDays(initialMeal || undefined);
 
-        // Aggiungi validazione per date passate e giorni disponibili
+        // Con Flatpickr, la validazione è gestita automaticamente tramite la configurazione 'enable'
+        // Aggiungiamo comunque un listener per il change per mantenere la compatibilità
         this.dateField.addEventListener('change', (event) => {
             const selectedDate = event.target.value;
             
-            if (selectedDate && selectedDate < today) {
-                event.target.setCustomValidity('Non è possibile prenotare per giorni passati.');
-                event.target.setAttribute('aria-invalid', 'true');
-                return;
-            }
-
-            // Valida se il giorno è disponibile per il meal selezionato
-            if (selectedDate && Object.keys(this.availableDaysCache).length === 0 && this.availableDaysLoading) {
-                // Cache ancora in caricamento - validazione rimandata
-                // Lo Step 2 (availability endpoint) farà la validazione definitiva
+            if (selectedDate) {
+                event.target.setCustomValidity('');
+                event.target.setAttribute('aria-invalid', 'false');
+                
                 const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
                 if (statusEl) {
-                    statusEl.textContent = 'Verifica disponibilità in corso...';
-                    statusEl.hidden = false;
+                    statusEl.hidden = true;
                 }
-                // Non blocchiamo l'utente, ma lo avvisiamo
-                return;
-            }
-            
-            if (selectedDate && this.availableDaysCache[selectedDate] !== undefined) {
-                const selectedMeal = this.getSelectedMeal();
-                const dayInfo = this.availableDaysCache[selectedDate];
-                
-                // Determina se il giorno è disponibile
-                let isAvailable = false;
-                
-                if (selectedMeal) {
-                    // Se c'è un meal selezionato
-                    if (dayInfo.meals) {
-                        // Formato con tutti i meals
-                        isAvailable = dayInfo.meals[selectedMeal] === true;
-                    } else {
-                        // Formato filtrato per singolo meal (dall'API con parametro meal)
-                        isAvailable = dayInfo.available === true;
-                    }
-                    
-                    if (!isAvailable) {
-                        const errorMessage = 'Questo servizio non è disponibile nel giorno selezionato. Scegli un altro giorno.';
-                        
-                        event.target.setCustomValidity(errorMessage);
-                        event.target.setAttribute('aria-invalid', 'true');
-                        
-                        // Mostra il messaggio di errore
-                        const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
-                        if (statusEl) {
-                            statusEl.textContent = errorMessage;
-                            statusEl.hidden = false;
-                        }
-                        
-                        // Resetta il campo dopo un breve ritardo
-                        setTimeout(() => {
-                            event.target.value = '';
-                            if (statusEl) {
-                                statusEl.hidden = true;
-                            }
-                        }, 2000);
-                        
-                        return;
-                    }
-                } else {
-                    // Se non c'è un meal selezionato, controlla se c'è almeno un meal disponibile
-                    if (!dayInfo.available) {
-                        const errorMessage = 'Nessun servizio disponibile per questo giorno. Scegli un altro giorno.';
-                        
-                        event.target.setCustomValidity(errorMessage);
-                        event.target.setAttribute('aria-invalid', 'true');
-                        
-                        const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
-                        if (statusEl) {
-                            statusEl.textContent = errorMessage;
-                            statusEl.hidden = false;
-                        }
-                        
-                        setTimeout(() => {
-                            event.target.value = '';
-                            if (statusEl) {
-                                statusEl.hidden = true;
-                            }
-                        }, 2000);
-                        
-                        return;
-                    }
-                }
-            }
-
-            event.target.setCustomValidity('');
-            event.target.setAttribute('aria-invalid', 'false');
-            
-            const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
-            if (statusEl) {
-                statusEl.hidden = true;
             }
         });
-
-        const openPicker = () => {
-            // Porta il focus sull'input
-            if (typeof this.dateField.focus === 'function') {
-                this.dateField.focus();
-            }
-
-            // Apri il picker nativo se disponibile
-            if (typeof this.dateField.showPicker === 'function') {
-                try {
-                    this.dateField.showPicker();
-                } catch (error) {
-                    // Alcuni browser (es. Safari) potrebbero non supportare showPicker. Ignora.
-                }
-            }
-        };
-
-        // Apri il calendario al click sull'input
-        this.dateField.addEventListener('click', openPicker);
     }
 
     loadAvailableDays(meal = null) {
@@ -460,20 +376,43 @@ class FormApp {
     }
 
     applyDateRestrictions() {
-        // Se il browser supporta il controllo avanzato del datepicker, applica le restrictions
-        if (!this.dateField || !this.availableDaysCache) {
+        if (!this.flatpickrInstance || !this.availableDaysCache) {
             return;
         }
 
-        // Non possiamo disabilitare direttamente i singoli giorni in un input type="date" HTML5
-        // La validazione avviene al momento del change
-        // Tuttavia possiamo usare il pattern per comunicare visivamente
-        
         const selectedMeal = this.getSelectedMeal();
-        if (selectedMeal) {
-            // Ricarica i giorni disponibili per il meal selezionato
-            this.loadAvailableDays(selectedMeal);
-        }
+        
+        // Costruisci l'array delle date disponibili
+        const enabledDates = [];
+        
+        Object.entries(this.availableDaysCache).forEach(([date, info]) => {
+            if (!info) {
+                return;
+            }
+            
+            let isAvailable = false;
+            
+            // Formato con tutti i meals: { meals: { 'lunch': true, 'dinner': false } }
+            if (info.meals) {
+                if (selectedMeal) {
+                    isAvailable = info.meals[selectedMeal] === true;
+                } else {
+                    // Se non c'è meal selezionato, controlla se almeno uno è disponibile
+                    isAvailable = Object.values(info.meals).some(available => available === true);
+                }
+            } 
+            // Formato filtrato per singolo meal: { available: true, meal: 'lunch' }
+            else {
+                isAvailable = info.available === true;
+            }
+            
+            if (isAvailable) {
+                enabledDates.push(date);
+            }
+        });
+
+        // Aggiorna Flatpickr con le nuove date disponibili
+        this.flatpickrInstance.set('enable', enabledDates);
         
         // Aggiorna il messaggio con i giorni disponibili
         this.updateAvailableDaysHint();
