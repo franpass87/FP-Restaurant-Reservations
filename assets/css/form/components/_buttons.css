@@ -25,55 +25,36 @@
   white-space: nowrap;
   
   /* Visual */
-  border-radius: var(--fp-radius-xl);
-  border: 1px solid transparent;
-  background: var(--fp-color-primary);
+  border-radius: var(--fp-radius-lg);
+  border: none;
+  background: #000000;
   color: white;
-  box-shadow: var(--fp-shadow-md);
+  box-shadow: var(--fp-shadow-sm);
   
   /* Interaction */
   cursor: pointer;
   user-select: none;
   transition: all var(--fp-transition-base);
+  -webkit-tap-highlight-color: transparent;
   
   /* Position */
   position: relative;
-  overflow: hidden;
 }
 
-/* Ripple effect */
-.fp-btn::before,
-.fp-resv-button::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.4s ease, height 0.4s ease;
-}
-
-.fp-btn:hover::before,
-.fp-resv-button:hover::before {
-  width: 300px;
-  height: 300px;
-}
 
 /* ==================== STATES ==================== */
 
-.fp-btn:hover,
-.fp-resv-button:hover {
-  background: var(--fp-color-primary-hover);
-  box-shadow: var(--fp-shadow-lg);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .fp-btn:hover,
+  .fp-resv-button:hover {
+    background: #1a1a1a;
+    box-shadow: var(--fp-shadow-md);
+  }
 }
 
 .fp-btn:active,
 .fp-resv-button:active {
-  transform: translateY(0);
+  transform: scale(0.97);
   box-shadow: var(--fp-shadow-sm);
 }
 
@@ -100,14 +81,13 @@
 .fp-resv-button--primary {
   background: #000000 !important;
   color: #ffffff !important;
-  border-color: #000000 !important;
 }
 
-.fp-btn--primary:hover,
-.fp-resv-button--primary:hover {
-  background: #333333 !important;
-  color: #ffffff !important;
-  border-color: #333333 !important;
+@media (hover: hover) {
+  .fp-btn--primary:hover,
+  .fp-resv-button--primary:hover {
+    background: #1a1a1a !important;
+  }
 }
 
 /* Secondary / Ghost - BIANCO con TESTO NERO e BORDO NERO */
@@ -121,13 +101,13 @@
   box-shadow: var(--fp-shadow-sm);
 }
 
-.fp-btn--secondary:hover,
-.fp-btn--ghost:hover,
-.fp-resv-button--secondary:hover,
-.fp-resv-button--ghost:hover {
-  background: #f5f5f5 !important;
-  color: #000000 !important;
-  border-color: #333333 !important;
+@media (hover: hover) {
+  .fp-btn--secondary:hover,
+  .fp-btn--ghost:hover,
+  .fp-resv-button--secondary:hover,
+  .fp-resv-button--ghost:hover {
+    background: #f5f5f5 !important;
+  }
 }
 
 /* Outline */

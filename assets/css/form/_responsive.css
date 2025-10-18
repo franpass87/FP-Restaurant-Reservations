@@ -16,8 +16,9 @@
 @media (max-width: 640px) {
   /* Container */
   .fp-resv {
-    padding: var(--fp-space-md);
-    border-radius: var(--fp-radius-xl);
+    padding: var(--fp-space-sm);
+    border-radius: var(--fp-radius-md);
+    gap: var(--fp-space-md);
   }
   
   /* Topbar */
@@ -51,7 +52,7 @@
   /* Meals */
   .fp-meals__list {
     flex-direction: column;
-    gap: var(--fp-space-sm);
+    gap: var(--fp-space-md);
   }
   
   .fp-meal-pill {
@@ -61,7 +62,8 @@
   
   /* Steps */
   .fp-resv-step {
-    padding: var(--fp-space-lg);
+    padding: var(--fp-space-sm);
+    gap: var(--fp-space-sm);
   }
   
   .fp-resv-step__footer {
@@ -90,6 +92,7 @@
   /* Alerts */
   .fp-alert {
     flex-direction: column;
+    padding: var(--fp-space-sm);
   }
   
   .fp-alert .fp-btn {
@@ -135,8 +138,9 @@
   
   /* Summary */
   .fp-resv-summary {
-    padding: var(--fp-space-md);
-    border-radius: var(--fp-radius-xl);
+    padding: var(--fp-space-sm);
+    border-radius: var(--fp-radius-md);
+    gap: var(--fp-space-sm);
   }
   
   .fp-resv-summary__info-box {
@@ -225,16 +229,6 @@
 
 /* ==================== LARGE DESKTOP (1280px+) ==================== */
 
-@media (min-width: 1280px) {
-  /* Aumenta spaziatura */
-  .fp-resv {
-    gap: var(--fp-space-xl);
-  }
-  
-  .fp-resv-step {
-    padding: var(--fp-space-2xl);
-  }
-}
 
 /* ==================== LANDSCAPE MOBILE ==================== */
 
@@ -307,19 +301,35 @@
 /* ==================== TOUCH DEVICES ==================== */
 
 @media (pointer: coarse) {
-  /* Aumenta target touch */
+  /* Aumenta target touch - iOS e Android */
   .fp-btn,
-  .fp-resv-button,
-  .fp-pill,
+  .fp-resv-button {
+    min-height: 48px;
+  }
+  
+  .fp-pill {
+    min-height: 48px;
+    padding: var(--fp-space-md) var(--fp-space-lg);
+  }
+  
   .fp-input,
   .fp-select {
-    min-height: 44px; /* Apple recommended touch target size */
+    min-height: 48px;
   }
   
   .fp-checkbox,
   .fp-radio {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  /* Aumenta gap tra elementi cliccabili */
+  .fp-pills-list {
+    gap: var(--fp-space-md);
+  }
+  
+  .fp-btn-group {
+    gap: var(--fp-space-md);
   }
 }
 

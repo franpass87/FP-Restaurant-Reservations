@@ -12,9 +12,9 @@
   display: block;
   width: 100%;
   
-  /* Sizing - PIÙ PADDING */
+  /* Sizing - Touch-friendly */
   min-height: var(--fp-input-height-md);
-  padding: var(--fp-space-md) var(--fp-space-lg);
+  padding: var(--fp-space-sm) var(--fp-space-md);
   
   /* Typography */
   font-family: inherit;
@@ -24,12 +24,13 @@
   
   /* Visual - BIANCO con TESTO NERO */
   background: #ffffff !important;
-  border: 1.5px solid #e0e0e0 !important;
-  border-radius: var(--fp-radius-lg);
-  box-shadow: var(--fp-shadow-sm);
+  border: 2px solid #e0e0e0 !important;
+  border-radius: var(--fp-radius-md);
+  box-shadow: none;
   
   /* Interaction */
-  transition: all var(--fp-transition-base);
+  transition: border-color var(--fp-transition-base);
+  -webkit-tap-highlight-color: transparent;
   
   /* Reset */
   appearance: none;
@@ -37,19 +38,21 @@
 
 /* ==================== STATES ==================== */
 
-.fp-input:hover,
-.fp-select:hover,
-.fp-textarea:hover {
-  border-color: var(--fp-color-primary);
+@media (hover: hover) {
+  .fp-input:hover,
+  .fp-select:hover,
+  .fp-textarea:hover {
+    border-color: #999999;
+  }
 }
 
 .fp-input:focus,
 .fp-select:focus,
 .fp-textarea:focus {
   outline: none;
-  border-color: var(--fp-color-primary);
-  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-sm);
-  background: white;
+  border-color: #000000;
+  box-shadow: var(--fp-shadow-focus);
+  background: #ffffff;
 }
 
 .fp-input:disabled,
@@ -109,28 +112,29 @@
 /* ==================== CHECKBOX ==================== */
 
 .fp-checkbox {
-  /* Sizing */
-  width: 20px;
-  height: 20px;
+  /* Sizing - Touch-friendly */
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   
   /* Visual */
-  border: 2px solid var(--fp-color-border);
+  border: 2px solid #d0d0d0;
   border-radius: var(--fp-radius-sm);
-  background: var(--fp-color-surface);
-  box-shadow: var(--fp-shadow-sm);
+  background: #ffffff;
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-fast);
+  transition: all var(--fp-transition-base);
+  -webkit-tap-highlight-color: transparent;
   
   /* Custom accent color */
-  accent-color: var(--fp-color-primary);
+  accent-color: #000000;
 }
 
-.fp-checkbox:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+@media (hover: hover) {
+  .fp-checkbox:hover {
+    border-color: #000000;
+  }
 }
 
 .fp-checkbox:focus-visible {
@@ -139,8 +143,8 @@
 }
 
 .fp-checkbox:checked {
-  border-color: var(--fp-color-primary);
-  background: var(--fp-color-primary);
+  border-color: #000000;
+  background: #000000;
 }
 
 .fp-checkbox:disabled {
@@ -151,27 +155,29 @@
 /* ==================== RADIO ==================== */
 
 .fp-radio {
-  /* Sizing */
-  width: 20px;
-  height: 20px;
+  /* Sizing - Touch-friendly */
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   
   /* Visual */
-  border: 2px solid var(--fp-color-border);
+  border: 2px solid #d0d0d0;
   border-radius: 50%;
-  background: var(--fp-color-surface);
+  background: #ffffff;
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-fast);
+  transition: all var(--fp-transition-base);
+  -webkit-tap-highlight-color: transparent;
   
   /* Custom accent color */
-  accent-color: var(--fp-color-primary);
+  accent-color: #000000;
 }
 
-.fp-radio:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+@media (hover: hover) {
+  .fp-radio:hover {
+    border-color: #000000;
+  }
 }
 
 .fp-radio:focus-visible {
@@ -180,8 +186,8 @@
 }
 
 .fp-radio:checked {
-  border-color: var(--fp-color-primary);
-  background: var(--fp-color-primary);
+  border-color: #000000;
+  background: #000000;
 }
 
 /* ==================== FIELD WRAPPER ==================== */

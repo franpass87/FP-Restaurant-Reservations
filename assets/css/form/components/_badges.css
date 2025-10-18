@@ -25,10 +25,10 @@
   white-space: nowrap;
   
   /* Visual */
-  background: var(--fp-gradient-primary);
+  background: #000000;
   color: white;
   border-radius: var(--fp-radius-full);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--fp-shadow-sm);
 }
 
 /* Badge con icona */
@@ -45,33 +45,33 @@
 
 /* Primary (default) */
 .fp-badge--primary {
-  background: var(--fp-gradient-primary);
+  background: #000000;
 }
 
 /* Success */
 .fp-badge--success {
-  background: linear-gradient(135deg, var(--fp-color-success) 0%, #15803d 100%);
+  background: var(--fp-color-success);
 }
 
 /* Warning */
 .fp-badge--warning {
-  background: linear-gradient(135deg, var(--fp-color-warning) 0%, #d97706 100%);
+  background: var(--fp-color-warning);
 }
 
 /* Error / Danger */
 .fp-badge--error,
 .fp-badge--danger {
-  background: linear-gradient(135deg, var(--fp-color-error) 0%, #b91c1c 100%);
+  background: var(--fp-color-error);
 }
 
 /* Info */
 .fp-badge--info {
-  background: linear-gradient(135deg, var(--fp-color-info) 0%, #2563eb 100%);
+  background: var(--fp-color-info);
 }
 
 /* Neutral / Gray */
 .fp-badge--neutral {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  background: #6b7280;
 }
 
 /* ==================== OUTLINE VARIANTS ==================== */
@@ -170,22 +170,22 @@
 
 /* Stati prenotazione */
 .fp-badge--confirmed {
-  background: var(--fp-badge--success);
+  background: var(--fp-color-success);
 }
 
 .fp-badge--pending {
-  background: linear-gradient(135deg, var(--fp-color-warning) 0%, #d97706 100%);
+  background: var(--fp-color-warning);
 }
 
 .fp-badge--cancelled {
-  background: linear-gradient(135deg, var(--fp-color-error) 0%, #b91c1c 100%);
+  background: var(--fp-color-error);
 }
 
 .fp-badge--visited {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  background: #6b7280;
 }
 
 .fp-badge--no-show {
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  background: #475569;
 }
 

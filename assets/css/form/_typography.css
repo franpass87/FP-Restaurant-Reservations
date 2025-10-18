@@ -21,10 +21,7 @@
   font-weight: var(--fp-font-bold);
   letter-spacing: -0.02em;
   line-height: var(--fp-leading-tight);
-  background: linear-gradient(135deg, var(--fp-color-text) 0%, var(--fp-color-text-muted) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--fp-color-text);
 }
 
 .fp-resv-widget__subheadline {

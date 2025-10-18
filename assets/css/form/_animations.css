@@ -24,11 +24,11 @@
 }
 
 .fp-animate-fade-in {
-  animation: fp-fade-in 0.3s ease-out;
+  animation: fp-fade-in 0.3s ease;
 }
 
 .fp-animate-fade-out {
-  animation: fp-fade-out 0.3s ease-out;
+  animation: fp-fade-out 0.2s ease;
 }
 
 /* ==================== SLIDE ANIMATIONS ==================== */
@@ -98,7 +98,7 @@
 @keyframes fp-scale-in {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
@@ -113,16 +113,16 @@
   }
   to {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
 }
 
 .fp-animate-scale-in {
-  animation: fp-scale-in 0.3s ease-out;
+  animation: fp-scale-in 0.3s ease;
 }
 
 .fp-animate-scale-out {
-  animation: fp-scale-out 0.3s ease-out;
+  animation: fp-scale-out 0.2s ease;
 }
 
 /* ==================== SPIN ANIMATION ==================== */
@@ -214,11 +214,7 @@
   width: 100%;
   height: 14px;
   border-radius: var(--fp-radius-md);
-  background: linear-gradient(90deg, 
-    rgba(148, 163, 184, 0.12), 
-    rgba(148, 163, 184, 0.2), 
-    rgba(148, 163, 184, 0.12)
-  );
+  background: #e0e0e0;
 }
 
 .fp-skeleton::after {
@@ -231,7 +227,7 @@
     transparent
   );
   transform: translateX(-100%);
-  animation: fp-skeleton-shimmer 1.2s ease-in-out infinite;
+  animation: fp-skeleton-shimmer 1.5s ease infinite;
 }
 
 .fp-skeleton--circle {

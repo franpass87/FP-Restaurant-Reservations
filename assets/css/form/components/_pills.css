@@ -12,9 +12,9 @@
   justify-content: center;
   gap: var(--fp-space-sm);
   
-  /* Sizing */
-  padding: var(--fp-space-sm) var(--fp-space-lg);
-  min-height: 2.75rem;
+  /* Sizing - Touch-friendly */
+  padding: var(--fp-space-md) var(--fp-space-lg);
+  min-height: 3rem;
   
   /* Typography */
   font-size: var(--fp-text-base);
@@ -23,51 +23,26 @@
   letter-spacing: 0.01em;
   
   /* Visual */
-  background: var(--fp-gradient-surface);
-  border: 2px solid var(--fp-color-border);
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
   border-radius: var(--fp-radius-full);
   box-shadow: var(--fp-shadow-sm);
   
   /* Interaction */
   cursor: pointer;
   transition: all var(--fp-transition-base);
+  -webkit-tap-highlight-color: transparent;
   position: relative;
-  overflow: hidden;
 }
 
-/* Gradient overlay effect */
-.fp-pill::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.2) 100%);
-  opacity: 0.3;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-/* Highlight effect */
-.fp-pill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--fp-color-primary-light);
-  opacity: 0;
-  transition: opacity var(--fp-transition-fast);
-  border-radius: inherit;
-  z-index: -1;
-}
 
 /* ==================== STATES ==================== */
 
-.fp-pill:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: var(--fp-shadow-lg);
-  transform: translateY(-2px);
-}
-
-.fp-pill:hover::after {
-  opacity: 1;
+@media (hover: hover) {
+  .fp-pill:hover {
+    border-color: #999999;
+    background: #f8f8f8;
+  }
 }
 
 .fp-pill:active {
@@ -80,13 +55,7 @@
   background: #000000 !important;
   border-color: #000000 !important;
   color: #ffffff !important;
-  box-shadow: var(--fp-shadow-lg);
-}
-
-.fp-pill[aria-pressed="true"]::before,
-.fp-pill[data-active="true"]::before,
-.fp-pill--active::before {
-  opacity: 0.2;
+  box-shadow: var(--fp-shadow-md) !important;
 }
 
 .fp-pill:disabled,
@@ -124,9 +93,9 @@
 
 .fp-slot-pill {
   /* Eredita da .fp-pill */
-  min-width: 100px;
-  padding: var(--fp-space-sm) var(--fp-space-md);
-  font-size: var(--fp-text-sm);
+  min-width: 110px;
+  padding: var(--fp-space-md) var(--fp-space-lg);
+  font-size: var(--fp-text-base);
   font-weight: var(--fp-font-bold);
 }
 
@@ -150,7 +119,7 @@
 .fp-pills-list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--fp-space-sm);
+  gap: var(--fp-space-md);
   list-style: none;
   padding: 0;
   margin: 0;
@@ -158,23 +127,23 @@
 
 .fp-pills-list--grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--fp-space-sm);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--fp-space-md);
 }
 
 /* ==================== VARIANTS ==================== */
 
 /* Pill compatta */
 .fp-pill--sm {
-  min-height: 2.25rem;
-  padding: var(--fp-space-xs) var(--fp-space-md);
+  min-height: 2.75rem;
+  padding: var(--fp-space-sm) var(--fp-space-md);
   font-size: var(--fp-text-sm);
 }
 
 /* Pill grande */
 .fp-pill--lg {
   min-height: 3.5rem;
-  padding: var(--fp-space-md) var(--fp-space-xl);
+  padding: var(--fp-space-lg) var(--fp-space-xl);
   font-size: var(--fp-text-lg);
 }
 
