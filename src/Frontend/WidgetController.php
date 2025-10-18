@@ -194,10 +194,10 @@ final class WidgetController
             gap: 0.65rem !important;
             align-items: flex-start !important;
         }
-        /* SPACING CORRETTI - Forza margini e padding generosi */
+        /* SPACING CORRETTI - Padding compatto stile TheFork */
         .fp-resv-widget,
         #fp-resv-default {
-            padding: clamp(1.5rem, 4vw, 2.5rem) !important;
+            padding: clamp(0.875rem, 3vw, 1.5rem) !important;
         }
         /* Mobile: padding 0 */
         @media (max-width: 640px) {
@@ -293,37 +293,38 @@ final class WidgetController
         }
         .fp-resv-widget .fp-resv-step,
         #fp-resv-default .fp-resv-step {
-            padding: 2rem clamp(1.5rem, 5vw, 2.5rem) !important;
-            margin-bottom: 1.5rem !important;
+            padding: 1.25rem clamp(1rem, 4vw, 1.5rem) !important;
+            margin-bottom: 1rem !important;
         }
-        /* Spacing tra sezioni - PADDING 20PX */
+        /* Spacing tra sezioni - Compatto */
         .fp-resv-widget .fp-section,
         #fp-resv-default .fp-section {
-            margin-bottom: 1.5rem !important;
-            padding: 20px !important;
+            margin-bottom: 1rem !important;
+            padding: 1rem !important;
         }
-        /* Spacing tra campi del form */
+        /* Spacing tra campi del form - Ridotto */
         .fp-resv-widget .fp-resv-field,
         .fp-resv-widget .fp-field,
         #fp-resv-default .fp-resv-field,
         #fp-resv-default .fp-field {
-            margin-bottom: 1.25rem !important;
+            margin-bottom: 0.875rem !important;
         }
-        /* Notice/hint text - più padding e margini */
+        /* Notice/hint text - Compatto stile TheFork */
         .fp-resv-widget .fp-hint,
         .fp-resv-widget .fp-resv-meal-notice,
         #fp-resv-default .fp-hint,
         #fp-resv-default .fp-resv-meal-notice {
-            margin-top: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            padding: 0.85rem 1rem !important;
-            line-height: 1.6 !important;
+            margin-top: 0.625rem !important;
+            margin-bottom: 0.625rem !important;
+            padding: 0.5rem 0.625rem !important;
+            line-height: 1.5 !important;
+            font-size: 0.8125rem !important;
         }
-        /* Header/Topbar - più spazio */
+        /* Header/Topbar - Compatto */
         .fp-resv-widget .fp-topbar,
         #fp-resv-default .fp-topbar {
-            padding: 1.5rem clamp(1.5rem, 5vw, 2.5rem) !important;
-            margin-bottom: 1.5rem !important;
+            padding: 1rem clamp(1rem, 4vw, 1.5rem) !important;
+            margin-bottom: 1rem !important;
         }
         /* Titoli nel form - più margini */
         .fp-resv-widget .fp-resv-widget__headline,
@@ -334,28 +335,31 @@ final class WidgetController
         #fp-resv-default .fp-resv-widget__subheadline {
             margin-bottom: 0 !important;
         }
-        /* Pulsanti servizio (Pranzo, Cena, ecc) */
+        /* Pulsanti servizio (Pranzo, Cena, ecc) - Stile compatto TheFork */
         .fp-resv-widget .fp-meal-pill,
         #fp-resv-default .fp-meal-pill {
-            margin: 0.5rem !important;
-            padding: 0.85rem 1.25rem !important;
+            margin: 0 !important;
+            padding: 0.625rem 0.875rem !important;
+            font-size: 0.9375rem !important;
         }
-        /* Titoli sezioni */
+        /* Titoli sezioni - Compatti */
         .fp-resv-widget h2,
         .fp-resv-widget h3,
         #fp-resv-default h2,
         #fp-resv-default h3 {
             margin-top: 0 !important;
-            margin-bottom: 1rem !important;
+            margin-bottom: 0.625rem !important;
+            font-size: 1.125rem !important;
         }
         /* Paragrafi descrittivi */
         .fp-resv-widget p,
         #fp-resv-default p {
             margin-top: 0 !important;
-            margin-bottom: 0.75rem !important;
-            line-height: 1.6 !important;
+            margin-bottom: 0.5rem !important;
+            line-height: 1.5 !important;
+            font-size: 0.875rem !important;
         }
-        /* Input, select, textarea - MIGLIOrata visibilità */
+        /* Input, select, textarea - Compatti stile TheFork */
         .fp-resv-widget input:not([type="checkbox"]):not([type="radio"]),
         .fp-resv-widget select,
         .fp-resv-widget textarea,
@@ -363,15 +367,15 @@ final class WidgetController
         #fp-resv-default select,
         #fp-resv-default textarea {
             margin-top: 0.25rem !important;
-            padding: 0.85rem 1rem !important;
-            border: 2px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
+            padding: 0.625rem 0.75rem !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.375rem !important;
             background: #ffffff !important;
             color: #1e293b !important;
-            font-size: 1rem !important;
+            font-size: 0.9375rem !important;
             line-height: 1.5 !important;
             width: 100% !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+            box-shadow: none !important;
             transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
         /* Input focus - bordo blu */
@@ -393,26 +397,26 @@ final class WidgetController
             color: #94a3b8 !important;
             opacity: 1 !important;
         }
-        /* Campo data - ancora più visibile */
+        /* Campo data - Compatto */
         .fp-resv-widget input[type="date"],
         .fp-resv-widget input[data-fp-resv-field="date"],
         #fp-resv-default input[type="date"],
         #fp-resv-default input[data-fp-resv-field="date"] {
-            font-size: 1.05rem !important;
-            padding: 1rem !important;
-            border-width: 2px !important;
-            min-height: 3rem !important;
+            font-size: 0.9375rem !important;
+            padding: 0.625rem 0.75rem !important;
+            border-width: 1px !important;
+            min-height: 2.5rem !important;
             cursor: pointer !important;
         }
-        /* Campi numerici (party, ecc) - più visibili */
+        /* Campi numerici (party, ecc) - Compatti */
         .fp-resv-widget input[type="number"],
         .fp-resv-widget input[data-fp-resv-field="party"],
         #fp-resv-default input[type="number"],
         #fp-resv-default input[data-fp-resv-field="party"] {
-            font-size: 1.1rem !important;
+            font-size: 0.9375rem !important;
             font-weight: 600 !important;
             text-align: center !important;
-            min-height: 3rem !important;
+            min-height: 2.5rem !important;
         }
         /* Campi email e telefono */
         .fp-resv-widget input[type="email"],
