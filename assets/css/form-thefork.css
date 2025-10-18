@@ -217,7 +217,9 @@
 }
 
 .fp-resv-step__label {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: var(--fp-text-sm);
   font-weight: var(--fp-font-semibold);
   color: var(--fp-color-primary);
@@ -228,7 +230,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   line-height: 1.5;
-  vertical-align: middle;
 }
 
 .fp-resv-step__title {
