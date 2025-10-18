@@ -42,15 +42,15 @@
   --fp-color-limited: #f59e0b;      /* Giallo - Limitato */
   --fp-color-full: #dc2626;         /* Rosso - Pieno */
   
-  /* ==================== SPAZIATURE ==================== */
+  /* ==================== SPAZIATURE - Mobile-First ==================== */
   
-  --fp-space-xs: 0.75rem;   /* 12px - PIÙ GENEROSE */
-  --fp-space-sm: 1rem;      /* 16px */
-  --fp-space-md: 1.5rem;    /* 24px */
-  --fp-space-lg: 2rem;      /* 32px */
-  --fp-space-xl: 2.5rem;    /* 40px */
-  --fp-space-2xl: 3.5rem;   /* 56px */
-  --fp-space-3xl: 5rem;     /* 80px */
+  --fp-space-xs: 0.5rem;    /* 8px */
+  --fp-space-sm: 0.75rem;   /* 12px */
+  --fp-space-md: 1rem;      /* 16px */
+  --fp-space-lg: 1.5rem;    /* 24px */
+  --fp-space-xl: 2rem;      /* 32px */
+  --fp-space-2xl: 2.5rem;   /* 40px */
+  --fp-space-3xl: 3rem;     /* 48px */
   
   /* ==================== TIPOGRAFIA ==================== */
   
@@ -90,26 +90,24 @@
   --fp-radius-2xl: 1.25rem;   /* 20px */
   --fp-radius-full: 9999px;   /* Pill shape */
   
-  /* ==================== SHADOWS - Premium & Sofisticate ==================== */
+  /* ==================== SHADOWS - Semplici & Ottimizzate Mobile ==================== */
   
-  --fp-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --fp-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08);
-  --fp-shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
-  --fp-shadow-xl: 0 24px 32px -8px rgba(0, 0, 0, 0.18), 0 12px 16px -6px rgba(0, 0, 0, 0.12);
-  --fp-shadow-2xl: 0 32px 64px -16px rgba(0, 0, 0, 0.28), 0 16px 32px -8px rgba(0, 0, 0, 0.16);
-  --fp-shadow-inner: inset 0 2px 6px 0 rgba(0, 0, 0, 0.08);
-  --fp-shadow-glow: 0 0 20px rgba(0, 0, 0, 0.06), 0 0 40px rgba(0, 0, 0, 0.03);
+  --fp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --fp-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  --fp-shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.12);
+  --fp-shadow-xl: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
+  --fp-shadow-2xl: 0 12px 24px 0 rgba(0, 0, 0, 0.18);
+  --fp-shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   
-  /* Shadow Focus - Nero con glow elegante */
-  --fp-shadow-focus: 0 0 0 4px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04);
+  /* Shadow Focus - Semplice e chiaro */
+  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.15);
   
-  /* ==================== TRANSIZIONI - Fluide & Premium ==================== */
+  /* ==================== TRANSIZIONI - Rapide & Performance ==================== */
   
-  --fp-transition-fast: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --fp-transition-base: 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  --fp-transition-slow: 450ms cubic-bezier(0.16, 1, 0.3, 1);
-  --fp-transition-smooth: 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-bounce: 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --fp-transition-fast: 150ms ease;
+  --fp-transition-base: 200ms ease;
+  --fp-transition-slow: 300ms ease;
+  --fp-transition-smooth: 200ms ease-out;
   
   /* ==================== Z-INDEX ==================== */
   
@@ -121,29 +119,28 @@
   --fp-z-popover: 1400;
   --fp-z-tooltip: 1500;
   
-  /* ==================== DIMENSIONI COMPONENTI ==================== */
+  /* ==================== DIMENSIONI COMPONENTI - Touch-Friendly ==================== */
   
-  /* Input Heights */
-  --fp-input-height-sm: 2.5rem;   /* 40px */
+  /* Input Heights - Minimo 44px per touch */
+  --fp-input-height-sm: 2.75rem;  /* 44px */
   --fp-input-height-md: 3rem;     /* 48px */
   --fp-input-height-lg: 3.5rem;   /* 56px */
   
-  /* Button Heights */
-  --fp-button-height-sm: 2.25rem; /* 36px */
-  --fp-button-height-md: 2.75rem; /* 44px */
-  --fp-button-height-lg: 3.25rem; /* 52px */
+  /* Button Heights - Minimo 44px per touch */
+  --fp-button-height-sm: 2.75rem; /* 44px */
+  --fp-button-height-md: 3rem;    /* 48px */
+  --fp-button-height-lg: 3.5rem;  /* 56px */
   
   /* Container Max Width */
   --fp-container-max-width: 100%;
   --fp-form-max-width: 600px;
   
-  /* ==================== GRADIENTI - Eleganti & Sofisticati ==================== */
+  /* ==================== COLORI - Semplici & Chiari ==================== */
   
-  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #2a2a2a 50%, #1a1a1a 100%);
-  --fp-gradient-surface: linear-gradient(145deg, #ffffff 0%, #fcfcfc 50%, #fafafa 100%);
-  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 60%, rgba(255, 255, 255, 0.95) 100%);
-  --fp-gradient-shine: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.8) 50%, transparent 60%);
-  --fp-gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+  --fp-gradient-primary: #000000;
+  --fp-gradient-surface: #ffffff;
+  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 100%);
+  --fp-gradient-glass: #ffffff;
   
   /* ==================== BACKDROP FILTER ==================== */
   

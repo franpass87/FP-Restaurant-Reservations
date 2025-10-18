@@ -8,31 +8,27 @@
 @keyframes fp-fade-in {
   from {
     opacity: 0;
-    transform: scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
 @keyframes fp-fade-out {
   from {
     opacity: 1;
-    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(0.98);
   }
 }
 
 .fp-animate-fade-in {
-  animation: fp-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fp-fade-in 0.3s ease;
 }
 
 .fp-animate-fade-out {
-  animation: fp-fade-out 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fp-fade-out 0.2s ease;
 }
 
 /* ==================== SLIDE ANIMATIONS ==================== */
@@ -102,35 +98,31 @@
 @keyframes fp-scale-in {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(10px);
-    filter: blur(2px);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: scale(1);
   }
 }
 
 @keyframes fp-scale-out {
   from {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(0.92) translateY(10px);
-    filter: blur(2px);
+    transform: scale(0.95);
   }
 }
 
 .fp-animate-scale-in {
-  animation: fp-scale-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fp-scale-in 0.3s ease;
 }
 
 .fp-animate-scale-out {
-  animation: fp-scale-out 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fp-scale-out 0.2s ease;
 }
 
 /* ==================== SPIN ANIMATION ==================== */
@@ -221,26 +213,21 @@
   display: inline-block;
   width: 100%;
   height: 14px;
-  border-radius: var(--fp-radius-lg);
-  background: linear-gradient(110deg, 
-    rgba(0, 0, 0, 0.06), 
-    rgba(0, 0, 0, 0.1), 
-    rgba(0, 0, 0, 0.06)
-  );
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: var(--fp-radius-md);
+  background: #e0e0e0;
 }
 
 .fp-skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(110deg, 
+  background: linear-gradient(90deg, 
     transparent, 
-    rgba(255, 255, 255, 0.8), 
+    rgba(255, 255, 255, 0.6), 
     transparent
   );
   transform: translateX(-100%);
-  animation: fp-skeleton-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: fp-skeleton-shimmer 1.5s ease infinite;
 }
 
 .fp-skeleton--circle {

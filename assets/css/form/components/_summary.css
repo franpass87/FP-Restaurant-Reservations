@@ -7,60 +7,43 @@
 
 .fp-resv-summary {
   display: grid;
-  gap: var(--fp-space-lg);
-  padding: var(--fp-space-2xl);
-  border-radius: var(--fp-radius-2xl);
-  background: var(--fp-gradient-glass);
-  border: 2px solid rgba(0, 0, 0, 0.08);
-  box-shadow: var(--fp-shadow-2xl), 0 0 40px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(255, 255, 255, 0.8);
+  gap: var(--fp-space-md);
+  padding: var(--fp-space-md);
+  border-radius: var(--fp-radius-md);
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  box-shadow: var(--fp-shadow-md);
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-  animation: fp-summary-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fp-summary-fade-in 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .fp-resv-summary {
+    gap: var(--fp-space-lg);
+    padding: var(--fp-space-xl);
+  }
 }
 
 @keyframes fp-summary-fade-in {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(20px);
-    filter: blur(4px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
-/* Barra superiore colorata con gradient */
+/* Barra superiore colorata */
 .fp-resv-summary::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: var(--fp-gradient-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Shine effect on load */
-.fp-resv-summary::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: fp-summary-shine 1.5s ease-out 0.3s;
-  pointer-events: none;
-}
-
-@keyframes fp-summary-shine {
-  to {
-    left: 200%;
-  }
+  height: 4px;
+  background: #000000;
 }
 
 /* ==================== SUMMARY TITLE ==================== */
@@ -84,27 +67,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
-  background: var(--fp-gradient-primary);
+  background: #000000;
   color: white;
-  font-size: var(--fp-text-lg);
+  font-size: var(--fp-text-base);
   font-weight: var(--fp-font-bold);
   flex-shrink: 0;
-  box-shadow: var(--fp-shadow-lg), 0 0 20px rgba(0, 0, 0, 0.2);
-  animation: fp-check-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s backwards;
-}
-
-@keyframes fp-check-pop {
-  from {
-    transform: scale(0) rotate(-180deg);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
+  box-shadow: var(--fp-shadow-sm);
 }
 
 /* ==================== SUMMARY LIST ==================== */
@@ -115,20 +86,16 @@
 }
 
 .fp-resv-summary__list > div {
-  padding: var(--fp-space-md);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%);
-  border-radius: var(--fp-radius-lg);
-  border: 1.5px solid rgba(0, 0, 0, 0.06);
-  box-shadow: var(--fp-shadow-sm), inset 0 1px 2px rgba(255, 255, 255, 0.9);
-  transition: all var(--fp-transition-smooth);
-  backdrop-filter: blur(8px);
+  padding: var(--fp-space-sm);
+  background: #fafafa;
+  border-radius: var(--fp-radius-md);
+  border: 1px solid #e0e0e0;
 }
 
-.fp-resv-summary__list > div:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%);
-  border-color: rgba(0, 0, 0, 0.12);
-  transform: translateY(-3px) scale(1.01);
-  box-shadow: var(--fp-shadow-lg), 0 8px 20px rgba(0, 0, 0, 0.08);
+@media (min-width: 768px) {
+  .fp-resv-summary__list > div {
+    padding: var(--fp-space-md);
+  }
 }
 
 /* ==================== SUMMARY ITEMS (dt/dd) ==================== */
@@ -266,17 +233,9 @@
 
 /* ==================== RESPONSIVE ==================== */
 
-@media (max-width: 768px) {
-  .fp-resv-summary {
-    padding: var(--fp-space-lg);
-  }
-  
+@media (max-width: 640px) {
   .fp-resv-summary__title {
     font-size: var(--fp-text-xl);
-  }
-  
-  .fp-resv-summary__list > div {
-    padding: var(--fp-space-sm);
   }
   
   .fp-resv-summary__list dd {
@@ -287,13 +246,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--fp-space-sm);
-  }
-}
-
-@media (max-width: 640px) {
-  .fp-resv-summary {
-    padding: var(--fp-space-md);
-    border-radius: var(--fp-radius-xl);
   }
   
   .fp-resv-summary__info-box,
