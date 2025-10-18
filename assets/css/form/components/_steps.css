@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Steps
- * Container per gli step del form multi-step
+ * Design moderno per wizard multi-step
  */
 
 /* ==================== STEPS CONTAINER ==================== */
@@ -10,7 +10,7 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--fp-space-lg);
+  gap: var(--fp-space-md);
 }
 
 /* ==================== SINGLE STEP ==================== */
@@ -20,11 +20,10 @@
   gap: var(--fp-space-md);
   padding: var(--fp-space-md);
   border-radius: var(--fp-radius-md);
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--fp-color-border);
   background: #ffffff;
-  box-shadow: var(--fp-shadow-sm);
-  animation: fp-step-fade-in 0.3s ease;
-  scroll-margin-top: var(--fp-space-lg);
+  box-shadow: none;
+  scroll-margin-top: var(--fp-space-md);
 }
 
 @media (min-width: 768px) {
@@ -52,20 +51,17 @@
 
 /* Step attivo ha un bordo evidenziato */
 .fp-resv-step[data-state="active"] {
-  border-color: #000000;
-  box-shadow: var(--fp-shadow-md);
+  border-color: var(--fp-color-text);
 }
 
 /* Step completato */
 .fp-resv-step[data-state="completed"] {
-  border-color: rgba(22, 163, 74, 0.4);
-  box-shadow: var(--fp-shadow-lg);
+  border-color: var(--fp-color-success);
 }
 
 /* Step bloccato */
 .fp-resv-step[data-state="locked"] {
-  opacity: 0.6;
-  filter: saturate(0.8);
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -93,13 +89,14 @@
   display: grid;
   gap: var(--fp-space-xs);
   padding-bottom: var(--fp-space-sm);
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--fp-color-border);
   margin-bottom: var(--fp-space-sm);
 }
 
 @media (min-width: 768px) {
   .fp-resv-step__header {
     gap: var(--fp-space-sm);
+    padding-bottom: var(--fp-space-md);
     margin-bottom: var(--fp-space-md);
   }
 }
@@ -127,11 +124,12 @@
   gap: var(--fp-space-sm);
   margin-top: var(--fp-space-md);
   padding-top: var(--fp-space-sm);
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--fp-color-border);
 }
 
 @media (min-width: 768px) {
   .fp-resv-step__footer {
+    gap: var(--fp-space-md);
     margin-top: var(--fp-space-lg);
     padding-top: var(--fp-space-md);
   }
@@ -142,18 +140,7 @@
   margin-inline-end: auto;
 }
 
-/* ==================== STEP ANIMATION ==================== */
-
-@keyframes fp-step-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* ==================== STEP ANIMATION - RIMOSSA ==================== */
 
 /* ==================== STEP SECTIONS ==================== */
 

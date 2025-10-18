@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Badges
- * Piccoli indicatori di stato e informazioni
+ * Design moderno per indicatori di stato
  */
 
 /* ==================== BASE BADGE ==================== */
@@ -13,28 +13,29 @@
   gap: var(--fp-space-xs);
   
   /* Sizing */
-  padding: 0.25rem var(--fp-space-sm);
-  min-height: 1.5rem;
+  padding: 0.375rem var(--fp-space-sm);
+  min-height: 1.625rem;
   
   /* Typography */
+  font-family: var(--fp-font-sans);
   font-size: var(--fp-text-xs);
   font-weight: var(--fp-font-bold);
   line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
   
   /* Visual */
-  background: #000000;
+  background: var(--fp-color-primary);
   color: white;
-  border-radius: var(--fp-radius-full);
-  box-shadow: var(--fp-shadow-sm);
+  border-radius: var(--fp-radius-md);
+  box-shadow: var(--fp-shadow-xs);
 }
 
 /* Badge con icona */
 .fp-badge::before {
   content: attr(data-icon);
-  font-size: 0.875em;
+  font-size: 1em;
 }
 
 .fp-badge:not([data-icon])::before {
@@ -45,7 +46,7 @@
 
 /* Primary (default) */
 .fp-badge--primary {
-  background: #000000;
+  background: var(--fp-color-primary);
 }
 
 /* Success */
@@ -56,6 +57,7 @@
 /* Warning */
 .fp-badge--warning {
   background: var(--fp-color-warning);
+  color: #ffffff;
 }
 
 /* Error / Danger */
@@ -71,7 +73,7 @@
 
 /* Neutral / Gray */
 .fp-badge--neutral {
-  background: #6b7280;
+  background: var(--fp-color-text-muted);
 }
 
 /* ==================== OUTLINE VARIANTS ==================== */
