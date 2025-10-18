@@ -91,6 +91,7 @@
   padding-bottom: var(--fp-space-sm);
   border-bottom: 1px solid var(--fp-color-border);
   margin-bottom: var(--fp-space-sm);
+  text-align: center;
 }
 
 @media (min-width: 768px) {
@@ -120,7 +121,7 @@
 .fp-resv-step__footer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-end;
   gap: var(--fp-space-sm);
   margin-top: var(--fp-space-md);
   padding-top: var(--fp-space-sm);
