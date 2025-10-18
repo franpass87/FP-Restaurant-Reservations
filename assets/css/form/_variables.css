@@ -142,10 +142,6 @@
   --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 100%);
   --fp-gradient-glass: #ffffff;
   
-  /* ==================== BACKDROP FILTER ==================== */
-  
-  --fp-backdrop-blur: blur(10px);
-  --fp-backdrop-blur-strong: blur(20px);
 }
 
 /* ==================== DARK MODE (Disabilitato) ==================== */

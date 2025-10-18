@@ -13,12 +13,6 @@
   
   /* Sizing */
   padding: var(--fp-space-sm);
-
-@media (min-width: 768px) {
-  .fp-alert {
-    padding: var(--fp-space-md);
-  }
-}
   
   /* Typography */
   font-size: var(--fp-text-sm);
@@ -32,6 +26,12 @@
   
   /* Animation */
   animation: fp-alert-slide-in 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .fp-alert {
+    padding: var(--fp-space-md);
+  }
 }
 
 @keyframes fp-alert-slide-in {

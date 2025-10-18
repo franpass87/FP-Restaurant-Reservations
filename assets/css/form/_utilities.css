@@ -211,10 +211,6 @@
 .fp-bottom-0 { bottom: 0 !important; }
 .fp-left-0 { left: 0 !important; }
 
-/* ==================== BACKDROP FILTER ==================== */
-
-.fp-backdrop-blur { backdrop-filter: var(--fp-backdrop-blur) !important; }
-.fp-backdrop-blur-none { backdrop-filter: none !important; }
 
 /* ==================== RESPONSIVE UTILITIES ==================== */
 

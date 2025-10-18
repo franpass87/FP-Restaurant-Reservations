@@ -199,7 +199,6 @@
   padding-top: var(--fp-space-lg);
   margin-top: var(--fp-space-lg);
   background: var(--fp-gradient-overlay);
-  backdrop-filter: var(--fp-backdrop-blur);
 }
 
 .fp-sticky--top {
