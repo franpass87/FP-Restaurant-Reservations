@@ -114,11 +114,12 @@ final class Service
         $currencies = [];
 
         $table = $this->reservations->tableName();
-        $where = 'date BETWEEN %s AND %s AND status <> %s';
+        $where = 'date BETWEEN %s AND %s AND status NOT IN (%s, %s)';
         $params = [
             $start->format('Y-m-d'),
             $end->format('Y-m-d'),
             'cancelled',
+            'deleted',
         ];
 
         if ($location !== null) {
@@ -134,11 +135,6 @@ final class Service
 
         if (is_array($rows)) {
             foreach ($rows as $row) {
-                $status = strtolower((string) ($row['status'] ?? ''));
-                if ($status === 'deleted') {
-                    continue;
-                }
-
                 $date = (string) ($row['date'] ?? '');
                 if (!isset($buckets[$date])) {
                     continue;
