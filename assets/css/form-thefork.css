@@ -321,6 +321,7 @@
 .fp-meal-pill__label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--fp-space-sm);
   font-size: var(--fp-text-lg);
   font-weight: var(--fp-font-semibold);
