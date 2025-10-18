@@ -8,20 +8,20 @@
 .fp-slots,
 .fp-resv-slots {
   display: grid;
-  gap: var(--fp-space-lg);
-  padding: var(--fp-space-lg);
-  border-radius: var(--fp-radius-xl);
+  gap: var(--fp-space-md);
+  padding: var(--fp-space-md);
+  border-radius: var(--fp-radius-lg);
   border: 2px solid var(--fp-color-border);
   background: var(--fp-color-surface-alt);
   box-shadow: var(--fp-shadow-xs);
-  margin-bottom: var(--fp-space-lg);
+  margin-bottom: var(--fp-space-md);
 }
 
 @media (min-width: 768px) {
   .fp-slots,
   .fp-resv-slots {
-    padding: var(--fp-space-xl);
-    margin-bottom: var(--fp-space-xl);
+    padding: var(--fp-space-lg);
+    margin-bottom: var(--fp-space-lg);
   }
 }
 

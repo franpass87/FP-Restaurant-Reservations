@@ -7,17 +7,17 @@
 
 .fp-meals {
   border: 2px solid var(--fp-color-border);
-  border-radius: var(--fp-radius-xl);
-  padding: var(--fp-space-lg);
+  border-radius: var(--fp-radius-lg);
+  padding: var(--fp-space-md);
   background: var(--fp-color-surface-alt);
   box-shadow: var(--fp-shadow-xs);
-  margin-bottom: var(--fp-space-lg);
+  margin-bottom: var(--fp-space-md);
 }
 
 @media (min-width: 768px) {
   .fp-meals {
-    padding: var(--fp-space-xl);
-    margin-bottom: var(--fp-space-xl);
+    padding: var(--fp-space-lg);
+    margin-bottom: var(--fp-space-lg);
   }
 }
 
@@ -26,8 +26,8 @@
 .fp-meals__header {
   display: flex;
   flex-direction: column;
-  gap: var(--fp-space-sm);
-  margin-bottom: var(--fp-space-lg);
+  gap: var(--fp-space-xs);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-meals__title {
@@ -111,9 +111,9 @@
 .fp-meals__notice {
   display: flex;
   align-items: flex-start;
-  gap: var(--fp-space-md);
-  margin: var(--fp-space-lg) 0 0;
-  padding: var(--fp-space-md);
+  gap: var(--fp-space-sm);
+  margin: var(--fp-space-md) 0 0;
+  padding: var(--fp-space-sm);
   background: rgba(0, 0, 0, 0.03);
   border-radius: var(--fp-radius-md);
   font-size: var(--fp-text-sm);
@@ -145,13 +145,9 @@
 /* ==================== RESPONSIVE ==================== */
 
 @media (max-width: 640px) {
-  .fp-meals {
-    padding: var(--fp-space-md);
-  }
-  
   .fp-meals__legend {
-    gap: var(--fp-space-sm);
-    margin-bottom: var(--fp-space-lg);
+    gap: var(--fp-space-xs);
+    margin-bottom: var(--fp-space-md);
   }
   
   .fp-meals__list {

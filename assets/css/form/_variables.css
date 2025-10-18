@@ -50,15 +50,15 @@
   --fp-color-limited: #f59e0b;
   --fp-color-full: #ef4444;
   
-  /* ==================== SPAZIATURE OTTIMIZZATE ==================== */
+  /* ==================== SPAZIATURE COMPATTE MA LEGGIBILI ==================== */
   
   --fp-space-xs: 0.5rem;     /* 8px */
-  --fp-space-sm: 0.875rem;   /* 14px */
-  --fp-space-md: 1.125rem;   /* 18px */
-  --fp-space-lg: 1.75rem;    /* 28px */
-  --fp-space-xl: 2.25rem;    /* 36px */
-  --fp-space-2xl: 3rem;      /* 48px */
-  --fp-space-3xl: 4rem;      /* 64px */
+  --fp-space-sm: 0.75rem;    /* 12px */
+  --fp-space-md: 1rem;       /* 16px */
+  --fp-space-lg: 1.25rem;    /* 20px */
+  --fp-space-xl: 1.5rem;     /* 24px */
+  --fp-space-2xl: 2rem;      /* 32px */
+  --fp-space-3xl: 2.5rem;    /* 40px */
   
   /* ==================== TIPOGRAFIA MODERNA ==================== */
   
