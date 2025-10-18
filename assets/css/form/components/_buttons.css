@@ -15,7 +15,7 @@
   
   /* Sizing - Più generosi per mobile */
   min-height: var(--fp-button-height-md);
-  padding: 0 var(--fp-space-lg);
+  padding: var(--fp-space-sm) var(--fp-space-lg);
   
   /* Typography */
   font-family: var(--fp-font-sans);
