@@ -14,7 +14,7 @@
   
   /* Sizing - Touch-friendly e generoso */
   min-height: var(--fp-input-height-md);
-  padding: var(--fp-space-sm) var(--fp-space-md);
+  padding: var(--fp-space-md) var(--fp-space-md);
   
   /* Typography */
   font-family: var(--fp-font-sans);
