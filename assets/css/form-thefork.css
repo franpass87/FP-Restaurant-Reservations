@@ -32,7 +32,7 @@
   width: 100% !important;
   max-width: var(--fp-form-max-width) !important;
   margin: 0 auto !important;
-  padding: var(--fp-space-2xl);
+  padding: var(--fp-space-lg);
   border-radius: var(--fp-radius-2xl);
   box-shadow: var(--fp-shadow-lg);
 }
@@ -52,8 +52,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--fp-space-lg);
-  gap: var(--fp-space-lg);
+  margin-bottom: var(--fp-space-md);
+  gap: var(--fp-space-md);
 }
 
 .fp-resv-widget__titles {
@@ -99,7 +99,7 @@
 /* ==================== PROGRESS BAR ==================== */
 
 .fp-resv-progress {
-  margin-bottom: var(--fp-space-2xl);
+  margin-bottom: var(--fp-space-lg);
 }
 
 .fp-progress {
@@ -205,7 +205,7 @@
 }
 
 .fp-resv-step {
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-resv-step[hidden] {
@@ -213,7 +213,7 @@
 }
 
 .fp-resv-step__header {
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-lg);
 }
 
 .fp-resv-step__label {
@@ -248,21 +248,21 @@
 }
 
 .fp-resv-step__body {
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-resv-step__footer {
   display: flex;
   gap: var(--fp-space-md);
   justify-content: flex-end;
-  padding-top: var(--fp-space-xl);
+  padding-top: var(--fp-space-lg);
   border-top: 1px solid var(--fp-color-border-light);
 }
 
 /* ==================== MEALS SELECTOR ==================== */
 
 .fp-meals {
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-meals__header {
@@ -584,7 +584,7 @@
 /* ==================== TIME SLOTS ==================== */
 
 .fp-resv-slots {
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-resv-slots__status {
@@ -646,9 +646,9 @@
 
 .fp-resv-summary {
   background: var(--fp-color-surface-alt);
-  padding: var(--fp-space-xl);
+  padding: var(--fp-space-lg);
   border-radius: var(--fp-radius-xl);
-  margin-bottom: var(--fp-space-xl);
+  margin-bottom: var(--fp-space-md);
 }
 
 .fp-resv-summary__title {
@@ -774,9 +774,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--fp-space-md);
-  padding-top: var(--fp-space-2xl);
+  padding-top: var(--fp-space-lg);
   border-top: 2px solid var(--fp-color-border-light);
-  margin-top: var(--fp-space-2xl);
+  margin-top: var(--fp-space-lg);
 }
 
 .fp-resv-button--submit {
@@ -797,7 +797,7 @@
 
 @media (max-width: 640px) {
   .fp-resv-widget {
-    padding: var(--fp-space-xl);
+    padding: var(--fp-space-md);
     border-radius: var(--fp-radius-xl);
   }
   
