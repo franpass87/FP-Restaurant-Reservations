@@ -291,7 +291,7 @@ class et {
     }
     this.availableDaysCache = {}, this.availableDaysLoading = !1, this.availableDaysCachedMeal = null, this.flatpickrInstance = window.flatpickr(this.dateField, {
       minDate: "today",
-      dateFormat: "Y-m-d",
+      dateFormat: "d-m-Y",
       locale: window.flatpickr.l10ns.it || "it",
       enable: [],
       // Inizialmente nessun giorno abilitato, lo aggiorneremo dopo il caricamento
