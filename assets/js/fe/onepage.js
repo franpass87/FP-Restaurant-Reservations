@@ -11,6 +11,25 @@ function closestSection(element) {
     return closestWithAttribute(element, 'data-fp-resv-section');
 }
 
+/**
+ * Converte una data dal formato di visualizzazione (d-m-Y) al formato ISO (YYYY-MM-DD)
+ * @param {string} dateStr - Data nel formato d-m-Y (es. "31-12-2024")
+ * @returns {string} Data nel formato YYYY-MM-DD (es. "2024-12-31")
+ */
+function convertDateToISO(dateStr) {
+    if (!dateStr || !dateStr.includes('-')) {
+        return dateStr;
+    }
+    
+    const parts = dateStr.split('-');
+    if (parts.length === 3 && parts[0].length <= 2) {
+        // Formato d-m-Y -> YYYY-MM-DD
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    
+    return dateStr;
+}
+
 class FormApp {
     constructor(root) {
         this.root = root;
@@ -957,8 +976,10 @@ class FormApp {
 
         // Valida la data attualmente selezionata (se presente)
         const currentDate = this.dateField.value;
-        if (currentDate && this.availableDaysCache[currentDate] !== undefined) {
-            const dayInfo = this.availableDaysCache[currentDate];
+        // Converti il formato visualizzato (d-m-Y) in formato ISO (YYYY-MM-DD) per la ricerca nella cache
+        const currentDateISO = convertDateToISO(currentDate);
+        if (currentDateISO && this.availableDaysCache[currentDateISO] !== undefined) {
+            const dayInfo = this.availableDaysCache[currentDateISO];
 
             // Determina se il giorno è disponibile per questo meal
             let isAvailable = false;
@@ -2001,6 +2022,11 @@ class FormApp {
             }
         });
         
+        // Converti la data dal formato visualizzato (d-m-Y) al formato ISO (YYYY-MM-DD) per il backend
+        if (payload.fp_resv_date) {
+            payload.fp_resv_date = convertDateToISO(payload.fp_resv_date);
+        }
+        
         // DEBUG: Verifica che il nonce sia presente
         console.log('[FP-RESV] Nonce nel form:', payload.fp_resv_nonce ? 'PRESENTE' : 'MANCANTE');
         if (!payload.fp_resv_nonce) {
@@ -2191,9 +2217,13 @@ class FormApp {
     collectAvailabilityParams() {
         const meal = this.hiddenMeal ? this.hiddenMeal.value : '';
         const dateValue = this.dateField && this.dateField.value ? this.dateField.value : '';
+        
+        // Converti il formato visualizzato (d-m-Y) in formato ISO (YYYY-MM-DD) per il backend
+        const dateISO = convertDateToISO(dateValue);
+        
         const partyValue = this.partyField && this.partyField.value ? this.partyField.value : '';
         return {
-            date: dateValue,
+            date: dateISO,
             party: partyValue,
             meal,
             requiresMeal: this.mealButtons.length > 0,
