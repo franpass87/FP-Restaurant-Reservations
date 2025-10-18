@@ -285,6 +285,9 @@ if ($styleCss !== '') {
                                                 $mealAvailableDays = isset($meal['available_days']) && is_array($meal['available_days']) ? wp_json_encode($meal['available_days']) : '[]';
                                                 $isActive  = !empty($meal['active']);
                                                 ?>
+                                                <?php
+                                                $mealIcon = isset($meal['icon']) ? (string) $meal['icon'] : '';
+                                                ?>
                                                 <button
                                                     type="button"
                                                     class="fp-meal-pill"
@@ -296,7 +299,12 @@ if ($styleCss !== '') {
                                                     data-meal-available-days="<?php echo esc_attr($mealAvailableDays); ?>"
                                                     <?php echo $isActive ? 'data-active="true" aria-pressed="true"' : 'aria-pressed="false"'; ?>
                                                 >
-                                                    <span class="fp-meal-pill__label"><?php echo esc_html($mealLabel); ?></span>
+                                                    <span class="fp-meal-pill__label">
+                                                        <?php if ($mealIcon !== '') : ?>
+                                                            <span class="fp-meal-pill__icon" aria-hidden="true"><?php echo esc_html($mealIcon); ?></span>
+                                                        <?php endif; ?>
+                                                        <?php echo esc_html($mealLabel); ?>
+                                                    </span>
                                                     <?php if ($mealBadge !== '') : ?>
                                                         <span class="fp-badge"<?php echo $mealBadgeIcon !== '' ? ' data-icon="' . esc_attr($mealBadgeIcon) . '"' : ''; ?>><?php echo esc_html($mealBadge); ?></span>
                                                     <?php endif; ?>
