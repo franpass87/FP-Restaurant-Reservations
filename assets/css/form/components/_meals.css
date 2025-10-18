@@ -114,7 +114,7 @@
   gap: var(--fp-space-md);
   margin: var(--fp-space-lg) 0 0;
   padding: var(--fp-space-md);
-  background: rgba(30, 41, 59, 0.04);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: var(--fp-radius-md);
   font-size: var(--fp-text-sm);
   color: var(--fp-color-text-secondary);

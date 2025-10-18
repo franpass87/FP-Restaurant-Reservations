@@ -5,31 +5,31 @@
  */
 
 :root {
-  /* ==================== COLORI MODERNI ==================== */
+  /* ==================== COLORI BIANCO E NERO ==================== */
   
-  /* Primario - Blu Slate moderno (leggibile e professionale) */
-  --fp-color-primary: #1e293b;
-  --fp-color-primary-hover: #0f172a;
-  --fp-color-primary-light: rgba(30, 41, 59, 0.08);
-  --fp-color-primary-rgb: 30, 41, 59;
+  /* Primario - Nero Puro */
+  --fp-color-primary: #000000;
+  --fp-color-primary-hover: #1a1a1a;
+  --fp-color-primary-light: rgba(0, 0, 0, 0.06);
+  --fp-color-primary-rgb: 0, 0, 0;
   
-  /* Superficie - Background puliti e stratificati */
+  /* Superficie - Background bianchi e grigi chiarissimi */
   --fp-color-surface: #ffffff;
-  --fp-color-surface-alt: #f8fafc;
-  --fp-color-surface-hover: #f1f5f9;
+  --fp-color-surface-alt: #fafafa;
+  --fp-color-surface-hover: #f5f5f5;
   --fp-color-surface-elevated: #ffffff;
   
-  /* Testo - Gerarchia chiara */
-  --fp-color-text: #0f172a;
-  --fp-color-text-secondary: #475569;
-  --fp-color-text-muted: #64748b;
-  --fp-color-text-light: #94a3b8;
+  /* Testo - Scale di grigi dal nero */
+  --fp-color-text: #000000;
+  --fp-color-text-secondary: #4a4a4a;
+  --fp-color-text-muted: #737373;
+  --fp-color-text-light: #a3a3a3;
   
-  /* Bordi - Sottili e delicati */
-  --fp-color-border: #e2e8f0;
-  --fp-color-border-light: #f1f5f9;
-  --fp-color-border-hover: #cbd5e1;
-  --fp-color-divider: #e2e8f0;
+  /* Bordi - Grigi chiari */
+  --fp-color-border: #e5e5e5;
+  --fp-color-border-light: #f0f0f0;
+  --fp-color-border-hover: #d4d4d4;
+  --fp-color-divider: #e5e5e5;
   
   /* Stati - Colori semantici chiari */
   --fp-color-success: #10b981;
@@ -109,7 +109,7 @@
   --fp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
   
   /* Shadow Focus - Ring style moderno */
-  --fp-shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
   --fp-shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.12);
   
   /* ==================== TRANSIZIONI OTTIMIZZATE ==================== */
@@ -147,8 +147,8 @@
   
   /* ==================== GRADIENTI E OVERLAY ==================== */
   
-  --fp-gradient-primary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  --fp-gradient-surface: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --fp-gradient-surface: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.98) 100%);
   --fp-gradient-glass: rgba(255, 255, 255, 0.95);
   

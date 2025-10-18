@@ -38,9 +38,10 @@
   font-size: var(--fp-text-sm);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--fp-color-primary);
+  color: var(--fp-color-text);
   font-weight: var(--fp-font-bold);
   line-height: var(--fp-leading-normal);
+  opacity: 0.7;
 }
 
 .fp-resv-step__title {
