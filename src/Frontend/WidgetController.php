@@ -111,10 +111,20 @@ final class WidgetController
         $version = Plugin::assetVersion();
         error_log('[FP-RESV-ASSETS] Enqueuing assets with version: ' . $version);
 
+        // Enqueue Flatpickr CSS
+        wp_register_style(
+            'flatpickr',
+            Plugin::$url . 'assets/vendor/flatpickr.min.css',
+            [],
+            '4.6.13',
+            'all'
+        );
+        wp_enqueue_style('flatpickr');
+
         wp_register_style(
             'fp-resv-form',
             Plugin::$url . 'assets/css/form.css',
-            [],
+            ['flatpickr'],
             $version,
             'all'
         );
@@ -702,6 +712,26 @@ final class WidgetController
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
 
+        // Enqueue Flatpickr JS
+        wp_register_script(
+            'flatpickr',
+            Plugin::$url . 'assets/vendor/flatpickr.min.js',
+            [],
+            '4.6.13',
+            true
+        );
+        wp_enqueue_script('flatpickr');
+
+        // Enqueue Flatpickr Italian locale
+        wp_register_script(
+            'flatpickr-it',
+            Plugin::$url . 'assets/vendor/flatpickr-it.js',
+            ['flatpickr'],
+            '4.6.13',
+            true
+        );
+        wp_enqueue_script('flatpickr-it');
+
         $modulePath = Plugin::$dir . 'assets/dist/fe/onepage.esm.js';
         $legacyPath = Plugin::$dir . 'assets/dist/fe/onepage.iife.js';
 
@@ -722,7 +752,7 @@ final class WidgetController
             wp_register_script(
                 self::HANDLE_MODULE,
                 $moduleUrl,
-                [],
+                ['flatpickr', 'flatpickr-it'],
                 $version,
                 true // Load in footer
             );
@@ -732,7 +762,7 @@ final class WidgetController
             wp_register_script(
                 self::HANDLE_LEGACY,
                 $legacyUrl,
-                [],
+                ['flatpickr', 'flatpickr-it'],
                 $version,
                 true // Load in footer
             );
@@ -742,7 +772,7 @@ final class WidgetController
             wp_register_script(
                 self::HANDLE_LEGACY,
                 $legacyUrl,
-                [],
+                ['flatpickr', 'flatpickr-it'],
                 $version,
                 true
             );
@@ -754,7 +784,7 @@ final class WidgetController
             wp_register_script(
                 self::HANDLE_MODULE,
                 $fallbackUrl,
-                [],
+                ['flatpickr', 'flatpickr-it'],
                 $version,
                 true
             );
