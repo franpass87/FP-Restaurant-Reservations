@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Pills
- * Stili per i bottoni pill (meal selector, slot selector)
+ * Design moderno con stile flat e card-like
  */
 
 /* ==================== BASE PILL ==================== */
@@ -12,21 +12,23 @@
   justify-content: center;
   gap: var(--fp-space-sm);
   
-  /* Sizing - Touch-friendly */
+  /* Sizing - Touch-friendly e generoso */
   padding: var(--fp-space-md) var(--fp-space-lg);
-  min-height: 3rem;
+  min-height: 3.25rem;
   
   /* Typography */
+  font-family: var(--fp-font-sans);
   font-size: var(--fp-text-base);
   font-weight: var(--fp-font-semibold);
   line-height: var(--fp-leading-tight);
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
   
-  /* Visual */
+  /* Visual - Design flat moderno */
   background: #ffffff;
-  border: 2px solid #e0e0e0;
-  border-radius: var(--fp-radius-full);
+  border: 2px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-lg);
   box-shadow: var(--fp-shadow-sm);
+  color: var(--fp-color-text);
   
   /* Interaction */
   cursor: pointer;
@@ -40,51 +42,60 @@
 
 @media (hover: hover) {
   .fp-pill:hover {
-    border-color: #999999;
-    background: #f8f8f8;
+    border-color: var(--fp-color-primary);
+    background: var(--fp-color-surface-hover);
+    box-shadow: var(--fp-shadow-md);
+    transform: translateY(-1px);
   }
 }
 
 .fp-pill:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--fp-shadow-xs);
 }
 
 .fp-pill[aria-pressed="true"],
 .fp-pill[data-active="true"],
 .fp-pill--active {
-  background: #000000 !important;
-  border-color: #000000 !important;
+  background: var(--fp-color-primary) !important;
+  border-color: var(--fp-color-primary) !important;
   color: #ffffff !important;
   box-shadow: var(--fp-shadow-md) !important;
+  font-weight: var(--fp-font-bold);
 }
 
 .fp-pill:disabled,
 .fp-pill[aria-disabled="true"] {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
+  background: var(--fp-color-surface-alt);
 }
 
 /* ==================== MEAL PILLS ==================== */
 
 .fp-meal-pill {
-  /* Eredita da .fp-pill */
-  min-width: 140px;
+  /* Eredita da .fp-pill - Style card */
+  min-width: 160px;
+  flex-direction: column;
+  padding: var(--fp-space-md);
+  gap: var(--fp-space-xs);
 }
 
 .fp-meal-pill__label {
   display: flex;
   align-items: center;
   gap: var(--fp-space-xs);
+  font-size: var(--fp-text-lg);
 }
 
 .fp-meal-pill__icon {
-  font-size: 1.25em;
+  font-size: 1.5em;
 }
 
 /* Stato non disponibile */
 .fp-meal-pill[data-meal-unavailable="true"] {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -93,25 +104,30 @@
 
 .fp-slot-pill {
   /* Eredita da .fp-pill */
-  min-width: 110px;
+  min-width: 120px;
   padding: var(--fp-space-md) var(--fp-space-lg);
-  font-size: var(--fp-text-base);
+  font-size: var(--fp-text-lg);
   font-weight: var(--fp-font-bold);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Stati disponibilità */
-.fp-slot-pill[data-availability="available"]::before {
-  box-shadow: inset 0 0 0 2px var(--fp-color-available);
+/* Stati disponibilità con badge colorato */
+.fp-slot-pill[data-availability="available"] {
+  border-color: var(--fp-color-available);
+  background: rgba(16, 185, 129, 0.05);
 }
 
-.fp-slot-pill[data-availability="limited"]::before {
-  box-shadow: inset 0 0 0 2px var(--fp-color-limited);
+.fp-slot-pill[data-availability="limited"] {
+  border-color: var(--fp-color-limited);
+  background: rgba(245, 158, 11, 0.05);
 }
 
 .fp-slot-pill[data-availability="full"] {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
+  border-color: var(--fp-color-border-light);
+  background: var(--fp-color-surface-alt);
 }
 
 /* ==================== PILL LIST LAYOUT ==================== */

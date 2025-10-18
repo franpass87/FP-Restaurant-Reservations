@@ -1,17 +1,24 @@
 /**
  * FP Restaurant Reservations - Meals Selector
- * Selezione del tipo di pasto (pranzo/cena)
+ * Design moderno per selezione pasto
  */
 
 /* ==================== MEALS CONTAINER ==================== */
 
 .fp-meals {
-  border: 1.5px solid var(--fp-color-divider);
+  border: 2px solid var(--fp-color-border);
   border-radius: var(--fp-radius-xl);
-  padding: var(--fp-space-xl);
-  background: var(--fp-gradient-surface);
-  box-shadow: var(--fp-shadow-sm);
-  margin-bottom: var(--fp-space-xl);
+  padding: var(--fp-space-lg);
+  background: var(--fp-color-surface-alt);
+  box-shadow: var(--fp-shadow-xs);
+  margin-bottom: var(--fp-space-lg);
+}
+
+@media (min-width: 768px) {
+  .fp-meals {
+    padding: var(--fp-space-xl);
+    margin-bottom: var(--fp-space-xl);
+  }
 }
 
 /* ==================== MEALS HEADER ==================== */
@@ -19,22 +26,22 @@
 .fp-meals__header {
   display: flex;
   flex-direction: column;
-  gap: var(--fp-space-xs);
-  margin-bottom: var(--fp-space-md);
+  gap: var(--fp-space-sm);
+  margin-bottom: var(--fp-space-lg);
 }
 
 .fp-meals__title {
   margin: 0;
-  font-size: var(--fp-text-lg);
+  font-size: var(--fp-text-xl);
   font-weight: var(--fp-font-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--fp-color-text);
 }
 
 .fp-meals__subtitle {
   margin: 0;
-  font-size: var(--fp-text-sm);
-  color: var(--fp-color-text-muted);
+  font-size: var(--fp-text-base);
+  color: var(--fp-color-text-secondary);
   line-height: var(--fp-leading-relaxed);
 }
 
@@ -88,9 +95,15 @@
 /* ==================== MEALS LIST ==================== */
 
 .fp-meals__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--fp-space-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--fp-space-md);
+}
+
+@media (max-width: 640px) {
+  .fp-meals__list {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ==================== MEALS NOTICE ==================== */
@@ -98,10 +111,13 @@
 .fp-meals__notice {
   display: flex;
   align-items: flex-start;
-  gap: var(--fp-space-sm);
+  gap: var(--fp-space-md);
   margin: var(--fp-space-lg) 0 0;
+  padding: var(--fp-space-md);
+  background: rgba(30, 41, 59, 0.04);
+  border-radius: var(--fp-radius-md);
   font-size: var(--fp-text-sm);
-  color: var(--fp-color-primary);
+  color: var(--fp-color-text-secondary);
 }
 
 .fp-meals__notice-icon {
@@ -109,21 +125,20 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.75em;
-  height: 1.75em;
+  width: 1.5rem;
+  height: 1.5rem;
   margin-top: 0.1em;
   border-radius: 50%;
   background: var(--fp-color-primary);
   color: white;
   font-style: normal;
   font-weight: var(--fp-font-bold);
-  font-size: 0.75em;
+  font-size: var(--fp-text-xs);
   line-height: 1;
 }
 
 .fp-meals__notice-text {
   flex: 1;
-  font-style: italic;
   line-height: var(--fp-leading-relaxed);
 }
 

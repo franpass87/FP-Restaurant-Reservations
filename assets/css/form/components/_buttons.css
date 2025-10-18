@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Buttons
- * Stili per tutti i bottoni del form
+ * Design moderno, pulito e touch-friendly
  */
 
 /* ==================== BASE BUTTON ==================== */
@@ -13,22 +13,24 @@
   justify-content: center;
   gap: var(--fp-space-sm);
   
-  /* Sizing */
+  /* Sizing - Più generosi per mobile */
   min-height: var(--fp-button-height-md);
-  padding: var(--fp-space-sm) var(--fp-space-lg);
+  padding: 0 var(--fp-space-lg);
   
   /* Typography */
+  font-family: var(--fp-font-sans);
   font-size: var(--fp-text-base);
   font-weight: var(--fp-font-semibold);
   line-height: var(--fp-leading-tight);
   text-decoration: none;
   white-space: nowrap;
+  letter-spacing: -0.01em;
   
-  /* Visual */
+  /* Visual - Design moderno */
   border-radius: var(--fp-radius-lg);
-  border: none;
-  background: #000000;
-  color: white;
+  border: 2px solid transparent;
+  background: var(--fp-color-primary);
+  color: #ffffff;
   box-shadow: var(--fp-shadow-sm);
   
   /* Interaction */
@@ -47,58 +49,63 @@
 @media (hover: hover) {
   .fp-btn:hover,
   .fp-resv-button:hover {
-    background: #1a1a1a;
+    background: var(--fp-color-primary-hover);
     box-shadow: var(--fp-shadow-md);
+    transform: translateY(-1px);
   }
 }
 
 .fp-btn:active,
 .fp-resv-button:active {
-  transform: scale(0.97);
-  box-shadow: var(--fp-shadow-sm);
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--fp-shadow-xs);
 }
 
 .fp-btn:focus-visible,
 .fp-resv-button:focus-visible {
   outline: none;
-  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
+  box-shadow: var(--fp-shadow-focus);
 }
 
 .fp-btn:disabled,
 .fp-btn[aria-disabled="true"],
 .fp-resv-button:disabled,
 .fp-resv-button[aria-disabled="true"] {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
-  box-shadow: var(--fp-shadow-sm);
+  box-shadow: none;
+  background: var(--fp-color-border);
+  color: var(--fp-color-text-muted);
 }
 
 /* ==================== VARIANTS ==================== */
 
-/* Primary (default) - NERO con TESTO BIANCO */
+/* Primary (default) - Colore brand */
 .fp-btn--primary,
 .fp-resv-button--primary {
-  background: #000000 !important;
+  background: var(--fp-color-primary) !important;
   color: #ffffff !important;
+  border-color: var(--fp-color-primary) !important;
 }
 
 @media (hover: hover) {
   .fp-btn--primary:hover,
   .fp-resv-button--primary:hover {
-    background: #1a1a1a !important;
+    background: var(--fp-color-primary-hover) !important;
+    border-color: var(--fp-color-primary-hover) !important;
   }
 }
 
-/* Secondary / Ghost - BIANCO con TESTO NERO e BORDO NERO */
+/* Secondary / Ghost - Outline style */
 .fp-btn--secondary,
 .fp-btn--ghost,
 .fp-resv-button--secondary,
 .fp-resv-button--ghost {
   background: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #000000 !important;
-  box-shadow: var(--fp-shadow-sm);
+  color: var(--fp-color-primary) !important;
+  border: 2px solid var(--fp-color-border) !important;
+  box-shadow: var(--fp-shadow-xs);
 }
 
 @media (hover: hover) {
@@ -106,7 +113,8 @@
   .fp-btn--ghost:hover,
   .fp-resv-button--secondary:hover,
   .fp-resv-button--ghost:hover {
-    background: #f5f5f5 !important;
+    background: var(--fp-color-surface-hover) !important;
+    border-color: var(--fp-color-primary) !important;
   }
 }
 

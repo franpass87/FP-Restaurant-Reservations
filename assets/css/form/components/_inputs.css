@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Inputs & Form Controls
- * Stili per input, select, textarea, checkbox, radio
+ * Design moderno, pulito e accessibile
  */
 
 /* ==================== BASE INPUT ==================== */
@@ -12,24 +12,25 @@
   display: block;
   width: 100%;
   
-  /* Sizing - Touch-friendly */
+  /* Sizing - Touch-friendly e generoso */
   min-height: var(--fp-input-height-md);
   padding: var(--fp-space-sm) var(--fp-space-md);
   
   /* Typography */
-  font-family: inherit;
+  font-family: var(--fp-font-sans);
   font-size: var(--fp-text-base);
   line-height: var(--fp-leading-normal);
-  color: #000000 !important;
+  color: var(--fp-color-text) !important;
+  letter-spacing: -0.01em;
   
-  /* Visual - BIANCO con TESTO NERO */
+  /* Visual - Moderno con ombre soft */
   background: #ffffff !important;
-  border: 2px solid #e0e0e0 !important;
-  border-radius: var(--fp-radius-md);
-  box-shadow: none;
+  border: 2px solid var(--fp-color-border) !important;
+  border-radius: var(--fp-radius-lg);
+  box-shadow: var(--fp-shadow-xs);
   
   /* Interaction */
-  transition: border-color var(--fp-transition-base);
+  transition: all var(--fp-transition-base);
   -webkit-tap-highlight-color: transparent;
   
   /* Reset */
@@ -42,7 +43,8 @@
   .fp-input:hover,
   .fp-select:hover,
   .fp-textarea:hover {
-    border-color: #999999;
+    border-color: var(--fp-color-border-hover);
+    box-shadow: var(--fp-shadow-sm);
   }
 }
 
@@ -50,7 +52,7 @@
 .fp-select:focus,
 .fp-textarea:focus {
   outline: none;
-  border-color: #000000;
+  border-color: var(--fp-color-primary);
   box-shadow: var(--fp-shadow-focus);
   background: #ffffff;
 }
@@ -58,32 +60,36 @@
 .fp-input:disabled,
 .fp-select:disabled,
 .fp-textarea:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
-  background: var(--fp-color-surface-alt);
+  background: var(--fp-color-surface-alt) !important;
+  border-color: var(--fp-color-border-light) !important;
 }
 
 .fp-input[readonly],
 .fp-select[readonly],
 .fp-textarea[readonly] {
-  background: var(--fp-color-surface-alt);
+  background: var(--fp-color-surface-alt) !important;
   cursor: default;
+  border-color: var(--fp-color-border-light) !important;
 }
 
-/* Error state */
+/* Error state - Più visibile */
 .fp-input[aria-invalid="true"],
 .fp-select[aria-invalid="true"],
 .fp-textarea[aria-invalid="true"],
 .fp-input--error,
 .fp-select--error,
 .fp-textarea--error {
-  border-color: var(--fp-color-error);
+  border-color: var(--fp-color-error) !important;
+  background: var(--fp-color-error-light) !important;
 }
 
 .fp-input[aria-invalid="true"]:focus,
 .fp-select[aria-invalid="true"]:focus,
 .fp-textarea[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 3px var(--fp-color-error-light), var(--fp-shadow-sm);
+  box-shadow: var(--fp-shadow-focus-error);
+  border-color: var(--fp-color-error) !important;
 }
 
 /* ==================== TEXTAREA ==================== */
@@ -112,15 +118,16 @@
 /* ==================== CHECKBOX ==================== */
 
 .fp-checkbox {
-  /* Sizing - Touch-friendly */
-  width: 24px;
-  height: 24px;
+  /* Sizing - Touch-friendly e più grande */
+  width: 1.375rem;
+  height: 1.375rem;
   flex-shrink: 0;
   
-  /* Visual */
-  border: 2px solid #d0d0d0;
+  /* Visual - Moderno con bordi arrotondati */
+  border: 2px solid var(--fp-color-border);
   border-radius: var(--fp-radius-sm);
   background: #ffffff;
+  box-shadow: var(--fp-shadow-xs);
   
   /* Interaction */
   cursor: pointer;
@@ -128,12 +135,13 @@
   -webkit-tap-highlight-color: transparent;
   
   /* Custom accent color */
-  accent-color: #000000;
+  accent-color: var(--fp-color-primary);
 }
 
 @media (hover: hover) {
   .fp-checkbox:hover {
-    border-color: #000000;
+    border-color: var(--fp-color-primary);
+    box-shadow: var(--fp-shadow-sm);
   }
 }
 
@@ -143,12 +151,12 @@
 }
 
 .fp-checkbox:checked {
-  border-color: #000000;
-  background: #000000;
+  border-color: var(--fp-color-primary);
+  background: var(--fp-color-primary);
 }
 
 .fp-checkbox:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 

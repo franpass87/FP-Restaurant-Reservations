@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Time Slots
- * Selezione degli orari disponibili
+ * Design moderno per selezione orari
  */
 
 /* ==================== SLOTS CONTAINER ==================== */
@@ -9,12 +9,20 @@
 .fp-resv-slots {
   display: grid;
   gap: var(--fp-space-lg);
-  padding: var(--fp-space-xl);
+  padding: var(--fp-space-lg);
   border-radius: var(--fp-radius-xl);
-  border: 1.5px solid var(--fp-color-border);
-  background: var(--fp-gradient-surface);
-  box-shadow: var(--fp-shadow-sm);
-  margin-bottom: var(--fp-space-xl);
+  border: 2px solid var(--fp-color-border);
+  background: var(--fp-color-surface-alt);
+  box-shadow: var(--fp-shadow-xs);
+  margin-bottom: var(--fp-space-lg);
+}
+
+@media (min-width: 768px) {
+  .fp-slots,
+  .fp-resv-slots {
+    padding: var(--fp-space-xl);
+    margin-bottom: var(--fp-space-xl);
+  }
 }
 
 /* ==================== SLOTS STATUS ==================== */
@@ -58,11 +66,18 @@
 .fp-slots__list,
 .fp-resv-slots__list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--fp-space-sm);
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--fp-space-md);
   padding: 0;
   margin: 0;
   list-style: none;
+}
+
+@media (min-width: 640px) {
+  .fp-slots__list,
+  .fp-resv-slots__list {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
 }
 
 .fp-resv-slots__list > li {
@@ -84,20 +99,22 @@
   align-items: center;
   justify-content: center;
   
-  /* Sizing */
-  padding: var(--fp-space-sm) var(--fp-space-md);
-  min-height: 2.75rem;
+  /* Sizing - Più generoso per touch */
+  padding: var(--fp-space-md);
+  min-height: 3rem;
   
   /* Typography */
-  font-size: var(--fp-text-sm);
-  font-weight: var(--fp-font-semibold);
+  font-family: var(--fp-font-sans);
+  font-size: var(--fp-text-lg);
+  font-weight: var(--fp-font-bold);
   line-height: var(--fp-leading-tight);
-  letter-spacing: 0.005em;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   
-  /* Visual */
-  border-radius: var(--fp-radius-full);
+  /* Visual - Stile card moderno */
+  border-radius: var(--fp-radius-lg);
   border: 2px solid var(--fp-color-border);
-  background: var(--fp-gradient-surface);
+  background: #ffffff;
   color: var(--fp-color-text);
   box-shadow: var(--fp-shadow-sm);
   
@@ -111,38 +128,40 @@
 /* ==================== SLOT STATES ==================== */
 
 /* Hover */
-.fp-slots__list button:hover,
-.fp-resv-slots__list button:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: var(--fp-shadow-lg);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .fp-slots__list button:hover:not(:disabled),
+  .fp-resv-slots__list button:hover:not(:disabled) {
+    border-color: var(--fp-color-primary);
+    box-shadow: var(--fp-shadow-md);
+    transform: translateY(-1px);
+  }
 }
-
 
 /* Focus */
 .fp-slots__list button:focus-visible,
 .fp-resv-slots__list button:focus-visible {
   outline: none;
-  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
+  box-shadow: var(--fp-shadow-focus);
 }
 
 /* Selected */
 .fp-slots__list button[aria-pressed="true"],
 .fp-resv-slots__list button[aria-pressed="true"] {
-  background: var(--fp-gradient-primary);
+  background: var(--fp-color-primary);
   border-color: var(--fp-color-primary);
   color: white;
-  box-shadow: var(--fp-shadow-lg);
+  box-shadow: var(--fp-shadow-md);
+  font-weight: var(--fp-font-bold);
 }
-
-.fp-slots__list button[aria-pressed="true"]::before,
 
 /* Disabled */
 .fp-slots__list button:disabled,
 .fp-resv-slots__list button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
+  background: var(--fp-color-surface-alt);
+  border-color: var(--fp-color-border-light);
 }
 
 /* ==================== AVAILABILITY INDICATORS ==================== */
