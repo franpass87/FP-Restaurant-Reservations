@@ -26,17 +26,17 @@
   white-space: nowrap;
   letter-spacing: -0.01em;
   
-  /* Visual - Design moderno */
-  border-radius: var(--fp-radius-lg);
-  border: 2px solid transparent;
+  /* Visual - Design minimal */
+  border-radius: var(--fp-radius-md);
+  border: 1px solid var(--fp-color-primary);
   background: var(--fp-color-primary);
   color: #ffffff;
-  box-shadow: var(--fp-shadow-sm);
+  box-shadow: none;
   
   /* Interaction */
   cursor: pointer;
   user-select: none;
-  transition: all var(--fp-transition-base);
+  transition: background-color var(--fp-transition-base), border-color var(--fp-transition-base);
   -webkit-tap-highlight-color: transparent;
   
   /* Position */
@@ -50,15 +50,13 @@
   .fp-btn:hover,
   .fp-resv-button:hover {
     background: var(--fp-color-primary-hover);
-    box-shadow: var(--fp-shadow-md);
-    transform: translateY(-1px);
+    border-color: var(--fp-color-primary-hover);
   }
 }
 
 .fp-btn:active,
 .fp-resv-button:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: var(--fp-shadow-xs);
+  opacity: 0.9;
 }
 
 .fp-btn:focus-visible,
@@ -71,12 +69,12 @@
 .fp-btn[aria-disabled="true"],
 .fp-resv-button:disabled,
 .fp-resv-button[aria-disabled="true"] {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
-  box-shadow: none;
   background: var(--fp-color-border);
   color: var(--fp-color-text-muted);
+  border-color: var(--fp-color-border);
 }
 
 /* ==================== VARIANTS ==================== */
@@ -104,8 +102,8 @@
 .fp-resv-button--ghost {
   background: #ffffff !important;
   color: var(--fp-color-primary) !important;
-  border: 2px solid var(--fp-color-border) !important;
-  box-shadow: var(--fp-shadow-xs);
+  border: 1px solid var(--fp-color-border) !important;
+  box-shadow: none;
 }
 
 @media (hover: hover) {
@@ -114,7 +112,7 @@
   .fp-resv-button--secondary:hover,
   .fp-resv-button--ghost:hover {
     background: var(--fp-color-surface-hover) !important;
-    border-color: var(--fp-color-primary) !important;
+    border-color: var(--fp-color-text) !important;
   }
 }
 

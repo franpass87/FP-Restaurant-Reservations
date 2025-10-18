@@ -24,9 +24,9 @@
   margin-inline: auto;
   padding: var(--fp-space-md);
   background: #ffffff;
-  border-radius: var(--fp-radius-lg);
-  box-shadow: var(--fp-shadow-lg);
-  border: 1px solid var(--fp-color-border-light);
+  border-radius: var(--fp-radius-md);
+  box-shadow: var(--fp-shadow-sm);
+  border: 1px solid var(--fp-color-border);
 }
 
 /* Desktop - Spaziature bilanciate */
@@ -34,7 +34,7 @@
   .fp-resv {
     padding: var(--fp-space-xl);
     gap: var(--fp-space-lg);
-    border-radius: var(--fp-radius-xl);
+    border-radius: var(--fp-radius-lg);
   }
 }
 
@@ -65,7 +65,7 @@
   justify-content: space-between;
   gap: var(--fp-space-sm);
   padding-bottom: var(--fp-space-md);
-  border-bottom: 2px solid var(--fp-color-border-light);
+  border-bottom: 1px solid var(--fp-color-border);
   margin-bottom: var(--fp-space-md);
 }
 

@@ -23,14 +23,14 @@
   color: var(--fp-color-text) !important;
   letter-spacing: -0.01em;
   
-  /* Visual - Moderno con ombre soft */
+  /* Visual - Minimal e pulito */
   background: #ffffff !important;
-  border: 2px solid var(--fp-color-border) !important;
-  border-radius: var(--fp-radius-lg);
-  box-shadow: var(--fp-shadow-xs);
+  border: 1px solid var(--fp-color-border) !important;
+  border-radius: var(--fp-radius-md);
+  box-shadow: none;
   
   /* Interaction */
-  transition: all var(--fp-transition-base);
+  transition: border-color var(--fp-transition-base);
   -webkit-tap-highlight-color: transparent;
   
   /* Reset */
@@ -43,8 +43,7 @@
   .fp-input:hover,
   .fp-select:hover,
   .fp-textarea:hover {
-    border-color: var(--fp-color-border-hover);
-    box-shadow: var(--fp-shadow-sm);
+    border-color: var(--fp-color-text);
   }
 }
 
@@ -123,15 +122,15 @@
   height: 1.375rem;
   flex-shrink: 0;
   
-  /* Visual - Moderno con bordi arrotondati */
-  border: 2px solid var(--fp-color-border);
+  /* Visual - Minimal */
+  border: 1px solid var(--fp-color-border);
   border-radius: var(--fp-radius-sm);
   background: #ffffff;
-  box-shadow: var(--fp-shadow-xs);
+  box-shadow: none;
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-base);
+  transition: border-color var(--fp-transition-base), background-color var(--fp-transition-base);
   -webkit-tap-highlight-color: transparent;
   
   /* Custom accent color */
@@ -140,8 +139,7 @@
 
 @media (hover: hover) {
   .fp-checkbox:hover {
-    border-color: var(--fp-color-primary);
-    box-shadow: var(--fp-shadow-sm);
+    border-color: var(--fp-color-text);
   }
 }
 

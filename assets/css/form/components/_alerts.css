@@ -18,15 +18,12 @@
   font-size: var(--fp-text-sm);
   line-height: var(--fp-leading-relaxed);
   
-  /* Visual - Design moderno con bordo laterale */
+  /* Visual - Design minimal con bordo laterale */
   background: #ffffff;
-  border: 2px solid var(--fp-color-border);
-  border-left-width: 4px;
-  border-radius: var(--fp-radius-md);
-  box-shadow: var(--fp-shadow-sm);
-  
-  /* Animation */
-  animation: fp-alert-slide-in 0.2s ease-out;
+  border: 1px solid var(--fp-color-border);
+  border-left-width: 3px;
+  border-radius: var(--fp-radius-sm);
+  box-shadow: none;
 }
 
 @media (min-width: 768px) {
@@ -36,16 +33,7 @@
   }
 }
 
-@keyframes fp-alert-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Animazione rimossa per approccio minimal */
 
 /* Hidden alert */
 .fp-alert[hidden] {

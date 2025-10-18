@@ -89,35 +89,35 @@
   --fp-leading-relaxed: 1.7;
   --fp-leading-loose: 2;
   
-  /* ==================== BORDER RADIUS MODERNI ==================== */
+  /* ==================== BORDER RADIUS MINIMAL ==================== */
   
-  --fp-radius-sm: 0.5rem;     /* 8px */
-  --fp-radius-md: 0.75rem;    /* 12px */
-  --fp-radius-lg: 1rem;       /* 16px */
-  --fp-radius-xl: 1.5rem;     /* 24px */
-  --fp-radius-2xl: 2rem;      /* 32px */
+  --fp-radius-sm: 0.25rem;    /* 4px */
+  --fp-radius-md: 0.5rem;     /* 8px */
+  --fp-radius-lg: 0.75rem;    /* 12px */
+  --fp-radius-xl: 1rem;       /* 16px */
+  --fp-radius-2xl: 1.25rem;   /* 20px */
   --fp-radius-full: 9999px;   /* Pill shape */
   
-  /* ==================== SHADOWS MODERNE E SOFT ==================== */
+  /* ==================== SHADOWS MINIMAL ==================== */
   
-  --fp-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --fp-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  --fp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --fp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --fp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  --fp-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
-  --fp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --fp-shadow-xs: none;
+  --fp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --fp-shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  --fp-shadow-lg: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  --fp-shadow-xl: 0 4px 8px 0 rgba(0, 0, 0, 0.12);
+  --fp-shadow-2xl: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
+  --fp-shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   
-  /* Shadow Focus - Ring style moderno */
-  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
-  --fp-shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  /* Shadow Focus - Ring minimal */
+  --fp-shadow-focus: 0 0 0 2px rgba(0, 0, 0, 0.15);
+  --fp-shadow-focus-error: 0 0 0 2px rgba(239, 68, 68, 0.2);
   
-  /* ==================== TRANSIZIONI OTTIMIZZATE ==================== */
+  /* ==================== TRANSIZIONI MINIMAL ==================== */
   
-  --fp-transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-base: 180ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-smooth: 200ms cubic-bezier(0.4, 0, 0.1, 1);
+  --fp-transition-fast: 100ms ease;
+  --fp-transition-base: 150ms ease;
+  --fp-transition-slow: 200ms ease;
+  --fp-transition-smooth: 150ms ease;
   
   /* ==================== Z-INDEX ==================== */
   

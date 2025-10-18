@@ -10,10 +10,10 @@
   display: grid;
   gap: var(--fp-space-md);
   padding: var(--fp-space-md);
-  border-radius: var(--fp-radius-lg);
-  border: 2px solid var(--fp-color-border);
-  background: var(--fp-color-surface-alt);
-  box-shadow: var(--fp-shadow-xs);
+  border-radius: var(--fp-radius-md);
+  border: 1px solid var(--fp-color-border);
+  background: #ffffff;
+  box-shadow: none;
   margin-bottom: var(--fp-space-md);
 }
 
@@ -111,16 +111,16 @@
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   
-  /* Visual - Stile card moderno */
-  border-radius: var(--fp-radius-lg);
-  border: 2px solid var(--fp-color-border);
+  /* Visual - Stile minimal */
+  border-radius: var(--fp-radius-md);
+  border: 1px solid var(--fp-color-border);
   background: #ffffff;
   color: var(--fp-color-text);
-  box-shadow: var(--fp-shadow-sm);
+  box-shadow: none;
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-base);
+  transition: background-color var(--fp-transition-base), border-color var(--fp-transition-base), color var(--fp-transition-base);
   overflow: hidden;
 }
 
@@ -131,9 +131,8 @@
 @media (hover: hover) {
   .fp-slots__list button:hover:not(:disabled),
   .fp-resv-slots__list button:hover:not(:disabled) {
-    border-color: var(--fp-color-primary);
-    box-shadow: var(--fp-shadow-md);
-    transform: translateY(-1px);
+    border-color: var(--fp-color-text);
+    background: var(--fp-color-surface-hover);
   }
 }
 
@@ -150,7 +149,6 @@
   background: var(--fp-color-primary);
   border-color: var(--fp-color-primary);
   color: white;
-  box-shadow: var(--fp-shadow-md);
   font-weight: var(--fp-font-bold);
 }
 

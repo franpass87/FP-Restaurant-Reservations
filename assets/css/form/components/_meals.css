@@ -6,11 +6,11 @@
 /* ==================== MEALS CONTAINER ==================== */
 
 .fp-meals {
-  border: 2px solid var(--fp-color-border);
-  border-radius: var(--fp-radius-lg);
+  border: 1px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-md);
   padding: var(--fp-space-md);
-  background: var(--fp-color-surface-alt);
-  box-shadow: var(--fp-shadow-xs);
+  background: #ffffff;
+  box-shadow: none;
   margin-bottom: var(--fp-space-md);
 }
 
