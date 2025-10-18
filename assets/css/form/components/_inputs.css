@@ -23,16 +23,21 @@
   color: #000000 !important;
   
   /* Visual - BIANCO con TESTO NERO */
-  background: #ffffff !important;
-  border: 1.5px solid #e0e0e0 !important;
+  background: var(--fp-gradient-glass) !important;
+  border: 2px solid #e5e5e5 !important;
   border-radius: var(--fp-radius-lg);
-  box-shadow: var(--fp-shadow-sm);
+  box-shadow: var(--fp-shadow-sm), inset 0 1px 2px rgba(0, 0, 0, 0.03);
   
   /* Interaction */
-  transition: all var(--fp-transition-base);
+  transition: all var(--fp-transition-smooth), 
+              transform var(--fp-transition-fast),
+              box-shadow var(--fp-transition-fast);
   
   /* Reset */
   appearance: none;
+  
+  /* Glassmorphism */
+  backdrop-filter: blur(8px);
 }
 
 /* ==================== STATES ==================== */
@@ -40,16 +45,21 @@
 .fp-input:hover,
 .fp-select:hover,
 .fp-textarea:hover {
-  border-color: var(--fp-color-primary);
+  border-color: #999999;
+  box-shadow: var(--fp-shadow-md), inset 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
 }
 
 .fp-input:focus,
 .fp-select:focus,
 .fp-textarea:focus {
   outline: none;
-  border-color: var(--fp-color-primary);
-  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-sm);
-  background: white;
+  border-color: #000000;
+  box-shadow: var(--fp-shadow-focus), 
+              var(--fp-shadow-md), 
+              inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  background: #ffffff;
+  transform: translateY(-2px);
 }
 
 .fp-input:disabled,
@@ -110,37 +120,40 @@
 
 .fp-checkbox {
   /* Sizing */
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   
   /* Visual */
-  border: 2px solid var(--fp-color-border);
-  border-radius: var(--fp-radius-sm);
-  background: var(--fp-color-surface);
-  box-shadow: var(--fp-shadow-sm);
+  border: 2px solid #d0d0d0;
+  border-radius: var(--fp-radius-md);
+  background: var(--fp-gradient-glass);
+  box-shadow: var(--fp-shadow-sm), inset 0 1px 2px rgba(0, 0, 0, 0.02);
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-fast);
+  transition: all var(--fp-transition-bounce);
   
   /* Custom accent color */
   accent-color: var(--fp-color-primary);
 }
 
 .fp-checkbox:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+  border-color: #000000;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.06), var(--fp-shadow-md);
+  transform: scale(1.05);
 }
 
 .fp-checkbox:focus-visible {
   outline: none;
-  box-shadow: var(--fp-shadow-focus);
+  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
 }
 
 .fp-checkbox:checked {
-  border-color: var(--fp-color-primary);
-  background: var(--fp-color-primary);
+  border-color: #000000;
+  background: var(--fp-gradient-primary);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08), var(--fp-shadow-md);
+  transform: scale(1.08);
 }
 
 .fp-checkbox:disabled {
@@ -152,36 +165,40 @@
 
 .fp-radio {
   /* Sizing */
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   
   /* Visual */
-  border: 2px solid var(--fp-color-border);
+  border: 2px solid #d0d0d0;
   border-radius: 50%;
-  background: var(--fp-color-surface);
+  background: var(--fp-gradient-glass);
+  box-shadow: var(--fp-shadow-sm), inset 0 1px 2px rgba(0, 0, 0, 0.02);
   
   /* Interaction */
   cursor: pointer;
-  transition: all var(--fp-transition-fast);
+  transition: all var(--fp-transition-bounce);
   
   /* Custom accent color */
   accent-color: var(--fp-color-primary);
 }
 
 .fp-radio:hover {
-  border-color: var(--fp-color-primary);
-  box-shadow: 0 0 0 3px var(--fp-color-primary-light);
+  border-color: #000000;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.06), var(--fp-shadow-md);
+  transform: scale(1.05);
 }
 
 .fp-radio:focus-visible {
   outline: none;
-  box-shadow: var(--fp-shadow-focus);
+  box-shadow: var(--fp-shadow-focus), var(--fp-shadow-md);
 }
 
 .fp-radio:checked {
-  border-color: var(--fp-color-primary);
-  background: var(--fp-color-primary);
+  border-color: #000000;
+  background: var(--fp-gradient-primary);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08), var(--fp-shadow-md);
+  transform: scale(1.08);
 }
 
 /* ==================== FIELD WRAPPER ==================== */

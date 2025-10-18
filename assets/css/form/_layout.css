@@ -25,8 +25,14 @@
   padding: var(--fp-space-2xl);
   background: var(--fp-gradient-surface);
   border-radius: var(--fp-radius-2xl);
-  box-shadow: var(--fp-shadow-xl);
+  box-shadow: var(--fp-shadow-2xl), 0 0 60px rgba(0, 0, 0, 0.08);
   backdrop-filter: var(--fp-backdrop-blur);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: box-shadow var(--fp-transition-smooth);
+}
+
+.fp-resv:hover {
+  box-shadow: var(--fp-shadow-2xl), 0 0 80px rgba(0, 0, 0, 0.12);
 }
 
 /* ==================== SEZIONI ==================== */
@@ -67,10 +73,17 @@
 
 .fp-card {
   padding: var(--fp-space-xl);
-  background: var(--fp-color-surface);
+  background: var(--fp-gradient-glass);
   border-radius: var(--fp-radius-xl);
-  border: 1px solid var(--fp-color-border-light);
-  box-shadow: var(--fp-shadow-md);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--fp-shadow-lg), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  transition: all var(--fp-transition-smooth);
+}
+
+.fp-card:hover {
+  box-shadow: var(--fp-shadow-xl), 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .fp-card--bordered {
@@ -222,8 +235,31 @@
 .fp-divider {
   height: 1px;
   border: 0;
-  background: var(--fp-color-divider);
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(0, 0, 0, 0.1) 20%, 
+    rgba(0, 0, 0, 0.15) 50%,
+    rgba(0, 0, 0, 0.1) 80%, 
+    transparent
+  );
   margin: var(--fp-space-lg) 0;
+  position: relative;
+}
+
+.fp-divider::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.5) 20%, 
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.5) 80%, 
+    transparent
+  );
 }
 
 .fp-divider--thick {
@@ -233,8 +269,9 @@
 .fp-divider--gradient {
   background: linear-gradient(90deg, 
     transparent, 
-    var(--fp-color-divider) 20%, 
-    var(--fp-color-divider) 80%, 
+    rgba(0, 0, 0, 0.12) 15%,
+    rgba(0, 0, 0, 0.2) 50%, 
+    rgba(0, 0, 0, 0.12) 85%,
     transparent
   );
 }

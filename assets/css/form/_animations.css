@@ -8,27 +8,31 @@
 @keyframes fp-fade-in {
   from {
     opacity: 0;
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes fp-fade-out {
   from {
     opacity: 1;
+    transform: scale(1);
   }
   to {
     opacity: 0;
+    transform: scale(0.98);
   }
 }
 
 .fp-animate-fade-in {
-  animation: fp-fade-in 0.3s ease-out;
+  animation: fp-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fp-animate-fade-out {
-  animation: fp-fade-out 0.3s ease-out;
+  animation: fp-fade-out 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==================== SLIDE ANIMATIONS ==================== */
@@ -98,31 +102,35 @@
 @keyframes fp-scale-in {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.92) translateY(10px);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+    filter: blur(0);
   }
 }
 
 @keyframes fp-scale-out {
   from {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+    filter: blur(0);
   }
   to {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.92) translateY(10px);
+    filter: blur(2px);
   }
 }
 
 .fp-animate-scale-in {
-  animation: fp-scale-in 0.3s ease-out;
+  animation: fp-scale-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fp-animate-scale-out {
-  animation: fp-scale-out 0.3s ease-out;
+  animation: fp-scale-out 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==================== SPIN ANIMATION ==================== */
@@ -213,25 +221,26 @@
   display: inline-block;
   width: 100%;
   height: 14px;
-  border-radius: var(--fp-radius-md);
-  background: linear-gradient(90deg, 
-    rgba(148, 163, 184, 0.12), 
-    rgba(148, 163, 184, 0.2), 
-    rgba(148, 163, 184, 0.12)
+  border-radius: var(--fp-radius-lg);
+  background: linear-gradient(110deg, 
+    rgba(0, 0, 0, 0.06), 
+    rgba(0, 0, 0, 0.1), 
+    rgba(0, 0, 0, 0.06)
   );
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .fp-skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, 
+  background: linear-gradient(110deg, 
     transparent, 
-    rgba(255, 255, 255, 0.6), 
+    rgba(255, 255, 255, 0.8), 
     transparent
   );
   transform: translateX(-100%);
-  animation: fp-skeleton-shimmer 1.2s ease-in-out infinite;
+  animation: fp-skeleton-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .fp-skeleton--circle {

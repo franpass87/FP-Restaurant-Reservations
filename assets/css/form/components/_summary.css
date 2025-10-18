@@ -10,22 +10,57 @@
   gap: var(--fp-space-lg);
   padding: var(--fp-space-2xl);
   border-radius: var(--fp-radius-2xl);
-  background: var(--fp-gradient-surface);
-  border: 2px solid var(--fp-color-border-light);
-  box-shadow: var(--fp-shadow-xl);
+  background: var(--fp-gradient-glass);
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--fp-shadow-2xl), 0 0 40px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(255, 255, 255, 0.8);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(12px);
+  animation: fp-summary-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Barra superiore colorata */
+@keyframes fp-summary-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(20px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Barra superiore colorata con gradient */
 .fp-resv-summary::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 5px;
   background: var(--fp-gradient-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Shine effect on load */
+.fp-resv-summary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: fp-summary-shine 1.5s ease-out 0.3s;
+  pointer-events: none;
+}
+
+@keyframes fp-summary-shine {
+  to {
+    left: 200%;
+  }
 }
 
 /* ==================== SUMMARY TITLE ==================== */
@@ -49,14 +84,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: var(--fp-gradient-primary);
   color: white;
-  font-size: var(--fp-text-base);
+  font-size: var(--fp-text-lg);
   font-weight: var(--fp-font-bold);
   flex-shrink: 0;
+  box-shadow: var(--fp-shadow-lg), 0 0 20px rgba(0, 0, 0, 0.2);
+  animation: fp-check-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s backwards;
+}
+
+@keyframes fp-check-pop {
+  from {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 /* ==================== SUMMARY LIST ==================== */
@@ -68,17 +116,19 @@
 
 .fp-resv-summary__list > div {
   padding: var(--fp-space-md);
-  background: rgba(248, 250, 252, 0.5);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%);
   border-radius: var(--fp-radius-lg);
-  border: 1px solid var(--fp-color-border-light);
-  transition: all var(--fp-transition-fast);
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--fp-shadow-sm), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  transition: all var(--fp-transition-smooth);
+  backdrop-filter: blur(8px);
 }
 
 .fp-resv-summary__list > div:hover {
-  background: rgba(248, 250, 252, 0.8);
-  border-color: var(--fp-color-border);
-  transform: translateY(-2px);
-  box-shadow: var(--fp-shadow-sm);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%);
+  border-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--fp-shadow-lg), 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* ==================== SUMMARY ITEMS (dt/dd) ==================== */

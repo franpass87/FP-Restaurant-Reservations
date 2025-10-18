@@ -90,23 +90,26 @@
   --fp-radius-2xl: 1.25rem;   /* 20px */
   --fp-radius-full: 9999px;   /* Pill shape */
   
-  /* ==================== SHADOWS ==================== */
+  /* ==================== SHADOWS - Premium & Sofisticate ==================== */
   
-  --fp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --fp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --fp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --fp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --fp-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --fp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  --fp-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --fp-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08);
+  --fp-shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  --fp-shadow-xl: 0 24px 32px -8px rgba(0, 0, 0, 0.18), 0 12px 16px -6px rgba(0, 0, 0, 0.12);
+  --fp-shadow-2xl: 0 32px 64px -16px rgba(0, 0, 0, 0.28), 0 16px 32px -8px rgba(0, 0, 0, 0.16);
+  --fp-shadow-inner: inset 0 2px 6px 0 rgba(0, 0, 0, 0.08);
+  --fp-shadow-glow: 0 0 20px rgba(0, 0, 0, 0.06), 0 0 40px rgba(0, 0, 0, 0.03);
   
-  /* Shadow Focus - Nero */
-  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  /* Shadow Focus - Nero con glow elegante */
+  --fp-shadow-focus: 0 0 0 4px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04);
   
-  /* ==================== TRANSIZIONI ==================== */
+  /* ==================== TRANSIZIONI - Fluide & Premium ==================== */
   
-  --fp-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-base: 240ms cubic-bezier(0.4, 0, 0.2, 1);
-  --fp-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-transition-fast: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --fp-transition-base: 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --fp-transition-slow: 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  --fp-transition-smooth: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-transition-bounce: 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
   
   /* ==================== Z-INDEX ==================== */
   
@@ -134,11 +137,13 @@
   --fp-container-max-width: 100%;
   --fp-form-max-width: 600px;
   
-  /* ==================== GRADIENTI - Minimalisti ==================== */
+  /* ==================== GRADIENTI - Eleganti & Sofisticati ==================== */
   
-  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-  --fp-gradient-surface: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
-  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 100%);
+  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #2a2a2a 50%, #1a1a1a 100%);
+  --fp-gradient-surface: linear-gradient(145deg, #ffffff 0%, #fcfcfc 50%, #fafafa 100%);
+  --fp-gradient-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 60%, rgba(255, 255, 255, 0.95) 100%);
+  --fp-gradient-shine: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.8) 50%, transparent 60%);
+  --fp-gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
   
   /* ==================== BACKDROP FILTER ==================== */
   

@@ -20,12 +20,33 @@
   gap: var(--fp-space-xl);
   padding: var(--fp-space-2xl);
   border-radius: var(--fp-radius-xl);
-  border: 1.5px solid var(--fp-color-border);
-  background: var(--fp-gradient-surface);
-  box-shadow: var(--fp-shadow-md);
-  animation: fp-step-fade-in 0.3s ease-out;
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  background: var(--fp-gradient-glass);
+  box-shadow: var(--fp-shadow-lg), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+  animation: fp-step-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   scroll-margin-top: var(--fp-space-3xl);
   transition: all var(--fp-transition-slow);
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine effect on load */
+.fp-resv-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: fp-step-shine 1.5s ease-out 0.3s;
+}
+
+@keyframes fp-step-shine {
+  to {
+    left: 200%;
+  }
 }
 
 /* Mostra solo lo step attivo */
@@ -46,10 +67,12 @@
 
 /* Step attivo ha un bordo evidenziato */
 .fp-resv-step[data-state="active"] {
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: rgba(0, 0, 0, 0.15);
   box-shadow: var(--fp-shadow-xl), 
-              0 0 0 1px rgba(37, 99, 235, 0.1);
-  background: var(--fp-color-surface);
+              0 0 40px rgba(0, 0, 0, 0.08),
+              inset 0 1px 3px rgba(255, 255, 255, 0.8);
+  background: linear-gradient(145deg, #ffffff 0%, #fcfcfc 100%);
+  transform: scale(1.01);
 }
 
 /* Step completato */
@@ -123,11 +146,13 @@
 @keyframes fp-step-fade-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(20px) scale(0.96);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 
