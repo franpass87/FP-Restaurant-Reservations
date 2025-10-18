@@ -142,6 +142,10 @@
   line-height: var(--fp-leading-relaxed);
 }
 
+.fp-meals__notice-text:empty {
+  display: none;
+}
+
 /* ==================== RESPONSIVE ==================== */
 
 @media (max-width: 640px) {

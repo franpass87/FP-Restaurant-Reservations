@@ -354,6 +354,10 @@
   font-style: normal;
 }
 
+.fp-meals__notice-text:empty {
+  display: none;
+}
+
 /* ==================== FORM FIELDS ==================== */
 
 .fp-resv-field,
