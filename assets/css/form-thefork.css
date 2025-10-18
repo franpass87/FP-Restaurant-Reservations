@@ -9,6 +9,9 @@
 /* ==================== IMPORTA VARIABILI THE FORK ==================== */
 @import './form/_variables-thefork.css';
 
+/* ==================== IMPORTA FIX CONTRASTI E VISIBILITÀ ==================== */
+@import './form/FIX-CONTRASTI-VISIBILITA.css';
+
 /* ==================== BASE & RESET ==================== */
 
 .fp-resv-widget,

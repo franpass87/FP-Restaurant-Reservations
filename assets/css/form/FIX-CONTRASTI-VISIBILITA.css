@@ -390,6 +390,96 @@ button.fp-meal-pill:focus-visible {
   padding: 20px !important;
 }
 
+/* ==================== FLATPICKR CALENDARIO - DATE VISIBILI ==================== */
+
+/* Date normali del mese corrente - NERO */
+.flatpickr-day {
+  color: #000000 !important;
+  background: #ffffff !important;
+}
+
+/* Date hover */
+.flatpickr-day:hover {
+  background: #f5f5f5 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+/* Data odierna (today) */
+.flatpickr-day.today {
+  background: #f0f0f0 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  font-weight: bold !important;
+}
+
+.flatpickr-day.today:hover {
+  background: #e0e0e0 !important;
+  color: #000000 !important;
+}
+
+/* Data selezionata - NERO con testo BIANCO */
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+/* Date mesi precedenti/successivi - GRIGIO ma VISIBILE */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #999999 !important;
+  background: transparent !important;
+}
+
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover {
+  background: #f5f5f5 !important;
+  color: #666666 !important;
+}
+
+/* Date disabilitate - GRIGIO CHIARO ma LEGGIBILE */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+  color: #cccccc !important;
+  background: transparent !important;
+  cursor: not-allowed !important;
+}
+
+/* Intestazioni giorni settimana */
+.flatpickr-weekday,
+span.flatpickr-weekday {
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+/* Mese e anno nel calendario */
+.flatpickr-current-month,
+.flatpickr-current-month .cur-month,
+.flatpickr-current-month input.cur-year {
+  color: #000000 !important;
+}
+
+/* Frecce navigazione mese */
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  color: #333333 !important;
+}
+
+/* Sfondo calendario */
+.flatpickr-calendar {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
 /* ==================== GARANZIA VISIBILITÀ ASSOLUTA ==================== */
 
 /* Se qualcosa è ancora invisibile, questa regola lo salva */
