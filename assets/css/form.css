@@ -57,10 +57,11 @@
 
 /* Aggiungi qui eventuali personalizzazioni rapide */
 
-/* Nascondi paragrafi nei widget di prenotazione */
+/* DISABILITATO - I paragrafi fanno parte del design TheFork
 .fp-resv-widget p, #fp-resv-default p {
     display: none;
 }
+*/
 
 /* Stili per l'input alternativo di Flatpickr */
 .fp-resv-widget .flatpickr-input {
