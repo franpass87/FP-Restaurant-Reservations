@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Settings;
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\Roles;
 use FP\Resv\Core\ServiceContainer;
+use FP\Resv\Domain\Settings\FormColors;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\PagesConfig;
 use function __;
@@ -94,9 +95,12 @@ final class AdminPages
         add_action('admin_menu', [$this, 'registerMainMenu'], 5);
         // Priorità 20: aggiunge i submenu delle impostazioni dopo i menu operativi (Agenda, Tables, ecc.)
         add_action('admin_menu', [$this, 'registerSubmenuPages'], 20);
+        add_action('admin_menu', [$this, 'registerFormColorsPage'], 21);
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('admin_post_fp_resv_style_reset', [$this, 'handleStyleReset']);
+        add_action('admin_post_fp_resv_save_form_colors', [$this, 'handleSaveFormColors']);
+        add_action('admin_post_fp_resv_reset_form_colors', [$this, 'handleResetFormColors']);
     }
 
     public function enqueueAssets(): void
@@ -122,6 +126,15 @@ final class AdminPages
                 add_filter('script_loader_tag', [$this, 'addModuleTypeToMealPlanScript'], 10, 2);
             }
             wp_enqueue_script('fp-resv-meal-plan', Plugin::$url . 'assets/js/admin/meal-plan.js', [], $version, true);
+        }
+
+        if ($page === 'fp-resv-form-colors') {
+            wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], $version);
+            wp_enqueue_script('fp-resv-form-colors', Plugin::$url . 'assets/js/admin/form-colors.js', [], $version, true);
+            wp_localize_script('fp-resv-form-colors', 'fpResvFormColors', [
+                'cssUrl' => Plugin::$url . 'assets/css/form-thefork.css?v=' . $version,
+            ]);
+            return;
         }
 
         if ($page !== 'fp-resv-style') {
@@ -198,6 +211,121 @@ final class AdminPages
         $redirect = add_query_arg(
             ['fp_resv_style_reset' => '1'],
             admin_url('admin.php?page=fp-resv-style')
+        );
+
+        wp_safe_redirect($redirect);
+        exit;
+    }
+
+    /**
+     * Registra la pagina Colori Form (priorità 21)
+     */
+    public function registerFormColorsPage(): void
+    {
+        if ($this->pages === []) {
+            return;
+        }
+
+        $firstKey = array_key_first($this->pages);
+        if ($firstKey === null) {
+            return;
+        }
+
+        $firstPage = $this->pages[$firstKey];
+
+        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
+            ? 'manage_options' 
+            : self::CAPABILITY;
+
+        add_submenu_page(
+            $firstPage['slug'],
+            __('Colori Form', 'fp-restaurant-reservations'),
+            __('🎨 Colori Form', 'fp-restaurant-reservations'),
+            $capability,
+            'fp-resv-form-colors',
+            [$this, 'renderFormColorsPage']
+        );
+    }
+
+    /**
+     * Render della pagina Colori Form
+     */
+    public function renderFormColorsPage(): void
+    {
+        if (!current_user_can(self::CAPABILITY) && !current_user_can('manage_options')) {
+            wp_die(__('Non hai i permessi per accedere a questa pagina.', 'fp-restaurant-reservations'));
+        }
+
+        $container = ServiceContainer::getInstance();
+        $formColors = $container->get(FormColors::class);
+        
+        if (!$formColors instanceof FormColors) {
+            $formColors = new FormColors();
+            $container->register(FormColors::class, $formColors);
+        }
+
+        require __DIR__ . '/../Admin/Views/form-colors.php';
+    }
+
+    /**
+     * Handler per salvare i colori del form
+     */
+    public function handleSaveFormColors(): void
+    {
+        if (!current_user_can(self::CAPABILITY) && !current_user_can('manage_options')) {
+            wp_safe_redirect(admin_url());
+            exit;
+        }
+
+        check_admin_referer('fp_resv_save_form_colors', 'fp_resv_colors_nonce');
+
+        $container = ServiceContainer::getInstance();
+        $formColors = $container->get(FormColors::class);
+        
+        if (!$formColors instanceof FormColors) {
+            $formColors = new FormColors();
+            $container->register(FormColors::class, $formColors);
+        }
+
+        $colors = filter_input(INPUT_POST, 'colors', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+        if (is_array($colors)) {
+            $formColors->saveColors($colors);
+        }
+
+        $redirect = add_query_arg(
+            ['fp_resv_colors_saved' => '1'],
+            admin_url('admin.php?page=fp-resv-form-colors')
+        );
+
+        wp_safe_redirect($redirect);
+        exit;
+    }
+
+    /**
+     * Handler per resettare i colori del form
+     */
+    public function handleResetFormColors(): void
+    {
+        if (!current_user_can(self::CAPABILITY) && !current_user_can('manage_options')) {
+            wp_safe_redirect(admin_url());
+            exit;
+        }
+
+        check_admin_referer('fp_resv_reset_form_colors');
+
+        $container = ServiceContainer::getInstance();
+        $formColors = $container->get(FormColors::class);
+        
+        if (!$formColors instanceof FormColors) {
+            $formColors = new FormColors();
+            $container->register(FormColors::class, $formColors);
+        }
+
+        $formColors->reset();
+
+        $redirect = add_query_arg(
+            ['fp_resv_colors_reset' => '1'],
+            admin_url('admin.php?page=fp-resv-form-colors')
         );
 
         wp_safe_redirect($redirect);
