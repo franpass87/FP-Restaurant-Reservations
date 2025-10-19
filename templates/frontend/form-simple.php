@@ -314,6 +314,26 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             transform: scale(1.2);
         }
         
+        /* Input date - permette click su tutta l'area */
+        .fp-field input[type="date"] {
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .fp-field input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            color: transparent;
+            background: transparent;
+            cursor: pointer;
+        }
+        
         .fp-field label[style*="display: flex"] {
             align-items: flex-start;
             font-weight: 500;

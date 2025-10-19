@@ -464,6 +464,59 @@ document.addEventListener('DOMContentLoaded', function() {
         return fallbackDates;
     }
     
+    // Genera orari disponibili localmente come fallback
+    function generateFallbackTimeSlots(meal) {
+        const slots = [];
+        
+        if (meal === 'pranzo') {
+            // Orari pranzo: 12:00 - 14:30 ogni 30 minuti
+            const startHour = 12;
+            const endHour = 14;
+            const startMinute = 0;
+            const endMinute = 30;
+            
+            for (let hour = startHour; hour <= endHour; hour++) {
+                const maxMinute = (hour === endHour) ? endMinute : 30;
+                for (let minute = startMinute; minute <= maxMinute; minute += 30) {
+                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    const slotStart = `${timeStr}:00`;
+                    
+                    slots.push({
+                        time: timeStr,
+                        slotStart: slotStart,
+                        available: true,
+                        capacity: 50,
+                        status: 'available'
+                    });
+                }
+            }
+        } else if (meal === 'cena') {
+            // Orari cena: 19:00 - 22:30 ogni 30 minuti
+            const startHour = 19;
+            const endHour = 22;
+            const startMinute = 0;
+            const endMinute = 30;
+            
+            for (let hour = startHour; hour <= endHour; hour++) {
+                const maxMinute = (hour === endHour) ? endMinute : 30;
+                for (let minute = startMinute; minute <= maxMinute; minute += 30) {
+                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    const slotStart = `${timeStr}:00`;
+                    
+                    slots.push({
+                        time: timeStr,
+                        slotStart: slotStart,
+                        available: true,
+                        capacity: 50,
+                        status: 'available'
+                    });
+                }
+            }
+        }
+        
+        return slots;
+    }
+    
     // Update date input with availability info
     function updateDateInput() {
         // Set available dates as data attribute for validation
@@ -523,7 +576,12 @@ document.addEventListener('DOMContentLoaded', function() {
         infoEl.style.display = 'none';
         
         fetch(`/wp-json/fp-resv/v1/available-slots?meal=${meal}&date=${date}&party=${party}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 loadingEl.style.display = 'none';
                 
@@ -567,8 +625,45 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Errore nel caricamento orari:', error);
+                console.log('Usando orari di fallback per', meal, 'alle', date);
+                
+                // Fallback: genera orari localmente
+                const fallbackSlots = generateFallbackTimeSlots(meal);
                 loadingEl.style.display = 'none';
-                slotsEl.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Errore nel caricamento degli orari</p>';
+                
+                if (fallbackSlots.length > 0) {
+                    slotsEl.innerHTML = '';
+                    fallbackSlots.forEach(slot => {
+                        const slotBtn = document.createElement('button');
+                        slotBtn.type = 'button';
+                        slotBtn.className = 'fp-time-slot';
+                        slotBtn.textContent = slot.time;
+                        slotBtn.dataset.time = slot.time;
+                        slotBtn.dataset.slotStart = slot.slotStart;
+                        
+                        slotBtn.addEventListener('click', function() {
+                            document.querySelectorAll('.fp-time-slot').forEach(s => s.classList.remove('selected'));
+                            this.classList.add('selected');
+                            selectedTime = this.dataset.time;
+                            
+                            // Update hidden fields
+                            document.querySelector('input[name="fp_resv_time"]').value = this.dataset.time;
+                            document.querySelector('input[name="fp_resv_slot_start"]').value = this.dataset.slotStart;
+                            
+                            // Auto-advance to next step
+                            if (validateStep(4)) {
+                                currentStep++;
+                                showStep(currentStep);
+                            }
+                        });
+                        
+                        slotsEl.appendChild(slotBtn);
+                    });
+                    infoEl.style.display = 'block';
+                    infoEl.innerHTML = `<p>🕐 ${fallbackSlots.length} orari disponibili per ${meal} (modalità offline)</p>`;
+                } else {
+                    slotsEl.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nessun orario disponibile per questa data</p>';
+                }
             });
     }
     

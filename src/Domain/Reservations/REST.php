@@ -363,12 +363,12 @@ final class REST
                 ],
             ];
             
-            Logging::log('availability', 'Usando dati mock per slot', [
-                'date' => $date,
-                'meal' => $meal,
-                'party' => $party,
-                'slots_count' => count($slots),
-            ]);
+            // Logging::log('availability', 'Usando dati mock per slot', [
+            //     'date' => $date,
+            //     'meal' => $meal,
+            //     'party' => $party,
+            //     'slots_count' => count($slots),
+            // ]);
 
             $response = new WP_REST_Response([
                 'slots' => $slots,
@@ -383,10 +383,10 @@ final class REST
 
             return $response;
         } catch (\Exception $e) {
-            Logging::log('availability', 'Errore in handleAvailableSlots', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            // Logging::log('availability', 'Errore in handleAvailableSlots', [
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString(),
+            // ]);
 
             return new WP_Error(
                 'fp_resv_availability_slots_error',
