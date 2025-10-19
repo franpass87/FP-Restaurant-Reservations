@@ -756,11 +756,54 @@ class it {
     if (!this.submitButton)
       return;
     const t = this.form.checkValidity();
-    if (this.state.sending ? this.setSubmitButtonState(!1, "sending") : this.setSubmitButtonState(t, null), this.submitHint) {
-      const e = this.state.hintOverride || (t ? this.state.initialHint : this.copy.ctaDisabled);
+    // Validazione logica aggiuntiva: richiedi selezione orario/slot quando presente lo step "slots"
+    let logicallyValid = t;
+    let hasSlotsStep = !1;
+    let timeField = null;
+    let slotStartField = null;
+    let dateField = null;
+    if (t) {
+      hasSlotsStep = Array.isArray(this.sections) && this.sections.some((s) => (s.getAttribute("data-step") || "") === "slots");
+      timeField = this.form.querySelector('[data-fp-resv-field="time"]');
+      slotStartField = this.form.querySelector('input[name="fp_resv_slot_start"]');
+      dateField = this.form.querySelector('[data-fp-resv-field="date"]');
+      if (hasSlotsStep) {
+        const hasTime = !!(timeField && typeof timeField.value === "string" && timeField.value.trim() !== "");
+        const hasSlot = !!(slotStartField && typeof slotStartField.value === "string" && slotStartField.value.trim() !== "");
+        logicallyValid = logicallyValid && hasTime && hasSlot;
+      }
+      if (dateField && typeof dateField.value === "string" && dateField.value.trim() === "") {
+        logicallyValid = !1;
+      }
+    }
+    // Aggiorna stato CTA
+    if (this.state.sending) {
+      this.setSubmitButtonState(!1, "sending");
+    } else {
+      this.setSubmitButtonState(logicallyValid, null);
+    }
+    // Aggiorna hint solo se non c'è già un override (es. errori server)
+    if (!this.state.hintOverride) {
+      if (!logicallyValid) {
+        // Mostra suggerimento contestuale
+        const needsSlot = hasSlotsStep && (!timeField || !timeField.value || timeField.value.trim() === "" || !slotStartField || !slotStartField.value || slotStartField.value.trim() === "");
+        const needsDate = dateField && typeof dateField.value === "string" && dateField.value.trim() === "";
+        if (needsSlot && this.copy && this.copy.slotRequired) {
+          this.state.hintOverride = this.copy.slotRequired;
+        } else if (needsDate && this.copy && this.copy.dateRequired) {
+          this.state.hintOverride = this.copy.dateRequired;
+        } else {
+          this.state.hintOverride = "";
+        }
+      } else {
+        this.state.hintOverride = "";
+      }
+    }
+    if (this.submitHint) {
+      const e = this.state.hintOverride || (logicallyValid ? this.state.initialHint : this.copy.ctaDisabled);
       this.submitHint.textContent = e;
     }
-    if (t && !this.state.formValidEmitted) {
+    if (logicallyValid && !this.state.formValidEmitted) {
       const e = this.events.form_valid || "form_valid";
       g(e, { timestamp: Date.now() }), this.state.formValidEmitted = !0;
     }
