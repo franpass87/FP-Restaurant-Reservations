@@ -22,7 +22,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-resv-simple {
             max-width: 480px;
             margin: 0 auto;
-            padding: 24px 20px;
+            padding: 16px 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: #ffffff;
             border-radius: 12px;
@@ -44,7 +44,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-resv-simple h2 {
             color: #000000;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             text-align: center;
             font-size: 22px;
             font-weight: 600;
@@ -54,21 +54,33 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-step {
             display: none;
-            padding: 16px 0;
+            padding: 8px 0;
             opacity: 0;
             transform: translateX(20px);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            visibility: hidden;
         }
         
         .fp-step.active {
             display: block;
             opacity: 1;
             transform: translateX(0);
+            position: relative;
+            visibility: visible;
         }
         
         .fp-step.prev {
             opacity: 0;
             transform: translateX(-20px);
+        }
+        
+        .fp-steps-container {
+            position: relative;
+            min-height: 200px;
         }
         
         .fp-step h3 {
@@ -258,8 +270,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 16px 0;
+            margin-bottom: 12px;
+            padding: 8px 0;
             position: relative;
         }
         
@@ -651,8 +663,10 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-progress-step" data-step="4">4</div>
     </div>
 
-    <!-- Step 1: Servizio -->
-    <div class="fp-step active" data-step="1">
+    <!-- Steps Container -->
+    <div class="fp-steps-container">
+        <!-- Step 1: Servizio -->
+        <div class="fp-step active" data-step="1">
         <h3>1. Scegli il Servizio</h3>
         <div class="fp-field">
             <div class="fp-meals" id="meal-buttons">
@@ -909,6 +923,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             <p>📝 <strong>Verifica attentamente tutti i dati</strong> prima di confermare la prenotazione. Una volta inviata, riceverai una email di conferma.</p>
         </div>
     </div>
+    </div> <!-- End fp-steps-container -->
 
     <!-- Hidden Fields -->
     <input type="hidden" name="fp_resv_meal" value="">
