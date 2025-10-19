@@ -137,6 +137,36 @@ final class REST
 
         register_rest_route(
             'fp-resv/v1',
+            '/available-slots',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAvailableSlots'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'date' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'validate_callback' => static function ($value): bool {
+                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+                        },
+                    ],
+                    'meal' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                    ],
+                    'party' => [
+                        'required'          => true,
+                        'type'              => 'integer',
+                        'sanitize_callback' => static fn ($value): int => max(0, absint($value)),
+                        'validate_callback' => static fn ($value): bool => absint($value) > 0,
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
             '/reservations',
             [
                 'methods'             => WP_REST_Server::CREATABLE,
@@ -231,6 +261,79 @@ final class REST
                     },
                     'permission_callback' => '__return_true',
                 ]
+            );
+        }
+    }
+
+    public function handleAvailableSlots(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        try {
+            $date = $request->get_param('date');
+            $meal = $request->get_param('meal');
+            $party = absint($request->get_param('party'));
+
+            if (!is_string($date) || !is_string($meal) || $party <= 0) {
+                return new WP_Error(
+                    'fp_resv_invalid_params',
+                    __('Parametri non validi.', 'fp-restaurant-reservations'),
+                    ['status' => 400]
+                );
+            }
+
+            // Valida formato data
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return new WP_Error(
+                    'fp_resv_invalid_date_format',
+                    __('Formato data non valido. Usare YYYY-MM-DD.', 'fp-restaurant-reservations'),
+                    ['status' => 400]
+                );
+            }
+
+            // Usa il metodo esistente per ottenere gli slot disponibili
+            $criteria = [
+                'date' => $date,
+                'party' => $party,
+                'meal' => $meal,
+            ];
+
+            $availability = $this->availability->findAvailableSlots($criteria);
+            
+            // Trasforma il risultato nel formato richiesto dal frontend
+            $slots = [];
+            if (isset($availability['slots']) && is_array($availability['slots'])) {
+                foreach ($availability['slots'] as $slot) {
+                    $slots[] = [
+                        'time' => $slot['time'] ?? '',
+                        'slot_start' => $slot['start'] ?? '',
+                        'available' => ($slot['status'] ?? 'unavailable') === 'available',
+                        'capacity' => $slot['capacity'] ?? 0,
+                        'status' => $slot['status'] ?? 'unavailable',
+                    ];
+                }
+            }
+
+            $response = new WP_REST_Response([
+                'slots' => $slots,
+                'date' => $date,
+                'meal' => $meal,
+                'party' => $party,
+            ], 200);
+
+            $response->set_headers([
+                'Cache-Control' => 'public, max-age=60', // Cache per 1 minuto
+            ]);
+
+            return $response;
+        } catch (\Exception $e) {
+            Logging::log('availability', 'Errore in handleAvailableSlots', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new WP_Error(
+                'fp_resv_availability_slots_error',
+                __('Errore nel recupero degli orari disponibili.', 'fp-restaurant-reservations'),
+                ['status' => 500]
             );
         }
     }
