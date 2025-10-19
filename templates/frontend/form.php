@@ -90,39 +90,35 @@ $styleCss  = isset($style['css']) ? (string) $style['css'] : '';
 $styleHash = isset($style['hash']) ? (string) $style['hash'] : '';
 $styleId   = $styleHash !== '' ? 'fp-resv-style-' . $styleHash : 'fp-resv-style-' . md5($formId);
 
-// Output inline styles using WordPress best practices
-// This avoids WPBakery escaping issues while being more semantic
+// Output inline styles using JavaScript to completely avoid WordPress filters
 // NOTE: CSS dinamico con default B/W, personalizzabile via admin panel
 //       Il bridge in form/_variables-bridge.css unifica statici e dinamici
 if ($styleCss !== '') {
-    // Check if we're in a WPBakery/Visual Composer context
-    $isWPBakery = function_exists('vc_is_inline') && vc_is_inline();
-    
-    if ($isWPBakery) {
-        // WPBakery: Use JavaScript injection to avoid escaping
-        $escapedCss = str_replace("'", "\\'", str_replace("\n", '', $styleCss));
-        ?>
-        <script>
-        (function() {
-            var styleId = '<?php echo esc_js($styleId); ?>';
-            var css = '<?php echo $escapedCss; ?>';
-            if (css && !document.getElementById(styleId)) {
-                var style = document.createElement('style');
-                style.id = styleId;
-                style.textContent = css;
-                document.head.appendChild(style);
+    // SEMPRE usa JavaScript injection per evitare che WordPress rovini il CSS con wpautop
+    // Questo è l'unico modo sicuro per evitare che WP aggiunga tag <p> dentro il CSS
+    $escapedCss = str_replace(["\r\n", "\n", "\r"], '', $styleCss); // Rimuovi newlines
+    $escapedCss = str_replace("'", "\\'", $escapedCss); // Escape single quotes
+    ?>
+    <script>
+    (function() {
+        var styleId = '<?php echo esc_js($styleId); ?>';
+        var css = '<?php echo $escapedCss; ?>';
+        if (css && !document.getElementById(styleId)) {
+            var style = document.createElement('style');
+            style.id = styleId;
+            style.type = 'text/css';
+            if (style.styleSheet) {
+                // IE
+                style.styleSheet.cssText = css;
+            } else {
+                // Modern browsers
+                style.appendChild(document.createTextNode(css));
             }
-        })();
-        </script>
-        <?php
-    } else {
-        // Normal context: Use proper <style> tag
-        ?>
-        <style id="<?php echo esc_attr($styleId); ?>" type="text/css">
-        <?php echo wp_strip_all_tags($styleCss); ?>
-        </style>
-        <?php
-    }
+            document.head.appendChild(style);
+        }
+    })();
+    </script>
+    <?php
 }
 ?>
 <div
