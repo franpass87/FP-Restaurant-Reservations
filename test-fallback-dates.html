@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fallback Dates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .result {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Fallback Dates</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Funzione generateFallbackDates</h3>
+        <button onclick="testGenerateFallbackDates()">Test generateFallbackDates</button>
+        <div id="fallback-result" class="result">Risultato...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Date disponibili per Pranzo</h3>
+        <button onclick="testPranzoDates()">Test Pranzo</button>
+        <div id="pranzo-result" class="result">Risultato...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Date disponibili per Cena</h3>
+        <button onclick="testCenaDates()">Test Cena</button>
+        <div id="cena-result" class="result">Risultato...</div>
+    </div>
+
+    <script>
+        // Copia della funzione generateFallbackDates dal form-simple.js
+        function generateFallbackDates(from, to, meal) {
+            const startDate = new Date(from);
+            const endDate = new Date(to);
+            const availableDates = [];
+            
+            // Schedule di default
+            const defaultSchedule = {
+                'pranzo': {
+                    'mon': true,
+                    'tue': true,
+                    'wed': true,
+                    'thu': true,
+                    'fri': true,
+                    'sat': true,
+                    'sun': false, // Pranzo non disponibile la domenica
+                },
+                'cena': {
+                    'mon': false, // Cena non disponibile il lunedì
+                    'tue': true,
+                    'wed': true,
+                    'thu': true,
+                    'fri': true,
+                    'sat': true,
+                    'sun': true,
+                }
+            };
+            
+            const current = new Date(startDate);
+            while (current <= endDate) {
+                const dateKey = current.toISOString().split('T')[0];
+                const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+                
+                if (meal && defaultSchedule[meal]) {
+                    const isAvailable = defaultSchedule[meal][dayKey] || false;
+                    if (isAvailable) {
+                        availableDates.push(dateKey);
+                    }
+                } else {
+                    // Controlla tutti i pasti
+                    const hasAnyAvailability = Object.values(defaultSchedule).some(schedule => schedule[dayKey]);
+                    if (hasAnyAvailability) {
+                        availableDates.push(dateKey);
+                    }
+                }
+                
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return availableDates;
+        }
+
+        function testGenerateFallbackDates() {
+            const result = document.getElementById('fallback-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const from = '2025-10-19';
+                const to = '2025-11-19';
+                const meal = 'pranzo';
+                
+                const dates = generateFallbackDates(from, to, meal);
+                
+                result.className = 'result success';
+                result.textContent = `✅ SUCCESS\nDate generate: ${dates.length}\nPrime 10 date: ${dates.slice(0, 10).join(', ')}\nUltime 5 date: ${dates.slice(-5).join(', ')}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ ERROR\n${error.message}`;
+            }
+        }
+
+        function testPranzoDates() {
+            const result = document.getElementById('pranzo-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const from = '2025-10-19';
+                const to = '2025-11-19';
+                const meal = 'pranzo';
+                
+                const dates = generateFallbackDates(from, to, meal);
+                
+                // Conta i giorni della settimana
+                const dayCounts = {
+                    'mon': 0, 'tue': 0, 'wed': 0, 'thu': 0, 
+                    'fri': 0, 'sat': 0, 'sun': 0
+                };
+                
+                dates.forEach(date => {
+                    const day = new Date(date).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+                    dayCounts[day]++;
+                });
+                
+                result.className = 'result success';
+                result.textContent = `✅ PRANZO\nDate totali: ${dates.length}\nLun: ${dayCounts.mon}, Mar: ${dayCounts.tue}, Mer: ${dayCounts.wed}\nGio: ${dayCounts.thu}, Ven: ${dayCounts.fri}, Sab: ${dayCounts.sat}, Dom: ${dayCounts.sun}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ ERROR\n${error.message}`;
+            }
+        }
+
+        function testCenaDates() {
+            const result = document.getElementById('cena-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const from = '2025-10-19';
+                const to = '2025-11-19';
+                const meal = 'cena';
+                
+                const dates = generateFallbackDates(from, to, meal);
+                
+                // Conta i giorni della settimana
+                const dayCounts = {
+                    'mon': 0, 'tue': 0, 'wed': 0, 'thu': 0, 
+                    'fri': 0, 'sat': 0, 'sun': 0
+                };
+                
+                dates.forEach(date => {
+                    const day = new Date(date).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+                    dayCounts[day]++;
+                });
+                
+                result.className = 'result success';
+                result.textContent = `✅ CENA\nDate totali: ${dates.length}\nLun: ${dayCounts.mon}, Mar: ${dayCounts.tue}, Mer: ${dayCounts.wed}\nGio: ${dayCounts.thu}, Ven: ${dayCounts.fri}, Sab: ${dayCounts.sat}, Dom: ${dayCounts.sun}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ ERROR\n${error.message}`;
+            }
+        }
+
+        // Test automatico al caricamento
+        window.onload = function() {
+            setTimeout(() => {
+                testGenerateFallbackDates();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

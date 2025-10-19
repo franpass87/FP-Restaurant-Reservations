@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Set minimum date to today and load available dates
-    const dateInput = document.getElementById('reservation-date');
+    let dateInput = document.getElementById('reservation-date');
     const today = new Date().toISOString().split('T')[0];
     dateInput.min = today;
     
@@ -326,10 +326,35 @@ document.addEventListener('DOMContentLoaded', function() {
         function tryNextEndpoint() {
             if (currentEndpointIndex >= endpoints.length) {
                 // Tutti gli endpoint hanno fallito, usa fallback locale
-                console.error('Tutti gli endpoint hanno fallito, usando fallback locale');
+                console.log('Tutti gli endpoint hanno fallito, usando fallback locale');
                 availableDates = generateFallbackDates(from, toDate, meal);
                 loadingEl.style.display = 'none';
-                infoEl.style.display = 'block';
+                
+                // Show info about fallback dates
+                if (infoEl) {
+                    infoEl.style.display = 'block';
+                    infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${meal} (modalità offline)</p>`;
+                }
+                
+                // Force show step 2 if it's hidden
+                if (currentStep === 1) {
+                    currentStep = 2;
+                    showStep(currentStep);
+                }
+                
+                // Also show the date input field
+                const dateField = document.querySelector('.fp-step[data-step="2"]');
+                if (dateField) {
+                    dateField.style.display = 'block';
+                }
+                
+                // Show the date input
+                const dateInput = document.getElementById('reservation-date');
+                if (dateInput) {
+                    dateInput.style.display = 'block';
+                    dateInput.disabled = false;
+                }
+                
                 updateDateInput();
                 console.log('Usando date di fallback per', meal, ':', availableDates);
                 return;
@@ -433,17 +458,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update date input with availability info
     function updateDateInput() {
-        // Remove existing event listeners
-        const newDateInput = dateInput.cloneNode(true);
-        dateInput.parentNode.replaceChild(newDateInput, dateInput);
+        // Set available dates as data attribute for validation
+        if (availableDates.length > 0) {
+            dateInput.setAttribute('data-available-dates', availableDates.join(','));
+            dateInput.setAttribute('data-available-count', availableDates.length);
+            
+            // Show info about available dates
+            const infoEl = document.getElementById('date-info');
+            if (infoEl) {
+                infoEl.style.display = 'block';
+                infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${selectedMeal}</p>`;
+            }
+        } else {
+            // No restrictions, allow all dates
+            dateInput.removeAttribute('data-available-dates');
+            dateInput.removeAttribute('data-available-count');
+            
+            const infoEl = document.getElementById('date-info');
+            if (infoEl) {
+                infoEl.style.display = 'none';
+            }
+        }
         
-        // Add new event listener
-        newDateInput.addEventListener('change', function() {
+        // Add validation on change
+        dateInput.addEventListener('change', function() {
             const selectedDate = this.value;
-            if (selectedDate && availableDates.length > 0 && !availableDates.includes(selectedDate)) {
-                alert('Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
-                this.value = '';
-                return;
+            const availableDatesList = this.getAttribute('data-available-dates');
+            
+            if (selectedDate && availableDatesList) {
+                const availableDatesArray = availableDatesList.split(',');
+                if (!availableDatesArray.includes(selectedDate)) {
+                    alert('Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
+                    this.value = '';
+                    return;
+                }
             }
             
             // If date is valid, proceed to next step
@@ -452,9 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showStep(currentStep);
             }
         });
-        
-        // Update reference
-        dateInput = newDateInput;
     }
     
     // Load available time slots when date is selected
