@@ -187,6 +187,8 @@ final class FormContext
             $fallbackLocale
         );
 
+        // CSS dinamico RIABILITATO per permettere branding personalizzato
+        // Default: B/W (nero #000000) ma personalizzabile via admin panel
         $styleService = new Style($this->options);
         $stylePayload = $styleService->buildFrontend($config['formId']);
 

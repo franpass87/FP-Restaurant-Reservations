@@ -69,11 +69,14 @@
 
 /* ==================== OVERRIDE & FIXES ==================== */
 
-/* FIX CONTRASTI - IMPORTANTISSIMO! */
-@import './FIX-CONTRASTI-VISIBILITA.css';
+/* FIX CONTRASTI - DISABILITATO (causava override forzati) */
+/* @import './FIX-CONTRASTI-VISIBILITA.css'; */
 
-/* SPAZIATURE AUMENTATE - Box più ariosi */
-@import './SPAZIATURE-AUMENTATE.css';
+/* SPAZIATURE AUMENTATE - DISABILITATO (usiamo form-thefork-bw.css) */
+/* NOTA: Questo file NON viene più usato. Il sistema principale usa form-thefork-bw.css
+   che ha spacing corretti con variabili CSS. SPAZIATURE-AUMENTATE.css causava
+   override con !important e spacing troppo stretti su mobile (8px). */
+/* @import './SPAZIATURE-AUMENTATE.css'; */
 
 /* Force visibility del widget */
 .fp-resv-widget,

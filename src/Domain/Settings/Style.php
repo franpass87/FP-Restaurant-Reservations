@@ -37,10 +37,10 @@ final class Style
     public function getDefaults(): array
     {
         return [
-            'style_palette'          => 'brand',
-            'style_primary_color'    => '#bb2649',
-            'style_button_bg'        => '#000000',
-            'style_button_text'      => '#ffffff',
+            'style_palette'          => 'neutral', // B/W palette di default
+            'style_primary_color'    => '#000000', // Nero di default
+            'style_button_bg'        => '#000000', // Bottoni neri
+            'style_button_text'      => '#ffffff', // Testo bianco
             'style_font_family'      => '"Inter", sans-serif',
             'style_font_size'        => '16',
             'style_heading_weight'   => '600',
@@ -81,12 +81,12 @@ final class Style
                 'surface'         => '#ffffff',
                 'text'            => '#202225',
                 'muted'           => '#5f6368',
-                'accent'          => '#2563eb',
+                'accent'          => '#000000', // B/W: nero invece di blu
                 'dark_background' => '#0f172a',
                 'dark_surface'    => '#1e293b',
                 'dark_text'       => '#e2e8f0',
                 'dark_muted'      => '#94a3b8',
-                'dark_accent'     => '#3b82f6',
+                'dark_accent'     => '#ffffff', // B/W: bianco invece di blu
             ],
             'dark' => [
                 'background'      => '#10131a',
