@@ -37,9 +37,10 @@ final class Style
     public function getDefaults(): array
     {
         return [
-            'style_palette'          => 'neutral', // B/W palette di default
-            'style_primary_color'    => '#000000', // Nero di default
-            'style_button_bg'        => '#000000', // Bottoni neri
+            // Default estetica TheFork: verde premium
+            'style_palette'          => 'brand',
+            'style_primary_color'    => '#2db77e', // Verde TheFork
+            'style_button_bg'        => '#2db77e', // Bottoni verdi
             'style_button_text'      => '#ffffff', // Testo bianco
             'style_font_family'      => '"Inter", sans-serif',
             'style_font_size'        => '16',

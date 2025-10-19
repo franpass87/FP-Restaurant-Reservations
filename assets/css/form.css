@@ -15,8 +15,8 @@
 /* Importa il bridge per compatibilità tra sistemi di variabili */
 @import './form/_variables-bridge.css';
 
-/* Importa il sistema completo The Fork Style */
-@import './form-thefork-bw.css';
+/* Importa il sistema completo The Fork Style (palette verde TheFork) */
+@import './form-thefork.css';
 
 /* ==================== NOTE IMPORTANTI ==================== */
 
