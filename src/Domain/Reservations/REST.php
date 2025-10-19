@@ -513,12 +513,12 @@ final class REST
             $to = $request->get_param('to');
             $meal = $request->get_param('meal');
             
-            // Debug logging
-            Logging::log('availability', 'handleAvailableDays chiamato', [
-                'from' => $from,
-                'to' => $to,
-                'meal' => $meal,
-            ]);
+            // Debug logging - temporaneamente disabilitato
+            // Logging::log('availability', 'handleAvailableDays chiamato', [
+            //     'from' => $from,
+            //     'to' => $to,
+            //     'meal' => $meal,
+            // ]);
 
             if (!is_string($from) || !is_string($to)) {
                 return new WP_Error(
@@ -565,9 +565,9 @@ final class REST
                 '2025-10-21' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
             ];
             
-            Logging::log('availability', 'Usando dati mock per test', [
-                'result_count' => count($availableDays),
-            ]);
+            // Logging::log('availability', 'Usando dati mock per test', [
+            //     'result_count' => count($availableDays),
+            // ]);
 
             // Se è specificato un meal, filtra solo per quel meal
             if (is_string($meal) && $meal !== '') {
@@ -596,10 +596,10 @@ final class REST
 
             return $response;
         } catch (\Exception $e) {
-            Logging::log('availability', 'Errore in handleAvailableDays', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            // Logging::log('availability', 'Errore in handleAvailableDays', [
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString(),
+            // ]);
 
             return new WP_Error(
                 'fp_resv_availability_days_error',

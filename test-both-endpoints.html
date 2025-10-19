@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Entrambi Endpoint</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .test { border: 1px solid #ddd; margin: 20px 0; padding: 20px; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { background-color: #007cba; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .comparison { display: flex; gap: 20px; }
+        .comparison > div { flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>Test Entrambi Endpoint</h1>
+    
+    <div class="test info">
+        <h3>🔍 Test 1: Endpoint WordPress (con errore 500)</h3>
+        <button onclick="testWordPressEndpoint()">Testa WordPress</button>
+        <div id="wp-result"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🔍 Test 2: Endpoint PHP Semplice (funzionante)</h3>
+        <button onclick="testSimpleEndpoint()">Testa PHP Semplice</button>
+        <div id="simple-result"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🔍 Test 3: Confronto Risultati</h3>
+        <button onclick="compareEndpoints()">Confronta Entrambi</button>
+        <div id="comparison-result"></div>
+    </div>
+
+    <script>
+        async function testWordPressEndpoint() {
+            const resultDiv = document.getElementById('wp-result');
+            resultDiv.innerHTML = '<p>⏳ Testando endpoint WordPress...</p>';
+            
+            try {
+                const url = '/wp-json/fp-resv/v1/available-days?from=2025-10-19&to=2026-01-19&meal=pranzo';
+                console.log('URL WordPress:', url);
+                
+                const response = await fetch(url);
+                console.log('Risposta WordPress:', response);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Errore WordPress</h4>
+                            <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                            <p><strong>URL:</strong> ${url}</p>
+                            <p><strong>Risposta:</strong></p>
+                            <pre>${text.substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Dati WordPress:', data);
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ WordPress funzionante!</h4>
+                        <p><strong>Giorni:</strong> ${Object.keys(data.days || {}).length}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Errore WordPress:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore WordPress</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testSimpleEndpoint() {
+            const resultDiv = document.getElementById('simple-result');
+            resultDiv.innerHTML = '<p>⏳ Testando endpoint semplice...</p>';
+            
+            try {
+                const url = 'test-endpoint-simple-fixed.php?from=2025-10-19&to=2026-01-19&meal=pranzo';
+                console.log('URL Semplice:', url);
+                
+                const response = await fetch(url);
+                console.log('Risposta Semplice:', response);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Errore Semplice</h4>
+                            <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                            <p><strong>Risposta:</strong></p>
+                            <pre>${text.substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Dati Semplice:', data);
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Semplice funzionante!</h4>
+                        <p><strong>Success:</strong> ${data.success}</p>
+                        <p><strong>Giorni:</strong> ${Object.keys(data.days || {}).length}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Errore Semplice:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore Semplice</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function compareEndpoints() {
+            const resultDiv = document.getElementById('comparison-result');
+            resultDiv.innerHTML = '<p>⏳ Confrontando entrambi gli endpoint...</p>';
+            
+            try {
+                const [wpResponse, simpleResponse] = await Promise.allSettled([
+                    fetch('/wp-json/fp-resv/v1/available-days?from=2025-10-19&to=2026-01-19&meal=pranzo'),
+                    fetch('test-endpoint-simple-fixed.php?from=2025-10-19&to=2026-01-19&meal=pranzo')
+                ]);
+                
+                let wpData = null;
+                let simpleData = null;
+                let wpError = null;
+                let simpleError = null;
+                
+                if (wpResponse.status === 'fulfilled' && wpResponse.value.ok) {
+                    wpData = await wpResponse.value.json();
+                } else {
+                    wpError = wpResponse.status === 'rejected' ? wpResponse.reason : `HTTP ${wpResponse.value.status}`;
+                }
+                
+                if (simpleResponse.status === 'fulfilled' && simpleResponse.value.ok) {
+                    simpleData = await simpleResponse.value.json();
+                } else {
+                    simpleError = simpleResponse.status === 'rejected' ? simpleResponse.reason : `HTTP ${simpleResponse.value.status}`;
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="comparison">
+                        <div>
+                            <h4>WordPress Endpoint</h4>
+                            ${wpData ? `
+                                <div class="success">
+                                    <p><strong>Status:</strong> ✅ Funzionante</p>
+                                    <p><strong>Giorni:</strong> ${Object.keys(wpData.days || {}).length}</p>
+                                </div>
+                            ` : `
+                                <div class="error">
+                                    <p><strong>Status:</strong> ❌ Errore</p>
+                                    <p><strong>Errore:</strong> ${wpError}</p>
+                                </div>
+                            `}
+                        </div>
+                        <div>
+                            <h4>PHP Semplice</h4>
+                            ${simpleData ? `
+                                <div class="success">
+                                    <p><strong>Status:</strong> ✅ Funzionante</p>
+                                    <p><strong>Giorni:</strong> ${Object.keys(simpleData.days || {}).length}</p>
+                                </div>
+                            ` : `
+                                <div class="error">
+                                    <p><strong>Status:</strong> ❌ Errore</p>
+                                    <p><strong>Errore:</strong> ${simpleError}</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <h4>Raccomandazione:</h4>
+                        <p>${simpleData && !wpData ? 
+                            '✅ Usa l\'endpoint PHP semplice per ora' : 
+                            wpData && !simpleData ? 
+                            '✅ Usa l\'endpoint WordPress' : 
+                            wpData && simpleData ? 
+                            '✅ Entrambi funzionano, usa WordPress' : 
+                            '❌ Nessuno dei due funziona, controlla il server'
+                        }</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore confronto</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
