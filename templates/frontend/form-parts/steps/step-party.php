@@ -13,13 +13,14 @@ $defaultPartySize = isset($config['defaults']['partySize']) ? (int) $config['def
 
 <div class="fp-resv-field fp-field">
     <label>
-        <span><?php echo esc_html($strings['fields']['party'] ?? ''); ?></span>
+        <span><?php echo esc_html($strings['fields']['party'] ?? 'Numero di Persone'); ?></span>
         <div class="fp-resv-party-input-wrapper">
             <button 
                 type="button" 
                 class="fp-resv-party-btn fp-resv-party-btn--decrement" 
                 data-fp-resv-party-decrement
                 aria-label="<?php echo esc_attr__('Riduci numero persone', 'fp-restaurant-reservations'); ?>"
+                title="<?php echo esc_attr__('Riduci', 'fp-restaurant-reservations'); ?>"
             >
                 <span aria-hidden="true">−</span>
             </button>
@@ -32,12 +33,14 @@ $defaultPartySize = isset($config['defaults']['partySize']) ? (int) $config['def
                 data-fp-resv-field="party"
                 value="<?php echo esc_attr((string) $defaultPartySize); ?>"
                 required
+                aria-label="<?php echo esc_attr__('Numero di persone', 'fp-restaurant-reservations'); ?>"
             >
             <button 
                 type="button" 
                 class="fp-resv-party-btn fp-resv-party-btn--increment" 
                 data-fp-resv-party-increment
                 aria-label="<?php echo esc_attr__('Aumenta numero persone', 'fp-restaurant-reservations'); ?>"
+                title="<?php echo esc_attr__('Aumenta', 'fp-restaurant-reservations'); ?>"
             >
                 <span aria-hidden="true">+</span>
             </button>

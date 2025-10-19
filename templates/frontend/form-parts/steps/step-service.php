@@ -18,10 +18,10 @@ if (!isset($meals) || !is_array($meals) || $meals === []) {
 <section class="fp-meals" data-fp-resv-meals>
     <header class="fp-meals__header">
         <h3 class="fp-meals__title">
-            <?php echo esc_html($strings['meals']['title'] ?? ($strings['steps']['service'] ?? '')); ?>
+            <?php echo esc_html($strings['meals']['title'] ?? ($strings['steps']['service'] ?? 'Seleziona il Servizio')); ?>
         </h3>
         <?php if (!empty($strings['meals']['subtitle'] ?? '')) : ?>
-            <p class="fp-meals__subtitle fp-hint">
+            <p class="fp-meals__subtitle">
                 <?php echo esc_html($strings['meals']['subtitle']); ?>
             </p>
         <?php endif; ?>
