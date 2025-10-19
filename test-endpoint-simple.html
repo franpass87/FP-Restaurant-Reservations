@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Endpoint Available Days</title>
+</head>
+<body>
+    <h1>Test Endpoint Available Days</h1>
+    <button onclick="testEndpoint()">Test Endpoint</button>
+    <div id="result"></div>
+
+    <script>
+    function testEndpoint() {
+        const url = '/wp-json/fp-resv/v1/available-days?from=2025-10-19&to=2026-01-19&meal=pranzo';
+        console.log('Testing URL:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.text();
+            })
+            .then(text => {
+                console.log('Response text:', text);
+                document.getElementById('result').innerHTML = '<pre>' + text + '</pre>';
+                
+                // Prova a parsare come JSON
+                try {
+                    const json = JSON.parse(text);
+                    console.log('JSON parsed:', json);
+                } catch (e) {
+                    console.log('JSON parse error:', e);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                document.getElementById('result').innerHTML = '<pre>Error: ' + error.message + '</pre>';
+            });
+    }
+    </script>
+</body>
+</html>

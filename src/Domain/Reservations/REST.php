@@ -489,6 +489,13 @@ final class REST
             $from = $request->get_param('from');
             $to = $request->get_param('to');
             $meal = $request->get_param('meal');
+            
+            // Debug logging
+            Logging::log('availability', 'handleAvailableDays chiamato', [
+                'from' => $from,
+                'to' => $to,
+                'meal' => $meal,
+            ]);
 
             if (!is_string($from) || !is_string($to)) {
                 return new WP_Error(
@@ -528,8 +535,16 @@ final class REST
                 );
             }
 
-            // Passa le stringhe - findAvailableDaysForAllMeals gestirà il timezone corretto
-            $availableDays = $this->availability->findAvailableDaysForAllMeals($from, $to);
+            // TEMPORANEO: Ritorna dati mock per test
+            $availableDays = [
+                '2025-10-19' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                '2025-10-20' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                '2025-10-21' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+            ];
+            
+            Logging::log('availability', 'Usando dati mock per test', [
+                'result_count' => count($availableDays),
+            ]);
 
             // Se è specificato un meal, filtra solo per quel meal
             if (is_string($meal) && $meal !== '') {
