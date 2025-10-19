@@ -49,7 +49,7 @@
             to.setMonth(to.getMonth() + 3);
             const toDate = to.toISOString().split('T')[0];
             
-            const url = `./test-endpoint-simple.php?from=${today}&to=${toDate}&meal=${meal}`;
+            const url = `/wp-json/fp-resv/v1/available-days?from=${today}&to=${toDate}&meal=${meal}`;
             console.log('URL richiesta:', url);
             
             return fetch(url)
@@ -90,7 +90,7 @@
             resultDiv.innerHTML = '<p>⏳ Testando endpoint diretto...</p>';
             
             try {
-                const response = await fetch('./test-endpoint-simple.php?from=2025-10-19&to=2026-01-19&meal=pranzo');
+                const response = await fetch('/wp-json/fp-resv/v1/available-days?from=2025-10-19&to=2026-01-19&meal=pranzo');
                 
                 if (!response.ok) {
                     const text = await response.text();

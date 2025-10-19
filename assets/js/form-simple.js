@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         to.setMonth(to.getMonth() + 3); // 3 months ahead
         const toDate = to.toISOString().split('T')[0];
         
-        fetch(`../test-endpoint-simple.php?from=${from}&to=${toDate}&meal=${meal}`)
+        fetch(`/wp-json/fp-resv/v1/available-days?from=${from}&to=${toDate}&meal=${meal}`)
             .then(response => response.json())
             .then(data => {
                 // Hide loading indicator
