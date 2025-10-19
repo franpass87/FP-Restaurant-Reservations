@@ -349,7 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Show the date input
-                const dateInput = document.getElementById('reservation-date');
                 if (dateInput) {
                     dateInput.style.display = 'block';
                     dateInput.disabled = false;
@@ -408,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateFallbackDates(from, to, meal) {
         const startDate = new Date(from);
         const endDate = new Date(to);
-        const availableDates = [];
+        const fallbackDates = [];
         
         // Schedule di default
         const defaultSchedule = {
@@ -440,20 +439,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (meal && defaultSchedule[meal]) {
                 const isAvailable = defaultSchedule[meal][dayKey] || false;
                 if (isAvailable) {
-                    availableDates.push(dateKey);
+                    fallbackDates.push(dateKey);
                 }
             } else {
                 // Controlla tutti i pasti
                 const hasAnyAvailability = Object.values(defaultSchedule).some(schedule => schedule[dayKey]);
                 if (hasAnyAvailability) {
-                    availableDates.push(dateKey);
+                    fallbackDates.push(dateKey);
                 }
             }
             
             current.setDate(current.getDate() + 1);
         }
         
-        return availableDates;
+        return fallbackDates;
     }
     
     // Update date input with availability info
