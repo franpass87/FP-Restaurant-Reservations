@@ -23,11 +23,11 @@ function closestWithAttribute(element, attribute) {
     return null;
 }
 
-function closestSection(element) {
+function _closestSection(element) {
     return closestWithAttribute(element, 'data-fp-resv-section');
 }
 
-function parseJsonAttribute(element, attribute) {
+function _parseJsonAttribute(element, attribute) {
     if (!element || !element.hasAttribute(attribute)) {
         return null;
     }
@@ -59,7 +59,7 @@ function setAriaDisabled(element, disabled) {
     }
 }
 
-function firstFocusable(section) {
+function _firstFocusable(section) {
     if (!section) {
         return null;
     }
@@ -68,7 +68,7 @@ function firstFocusable(section) {
     return section.querySelector(selector);
 }
 
-function scrollIntoView(element) {
+function _scrollIntoView(element) {
     if (!element || typeof element.scrollIntoView !== 'function') {
         return;
     }
@@ -77,7 +77,7 @@ function scrollIntoView(element) {
 }
 
 // Funzioni di utilità
-function toNumber(value) {
+function _toNumber(value) {
     if (typeof value === 'number') {
         return value;
     }
@@ -88,7 +88,7 @@ function toNumber(value) {
     return 0;
 }
 
-function safeJson(response) {
+function _safeJson(response) {
     if (!response || typeof response.json !== 'function') {
         return Promise.resolve(null);
     }
@@ -96,7 +96,7 @@ function safeJson(response) {
     return response.json().catch(() => null);
 }
 
-function resolveEndpoint(endpoint, fallback) {
+function _resolveEndpoint(endpoint, fallback) {
     if (!endpoint || endpoint === '') {
         return fallback || '';
     }
@@ -558,7 +558,7 @@ function isWidgetInitialized(widget) {
 }
 
 function initializeFPResv() {
-    console.log('[FP-RESV] Plugin v0.1.5 loaded - Fallback form functionality active');
+    console.log('[FP-RESV] Plugin v0.1.11 loaded - Fallback form functionality active');
     console.log('[FP-RESV] Current readyState:', document.readyState);
     console.log('[FP-RESV] Body innerHTML length:', document.body ? document.body.innerHTML.length : 0);
     
@@ -734,6 +734,43 @@ if (document.readyState === 'loading') {
     setupWidgetObserver();
     // Retry in case widgets load late
     retryInitialization();
+}
+
+// WPBakery Page Builder compatibility
+// WPBakery loads content asynchronously, so we need to re-check after it's done
+if (typeof window.vc_js !== 'undefined' || document.querySelector('[data-vc-full-width]') || document.querySelector('.vc_row')) {
+    console.log('[FP-RESV] WPBakery detected - adding compatibility listeners');
+    
+    // Listen for WPBakery-specific events
+    document.addEventListener('vc-full-content-loaded', function() {
+        console.log('[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing...');
+        setTimeout(initializeFPResv, 100);
+    });
+    
+    // Additional check after window load (WPBakery often loads late)
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            var currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+            if (currentWidgets.length > initializedWidgets.length) {
+                console.log('[FP-RESV] WPBakery late load - found new widgets, initializing...');
+                initializeFPResv();
+            }
+        }, 1000);
+    });
+    
+    // Extended retry for WPBakery (up to 10 seconds)
+    var wpbDelays = [1500, 3000, 5000, 10000];
+    for (var i = 0; i < wpbDelays.length; i++) {
+        (function(delay) {
+            setTimeout(function() {
+                var currentWidgets = document.querySelectorAll('[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]');
+                if (currentWidgets.length > initializedWidgets.length) {
+                    console.log('[FP-RESV] WPBakery extended retry (' + delay + 'ms) - initializing...');
+                    initializeFPResv();
+                }
+            }, delay);
+        })(wpbDelays[i]);
+    }
 }
 
 // Event listener per tracking
