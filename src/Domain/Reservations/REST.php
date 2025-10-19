@@ -61,11 +61,15 @@ final class REST
 
     public function register(): void
     {
+        error_log('[FP Resv REST] ✅ register() chiamato - Aggiunta action rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
+        error_log('[FP Resv REST] ✅ Action rest_api_init aggiunta con successo');
     }
 
     public function registerRoutes(): void
     {
+        error_log('[FP Resv REST] 🚀 registerRoutes() chiamato - Registrazione endpoint REST...');
+        
         register_rest_route(
             'fp-resv/v1',
             '/availability',
@@ -115,6 +119,7 @@ final class REST
                     'permission_callback' => '__return_true',
                 ]
             );
+        error_log('[FP Resv REST] ✅ Endpoint /available-days registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -125,6 +130,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /meal-config registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -155,6 +161,7 @@ final class REST
                 ],
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /available-slots registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -165,6 +172,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /reservations registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -175,6 +183,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /nonce registrato');
         
         // DEBUG ENDPOINTS - Solo in modalità debug per sviluppo
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -253,7 +262,10 @@ final class REST
                     'permission_callback' => '__return_true',
                 ]
             );
+            error_log('[FP Resv REST] ✅ Debug endpoints registrati');
         }
+        
+        error_log('[FP Resv REST] 🎉 Tutti gli endpoint REST registrati con successo');
     }
 
     public function handleAvailableSlots(WP_REST_Request $request): WP_REST_Response|WP_Error
