@@ -432,7 +432,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         /* Phone prefix styling - ALTA SPECIFICITÀ per sovrascrivere tema */
         .fp-resv-simple .fp-field div[style*="display: flex"] {
-            align-items: center !important;
+            align-items: flex-start !important;
         }
         
         .fp-resv-simple .fp-field div[style*="display: flex"] select {
