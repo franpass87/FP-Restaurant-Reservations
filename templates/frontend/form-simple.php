@@ -434,6 +434,22 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             min-width: 140px !important;
         }
         
+        /* Override ancora più specifico per il tema Salient */
+        html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
+        }
+        
+        /* Override con ID per massima specificità */
+        #fp-resv-default .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
+        }
+        
         /* Time slots styling */
         .fp-time-slots {
             display: grid;
@@ -835,7 +851,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-field">
             <label for="customer-phone">Telefono *</label>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <select name="fp_resv_phone_prefix" style="width: 140px; padding: 12px 8px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 13px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit; flex-shrink: 0;">
+                <select name="fp_resv_phone_prefix" style="width: 140px !important; padding: 12px 8px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 13px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit; flex-shrink: 0 !important; max-width: 140px !important; min-width: 140px !important;">
                     <?php 
                     $phonePrefixes = $config['phone_prefixes'] ?? [];
                     $defaultPhoneCode = $config['defaults']['phone_country_code'] ?? '39';
@@ -869,7 +885,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                         <option value="1">🇺🇸 +1 · Stati Uniti</option>
                     <?php endif; ?>
                 </select>
-                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1; min-width: 0; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
+                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1 !important; min-width: 0 !important; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
             </div>
         </div>
         <div class="fp-field">

@@ -91,30 +91,49 @@ final class WidgetController
         
         echo '<style id="fp-resv-override-css" type="text/css">
         /* Override tema Salient - SPECIFICITÀ MASSIMA */
-        body .fp-resv-simple select[name="fp_resv_phone_prefix"] {
+        html body .fp-resv-simple select[name="fp_resv_phone_prefix"] {
             width: 140px !important;
             flex-shrink: 0 !important;
             max-width: 140px !important;
             min-width: 140px !important;
         }
         
-        body .fp-resv-simple .fp-field div[style*="display: flex"] select {
+        html body .fp-resv-simple .fp-field div[style*="display: flex"] select {
             width: 140px !important;
             flex-shrink: 0 !important;
             max-width: 140px !important;
         }
         
-        body .fp-resv-simple .fp-field div[style*="display: flex"] input {
+        html body .fp-resv-simple .fp-field div[style*="display: flex"] input {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        
+        /* Override con ID per massima specificità */
+        #fp-resv-default select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
+        }
+        
+        #fp-resv-default .fp-field div[style*="display: flex"] select {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+        }
+        
+        #fp-resv-default .fp-field div[style*="display: flex"] input {
             flex: 1 !important;
             min-width: 0 !important;
         }
         
         /* Allineamento checkbox */
-        body .fp-resv-simple .fp-field label {
+        html body .fp-resv-simple .fp-field label {
             align-items: flex-start !important;
         }
         
-        body .fp-resv-simple .fp-field input[type="checkbox"] {
+        html body .fp-resv-simple .fp-field input[type="checkbox"] {
             margin-top: 2px !important;
             align-self: flex-start !important;
         }
