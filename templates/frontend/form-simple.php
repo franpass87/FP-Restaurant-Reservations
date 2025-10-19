@@ -22,13 +22,14 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-resv-simple {
             max-width: 480px;
             margin: 0 auto;
-            padding: 16px 20px;
+            padding: 20px 24px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #f0f0f0;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid rgba(209, 213, 219, 0.2);
             position: relative;
+            overflow: hidden;
         }
         
         .fp-resv-simple::before {
@@ -37,24 +38,38 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #000000 0%, #333333 50%, #000000 100%);
-            border-radius: 12px 12px 0 0;
+            height: 4px;
+            background: linear-gradient(90deg, #374151 0%, #6b7280 25%, #9ca3af 50%, #6b7280 75%, #374151 100%);
+            border-radius: 20px 20px 0 0;
         }
         
         .fp-resv-simple h2 {
-            color: #000000;
-            margin-bottom: 12px;
+            color: #111827;
+            margin-bottom: 20px;
             text-align: center;
-            font-size: 22px;
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
             letter-spacing: -0.3px;
             line-height: 1.2;
+            position: relative;
+            padding-bottom: 12px;
+        }
+        
+        .fp-resv-simple h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #374151 0%, #6b7280 100%);
+            border-radius: 2px;
         }
         
         .fp-step {
             display: none;
-            padding: 8px 0;
+            padding: 24px;
             opacity: 0;
             transform: translateX(20px);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -63,6 +78,22 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             left: 0;
             right: 0;
             visibility: hidden;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .fp-step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #374151 0%, #6b7280 50%, #374151 100%);
+            border-radius: 16px 16px 0 0;
         }
         
         .fp-step.active {
@@ -81,16 +112,20 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-steps-container {
             position: relative;
             min-height: 200px;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
         }
         
         .fp-step h3 {
-            color: #000000;
-            margin-bottom: 16px;
-            font-size: 16px;
-            font-weight: 500;
+            color: #111827;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
             letter-spacing: -0.2px;
             position: relative;
-            padding-bottom: 8px;
+            padding-bottom: 12px;
         }
         
         .fp-step h3::after {
@@ -98,23 +133,54 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 30px;
-            height: 2px;
-            background: #000000;
-            border-radius: 1px;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #374151 0%, #6b7280 100%);
+            border-radius: 2px;
         }
         
         .fp-field {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(209, 213, 219, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .fp-field:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(209, 213, 219, 0.4);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
         .fp-field label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #2c2c2c;
-            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
             letter-spacing: 0.2px;
+        }
+        
+        /* Separatori tra sezioni */
+        .fp-section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #d1d5db 50%, transparent 100%);
+            margin: 24px 0;
+            position: relative;
+        }
+        
+        .fp-section-divider::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 5px;
+            background: #6b7280;
+            border-radius: 2px;
         }
         
         .fp-field input,
@@ -202,11 +268,14 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-buttons {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #f0f0f0;
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
         .fp-btn {
@@ -823,6 +892,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
     <!-- Step 2: Data, Persone e Orario -->
     <div class="fp-step" data-step="2">
         <h3>2. Scegli Data, Persone e Orario</h3>
+        <div class="fp-section-divider"></div>
         
         <!-- Data -->
         <div class="fp-field">
@@ -868,6 +938,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
     <!-- Step 3: Dettagli -->
     <div class="fp-step" data-step="3">
         <h3>3. I Tuoi Dettagli</h3>
+        <div class="fp-section-divider"></div>
         <div class="fp-field">
             <label for="customer-first-name">Nome *</label>
             <input type="text" id="customer-first-name" name="fp_resv_first_name" required autocomplete="given-name">
@@ -979,6 +1050,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
     <!-- Step 4: Riepilogo -->
     <div class="fp-step" data-step="4">
         <h3>4. Riepilogo Prenotazione</h3>
+        <div class="fp-section-divider"></div>
         <div class="fp-summary">
             <div class="fp-summary-section">
                 <h4>📅 Dettagli Prenotazione</h4>
