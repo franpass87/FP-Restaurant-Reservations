@@ -61,11 +61,15 @@ final class REST
 
     public function register(): void
     {
+        error_log('[FP Resv REST] ✅ register() chiamato - Aggiunta action rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
+        error_log('[FP Resv REST] ✅ Action rest_api_init aggiunta con successo');
     }
 
     public function registerRoutes(): void
     {
+        error_log('[FP Resv REST] 🚀 registerRoutes() chiamato - Registrazione endpoint REST...');
+        
         register_rest_route(
             'fp-resv/v1',
             '/availability',
@@ -111,64 +115,11 @@ final class REST
                 '/available-days',
                 [
                     'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => function() {
-                        try {
-                            // Endpoint ultra-semplificato con debug
-                            $data = [
-                                'days' => [
-                                    '2025-10-25' => ['available' => true, 'meals' => ['pranzo' => false, 'cena' => true]],
-                                    '2025-10-26' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                    '2025-10-27' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                    '2025-10-28' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                    '2025-10-29' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                    '2025-10-30' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                    '2025-10-31' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-                                ],
-                                'from' => '2025-10-25',
-                                'to' => '2025-11-25',
-                                'meal' => 'cena',
-                                'debug' => [
-                                    'php_version' => PHP_VERSION,
-                                    'wordpress_version' => get_bloginfo('version'),
-                                    'plugin_version' => '1.0.0',
-                                    'timestamp' => date('Y-m-d H:i:s'),
-                                    'memory_usage' => memory_get_usage(true),
-                                ]
-                            ];
-                            
-                            return new WP_REST_Response($data, 200);
-                        } catch (Throwable $e) {
-                            return new WP_REST_Response([
-                                'error' => true,
-                                'message' => $e->getMessage(),
-                                'file' => $e->getFile(),
-                                'line' => $e->getLine(),
-                                'trace' => $e->getTraceAsString()
-                            ], 500);
-                        }
-                    },
+                    'callback'            => [$this, 'handleAvailableDays'],
                     'permission_callback' => '__return_true',
                 ]
             );
-
-        // Endpoint di test per debug
-        register_rest_route(
-            'fp-resv/v1',
-            '/test',
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => function() {
-                    return new WP_REST_Response([
-                        'status' => 'ok',
-                        'message' => 'Test endpoint funziona',
-                        'timestamp' => date('Y-m-d H:i:s'),
-                        'php_version' => PHP_VERSION,
-                        'wordpress_version' => get_bloginfo('version'),
-                    ], 200);
-                },
-                'permission_callback' => '__return_true',
-            ]
-        );
+        error_log('[FP Resv REST] ✅ Endpoint /available-days registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -179,6 +130,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /meal-config registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -209,6 +161,7 @@ final class REST
                 ],
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /available-slots registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -219,6 +172,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /reservations registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -229,6 +183,7 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
+        error_log('[FP Resv REST] ✅ Endpoint /nonce registrato');
         
         // DEBUG ENDPOINTS - Solo in modalità debug per sviluppo
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -307,7 +262,10 @@ final class REST
                     'permission_callback' => '__return_true',
                 ]
             );
+            error_log('[FP Resv REST] ✅ Debug endpoints registrati');
         }
+        
+        error_log('[FP Resv REST] 🎉 Tutti gli endpoint REST registrati con successo');
     }
 
     public function handleAvailableSlots(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -419,7 +377,12 @@ final class REST
     {
         try {
             // Recupera la configurazione dei meal dal backend
-            $frontendMeals = get_option('fp_resv_general')['frontend_meals'] ?? '';
+            $options = get_option('fp_resv_general');
+            $frontendMeals = '';
+            
+            if (is_array($options) && isset($options['frontend_meals'])) {
+                $frontendMeals = $options['frontend_meals'];
+            }
             
             if (empty($frontendMeals)) {
                 // Se non ci sono meal configurati, restituisci configurazione di default
