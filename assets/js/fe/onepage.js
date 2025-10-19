@@ -12,18 +12,33 @@ function closestSection(element) {
 }
 
 /**
- * Converte una data dal formato di visualizzazione (d-m-Y) al formato ISO (YYYY-MM-DD)
- * @param {string} dateStr - Data nel formato d-m-Y (es. "31-12-2024")
+ * Converte una data dal formato di visualizzazione al formato ISO (YYYY-MM-DD)
+ * Gestisce formati: d-m-Y, d/m/Y, e Y-m-d (già ISO)
+ * @param {string} dateStr - Data nel formato d-m-Y, d/m/Y o Y-m-d
  * @returns {string} Data nel formato YYYY-MM-DD (es. "2024-12-31")
  */
 function convertDateToISO(dateStr) {
-    if (!dateStr || !dateStr.includes('-')) {
+    if (!dateStr || typeof dateStr !== 'string') {
         return dateStr;
     }
     
-    const parts = dateStr.split('-');
+    // Verifica se è già in formato ISO (Y-m-d)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    
+    // Gestisce formati con separatori - o /
+    let parts;
+    if (dateStr.includes('/')) {
+        parts = dateStr.split('/');
+    } else if (dateStr.includes('-')) {
+        parts = dateStr.split('-');
+    } else {
+        return dateStr;
+    }
+    
     if (parts.length === 3 && parts[0].length <= 2) {
-        // Formato d-m-Y -> YYYY-MM-DD
+        // Formato d-m-Y o d/m/Y -> YYYY-MM-DD
         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
     }
     
@@ -312,7 +327,9 @@ class FormApp {
         // Inizializza Flatpickr
         this.flatpickrInstance = window.flatpickr(this.dateField, {
             minDate: 'today',
-            dateFormat: 'd-m-Y',
+            dateFormat: 'Y-m-d', // Formato ISO per il backend (nel campo hidden)
+            altInput: true, // Mostra un input alternativo all'utente
+            altFormat: 'd/m/Y', // Formato italiano mostrato all'utente
             locale: window.flatpickr.l10ns.it || 'it',
             enable: [], // Inizialmente nessun giorno abilitato, lo aggiorneremo dopo il caricamento
             allowInput: false,
@@ -976,7 +993,7 @@ class FormApp {
 
         // Valida la data attualmente selezionata (se presente)
         const currentDate = this.dateField.value;
-        // Converti il formato visualizzato (d-m-Y) in formato ISO (YYYY-MM-DD) per la ricerca nella cache
+        // Assicura che la data sia in formato ISO (YYYY-MM-DD) per la ricerca nella cache
         const currentDateISO = convertDateToISO(currentDate);
         if (currentDateISO && this.availableDaysCache[currentDateISO] !== undefined) {
             const dayInfo = this.availableDaysCache[currentDateISO];
@@ -2022,7 +2039,7 @@ class FormApp {
             }
         });
         
-        // Converti la data dal formato visualizzato (d-m-Y) al formato ISO (YYYY-MM-DD) per il backend
+        // Assicura che la data sia in formato ISO (YYYY-MM-DD) per il backend
         if (payload.fp_resv_date) {
             payload.fp_resv_date = convertDateToISO(payload.fp_resv_date);
         }
@@ -2218,7 +2235,7 @@ class FormApp {
         const meal = this.hiddenMeal ? this.hiddenMeal.value : '';
         const dateValue = this.dateField && this.dateField.value ? this.dateField.value : '';
         
-        // Converti il formato visualizzato (d-m-Y) in formato ISO (YYYY-MM-DD) per il backend
+        // Assicura che la data sia in formato ISO (YYYY-MM-DD) per il backend
         const dateISO = convertDateToISO(dateValue);
         
         const partyValue = this.partyField && this.partyField.value ? this.partyField.value : '';

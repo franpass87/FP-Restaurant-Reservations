@@ -62,6 +62,39 @@
     display: none;
 }
 
+/* Stili per l'input alternativo di Flatpickr */
+.fp-resv-widget .flatpickr-input {
+    width: 100%;
+    height: var(--fp-input-height, 56px);
+    padding: var(--fp-space-md);
+    font-size: var(--fp-text-base);
+    font-family: var(--fp-font-sans);
+    color: var(--fp-color-text);
+    background: white;
+    border: 2px solid var(--fp-color-border);
+    border-radius: var(--fp-radius-lg);
+    transition: all var(--fp-transition-base);
+    cursor: pointer;
+}
+
+.fp-resv-widget .flatpickr-input:hover {
+    border-color: var(--fp-color-border-hover);
+}
+
+.fp-resv-widget .flatpickr-input:focus {
+    outline: none;
+    border-color: var(--fp-color-primary);
+    box-shadow: var(--fp-shadow-focus);
+}
+
+.fp-resv-widget .flatpickr-input[aria-invalid="true"] {
+    border-color: var(--fp-color-error);
+}
+
+.fp-resv-widget .flatpickr-input[aria-invalid="true"]:focus {
+    box-shadow: var(--fp-shadow-focus-error);
+}
+
 /* Esempio - Cambia il colore primario:
 :root {
   --fp-color-primary: #ff6b6b;
