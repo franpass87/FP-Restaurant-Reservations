@@ -172,6 +172,16 @@ final class REST
 
         register_rest_route(
             'fp-resv/v1',
+            '/meal-config',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleMealConfig'],
+                'permission_callback' => '__return_true',
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
             '/available-slots',
             [
                 'methods'             => WP_REST_Server::READABLE,
@@ -399,10 +409,121 @@ final class REST
     public function handleGetNonce(WP_REST_Request $request): WP_REST_Response
     {
         $nonce = wp_create_nonce('fp_resv_submit');
-        
+
         return new WP_REST_Response([
             'nonce' => $nonce,
         ], 200);
+    }
+
+    public function handleMealConfig(WP_REST_Request $request): WP_REST_Response
+    {
+        try {
+            // Recupera la configurazione dei meal dal backend
+            $frontendMeals = get_option('fp_resv_general')['frontend_meals'] ?? '';
+            
+            if (empty($frontendMeals)) {
+                // Se non ci sono meal configurati, restituisci configurazione di default
+                $defaultMeals = [
+                    [
+                        'key' => 'pranzo',
+                        'name' => 'Pranzo',
+                        'days_of_week' => [
+                            'mon' => true,
+                            'tue' => true,
+                            'wed' => true,
+                            'thu' => true,
+                            'fri' => true,
+                            'sat' => true,
+                            'sun' => false,
+                        ],
+                        'hours_definition' => [
+                            'mon' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'tue' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'wed' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'thu' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'fri' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'sat' => ['enabled' => true, 'start' => '12:00', 'end' => '14:30'],
+                            'sun' => ['enabled' => false, 'start' => '12:00', 'end' => '14:30'],
+                        ]
+                    ],
+                    [
+                        'key' => 'cena',
+                        'name' => 'Cena',
+                        'days_of_week' => [
+                            'mon' => false,
+                            'tue' => true,
+                            'wed' => true,
+                            'thu' => true,
+                            'fri' => true,
+                            'sat' => true,
+                            'sun' => true,
+                        ],
+                        'hours_definition' => [
+                            'mon' => ['enabled' => false, 'start' => '19:00', 'end' => '22:30'],
+                            'tue' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                            'wed' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                            'thu' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                            'fri' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                            'sat' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                            'sun' => ['enabled' => true, 'start' => '19:00', 'end' => '22:30'],
+                        ]
+                    ]
+                ];
+                
+                return new WP_REST_Response([
+                    'meals' => $defaultMeals,
+                    'source' => 'default',
+                    'message' => 'Usando configurazione di default'
+                ], 200);
+            }
+            
+            // Parsa la configurazione dei meal dal backend
+            $meals = \FP\Resv\Domain\Settings\MealPlan::parse($frontendMeals);
+            $mealsIndexed = \FP\Resv\Domain\Settings\MealPlan::indexByKey($meals);
+            
+            // Converte in formato compatibile con il frontend
+            $formattedMeals = [];
+            foreach ($mealsIndexed as $key => $meal) {
+                $formattedMeals[] = [
+                    'key' => $key,
+                    'name' => $meal['name'] ?? ucfirst($key),
+                    'days_of_week' => $meal['days_of_week'] ?? [],
+                    'hours_definition' => $meal['hours_definition'] ?? [],
+                ];
+            }
+            
+            return new WP_REST_Response([
+                'meals' => $formattedMeals,
+                'source' => 'backend',
+                'message' => 'Configurazione recuperata dal backend'
+            ], 200);
+            
+        } catch (\Exception $e) {
+            // In caso di errore, restituisci configurazione di default
+            $defaultMeals = [
+                [
+                    'key' => 'pranzo',
+                    'name' => 'Pranzo',
+                    'days_of_week' => [
+                        'mon' => true, 'tue' => true, 'wed' => true, 'thu' => true, 'fri' => true, 'sat' => true, 'sun' => false,
+                    ]
+                ],
+                [
+                    'key' => 'cena',
+                    'name' => 'Cena',
+                    'days_of_week' => [
+                        'mon' => false, 'tue' => true, 'wed' => true, 'thu' => true, 'fri' => true, 'sat' => true, 'sun' => true,
+                    ]
+                ]
+            ];
+            
+            return new WP_REST_Response([
+                'meals' => $defaultMeals,
+                'source' => 'fallback',
+                'message' => 'Errore nel recupero configurazione, usando default',
+                'error' => $e->getMessage()
+            ], 200);
+        }
     }
 
     public function handleAvailability(WP_REST_Request $request): WP_REST_Response|WP_Error

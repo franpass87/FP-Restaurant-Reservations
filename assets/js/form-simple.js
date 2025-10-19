@@ -378,31 +378,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     return response.json();
                 })
-                .then(data => {
-                    // Hide loading indicator
-                    loadingEl.style.display = 'none';
+            .then(data => {
+                // Hide loading indicator
+                loadingEl.style.display = 'none';
+                
+                if (data && data.days) {
+                    // Store available dates
+                    availableDates = Object.keys(data.days).filter(date => {
+                        return data.days[date] && data.days[date].available;
+                    });
                     
-                    if (data && data.days) {
-                        // Store available dates
-                        availableDates = Object.keys(data.days).filter(date => {
-                            return data.days[date] && data.days[date].available;
-                        });
-                        
-                        // Show info if dates are available
-                        if (availableDates.length > 0) {
-                            infoEl.style.display = 'block';
-                        }
-                        
-                        // Update date input with available dates info
-                        updateDateInput();
-                        console.log('Date disponibili per', meal, ':', availableDates);
-                    } else {
-                        // No data available, allow all dates
-                        availableDates = [];
-                        infoEl.style.display = 'none';
+                    // Show info if dates are available
+                    if (availableDates.length > 0) {
+                        infoEl.style.display = 'block';
                     }
-                })
-                .catch(error => {
+                    
+                    // Update date input with available dates info
+                    updateDateInput();
+                    console.log('Date disponibili per', meal, ':', availableDates);
+                } else {
+                    // No data available, allow all dates
+                    availableDates = [];
+                    infoEl.style.display = 'none';
+                }
+            })
+            .catch(error => {
                     console.error(`Errore endpoint ${currentEndpointIndex + 1}:`, error);
                     currentEndpointIndex++;
                     tryNextEndpoint();
@@ -418,7 +418,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const endDate = new Date(to);
         const fallbackDates = [];
         
-        // Schedule di default
+        // Prova a recuperare i dati dal backend tramite endpoint alternativo
+        try {
+            // Endpoint alternativo per recuperare configurazione meal
+            fetch('/wp-json/fp-resv/v1/meal-config')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.meals) {
+                        console.log('Configurazione meal recuperata dal backend:', data.meals);
+                        // Usa i dati reali dal backend
+                        return generateDatesFromBackendConfig(data.meals, from, to, meal);
+                    }
+                })
+                .catch(error => {
+                    console.log('Impossibile recuperare configurazione backend, usando schedule di default');
+                    return generateDatesFromDefaultSchedule(from, to, meal);
+                });
+        } catch (error) {
+            console.log('Errore nel recupero configurazione backend, usando schedule di default');
+        }
+        
+        // Fallback: usa schedule di default se non riesce a recuperare dal backend
+        return generateDatesFromDefaultSchedule(from, to, meal);
+    }
+    
+    // Genera date usando configurazione di default
+    function generateDatesFromDefaultSchedule(from, to, meal) {
+        const startDate = new Date(from);
+        const endDate = new Date(to);
+        const fallbackDates = [];
+        
+        // Schedule di default (basato su configurazione tipica ristorante)
         const defaultSchedule = {
             'pranzo': {
                 'mon': true,
@@ -464,8 +494,75 @@ document.addEventListener('DOMContentLoaded', function() {
         return fallbackDates;
     }
     
+    // Genera date usando configurazione dal backend
+    function generateDatesFromBackendConfig(meals, from, to, meal) {
+        const startDate = new Date(from);
+        const endDate = new Date(to);
+        const fallbackDates = [];
+        
+        // Trova la configurazione del meal specifico
+        const mealConfig = meals.find(m => m.key === meal);
+        if (!mealConfig) {
+            console.log('Configurazione meal non trovata, usando schedule di default');
+            return generateDatesFromDefaultSchedule(from, to, meal);
+        }
+        
+        // Usa la configurazione dal backend
+        const current = new Date(startDate);
+        while (current <= endDate) {
+            const dateKey = current.toISOString().split('T')[0];
+            const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+            
+            // Controlla se il meal è disponibile in questo giorno
+            let isAvailable = false;
+            
+            if (mealConfig.days_of_week) {
+                // Usa days_of_week se disponibile
+                isAvailable = mealConfig.days_of_week[dayKey] || false;
+            } else if (mealConfig.hours_definition) {
+                // Usa hours_definition se disponibile
+                isAvailable = mealConfig.hours_definition[dayKey] && mealConfig.hours_definition[dayKey].enabled;
+            }
+            
+            if (isAvailable) {
+                fallbackDates.push(dateKey);
+            }
+            
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return fallbackDates;
+    }
+    
     // Genera orari disponibili localmente come fallback
     function generateFallbackTimeSlots(meal) {
+        const slots = [];
+        
+        // Prova a recuperare la configurazione dal backend
+        fetch('/wp-json/fp-resv/v1/meal-config')
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.meals) {
+                    const mealConfig = data.meals.find(m => m.key === meal);
+                    if (mealConfig && mealConfig.hours_definition) {
+                        console.log('Usando orari dal backend per', meal);
+                        return generateTimeSlotsFromBackendConfig(mealConfig);
+                    }
+                }
+                console.log('Usando orari di default per', meal);
+                return generateTimeSlotsFromDefault(meal);
+            })
+            .catch(error => {
+                console.log('Errore nel recupero configurazione orari, usando default');
+                return generateTimeSlotsFromDefault(meal);
+            });
+        
+        // Fallback immediato: usa orari di default
+        return generateTimeSlotsFromDefault(meal);
+    }
+    
+    // Genera orari usando configurazione di default
+    function generateTimeSlotsFromDefault(meal) {
         const slots = [];
         
         if (meal === 'pranzo') {
@@ -496,6 +593,49 @@ document.addEventListener('DOMContentLoaded', function() {
             const endHour = 22;
             const startMinute = 0;
             const endMinute = 30;
+            
+            for (let hour = startHour; hour <= endHour; hour++) {
+                const maxMinute = (hour === endHour) ? endMinute : 30;
+                for (let minute = startMinute; minute <= maxMinute; minute += 30) {
+                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    const slotStart = `${timeStr}:00`;
+                    
+                    slots.push({
+                        time: timeStr,
+                        slotStart: slotStart,
+                        available: true,
+                        capacity: 50,
+                        status: 'available'
+                    });
+                }
+            }
+        }
+        
+        return slots;
+    }
+    
+    // Genera orari usando configurazione dal backend
+    function generateTimeSlotsFromBackendConfig(mealConfig) {
+        const slots = [];
+        
+        if (!mealConfig.hours_definition) {
+            return generateTimeSlotsFromDefault(mealConfig.key);
+        }
+        
+        // Usa la configurazione dal backend per generare gli orari
+        // Per ora, usa la configurazione del primo giorno disponibile
+        const firstAvailableDay = Object.keys(mealConfig.hours_definition).find(day => 
+            mealConfig.hours_definition[day] && mealConfig.hours_definition[day].enabled
+        );
+        
+        if (firstAvailableDay && mealConfig.hours_definition[firstAvailableDay]) {
+            const dayConfig = mealConfig.hours_definition[firstAvailableDay];
+            const startTime = dayConfig.start || '12:00';
+            const endTime = dayConfig.end || '14:30';
+            
+            // Parsa gli orari e genera slot ogni 30 minuti
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
             
             for (let hour = startHour; hour <= endHour; hour++) {
                 const maxMinute = (hour === endHour) ? endMinute : 30;
@@ -549,9 +689,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedDate && availableDatesList) {
                 const availableDatesArray = availableDatesList.split(',');
                 if (!availableDatesArray.includes(selectedDate)) {
-                    alert('Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
-                    this.value = '';
-                    return;
+                alert('Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
+                this.value = '';
+                return;
                 }
             }
             
