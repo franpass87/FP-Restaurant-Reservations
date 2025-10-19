@@ -608,11 +608,16 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                         foreach ($phonePrefixes as $prefix): 
                             if (is_array($prefix) && isset($prefix['value']) && isset($prefix['label'])): 
                                 $selected = ($prefix['value'] == $defaultPhoneCode) ? 'selected' : '';
-                                $flag = $prefix['flag'] ?? '🌍';
-                                $list = ($prefix['value'] == '39') ? '(IT)' : '(EN)';
+                                $label = $prefix['label'] ?? '';
+                                // Estrai il nome del paese dal label (formato: "+39 · Italia")
+                                $country = $label;
+                                if (strpos($label, ' · ') !== false) {
+                                    $parts = explode(' · ', $label, 2);
+                                    $country = trim($parts[1] ?? $label);
+                                }
                     ?>
                         <option value="<?php echo esc_attr($prefix['value']); ?>" <?php echo $selected; ?>>
-                            <?php echo $flag; ?> +<?php echo esc_html($prefix['value']); ?> <?php echo $list; ?>
+                            <?php echo esc_html($label); ?>
                         </option>
                     <?php 
                             endif;
@@ -620,12 +625,12 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                     else: 
                         // Fallback se non ci sono phone prefixes configurati
                     ?>
-                        <option value="39" selected>🇮🇹 +39 (IT)</option>
-                        <option value="44">🇬🇧 +44 (EN)</option>
-                        <option value="33">🇫🇷 +33 (EN)</option>
-                        <option value="49">🇩🇪 +49 (EN)</option>
-                        <option value="34">🇪🇸 +34 (EN)</option>
-                        <option value="1">🇺🇸 +1 (EN)</option>
+                        <option value="39" selected>🇮🇹 +39 · Italia</option>
+                        <option value="44">🇬🇧 +44 · Regno Unito</option>
+                        <option value="33">🇫🇷 +33 · Francia</option>
+                        <option value="49">🇩🇪 +49 · Germania</option>
+                        <option value="34">🇪🇸 +34 · Spagna</option>
+                        <option value="1">🇺🇸 +1 · Stati Uniti</option>
                     <?php endif; ?>
                 </select>
                 <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">

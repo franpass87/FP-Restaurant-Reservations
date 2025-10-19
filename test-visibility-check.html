@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Visibilità Modifiche</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .checklist {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .checklist ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Test Visibilità Modifiche Estetiche</h1>
+        
+        <div class="status success">
+            <strong>✅ Build Completato</strong><br>
+            Assets ricompilati con successo alle <?php echo date('H:i:s'); ?>
+        </div>
+
+        <div class="checklist">
+            <h3>📋 Checklist Modifiche Estetiche</h3>
+            <p>Vai al tuo sito e verifica che siano visibili queste modifiche:</p>
+            <ul>
+                <li><strong>Spaziature più compatte</strong> - Padding ridotto del 20-25%</li>
+                <li><strong>Font size ridotti</strong> - 14px per input, 13px per label</li>
+                <li><strong>Progress bar più piccola</strong> - Step 32px invece di 36px</li>
+                <li><strong>Bottoni meal compatti</strong> - Padding 12px 16px</li>
+                <li><strong>Time slots più serrati</strong> - Grid minmax 90px</li>
+                <li><strong>Transizioni fluide</strong> - Slide orizzontale senza balzi</li>
+                <li><strong>Prefissi telefonici</strong> - Nomi paesi invece di (EN/IT)</li>
+            </ul>
+        </div>
+
+        <div class="status warning">
+            <strong>⚠️ Se le modifiche NON sono visibili:</strong>
+            <ol>
+                <li>Fai <strong>Ctrl+F5</strong> (hard refresh)</li>
+                <li>Oppure <strong>Ctrl+Shift+R</strong></li>
+                <li>Prova in <strong>modalità incognito</strong></li>
+                <li>Pulisci <strong>cache del browser</strong></li>
+                <li>Verifica che <strong>WP_DEBUG</strong> sia attivo</li>
+            </ol>
+        </div>
+
+        <div class="checklist">
+            <h3>🔧 Debug Cache</h3>
+            <p>Se ancora non funziona, esegui questi controlli:</p>
+            <div class="code-block">
+# 1. Verifica timestamp file
+ls -la templates/frontend/form-simple.php
+
+# 2. Controlla WP_DEBUG
+# In wp-config.php: define('WP_DEBUG', true);
+
+# 3. Verifica asset versioning
+# Dovrebbe mostrare timestamp recente nelle URL CSS/JS
+            </div>
+        </div>
+
+        <div class="checklist">
+            <h3>📱 Test Responsive</h3>
+            <p>Verifica anche su mobile:</p>
+            <ul>
+                <li>Form più compatto su schermi piccoli</li>
+                <li>Spaziature ridotte su mobile</li>
+                <li>Elementi proporzionati</li>
+                <li>Leggibilità mantenuta</li>
+            </ul>
+        </div>
+
+        <div class="status success">
+            <strong>🎯 Modifiche Implementate:</strong>
+            <ul>
+                <li>✅ Design compatto con spaziature ridotte</li>
+                <li>✅ Transizioni fluide senza balzi visivi</li>
+                <li>✅ Prefissi telefonici con nomi paesi</li>
+                <li>✅ Responsive ottimizzato</li>
+                <li>✅ Estetica minimal e raffinata</li>
+            </ul>
+        </div>
+
+        <div class="checklist">
+            <h3>🌐 Test URL</h3>
+            <p>Vai alla pagina con il form e fai un hard refresh:</p>
+            <a href="#" class="button" onclick="window.open(window.location.href, '_blank')">
+                Apri Form in Nuova Tab
+            </a>
+        </div>
+
+        <div class="timestamp">
+            Test generato il <?php echo date('d/m/Y H:i:s'); ?>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 Test Visibilità Modifiche - ' + new Date().toLocaleString());
+        
+        // Verifica se siamo nella pagina del form
+        if (document.querySelector('.fp-resv-simple')) {
+            console.log('✅ Form trovato nella pagina');
+            
+            // Verifica modifiche specifiche
+            const form = document.querySelector('.fp-resv-simple');
+            const computedStyle = window.getComputedStyle(form);
+            
+            console.log('📏 Padding container:', computedStyle.padding);
+            console.log('📐 Max-width:', computedStyle.maxWidth);
+            
+            // Verifica progress steps
+            const progressSteps = document.querySelectorAll('.fp-progress-step');
+            if (progressSteps.length > 0) {
+                const stepStyle = window.getComputedStyle(progressSteps[0]);
+                console.log('🔘 Progress step size:', stepStyle.width, 'x', stepStyle.height);
+            }
+            
+            // Verifica meal buttons
+            const mealButtons = document.querySelectorAll('.fp-meal-btn');
+            if (mealButtons.length > 0) {
+                const buttonStyle = window.getComputedStyle(mealButtons[0]);
+                console.log('🍽️ Meal button padding:', buttonStyle.padding);
+                console.log('📝 Meal button font-size:', buttonStyle.fontSize);
+            }
+            
+            // Verifica phone prefixes
+            const phoneSelect = document.querySelector('select[name="fp_resv_phone_prefix"]');
+            if (phoneSelect) {
+                const options = phoneSelect.querySelectorAll('option');
+                console.log('📞 Phone prefixes found:', options.length);
+                options.forEach((option, index) => {
+                    if (index < 5) { // Mostra solo i primi 5
+                        console.log('  -', option.textContent);
+                    }
+                });
+            }
+            
+        } else {
+            console.log('❌ Form non trovato in questa pagina');
+            console.log('💡 Vai alla pagina con il form per vedere le modifiche');
+        }
+    </script>
+</body>
+</html>

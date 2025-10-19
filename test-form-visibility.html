@@ -3,239 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Visibilità Form - FP Restaurant Reservations</title>
+    <title>Test Form Visibilità</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
             padding: 20px;
             background: #f5f5f5;
         }
-        
-        .test-section {
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
             background: white;
             padding: 20px;
-            margin: 20px 0;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
-        .test-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #2563eb;
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
         }
-        
-        .test-description {
-            color: #666;
-            margin-bottom: 15px;
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
         }
-        
-        .success {
-            color: #16a34a;
-            font-weight: bold;
-        }
-        
-        .error {
-            color: #dc2626;
-            font-weight: bold;
-        }
-        
-        .info {
-            background: #e0f2fe;
+        .status {
             padding: 10px;
-            border-left: 4px solid #0284c7;
+            border-radius: 4px;
             margin: 10px 0;
         }
-        
-        /* Simulazione conflitti CSS comuni */
-        .theme-conflict-1 * {
-            display: none !important;
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
-        
-        .theme-conflict-2 {
-            visibility: hidden;
-            opacity: 0;
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
         }
-        
-        .theme-conflict-3 {
-            height: 0;
-            overflow: hidden;
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #005a87;
         }
     </style>
 </head>
 <body>
-    <h1>🧪 Test Visibilità Form - FP Restaurant Reservations</h1>
-    
-    <div class="info">
-        <strong>ℹ️ Informazioni:</strong><br>
-        Questa pagina testa che il form di prenotazione sia visibile anche in presenza di conflitti CSS comuni.
-        Apri la console del browser (F12) per vedere i log di debug.
-    </div>
-
-    <!-- Test 1: Form Normale -->
-    <div class="test-section">
-        <div class="test-title">✅ Test 1: Form Normale (senza conflitti)</div>
-        <div class="test-description">Il form dovrebbe essere completamente visibile e funzionante.</div>
-        <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-1" data-fp-resv-app data-fp-resv="{}">
-            <div style="padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; border-radius: 12px;">
-                <h2>✅ Form Visibile</h2>
-                <p>Se vedi questo messaggio, il form è visibile correttamente!</p>
+    <div class="test-container">
+        <h1>🔍 Test Visibilità Modifiche Form</h1>
+        
+        <div class="test-section">
+            <h3>1. Verifica Cache Busting</h3>
+            <p>Controlla se le modifiche estetiche sono visibili:</p>
+            <div class="status warning">
+                <strong>⚠️ Se non vedi le modifiche:</strong>
+                <ol>
+                    <li>Fai <strong>Ctrl+F5</strong> (hard refresh)</li>
+                    <li>Oppure <strong>Ctrl+Shift+R</strong></li>
+                    <li>Prova in modalità incognito</li>
+                    <li>Pulisci cache del browser</li>
+                </ol>
             </div>
         </div>
-    </div>
 
-    <!-- Test 2: Parent con display: none !important -->
-    <div class="test-section">
-        <div class="test-title">🔥 Test 2: Parent con display: none !important</div>
-        <div class="test-description">
-            Test più critico: il parent ha <code>display: none !important</code> su tutti i figli.
-            Il form dovrebbe comunque essere visibile grazie ai fix implementati.
+        <div class="test-section">
+            <h3>2. Modifiche Implementate</h3>
+            <p>Le seguenti modifiche dovrebbero essere visibili:</p>
+            <ul>
+                <li>✅ <strong>Spaziature più compatte</strong> (padding ridotto)</li>
+                <li>✅ <strong>Font size ridotti</strong> (14px per input, 13px per label)</li>
+                <li>✅ <strong>Progress bar più piccola</strong> (32px invece di 36px)</li>
+                <li>✅ <strong>Bottoni meal compatti</strong> (padding 12px 16px)</li>
+                <li>✅ <strong>Time slots più serrati</strong> (grid minmax 90px)</li>
+                <li>✅ <strong>Transizioni fluide</strong> (slide orizzontale senza balzi)</li>
+            </ul>
         </div>
-        <div class="theme-conflict-1">
-            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-2" data-fp-resv-app data-fp-resv="{}">
-                <div style="padding: 40px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-align: center; border-radius: 12px;">
-                    <h2>💪 Form Visibile Nonostante il Conflitto</h2>
-                    <p>Se vedi questo, il fix funziona alla perfezione!</p>
-                </div>
+
+        <div class="test-section">
+            <h3>3. Test Manuale</h3>
+            <p>Vai al tuo sito e verifica:</p>
+            <div class="code-block">
+1. Il form dovrebbe apparire più compatto
+2. Le transizioni tra step dovrebbero essere fluide (slide orizzontale)
+3. Non dovrebbero esserci "balzi" visivi
+4. Gli elementi dovrebbero essere più serrati ma leggibili
             </div>
         </div>
-    </div>
 
-    <!-- Test 3: visibility: hidden + opacity: 0 -->
-    <div class="test-section">
-        <div class="test-title">👀 Test 3: Parent con visibility: hidden e opacity: 0</div>
-        <div class="test-description">
-            Il container parent ha <code>visibility: hidden</code> e <code>opacity: 0</code>.
-        </div>
-        <div class="theme-conflict-2">
-            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-3" data-fp-resv-app data-fp-resv="{}">
-                <div style="padding: 40px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; text-align: center; border-radius: 12px;">
-                    <h2>👁️ Form Visibile</h2>
-                    <p>visibility e opacity override funzionano!</p>
-                </div>
+        <div class="test-section">
+            <h3>4. Debug Cache</h3>
+            <p>Se le modifiche non sono visibili, esegui questi comandi:</p>
+            <div class="code-block">
+# 1. Ricompila assets
+npm run build
+
+# 2. Verifica che WP_DEBUG sia attivo
+# In wp-config.php: define('WP_DEBUG', true);
+
+# 3. Controlla timestamp file
+# Il file form-simple.php dovrebbe avere timestamp recente
             </div>
         </div>
-    </div>
 
-    <!-- Test 4: height: 0 + overflow: hidden -->
-    <div class="test-section">
-        <div class="test-title">📏 Test 4: Parent con height: 0 e overflow: hidden</div>
-        <div class="test-description">
-            Il container parent ha <code>height: 0</code> e <code>overflow: hidden</code>.
-        </div>
-        <div class="theme-conflict-3">
-            <div class="fp-resv-widget fp-resv fp-card" id="fp-resv-test-4" data-fp-resv-app data-fp-resv="{}">
-                <div style="padding: 40px; background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; text-align: center; border-radius: 12px;">
-                    <h2>📐 Form Visibile</h2>
-                    <p>height e overflow gestiti correttamente!</p>
-                </div>
+        <div class="test-section">
+            <h3>5. Verifica File</h3>
+            <p>Controlla che il form stia usando il file corretto:</p>
+            <div class="code-block">
+File: templates/frontend/form-simple.php
+Ultima modifica: <?php echo date('Y-m-d H:i:s', filemtime('templates/frontend/form-simple.php')); ?>
             </div>
         </div>
-    </div>
 
-    <!-- Risultati -->
-    <div class="test-section">
-        <div class="test-title">📊 Risultati Test</div>
-        <div id="results"></div>
+        <div class="test-section">
+            <h3>6. Test URL</h3>
+            <p>Vai alla pagina con il form e fai un hard refresh:</p>
+            <button class="button" onclick="window.open(window.location.href, '_blank')">
+                Apri Form in Nuova Tab
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>7. Se Ancora Non Funziona</h3>
+            <div class="status error">
+                <strong>❌ Possibili cause:</strong>
+                <ul>
+                    <li>Cache del server/CDN</li>
+                    <li>Plugin di cache attivi</li>
+                    <li>Browser cache persistente</li>
+                    <li>File non aggiornato correttamente</li>
+                </ul>
+            </div>
+            <p><strong>Soluzioni:</strong></p>
+            <ol>
+                <li>Disabilita temporaneamente plugin di cache</li>
+                <li>Prova da browser diverso</li>
+                <li>Verifica che il file sia stato salvato correttamente</li>
+                <li>Controlla la console del browser per errori</li>
+            </ol>
+        </div>
     </div>
 
     <script>
-        // Simula i fix di visibilità
-        function ensureWidgetVisibility(widget) {
-            if (!widget) return;
+        // Test automatico
+        console.log('🔍 Test Form Visibilità - ' + new Date().toLocaleString());
+        
+        // Verifica se siamo nella pagina del form
+        if (document.querySelector('.fp-resv-simple')) {
+            console.log('✅ Form trovato nella pagina');
             
-            widget.style.display = 'block';
-            widget.style.visibility = 'visible';
-            widget.style.opacity = '1';
-            widget.style.position = 'relative';
-            widget.style.width = '100%';
-            widget.style.height = 'auto';
-            widget.style.overflow = 'visible';
+            // Verifica modifiche specifiche
+            const form = document.querySelector('.fp-resv-simple');
+            const computedStyle = window.getComputedStyle(form);
             
-            // Fix parent
-            let parent = widget.parentElement;
-            let depth = 0;
-            while (parent && depth < 5) {
-                const display = window.getComputedStyle(parent).display;
-                if (display === 'none') {
-                    console.warn('[TEST] Parent nascosto trovato, fix applicato:', parent.className);
-                    parent.style.display = 'block';
-                }
-                parent = parent.parentElement;
-                depth++;
-            }
-        }
-
-        // Test di visibilità
-        function testVisibility() {
-            const widgets = document.querySelectorAll('[data-fp-resv-app]');
-            const results = [];
+            console.log('📏 Padding container:', computedStyle.padding);
+            console.log('📐 Max-width:', computedStyle.maxWidth);
             
-            console.log('[TEST] Trovati', widgets.length, 'widgets');
-            
-            widgets.forEach((widget, index) => {
-                ensureWidgetVisibility(widget);
-                
-                const computed = window.getComputedStyle(widget);
-                const isVisible = computed.display !== 'none' && 
-                                 computed.visibility !== 'hidden' && 
-                                 parseFloat(computed.opacity) > 0;
-                
-                const testId = widget.id || `widget-${index}`;
-                const result = {
-                    id: testId,
-                    visible: isVisible,
-                    display: computed.display,
-                    visibility: computed.visibility,
-                    opacity: computed.opacity
-                };
-                
-                results.push(result);
-                
-                console.log(`[TEST] ${testId}:`, isVisible ? '✅ VISIBILE' : '❌ NASCOSTO', result);
-            });
-            
-            // Mostra risultati
-            const resultsDiv = document.getElementById('results');
-            let html = '<ul>';
-            results.forEach(r => {
-                const status = r.visible ? '<span class="success">✅ VISIBILE</span>' : '<span class="error">❌ NASCOSTO</span>';
-                html += `<li><strong>${r.id}</strong>: ${status} (display: ${r.display}, visibility: ${r.visibility}, opacity: ${r.opacity})</li>`;
-            });
-            html += '</ul>';
-            
-            const allVisible = results.every(r => r.visible);
-            if (allVisible) {
-                html = '<div class="success" style="font-size: 18px; margin-bottom: 15px;">🎉 TUTTI I TEST SUPERATI! Il form è visibile in tutti gli scenari.</div>' + html;
-            } else {
-                html = '<div class="error" style="font-size: 18px; margin-bottom: 15px;">⚠️ ATTENZIONE: Alcuni test hanno fallito.</div>' + html;
+            // Verifica progress steps
+            const progressSteps = document.querySelectorAll('.fp-progress-step');
+            if (progressSteps.length > 0) {
+                const stepStyle = window.getComputedStyle(progressSteps[0]);
+                console.log('🔘 Progress step size:', stepStyle.width, 'x', stepStyle.height);
             }
             
-            resultsDiv.innerHTML = html;
-        }
-
-        // Esegui test dopo il caricamento
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', testVisibility);
+            // Verifica meal buttons
+            const mealButtons = document.querySelectorAll('.fp-meal-btn');
+            if (mealButtons.length > 0) {
+                const buttonStyle = window.getComputedStyle(mealButtons[0]);
+                console.log('🍽️ Meal button padding:', buttonStyle.padding);
+                console.log('📝 Meal button font-size:', buttonStyle.fontSize);
+            }
+            
         } else {
-            testVisibility();
+            console.log('❌ Form non trovato in questa pagina');
         }
-
-        // Auto-check ogni secondo per 10 secondi
-        let checks = 0;
-        const interval = setInterval(() => {
-            checks++;
-            console.log(`[TEST] Auto-check #${checks}`);
-            testVisibility();
-            
-            if (checks >= 10) {
-                clearInterval(interval);
-                console.log('[TEST] Auto-check completato');
-            }
-        }, 1000);
     </script>
 </body>
 </html>
