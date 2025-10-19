@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         steps.forEach(s => s.classList.remove('active'));
         progressSteps.forEach(p => p.classList.remove('active', 'completed'));
         
-        const currentStepEl = form.querySelector(`[data-step="${step}"]`);
+        const currentStepEl = form.querySelector(`.fp-step[data-step="${step}"]`);
         console.log('Elemento step trovato:', currentStepEl);
         if (currentStepEl) {
             currentStepEl.classList.add('active');
@@ -349,9 +349,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Also show the date input field
-                const dateField = document.querySelector('.fp-step[data-step="2"]');
+                const dateField = form.querySelector('.fp-step[data-step="2"]');
                 if (dateField) {
                     dateField.style.display = 'block';
+                    console.log('Date field mostrato:', dateField);
+                } else {
+                    console.error('Date field non trovato');
                 }
                 
                 // Show the date input
