@@ -721,7 +721,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('<?php echo esc_js($formId); ?>');
+    const form = document.getElementById('fp-resv-default');
     let currentStep = 1;
     const totalSteps = 5;
     
@@ -738,8 +738,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupMealButtons() {
         mealBtns = form.querySelectorAll('.fp-meal-btn');
+        console.log('Trovati', mealBtns.length, 'pulsanti pasto');
         mealBtns.forEach(btn => {
             btn.addEventListener('click', function() {
+                console.log('Pulsante pasto cliccato:', this.dataset.meal);
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
