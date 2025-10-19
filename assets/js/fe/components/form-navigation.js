@@ -1,174 +1,117 @@
 /**
- * Gestione della navigazione del form
+ * Form Navigation - Rebuilt from scratch
+ * Gestione della navigazione tra gli step del form
  */
 
 export class FormNavigation {
-    constructor(sections, stepOrder, state, updateSectionAttributes, updateProgressIndicators, updateSubmitState, widgetRoot, form = null, copy = {}) {
+    constructor(sections, stepOrder, state, updateSectionFn, updateProgressFn, updateSubmitFn, widgetRoot, form, copy) {
         this.sections = sections;
         this.stepOrder = stepOrder;
         this.state = state;
-        this.updateSectionAttributes = updateSectionAttributes;
-        this.updateProgressIndicators = updateProgressIndicators;
-        this.updateSubmitState = updateSubmitState;
+        this.updateSectionFn = updateSectionFn;
+        this.updateProgressFn = updateProgressFn;
+        this.updateSubmitFn = updateSubmitFn;
         this.widgetRoot = widgetRoot;
         this.form = form;
-        this.copy = copy;
+        this.copy = copy || {};
     }
 
+    /**
+     * Ottieni l'indice di uno step
+     */
     getStepOrderIndex(target) {
-        const key = target && target.getAttribute ? target.getAttribute('data-step') || '' : String(target || '');
-        const normalized = typeof key === 'string' ? key : '';
-        const index = this.stepOrder.indexOf(normalized);
-        return index === -1 ? this.stepOrder.length + 1 : index;
+        const key = target && target.getAttribute 
+            ? target.getAttribute('data-step') || '' 
+            : String(target || '');
+        const index = this.stepOrder.indexOf(key);
+        return index === -1 ? this.stepOrder.length : index;
     }
 
+    /**
+     * Attiva una sezione se è bloccata
+     */
     ensureSectionActive(section) {
         const key = section.getAttribute('data-step') || '';
         if (this.state.sectionStates[key] === 'locked') {
             this.state.sectionStates[key] = 'active';
-            this.updateSectionAttributes(section, 'active');
-            this.dispatchSectionUnlocked(key);
-            // Non fare scroll automatico quando si attiva una sezione tramite interazione con i campi
-            // this.scrollIntoView(section);
+            this.updateSectionFn(section, 'active');
         }
     }
 
+    /**
+     * Completa una sezione e avanza alla successiva
+     */
     completeSection(section, advance) {
         const key = section.getAttribute('data-step') || '';
+        
         if (this.state.sectionStates[key] === 'completed') {
             return;
         }
 
         this.state.sectionStates[key] = 'completed';
-        this.updateSectionAttributes(section, 'completed');
-        this.updateProgressIndicators();
+        this.updateSectionFn(section, 'completed');
+        this.updateProgressFn();
 
-        if (!advance) {
-            return;
-        }
+        if (!advance) return;
 
         const currentIndex = this.sections.indexOf(section);
-        if (currentIndex === -1) {
-            return;
-        }
+        if (currentIndex === -1) return;
 
         const nextSection = this.sections[currentIndex + 1];
-        if (!nextSection) {
-            return;
-        }
+        if (!nextSection) return;
 
-        const nextKey = nextSection.getAttribute('data-step') || String(currentIndex + 1);
+        const nextKey = nextSection.getAttribute('data-step') || '';
         if (this.state.sectionStates[nextKey] !== 'completed') {
             this.state.sectionStates[nextKey] = 'active';
-            this.updateSectionAttributes(nextSection, 'active');
-            this.dispatchSectionUnlocked(nextKey);
-            // Scroll all'inizio del widget quando si avanza allo step successivo
-            this.scrollIntoView(nextSection);
+            this.updateSectionFn(nextSection, 'active');
+            this.scrollToSection(nextSection);
         }
     }
 
+    /**
+     * Naviga allo step precedente
+     */
     navigateToPrevious(section) {
         const index = this.sections.indexOf(section);
-        if (index <= 0) {
-            return;
-        }
+        if (index <= 0) return;
 
-        const previousSection = this.sections[index - 1];
-        if (!previousSection) {
-            return;
-        }
+        const prevSection = this.sections[index - 1];
+        if (!prevSection) return;
 
-        const previousKey = previousSection.getAttribute('data-step') || '';
-        if (!previousKey) {
-            return;
-        }
-
-        // Scroll all'inizio del widget quando si torna indietro
-        this.activateSectionByKey(previousKey);
+        const prevKey = prevSection.getAttribute('data-step') || '';
+        this.activateSectionByKey(prevKey);
     }
 
-    navigateToNext(section, formValidation) {
+    /**
+     * Naviga allo step successivo (con validazione)
+     */
+    navigateToNext(section, validation) {
         const stepKey = section.getAttribute('data-step') || '';
-        
-        // Per lo step date, verifica che sia stata selezionata una data
+
+        // Validazione speciale per lo step date
         if (stepKey === 'date') {
-            const dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null;
-            
-            // Se non è stata selezionata una data, mostra un messaggio e BLOCCA la navigazione
-            if (!dateField || dateField.value.trim() === '') {
-                const dateSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'date');
-                if (dateSection) {
-                    const statusEl = dateSection.querySelector('[data-fp-resv-date-status]');
-                    if (statusEl) {
-                        statusEl.textContent = this.copy.dateRequired || 'Seleziona una data per continuare.';
-                        statusEl.style.color = '#dc2626';
-                        statusEl.setAttribute('data-state', 'error');
-                        statusEl.hidden = false;
-                        statusEl.removeAttribute('hidden');
-                        
-                        setTimeout(() => {
-                            statusEl.textContent = '';
-                            statusEl.style.color = '';
-                            statusEl.removeAttribute('data-state');
-                            statusEl.hidden = true;
-                            statusEl.setAttribute('hidden', '');
-                        }, 3000);
-                    }
-                }
-                // BLOCCA la navigazione - non procedere
+            const dateField = this.form?.querySelector('[data-fp-resv-field="date"]');
+            if (!dateField || !dateField.value.trim()) {
+                this.showStepError(section, this.copy.dateRequired || 'Seleziona una data');
                 return;
             }
-            
-            this.completeSection(section, true);
-            return;
         }
-        
-        // Permetti la navigazione per lo step party senza validazione rigorosa
-        if (stepKey === 'party') {
-            this.completeSection(section, true);
-            return;
-        }
-        
-        // Per lo step slots, controlla se ci sono slot disponibili e BLOCCA se non selezionati
+
+        // Validazione speciale per lo step slots
         if (stepKey === 'slots') {
-            const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
-            const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
-            
-            // Se non ci sono slot selezionati, mostra un messaggio e BLOCCA la navigazione
-            if (!timeField || timeField.value.trim() === '' || !slotStartField || slotStartField.value.trim() === '') {
-                const slotsSection = this.sections.find((s) => (s.getAttribute('data-step') || '') === 'slots');
-                if (slotsSection) {
-                    const statusEl = slotsSection.querySelector('[data-fp-resv-slots-status]');
-                    if (statusEl) {
-                        statusEl.textContent = this.copy.slotRequired || 'Seleziona un orario per continuare.';
-                        statusEl.style.color = '#dc2626';
-                        statusEl.setAttribute('data-state', 'error');
-                        statusEl.hidden = false;
-                        statusEl.removeAttribute('hidden');
-                        
-                        setTimeout(() => {
-                            statusEl.textContent = '';
-                            statusEl.style.color = '';
-                            statusEl.removeAttribute('data-state');
-                            statusEl.hidden = true;
-                            statusEl.setAttribute('hidden', '');
-                        }, 3000);
-                    }
-                }
-                // BLOCCA la navigazione - non procedere
+            const timeField = this.form?.querySelector('[data-fp-resv-field="time"]');
+            if (!timeField || !timeField.value.trim()) {
+                this.showStepError(section, this.copy.slotRequired || 'Seleziona un orario');
                 return;
             }
         }
-        
-        if (!formValidation.isSectionValid(section)) {
-            const invalid = formValidation.findFirstInvalid(section);
+
+        // Validazione generale
+        if (validation && !validation.isSectionValid(section)) {
+            const invalid = validation.findFirstInvalid(section);
             if (invalid) {
-                if (typeof invalid.reportValidity === 'function') {
-                    invalid.reportValidity();
-                }
-                if (typeof invalid.focus === 'function') {
-                    invalid.focus({ preventScroll: false });
-                }
+                if (invalid.reportValidity) invalid.reportValidity();
+                if (invalid.focus) invalid.focus();
             }
             return;
         }
@@ -176,63 +119,65 @@ export class FormNavigation {
         this.completeSection(section, true);
     }
 
+    /**
+     * Attiva una sezione specifica per chiave
+     */
     activateSectionByKey(key) {
-        const targetSection = this.sections.find(function (section) {
-            return (section.getAttribute('data-step') || '') === key;
+        const targetSection = this.sections.find((s) => {
+            return (s.getAttribute('data-step') || '') === key;
         });
 
-        if (!targetSection) {
-            return;
-        }
+        if (!targetSection) return;
 
         let reachedTarget = false;
 
         this.sections.forEach((section) => {
             const sectionKey = section.getAttribute('data-step') || '';
+            
             if (sectionKey === key) {
                 reachedTarget = true;
-                this.updateSectionAttributes(section, 'active', { silent: true });
-                this.dispatchSectionUnlocked(sectionKey);
+                this.updateSectionFn(section, 'active', { silent: true });
             } else if (!reachedTarget) {
                 const previousState = this.state.sectionStates[sectionKey];
                 const state = previousState === 'locked' ? 'locked' : 'completed';
-                this.updateSectionAttributes(section, state, { silent: true });
+                this.updateSectionFn(section, state, { silent: true });
             } else {
-                this.updateSectionAttributes(section, 'locked', { silent: true });
+                this.updateSectionFn(section, 'locked', { silent: true });
             }
         });
 
-        this.updateProgressIndicators();
-        this.scrollIntoView(targetSection);
-        requestAnimationFrame(() => {
-            const focusTarget = targetSection.querySelector('input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
-            if (focusTarget && typeof focusTarget.focus === 'function') {
-                focusTarget.focus({ preventScroll: true });
-            }
-        });
-        this.updateSubmitState();
+        this.updateProgressFn();
+        this.scrollToSection(targetSection);
+        this.updateSubmitFn();
     }
 
-    dispatchSectionUnlocked(key) {
-        if (this.state.unlocked[key]) {
-            return;
-        }
-
-        this.state.unlocked[key] = true;
-        // Qui dovresti chiamare pushDataLayerEvent se disponibile
-        // const eventName = this.events.section_unlocked || 'section_unlocked';
-        // pushDataLayerEvent(eventName, { section: key });
-    }
-
-    scrollIntoView(section) {
-        // Scroll all'inizio del widget quando si cambia step
+    /**
+     * Scroll alla sezione
+     */
+    scrollToSection(section) {
         const target = this.widgetRoot || section;
-        if (!target || typeof target.scrollIntoView !== 'function') {
-            return;
-        }
+        if (!target || typeof target.scrollIntoView !== 'function') return;
 
         requestAnimationFrame(() => {
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+    }
+
+    /**
+     * Mostra un errore temporaneo nello step
+     */
+    showStepError(section, message) {
+        const statusEl = section.querySelector('[data-fp-resv-date-status], [data-fp-resv-slots-status]');
+        if (!statusEl) return;
+
+        statusEl.textContent = message;
+        statusEl.style.color = '#dc2626';
+        statusEl.hidden = false;
+
+        setTimeout(() => {
+            statusEl.textContent = '';
+            statusEl.style.color = '';
+            statusEl.hidden = true;
+        }, 3000);
     }
 }
