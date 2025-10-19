@@ -1,56 +1,30 @@
 /**
- * Gestione della validazione del form
+ * Form Validation - Rebuilt from scratch
+ * Gestione della validazione in modo semplice e chiaro
  */
 
-import { toNumber } from '../utils/validation.js';
 import { buildPayload, isValidLocal } from '../phone.js';
 
 export class FormValidation {
-    constructor(form, phoneField, phonePrefixField, phoneCountryCode, copy) {
+    constructor(form, phoneField, phoneCountryCode, copy) {
         this.form = form;
         this.phoneField = phoneField;
-        this.phonePrefixField = phonePrefixField;
         this.phoneCountryCode = phoneCountryCode;
-        this.copy = copy;
+        this.copy = copy || {};
     }
 
+    /**
+     * Verifica se una sezione è valida
+     */
     isSectionValid(section) {
-        const fields = section.querySelectorAll('[data-fp-resv-field]');
-        if (fields.length === 0) {
-            return true;
-        }
+        if (!section) return false;
 
-        const stepKey = section.getAttribute('data-step') || '';
-        
-        // Se siamo nello step "date" richiediamo esplicitamente che sia selezionata una data
-        if (stepKey === 'date') {
-            const dateField = this.form ? this.form.querySelector('[data-fp-resv-field="date"]') : null;
-            
-            // Verifica che sia stata selezionata una data
-            const hasDateSelection = dateField && dateField.value.trim() !== '';
-            
-            if (!hasDateSelection) {
-                return false;
-            }
-        }
-        
-        // Se siamo nello step "slots" richiediamo esplicitamente che sia selezionato un orario
-        if (stepKey === 'slots') {
-            const timeField = this.form ? this.form.querySelector('[data-fp-resv-field="time"]') : null;
-            const slotStartField = this.form ? this.form.querySelector('input[name="fp_resv_slot_start"]') : null;
-            
-            // Verifica che sia stato selezionato un orario (sia nel campo time che nel campo slot_start)
-            const hasTimeSelection = timeField && timeField.value.trim() !== '';
-            const hasSlotSelection = slotStartField && slotStartField.value.trim() !== '';
-            
-            if (!hasTimeSelection || !hasSlotSelection) {
-                return false;
-            }
-        }
+        const fields = section.querySelectorAll('[data-fp-resv-field]');
+        if (fields.length === 0) return true;
 
         let valid = true;
-        Array.prototype.forEach.call(fields, function (field) {
-            if (typeof field.checkValidity === 'function' && !field.checkValidity()) {
+        Array.prototype.forEach.call(fields, (field) => {
+            if (field.checkValidity && !field.checkValidity()) {
                 valid = false;
             }
         });
@@ -58,80 +32,86 @@ export class FormValidation {
         return valid;
     }
 
+    /**
+     * Trova il primo campo invalido in una sezione
+     */
     findFirstInvalid(section) {
-        if (!section) {
-            return null;
-        }
-
+        if (!section) return null;
         return section.querySelector('[data-fp-resv-field]:invalid, [required]:invalid');
     }
 
+    /**
+     * Focus sul primo campo invalido
+     */
     focusFirstInvalid() {
+        if (!this.form) return;
+        
         const invalid = this.form.querySelector('[data-fp-resv-field]:invalid, [required]:invalid');
         if (invalid && typeof invalid.focus === 'function') {
             invalid.focus();
         }
     }
 
+    /**
+     * Valida il campo telefono
+     */
     validatePhoneField() {
-        if (!this.phoneField) {
-            return;
-        }
+        if (!this.phoneField) return true;
 
         const payload = buildPayload(this.phoneField, this.phoneCountryCode);
+        
         if (payload.local === '') {
             this.phoneField.setCustomValidity('');
             this.phoneField.removeAttribute('aria-invalid');
-            return;
+            return true;
         }
 
         if (!isValidLocal(payload.local)) {
-            this.phoneField.setCustomValidity(this.copy.invalidPhone);
+            const message = this.copy.invalidPhone || 'Numero di telefono non valido';
+            this.phoneField.setCustomValidity(message);
             this.phoneField.setAttribute('aria-invalid', 'true');
             return false;
-        } else {
-            this.phoneField.setCustomValidity('');
-            this.phoneField.setAttribute('aria-invalid', 'false');
-            return true;
         }
+
+        this.phoneField.setCustomValidity('');
+        this.phoneField.setAttribute('aria-invalid', 'false');
+        return true;
     }
 
+    /**
+     * Valida il campo email
+     */
     validateEmailField(field) {
-        // Normalizza e pulisci eventuale stato di errore precedente
-        if (typeof field.value === 'string') {
-            const trimmed = field.value.trim();
-            if (trimmed !== field.value) {
-                field.value = trimmed;
-            }
-        }
+        if (!field) return true;
 
-        if (field.value.trim() === '') {
+        const value = (field.value || '').trim();
+        
+        if (value === '') {
             field.setCustomValidity('');
             field.removeAttribute('aria-invalid');
             return true;
         }
 
-        // Rimuove eventuali errori custom prima del controllo nativo,
-        // altrimenti checkValidity() fallisce sempre
         field.setCustomValidity('');
 
         if (!field.checkValidity()) {
-            field.setCustomValidity(this.copy.invalidEmail);
+            const message = this.copy.invalidEmail || 'Email non valida';
+            field.setCustomValidity(message);
             field.setAttribute('aria-invalid', 'true');
             return false;
-        } else {
-            field.setCustomValidity('');
-            field.setAttribute('aria-invalid', 'false');
-            return true;
         }
+
+        field.setAttribute('aria-invalid', 'false');
+        return true;
     }
 
+    /**
+     * Aggiorna i messaggi di errore inline
+     */
     updateInlineErrors(touchedFields, strings) {
-        if (!this.form) {
-            return;
-        }
+        if (!this.form) return;
 
-        const map = {
+        const fields = {
             first_name: this.form.querySelector('[data-fp-resv-field="first_name"]'),
             last_name: this.form.querySelector('[data-fp-resv-field="last_name"]'),
             email: this.form.querySelector('[data-fp-resv-field="email"]'),
@@ -139,62 +119,45 @@ export class FormValidation {
             consent: this.form.querySelector('[data-fp-resv-field="consent"]'),
         };
 
-        const messages = {
-            first_name: strings?.messages?.required_first_name || 'Inserisci il nome',
-            last_name: strings?.messages?.required_last_name || 'Inserisci il cognome',
-            email: this.copy.invalidEmail,
-            phone: this.copy.invalidPhone,
-            consent: strings?.messages?.required_consent || 'Accetta la privacy per procedere',
-        };
+        const messages = strings?.messages || {};
 
-        Object.keys(map).forEach((key) => {
-            const field = map[key];
+        Object.keys(fields).forEach((key) => {
+            const field = fields[key];
             const errorEl = this.form.querySelector(`[data-fp-resv-error="${key}"]`);
-            if (!errorEl) {
-                return;
-            }
+            
+            if (!errorEl) return;
 
-            // Non mostrare errori per i campi consent finché non sono stati toccati
+            // Non mostrare errori per consent finché non è stato toccato
             if (key === 'consent' && !touchedFields[key]) {
-                errorEl.textContent = '';
                 errorEl.hidden = true;
+                errorEl.textContent = '';
                 return;
             }
 
-            let visible = false;
-            let text = '';
-            if (field && typeof field.checkValidity === 'function' && !field.checkValidity()) {
-                visible = true;
-                text = messages[key] || '';
-            }
+            let showError = false;
+            let errorText = '';
 
-            if (key === 'email' && field && field.value && field.value.trim() !== '' && field.checkValidity()) {
-                visible = false;
-                text = '';
+            if (field && field.checkValidity && !field.checkValidity()) {
+                showError = true;
+                errorText = messages[`required_${key}`] || field.validationMessage || 'Campo richiesto';
             }
 
             if (key === 'phone' && this.phoneField) {
                 const payload = buildPayload(this.phoneField, this.phoneCountryCode);
                 if (payload.local && !isValidLocal(payload.local)) {
-                    visible = true;
-                    text = this.copy.invalidPhone;
+                    showError = true;
+                    errorText = this.copy.invalidPhone || 'Numero non valido';
                 }
             }
 
-            // Nascondi il messaggio di errore per il campo consent se è valido
-            if (key === 'consent' && field && field.checked) {
-                visible = false;
-                text = '';
-            }
-
-            if (visible) {
-                errorEl.textContent = text;
+            if (showError) {
+                errorEl.textContent = errorText;
                 errorEl.hidden = false;
-                field && field.setAttribute && field.setAttribute('aria-invalid', 'true');
+                if (field) field.setAttribute('aria-invalid', 'true');
             } else {
                 errorEl.textContent = '';
                 errorEl.hidden = true;
-                field && field.removeAttribute && field.removeAttribute('aria-invalid');
+                if (field) field.removeAttribute('aria-invalid');
             }
         });
     }
