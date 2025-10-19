@@ -16,8 +16,9 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
 ?>
 
 <!-- FORM SEMPLICE ATTIVO: <?php echo date('H:i:s'); ?> -->
-<div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
-    <style>
+        <div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
+            <!-- FORM SEMPLICE ATTIVO: <?php echo date('H:i:s'); ?> -->
+            <style>
         .fp-resv-simple {
             max-width: 480px;
             margin: 0 auto;
