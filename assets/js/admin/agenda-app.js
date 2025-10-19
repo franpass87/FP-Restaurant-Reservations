@@ -1099,6 +1099,13 @@ class ReservationManager {
                     <div class="fp-detail-value">${resv.party}</div>
                 </div>
                 
+                ${resv.meal ? `
+                <div class="fp-detail-group">
+                    <label>Servizio</label>
+                    <div class="fp-detail-value">${this.escapeHtml(resv.meal.charAt(0).toUpperCase() + resv.meal.slice(1))}</div>
+                </div>
+                ` : ''}
+                
                 <div class="fp-detail-group">
                     <label>Stato</label>
                     <div class="fp-detail-value">

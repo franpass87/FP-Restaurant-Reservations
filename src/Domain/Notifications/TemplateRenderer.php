@@ -156,6 +156,7 @@ final class TemplateRenderer
             'reservation.formatted_date'  => (string) ($context['date_formatted'] ?? ($context['date'] ?? '')),
             'reservation.formatted_time'  => (string) ($context['time_formatted'] ?? $time),
             'reservation.party'           => (string) ($context['party'] ?? ''),
+            'reservation.meal'            => (string) ($context['meal'] ?? ''),
             'reservation.manage_url'      => esc_url($manageUrl),
             'reservation.manage_link'     => $manageLink,
             'customer.first_name'         => esc_html((string) ($customer['first_name'] ?? '')),

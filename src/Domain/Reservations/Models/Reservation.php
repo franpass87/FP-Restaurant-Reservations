@@ -11,6 +11,7 @@ final class Reservation
     public string $date;
     public string $time;
     public int $party;
+    public string $meal = '';
     public string $email = '';
     public \DateTimeImmutable $created;
     public ?string $calendarEventId = null;

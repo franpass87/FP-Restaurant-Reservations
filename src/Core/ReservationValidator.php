@@ -26,6 +26,7 @@ class ReservationValidator
         $this->validateTime($payload['time'] ?? '');
         $this->validateDateTime($payload['date'] ?? '', $payload['time'] ?? '');
         $this->validateParty($payload['party'] ?? 0);
+        $this->validateMeal($payload['meal'] ?? '');
         $this->validateContact($payload);
 
         return $this->errors === [];
@@ -159,6 +160,19 @@ class ReservationValidator
                 ),
                 ['party' => $party, 'max_capacity' => $maxCapacity]
             );
+        }
+    }
+
+    private function validateMeal(string $meal): void
+    {
+        if ($meal === '') {
+            $this->errors['meal'] = __('Il servizio è obbligatorio.', 'fp-restaurant-reservations');
+            return;
+        }
+
+        $validMeals = ['pranzo', 'cena'];
+        if (!in_array(strtolower($meal), $validMeals, true)) {
+            $this->errors['meal'] = __('Servizio non valido. Scegli tra Pranzo o Cena.', 'fp-restaurant-reservations');
         }
     }
 

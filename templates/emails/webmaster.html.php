@@ -61,6 +61,19 @@ if ($createdAt instanceof \DateTimeImmutable) {
                 <?php echo esc_html($datetimeDisplay); ?>
             </td>
         </tr>
+        <?php if (!empty($reservation['meal'])) : ?>
+            <tr>
+                <th align="left" style="padding:4px 8px;font-weight:bold;">
+                    <?php echo esc_html($label($labels, 'meal', __('Servizio', 'fp-restaurant-reservations'))); ?>
+                </th>
+                <td style="padding:4px 8px;">
+                    <?php 
+                    $mealLabel = ucfirst($reservation['meal']);
+                    echo esc_html($mealLabel); 
+                    ?>
+                </td>
+            </tr>
+        <?php endif; ?>
         <tr>
             <th align="left" style="padding:4px 8px;font-weight:bold;">
                 <?php echo esc_html($label($labels, 'party', __('Coperti', 'fp-restaurant-reservations'))); ?>

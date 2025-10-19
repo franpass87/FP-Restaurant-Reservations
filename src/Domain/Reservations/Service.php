@@ -971,6 +971,7 @@ class Service
             'date'       => $payload['date'],
             'time'       => $payload['time'],
             'party'      => $payload['party'],
+            'meal'       => $payload['meal'] ?? '',
             'language'   => $languageCode,
             'manage_url' => $manageUrl,
             'customer'   => [
@@ -1152,6 +1153,7 @@ class Service
             'date'          => $payload['date'],
             'time'          => $payload['time'],
             'party'         => $payload['party'],
+            'meal'          => $payload['meal'] ?? '',
             'manage_url'    => $manageUrl,
             'notes'         => $payload['notes'],
             'allergies'     => $payload['allergies'],

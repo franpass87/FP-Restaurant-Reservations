@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Form Step 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #005a87; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Form Step 2 - Caricamento Date Disponibili</h1>
+    
+    <div class="test-section info">
+        <h3>🔍 Test 1: Verifica Endpoint</h3>
+        <button onclick="testEndpoint()">Testa Endpoint</button>
+        <div id="endpoint-result"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>🔍 Test 2: Simula Selezione Pasto</h3>
+        <button onclick="testMealSelection()">Testa Selezione Pranzo</button>
+        <div id="meal-result"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>🔍 Test 3: Test Completo Form</h3>
+        <button onclick="testCompleteForm()">Testa Form Completo</button>
+        <div id="form-result"></div>
+    </div>
+
+    <script>
+        async function testEndpoint() {
+            const resultDiv = document.getElementById('endpoint-result');
+            resultDiv.innerHTML = '<p>⏳ Testando endpoint...</p>';
+            
+            try {
+                const response = await fetch('test-endpoint-simple.php?from=2025-10-19&to=2026-01-19&meal=pranzo');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Endpoint funzionante!</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Content-Type:</strong> ${response.headers.get('content-type')}</p>
+                        <p><strong>Giorni disponibili:</strong> ${Object.keys(data.days).length}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore endpoint</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                        <p>Verifica che il file test-endpoint-simple.php sia accessibile.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testMealSelection() {
+            const resultDiv = document.getElementById('meal-result');
+            resultDiv.innerHTML = '<p>⏳ Testando selezione pasto...</p>';
+            
+            try {
+                // Simula la chiamata che fa il form
+                const today = new Date().toISOString().split('T')[0];
+                const to = new Date();
+                to.setMonth(to.getMonth() + 3);
+                const toDate = to.toISOString().split('T')[0];
+                
+                const response = await fetch(`test-endpoint-simple.php?from=${today}&to=${toDate}&meal=pranzo`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.days) {
+                    const availableDates = Object.keys(data.days).filter(date => {
+                        return data.days[date] && data.days[date].available;
+                    });
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Selezione pasto funzionante!</h4>
+                            <p><strong>Pasto selezionato:</strong> pranzo</p>
+                            <p><strong>Date disponibili:</strong> ${availableDates.length}</p>
+                            <p><strong>Date:</strong> ${availableDates.join(', ')}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Nessuna data disponibile');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore selezione pasto</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testCompleteForm() {
+            const resultDiv = document.getElementById('form-result');
+            resultDiv.innerHTML = '<p>⏳ Testando form completo...</p>';
+            
+            try {
+                // Testa tutti i passaggi del form
+                const tests = [
+                    { meal: 'pranzo', expected: true },
+                    { meal: 'cena', expected: true },
+                    { meal: 'colazione', expected: false }
+                ];
+                
+                let results = [];
+                
+                for (const test of tests) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const to = new Date();
+                    to.setMonth(to.getMonth() + 3);
+                    const toDate = to.toISOString().split('T')[0];
+                    
+                    const response = await fetch(`test-endpoint-simple.php?from=${today}&to=${toDate}&meal=${test.meal}`);
+                    const data = await response.json();
+                    
+                    const hasData = data && data.days && Object.keys(data.days).length > 0;
+                    results.push({
+                        meal: test.meal,
+                        success: hasData === test.expected,
+                        hasData: hasData
+                    });
+                }
+                
+                const allPassed = results.every(r => r.success);
+                
+                resultDiv.innerHTML = `
+                    <div class="${allPassed ? 'success' : 'error'}">
+                        <h4>${allPassed ? '✅' : '❌'} Test form completo</h4>
+                        ${results.map(r => `
+                            <p><strong>${r.meal}:</strong> ${r.success ? '✅' : '❌'} (dati: ${r.hasData ? 'sì' : 'no'})</p>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore test form</h4>
+                        <p><strong>Errore:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

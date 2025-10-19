@@ -127,7 +127,7 @@ final class Service
             $params[] = $location;
         }
 
-        $sql = 'SELECT date, party, value, currency, utm_source, utm_medium, utm_campaign, status '
+        $sql = 'SELECT date, party, meal, value, currency, utm_source, utm_medium, utm_campaign, status '
             . 'FROM ' . $table
             . ' WHERE ' . $where;
 
@@ -419,7 +419,7 @@ final class Service
             $params[] = $statusFilter;
         }
 
-        $sql = 'SELECT r.id, r.status, r.date, r.time, r.party, r.notes, r.allergies, r.value, r.currency,'
+        $sql = 'SELECT r.id, r.status, r.date, r.time, r.party, r.meal, r.notes, r.allergies, r.value, r.currency,'
             . ' r.lang, r.location_id, r.utm_source, r.utm_medium, r.utm_campaign, r.created_at, r.updated_at, r.visited_at,'
             . ' c.first_name, c.last_name, c.email, c.phone, c.lang AS customer_lang'
             . ' FROM ' . $reservationsTable . ' r'
@@ -438,6 +438,7 @@ final class Service
                     'date'            => (string) ($row['date'] ?? ''),
                     'time'            => $this->formatTime((string) ($row['time'] ?? '')),
                     'party'           => (string) ($row['party'] ?? ''),
+                    'meal'            => (string) ($row['meal'] ?? ''),
                     'location'        => (string) ($row['location_id'] ?? ''),
                     'language'        => (string) ($row['lang'] ?? ''),
                     'customer_name'   => $this->composeName((string) ($row['first_name'] ?? ''), (string) ($row['last_name'] ?? '')),

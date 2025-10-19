@@ -485,11 +485,11 @@ final class Language
                     ],
                     'confirmation' => [
                         'subject' => 'La tua prenotazione per {{reservation.formatted_date}}',
-                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nGrazie per aver prenotato per {{reservation.party}} persone il {{reservation.formatted_date}} alle {{reservation.formatted_time}}.\nStato prenotazione: {{reservation.status_label}}.\n\nPuoi gestire o annullare la prenotazione da qui: {{reservation.manage_link}}.\n\nSe hai bisogno di assistenza rispondi a questa email.",
+                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nGrazie per aver prenotato per {{reservation.party}} persone il {{reservation.formatted_date}} alle {{reservation.formatted_time}} per il {{reservation.meal}}.\nStato prenotazione: {{reservation.status_label}}.\n\nPuoi gestire o annullare la prenotazione da qui: {{reservation.manage_link}}.\n\nSe hai bisogno di assistenza rispondi a questa email.",
                     ],
                     'reminder' => [
                         'subject' => 'Promemoria: prenotazione del {{reservation.formatted_date}} alle {{reservation.formatted_time}}',
-                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nTi aspettiamo il {{reservation.formatted_date}} alle {{reservation.formatted_time}} per {{reservation.party}} persone.\nSe hai bisogno di modificare la prenotazione puoi farlo qui: {{reservation.manage_link}}.",
+                        'body'    => "Ciao {{customer.first_name}} {{customer.last_name}},\nTi aspettiamo il {{reservation.formatted_date}} alle {{reservation.formatted_time}} per {{reservation.party}} persone per il {{reservation.meal}}.\nSe hai bisogno di modificare la prenotazione puoi farlo qui: {{reservation.manage_link}}.",
                     ],
                     'review' => [
                         'subject' => 'Com\'è andata la tua visita da {{restaurant.name}}?',
@@ -745,11 +745,11 @@ final class Language
                     ],
                     'confirmation' => [
                         'subject' => 'Your reservation for {{reservation.formatted_date}}',
-                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nThanks for booking a table for {{reservation.party}} guests on {{reservation.formatted_date}} at {{reservation.formatted_time}}.\nReservation status: {{reservation.status_label}}.\n\nYou can manage or cancel your reservation here: {{reservation.manage_link}}.\n\nReply to this email if you need assistance.",
+                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nThanks for booking a table for {{reservation.party}} guests on {{reservation.formatted_date}} at {{reservation.formatted_time}} for {{reservation.meal}}.\nReservation status: {{reservation.status_label}}.\n\nYou can manage or cancel your reservation here: {{reservation.manage_link}}.\n\nReply to this email if you need assistance.",
                     ],
                     'reminder' => [
                         'subject' => 'Reminder: reservation on {{reservation.formatted_date}} at {{reservation.formatted_time}}',
-                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nWe look forward to seeing you on {{reservation.formatted_date}} at {{reservation.formatted_time}} for {{reservation.party}} guests.\nNeed to change something? Use this link: {{reservation.manage_link}}.",
+                        'body'    => "Hi {{customer.first_name}} {{customer.last_name}},\nWe look forward to seeing you on {{reservation.formatted_date}} at {{reservation.formatted_time}} for {{reservation.party}} guests for {{reservation.meal}}.\nNeed to change something? Use this link: {{reservation.manage_link}}.",
                     ],
                     'review' => [
                         'subject' => 'How was your visit at {{restaurant.name}}?',
