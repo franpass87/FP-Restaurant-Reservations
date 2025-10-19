@@ -85,7 +85,32 @@ Ma il file principale `form.css` è rimasto datato 12:50, e la cache del browser
 
 ## 🔧 Soluzioni
 
-### ✅ Soluzione 1: Script Automatico (CONSIGLIATA)
+### ✅ Soluzione 0: Auto-Rilevamento Modifiche (NUOVO - CONSIGLIATA)
+
+**🎉 Aggiornamento del 2025-10-19:**  
+Il sistema ora **rileva automaticamente le modifiche ai file** quando `WP_DEBUG` è attivo!
+
+Il metodo `Plugin::assetVersion()` è stato aggiornato per:
+- Monitorare i timestamp di modifica dei file chiave (form.php, CSS, JS)
+- Usare automaticamente il file più recente come versione
+- **Eliminare completamente il problema della cache in sviluppo**
+
+**Come attivarlo:**
+
+Aggiungi o modifica in `wp-config.php`:
+```php
+define('WP_DEBUG', true);
+```
+
+✅ **Vantaggi:**
+- Zero configurazione aggiuntiva
+- I cambiamenti vengono rilevati automaticamente
+- Non serve più refresh manuale
+- Funziona per tutti i file del form
+
+⚠️ **Nota:** Usa solo in ambiente di sviluppo, non in produzione!
+
+### ✅ Soluzione 1: Script Automatico
 
 Ho creato uno script `force-refresh-assets.php` nella root del progetto.
 

@@ -100,9 +100,28 @@ final class Plugin
      */
     public static function assetVersion(): string
     {
-        // In debug mode, always use current timestamp to bust cache
+        // In debug mode, use file modification time to auto-detect changes
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            return self::VERSION . '.' . time();
+            // Use the latest modification time of key frontend files
+            $files = [
+                self::$dir . 'templates/frontend/form.php',
+                self::$dir . 'assets/css/form-thefork.css',
+                self::$dir . 'assets/css/form.css',
+                self::$dir . 'assets/dist/fe/onepage.esm.js',
+                self::$dir . 'assets/dist/fe/onepage.iife.js',
+            ];
+            
+            $latestTime = time();
+            foreach ($files as $file) {
+                if (file_exists($file)) {
+                    $mtime = filemtime($file);
+                    if ($mtime !== false && $mtime > $latestTime) {
+                        $latestTime = $mtime;
+                    }
+                }
+            }
+            
+            return self::VERSION . '.' . $latestTime;
         }
         
         // In production, use upgrade timestamp for stable caching
