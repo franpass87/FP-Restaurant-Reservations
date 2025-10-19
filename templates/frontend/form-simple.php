@@ -885,8 +885,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         /* Responsive */
         @media (max-width: 640px) {
             .fp-resv-simple {
-                margin: 12px;
-                padding: 20px 16px;
+                margin: 20px;
+                padding: 24px 20px;
             }
             
             .fp-resv-simple h2 {
