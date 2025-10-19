@@ -137,6 +137,26 @@ final class WidgetController
             margin-top: 2px !important;
             align-self: flex-start !important;
         }
+        
+        /* Allineamento sezione Servizi Aggiuntivi */
+        html body .fp-resv-simple .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
+            align-items: flex-start !important;
+        }
+        
+        #fp-resv-default .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
+            align-items: flex-start !important;
+        }
+        
+        /* Spaziatura link Privacy Policy */
+        html body .fp-resv-simple .fp-field a {
+            margin: 0 2px !important;
+            display: inline !important;
+        }
+        
+        #fp-resv-default .fp-field a {
+            margin: 0 2px !important;
+            display: inline !important;
+        }
         </style>';
     }
     

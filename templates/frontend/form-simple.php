@@ -374,6 +374,26 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             align-self: flex-start !important;
         }
         
+        /* Allineamento sezione Servizi Aggiuntivi */
+        .fp-resv-simple .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
+            align-items: flex-start !important;
+        }
+        
+        #fp-resv-default .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
+            align-items: flex-start !important;
+        }
+        
+        /* Spaziatura link Privacy Policy */
+        .fp-resv-simple .fp-field a {
+            margin: 0 2px !important;
+            display: inline !important;
+        }
+        
+        #fp-resv-default .fp-field a {
+            margin: 0 2px !important;
+            display: inline !important;
+        }
+        
         /* Input date - permette click su tutta l'area */
         .fp-field input[type="date"] {
             cursor: pointer;
@@ -913,7 +933,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <!-- Extras -->
         <div class="fp-field">
             <label>Servizi Aggiuntivi</label>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                     <input type="checkbox" name="fp_resv_wheelchair_table" value="1" style="width: 18px; height: 18px; margin: 0; cursor: pointer;">
                     <span>Tavolo accessibile per sedia a rotelle</span>
