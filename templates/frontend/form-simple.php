@@ -321,9 +321,21 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         /* Checkbox styling */
         .fp-field input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-            transform: scale(1.2);
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            transform: none;
+            cursor: pointer;
+            accent-color: #000000;
+        }
+        
+        .fp-field label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
         }
         
         /* Input date - permette click su tutta l'area */
@@ -756,8 +768,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         </div>
         <div class="fp-field">
             <label for="customer-phone">Telefono *</label>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <select name="fp_resv_phone_prefix" style="width: 120px; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <select name="fp_resv_phone_prefix" style="width: 100px; padding: 12px 8px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 13px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
                     <?php 
                     $phonePrefixes = $config['phone_prefixes'] ?? [];
                     $defaultPhoneCode = $config['defaults']['phone_country_code'] ?? '39';
@@ -791,7 +803,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                         <option value="1">🇺🇸 +1 · Stati Uniti</option>
                     <?php endif; ?>
                 </select>
-                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
+                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1; min-width: 0; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
             </div>
         </div>
         <div class="fp-field">
@@ -820,11 +832,11 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-field">
             <label>Servizi Aggiuntivi</label>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="display: flex; align-items: center; gap: 8px;">
+                <label>
                     <input type="checkbox" name="fp_resv_wheelchair_table" value="1">
                     <span>Tavolo accessibile per sedia a rotelle</span>
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px;">
+                <label>
                     <input type="checkbox" name="fp_resv_pets" value="1">
                     <span>Accompagnato da animale domestico</span>
                 </label>
@@ -837,14 +849,14 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         <!-- Privacy -->
         <div class="fp-field">
-            <label style="display: flex; align-items: flex-start; gap: 8px;">
-                <input type="checkbox" name="fp_resv_consent" required style="margin-top: 4px;">
+            <label>
+                <input type="checkbox" name="fp_resv_consent" required>
                 <span>Accetto la <a href="#" target="_blank">Privacy Policy</a> e il trattamento dei miei dati personali *</span>
             </label>
         </div>
         <div class="fp-field">
-            <label style="display: flex; align-items: flex-start; gap: 8px;">
-                <input type="checkbox" name="fp_resv_marketing_consent" value="1" style="margin-top: 4px;">
+            <label>
+                <input type="checkbox" name="fp_resv_marketing_consent" value="1">
                 <span>Acconsento al trattamento dei dati per comunicazioni marketing (opzionale)</span>
             </label>
         </div>
