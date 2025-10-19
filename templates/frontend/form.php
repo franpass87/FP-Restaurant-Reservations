@@ -1,6 +1,6 @@
 <?php
 /**
- * Frontend reservation form - Rebuilt from scratch in The Fork style
+ * Frontend reservation form - VERSIONE SEMPLIFICATA
  * 
  * @var array<string, mixed> $context
  */
@@ -8,6 +8,10 @@
 if (!isset($context) || !is_array($context)) {
     return;
 }
+
+// USA IL FORM SEMPLICE
+include __DIR__ . '/form-simple.php';
+return;
 
 $config = $context['config'] ?? [];
 $strings = $context['strings'] ?? [];

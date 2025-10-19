@@ -844,8 +844,31 @@ class Availability
      */
     private function resolveScheduleForDay(DateTimeImmutable $day, array $scheduleMap): array
     {
-        $dayKey = strtolower($day->format('D'));
+        $dayKey = strtolower($day->format('D')); // mon, tue, wed, etc.
+        
+        // Mapping italiano -> inglese per compatibilità
+        $italianToEnglish = [
+            'lun' => 'mon',
+            'mar' => 'tue',
+            'mer' => 'wed',
+            'gio' => 'thu',
+            'ven' => 'fri',
+            'sab' => 'sat',
+            'dom' => 'sun'
+        ];
+        
+        // Prova prima con il giorno inglese (formato standard PHP)
         $schedule = $scheduleMap[$dayKey] ?? [];
+        
+        // Se vuoto, prova con il mapping italiano
+        if (empty($schedule)) {
+            foreach ($scheduleMap as $key => $value) {
+                if (isset($italianToEnglish[$key]) && $italianToEnglish[$key] === $dayKey) {
+                    $schedule = $value;
+                    break;
+                }
+            }
+        }
 
         Logging::log('availability', 'resolveScheduleForDay', [
             'date' => $day->format('Y-m-d'),
@@ -853,15 +876,17 @@ class Availability
             'schedule_for_day' => $schedule,
             'schedule_is_empty' => $schedule === [],
             'available_days' => array_keys($scheduleMap),
+            'mapping_used' => empty($scheduleMap[$dayKey]) ? 'italian_mapping' : 'direct',
         ]);
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(
-                '[FP-RESV] resolveScheduleForDay - date: %s, dayKey: %s, schedule: %s, full scheduleMap: %s',
+                '[FP-RESV] resolveScheduleForDay - date: %s, dayKey: %s, schedule: %s, full scheduleMap: %s, mapping: %s',
                 $day->format('Y-m-d'),
                 $dayKey,
                 wp_json_encode($schedule) ?: 'empty',
-                wp_json_encode($scheduleMap) ?: 'empty'
+                wp_json_encode($scheduleMap) ?: 'empty',
+                empty($scheduleMap[$dayKey]) ? 'italian' : 'direct'
             ));
         }
 
