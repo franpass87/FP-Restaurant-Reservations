@@ -173,12 +173,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigation
     function showStep(step) {
+        console.log('showStep chiamata con step:', step);
         steps.forEach(s => s.classList.remove('active'));
         progressSteps.forEach(p => p.classList.remove('active', 'completed'));
         
         const currentStepEl = form.querySelector(`[data-step="${step}"]`);
+        console.log('Elemento step trovato:', currentStepEl);
         if (currentStepEl) {
             currentStepEl.classList.add('active');
+            console.log('Classe active aggiunta al step', step);
+        } else {
+            console.error('Elemento step non trovato per step:', step);
         }
         
         // Update progress
@@ -339,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Force show step 2 if it's hidden
                 if (currentStep === 1) {
                     currentStep = 2;
+                    console.log('Forzando visualizzazione step 2, currentStep:', currentStep);
                     showStep(currentStep);
                 }
                 
