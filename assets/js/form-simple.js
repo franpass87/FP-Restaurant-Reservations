@@ -10,6 +10,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // Funzione helper per mostrare notice
+    function showNotice(type, message, duration = 5000) {
+        if (window.fpNoticeManager) {
+            return window.fpNoticeManager.show(type, message, duration);
+        } else {
+            // Fallback a alert se il notice manager non è disponibile
+            alert(message);
+        }
+    }
+    
     let currentStep = 1;
     const totalSteps = 4;
     
@@ -244,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             showStep(currentStep);
         } else {
-            alert('Per favore completa tutti i campi richiesti.');
+            showNotice('warning', 'Per favore completa tutti i campi richiesti.');
         }
     });
     
@@ -291,9 +301,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Submit form
             console.log('Form data completo:', formData);
-            alert('Prenotazione inviata! (Questo è un demo)\n\nDati raccolti:\n- Servizio: ' + formData.meal + '\n- Data: ' + formData.date + '\n- Orario: ' + formData.time + '\n- Persone: ' + formData.party + '\n- Nome: ' + formData.firstName + ' ' + formData.lastName + '\n- Email: ' + formData.email + '\n- Telefono: ' + formData.phone);
+            showNotice('success', 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');
         } else {
-            alert('Per favore completa tutti i campi richiesti.');
+            showNotice('warning', 'Per favore completa tutti i campi richiesti.');
         }
     });
     
@@ -353,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (dateField) {
                     dateField.style.display = 'block';
                     console.log('Date field mostrato:', dateField);
+                    showNotice('success', 'Date disponibili caricate con successo!');
                 } else {
                     console.error('Date field non trovato');
                 }
@@ -404,6 +415,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                     console.error(`Errore endpoint ${currentEndpointIndex + 1}:`, error);
+                    if (currentEndpointIndex === 0) {
+                        showNotice('warning', 'Problemi di connessione. Riprovo con un server alternativo...');
+                    }
                     currentEndpointIndex++;
                     tryNextEndpoint();
                 });
@@ -689,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedDate && availableDatesList) {
                 const availableDatesArray = availableDatesList.split(',');
                 if (!availableDatesArray.includes(selectedDate)) {
-                alert('Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
+                showNotice('error', 'Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
                 this.value = '';
                 return;
                 }
@@ -766,6 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Errore nel caricamento orari:', error);
                 console.log('Usando orari di fallback per', meal, 'alle', date);
+                showNotice('info', 'Caricamento orari in corso...');
                 
                 // Fallback: genera orari localmente
                 const fallbackSlots = generateFallbackTimeSlots(meal);

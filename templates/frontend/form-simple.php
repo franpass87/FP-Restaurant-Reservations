@@ -183,6 +183,127 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             border-radius: 2px;
         }
         
+        /* Notice Inline System */
+        .fp-notice-container {
+            margin: 16px 0;
+            min-height: 0;
+        }
+        
+        .fp-notice {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInDown 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fp-notice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+        
+        .fp-notice--success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        
+        .fp-notice--success::before {
+            background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+        }
+        
+        .fp-notice--error {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .fp-notice--error::before {
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .fp-notice--warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: #fed7aa;
+            color: #d97706;
+        }
+        
+        .fp-notice--warning::before {
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .fp-notice--info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #bfdbfe;
+            color: #2563eb;
+        }
+        
+        .fp-notice--info::before {
+            background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .fp-notice__icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        .fp-notice__content {
+            flex: 1;
+        }
+        
+        .fp-notice__close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .fp-notice__close:hover {
+            opacity: 1;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideOutUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+        
+        .fp-notice--closing {
+            animation: slideOutUp 0.3s ease-in forwards;
+        }
+        
         .fp-field input,
         .fp-field select,
         .fp-field textarea {
@@ -850,6 +971,11 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
 
     <h2>Prenota il Tuo Tavolo</h2>
     
+    <!-- Area Notice Inline -->
+    <div class="fp-notice-container" id="fp-notice-container">
+        <!-- I notice verranno inseriti qui dinamicamente -->
+    </div>
+    
     <!-- Progress Bar -->
     <div class="fp-progress">
         <div class="fp-progress-step active" data-step="1">1</div>
@@ -1149,3 +1275,157 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
 </div>
 
 <script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>"></script>
+
+<script>
+// Sistema Notice Inline
+class NoticeManager {
+    constructor() {
+        this.container = document.getElementById('fp-notice-container');
+        this.notices = new Map();
+        this.init();
+    }
+    
+    init() {
+        if (!this.container) return;
+        
+        // Override delle funzioni di notifica esistenti
+        this.overrideExistingNotifications();
+    }
+    
+    overrideExistingNotifications() {
+        // Override per alert/notify esistenti
+        const originalAlert = window.alert;
+        const originalNotify = window.notify;
+        
+        // Intercetta alert
+        window.alert = (message) => {
+            this.show('info', message, 5000);
+        };
+        
+        // Intercetta notify se esiste
+        if (typeof window.notify === 'function') {
+            window.notify = (message, level = 'info') => {
+                this.show(level, message, 5000);
+            };
+        }
+        
+        // Intercetta console.error per errori JavaScript
+        const originalConsoleError = console.error;
+        console.error = (...args) => {
+            originalConsoleError.apply(console, args);
+            const message = args.join(' ');
+            if (message.includes('Error') || message.includes('error')) {
+                this.show('error', 'Si è verificato un errore. Riprova.', 5000);
+            }
+        };
+    }
+    
+    show(type, message, duration = 5000) {
+        if (!this.container) return;
+        
+        const id = Date.now() + Math.random();
+        const notice = this.createNotice(id, type, message);
+        
+        this.container.appendChild(notice);
+        this.notices.set(id, notice);
+        
+        // Auto-remove dopo la durata specificata
+        if (duration > 0) {
+            setTimeout(() => {
+                this.remove(id);
+            }, duration);
+        }
+        
+        return id;
+    }
+    
+    createNotice(id, type, message) {
+        const notice = document.createElement('div');
+        notice.className = `fp-notice fp-notice--${type}`;
+        notice.setAttribute('data-notice-id', id);
+        
+        const icon = this.getIcon(type);
+        const closeButton = this.createCloseButton(id);
+        
+        notice.innerHTML = `
+            <span class="fp-notice__icon">${icon}</span>
+            <div class="fp-notice__content">${message}</div>
+        `;
+        
+        notice.appendChild(closeButton);
+        
+        return notice;
+    }
+    
+    getIcon(type) {
+        const icons = {
+            success: '✓',
+            error: '✕',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+        return icons[type] || icons.info;
+    }
+    
+    createCloseButton(id) {
+        const button = document.createElement('button');
+        button.className = 'fp-notice__close';
+        button.innerHTML = '×';
+        button.setAttribute('aria-label', 'Chiudi notifica');
+        
+        button.addEventListener('click', () => {
+            this.remove(id);
+        });
+        
+        return button;
+    }
+    
+    remove(id) {
+        const notice = this.notices.get(id);
+        if (!notice) return;
+        
+        notice.classList.add('fp-notice--closing');
+        
+        setTimeout(() => {
+            if (notice.parentNode) {
+                notice.parentNode.removeChild(notice);
+            }
+            this.notices.delete(id);
+        }, 300);
+    }
+    
+    clear() {
+        this.notices.forEach((notice, id) => {
+            this.remove(id);
+        });
+    }
+    
+    // Metodi di convenienza
+    success(message, duration = 5000) {
+        return this.show('success', message, duration);
+    }
+    
+    error(message, duration = 8000) {
+        return this.show('error', message, duration);
+    }
+    
+    warning(message, duration = 6000) {
+        return this.show('warning', message, duration);
+    }
+    
+    info(message, duration = 5000) {
+        return this.show('info', message, duration);
+    }
+}
+
+// Inizializza il sistema di notice quando il DOM è pronto
+document.addEventListener('DOMContentLoaded', function() {
+    window.fpNoticeManager = new NoticeManager();
+    
+    // Esempi di utilizzo (da rimuovere in produzione)
+    // window.fpNoticeManager.success('Prenotazione completata con successo!');
+    // window.fpNoticeManager.error('Errore durante l\'invio della prenotazione');
+    // window.fpNoticeManager.warning('Attenzione: alcuni campi sono obbligatori');
+    // window.fpNoticeManager.info('Informazione: il ristorante è chiuso il lunedì');
+});
+</script>
