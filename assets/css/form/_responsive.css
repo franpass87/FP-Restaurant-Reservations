@@ -27,12 +27,12 @@
     align-items: flex-start;
   }
   
-  .fp-topbar .fp-resv-widget__headline {
+  .fp-topbar .fp-resv-headline {
     text-align: center;
     width: 100%;
   }
   
-  .fp-topbar .fp-resv-widget__subheadline {
+  .fp-topbar .fp-resv-subheadline {
     text-align: center;
     width: 100%;
   }

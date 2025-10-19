@@ -15,7 +15,7 @@
 
 /* ==================== HEADINGS MODERNI ==================== */
 
-.fp-resv-widget__headline {
+.fp-resv-headline {
   margin: 0;
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: var(--fp-font-bold);
@@ -24,7 +24,7 @@
   color: var(--fp-color-text);
 }
 
-.fp-resv-widget__subheadline {
+.fp-resv-subheadline {
   margin: var(--fp-space-sm) 0 0;
   font-size: var(--fp-text-lg);
   color: var(--fp-color-text-secondary);
