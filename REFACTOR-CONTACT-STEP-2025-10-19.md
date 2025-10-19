@@ -21,7 +21,8 @@ Refactor completo dello step "dati di contatto" (details) del form di prenotazio
 #### Dopo:
 ```
 ├─ Nome e Cognome (2 colonne) ✓
-├─ Email e Telefono (2 colonne) ✓✓ NUOVO LAYOUT
+├─ Email (full-width)
+├─ Telefono con prefisso (full-width)
 ├─ Occasione speciale (select) ✓✓ NUOVO CAMPO
 ├─ Note aggiuntive (full-width)
 ├─ Allergie (full-width)
@@ -42,10 +43,10 @@ Il campo è **opzionale** e appare nel riepilogo finale solo se compilato.
 
 ### 3. **Miglioramenti UI/UX**
 
-#### Layout a 2 colonne:
-- **Email e Telefono** ora sono affiancati su schermi desktop/tablet
-- Layout responsive: torna a 1 colonna su mobile (<640px)
-- Migliore utilizzo dello spazio orizzontale
+#### Layout ottimizzato:
+- **Nome e Cognome** affiancati su 2 colonne (responsive: 1 colonna su mobile)
+- **Email** su riga dedicata per migliore leggibilità
+- **Telefono con prefisso** su riga dedicata con layout inline ottimizzato
 
 #### Fieldset "Richieste aggiuntive":
 - Stile visivo migliorato con sfondo gradient
