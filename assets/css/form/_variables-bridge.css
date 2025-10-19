@@ -1,0 +1,96 @@
+/**
+ * FP Restaurant Reservations - CSS Variables Bridge
+ * 
+ * PROBLEMA: Il sistema usa due nomenclature di variabili:
+ * - --fp-color-* (CSS statici in form-thefork-bw.css)
+ * - --fp-resv-* (CSS dinamici da Style.php/database)
+ * 
+ * SOLUZIONE: Questo bridge permette la coesistenza e il fallback automatico
+ * 
+ * @version 1.0.0
+ * @date 2025-10-19
+ */
+
+:root {
+  /* ==================== BRIDGE: --fp-resv-* → --fp-color-* ==================== */
+  
+  /* Se --fp-resv-primary è definito (da CSS dinamico), usalo
+     Altrimenti usa --fp-color-primary (da CSS statico) */
+  
+  --fp-primary: var(--fp-resv-primary, var(--fp-color-primary, #000000));
+  --fp-button-bg: var(--fp-resv-button-bg, var(--fp-color-primary, #000000));
+  --fp-button-text: var(--fp-resv-button-text, var(--fp-color-text-inverse, #ffffff));
+  --fp-surface: var(--fp-resv-surface, var(--fp-color-surface, #ffffff));
+  --fp-text: var(--fp-resv-text, var(--fp-color-text, #1a1a1a));
+  --fp-text-secondary: var(--fp-resv-text-muted, var(--fp-color-text-secondary, #666666));
+  --fp-border: var(--fp-resv-divider, var(--fp-color-border, #e0e0e0));
+  
+  /* ==================== REVERSE BRIDGE: --fp-color-* → --fp-resv-* ==================== */
+  
+  /* Permette ai CSS dinamici di usare i valori statici come fallback */
+  --fp-resv-primary-fallback: var(--fp-color-primary, #000000);
+  --fp-resv-surface-fallback: var(--fp-color-surface, #ffffff);
+  --fp-resv-text-fallback: var(--fp-color-text, #1a1a1a);
+}
+
+/* ==================== APPLICAZIONE BRIDGE ==================== */
+
+/* Applica le variabili bridge ai componenti principali */
+.fp-resv-widget {
+  /* Usa il bridge per garantire compatibilità */
+  --fp-active-primary: var(--fp-primary);
+  --fp-active-button-bg: var(--fp-button-bg);
+  --fp-active-button-text: var(--fp-button-text);
+}
+
+/* Bottoni: priorità al bridge */
+.fp-btn,
+.fp-resv-button,
+.fp-meal-pill[data-active="true"],
+.fp-resv-slots__list button[aria-pressed="true"] {
+  background: var(--fp-button-bg) !important;
+  color: var(--fp-button-text) !important;
+  border-color: var(--fp-button-bg) !important;
+}
+
+/* Hover bottoni */
+.fp-btn:hover:not(:disabled),
+.fp-resv-button:hover:not(:disabled) {
+  background: var(--fp-resv-button-bg-hover, var(--fp-color-primary-hover, #1a1a1a)) !important;
+  border-color: var(--fp-resv-button-bg-hover, var(--fp-color-primary-hover, #1a1a1a)) !important;
+}
+
+/* Progress bar attivo */
+.fp-progress__item[data-state="active"],
+.fp-progress__item[aria-current="step"] {
+  background: var(--fp-primary) !important;
+  border-color: var(--fp-primary) !important;
+}
+
+.fp-progress__item[data-state="active"] .fp-progress__index,
+.fp-progress__item[aria-current="step"] .fp-progress__index {
+  background: var(--fp-primary) !important;
+  border-color: var(--fp-primary) !important;
+}
+
+/* Input focus */
+.fp-input:focus,
+.fp-textarea:focus,
+.fp-select:focus {
+  border-color: var(--fp-primary) !important;
+  box-shadow: 0 0 0 3px var(--fp-resv-focus, rgba(0, 0, 0, 0.1)) !important;
+}
+
+/* ==================== NOTA IMPORTANTE ==================== */
+
+/*
+ * Questo bridge garantisce che:
+ * 1. CSS dinamici (--fp-resv-*) hanno PRIORITÀ quando presenti
+ * 2. CSS statici (--fp-color-*) funzionano come FALLBACK
+ * 3. Entrambi i sistemi possono coesistere senza conflitti
+ * 
+ * FUNZIONAMENTO:
+ * - Se Style.php genera CSS → usa --fp-resv-*
+ * - Se Style.php NON genera CSS → usa --fp-color-* dai file statici
+ * - Il bridge con !important assicura che i valori siano applicati
+ */
