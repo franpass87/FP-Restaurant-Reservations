@@ -396,6 +396,137 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             border-color: #e0e0e0;
         }
         
+        /* Party Selector */
+        .fp-party-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            border: 2px solid #e8e8e8;
+        }
+        
+        .fp-btn-minus, .fp-btn-plus {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #000000;
+            background: #ffffff;
+            color: #000000;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fp-btn-minus:hover, .fp-btn-plus:hover {
+            background: #000000;
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        
+        .fp-btn-minus:disabled, .fp-btn-plus:disabled {
+            background: #f5f5f5;
+            color: #999;
+            border-color: #e8e8e8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .fp-party-display {
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .fp-party-display #party-count {
+            display: block;
+            font-size: 36px;
+            font-weight: bold;
+            color: #000000;
+            line-height: 1;
+        }
+        
+        .fp-party-display #party-label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Summary Step */
+        .fp-summary {
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #e8e8e8;
+        }
+        
+        .fp-summary-section {
+            margin-bottom: 25px;
+        }
+        
+        .fp-summary-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .fp-summary-section h4 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000;
+            border-bottom: 2px solid #e8e8e8;
+            padding-bottom: 8px;
+        }
+        
+        .fp-summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .fp-summary-item:last-child {
+            border-bottom: none;
+        }
+        
+        .fp-summary-label {
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .fp-summary-value {
+            font-weight: 600;
+            color: #000000;
+            font-size: 14px;
+            text-align: right;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+        
+        .fp-summary-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .fp-summary-note p {
+            margin: 0;
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.5;
+        }
+        
         /* Loading states */
         #date-loading, #time-loading {
             text-align: center;
@@ -498,7 +629,6 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-progress-step" data-step="2">2</div>
         <div class="fp-progress-step" data-step="3">3</div>
         <div class="fp-progress-step" data-step="4">4</div>
-        <div class="fp-progress-step" data-step="5">5</div>
     </div>
 
     <!-- Step 1: Servizio -->
@@ -530,11 +660,13 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         </div>
     </div>
 
-    <!-- Step 2: Data -->
+    <!-- Step 2: Data, Persone e Orario -->
     <div class="fp-step" data-step="2">
-        <h3>2. Scegli la Data</h3>
+        <h3>2. Scegli Data, Persone e Orario</h3>
+        
+        <!-- Data -->
         <div class="fp-field">
-            <label for="reservation-date">Data</label>
+            <label for="reservation-date">Data della prenotazione *</label>
             <input type="date" id="reservation-date" name="date" required>
             <div id="date-loading" style="display: none; margin-top: 8px; font-size: 13px; color: #666;">
                 ⏳ Caricamento date disponibili...
@@ -543,49 +675,39 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                 📅 Seleziona una data disponibile per il servizio scelto
             </div>
         </div>
-    </div>
-
-    <!-- Step 3: Persone -->
-    <div class="fp-step" data-step="3">
-        <h3>3. Quante Persone?</h3>
+        
+        <!-- Persone -->
         <div class="fp-field">
-            <label for="party-size">Numero di persone</label>
-            <select id="party-size" name="party" required>
-                <option value="">Seleziona...</option>
-                <?php 
-                $defaultPartySize = $config['defaults']['partySize'] ?? 2;
-                $maxPartySize = 20; // Potrebbe essere configurato nel backend
-                for ($i = 1; $i <= $maxPartySize; $i++): 
-                ?>
-                    <option value="<?php echo $i; ?>" <?php echo $i == $defaultPartySize ? 'selected' : ''; ?>>
-                        <?php echo $i; ?> <?php echo $i == 1 ? 'persona' : 'persone'; ?>
-                    </option>
-                <?php endfor; ?>
-            </select>
+            <label>Numero di persone</label>
+            <div class="fp-party-selector">
+                <button type="button" class="fp-btn-minus" id="party-minus">−</button>
+                <div class="fp-party-display">
+                    <span id="party-count">2</span>
+                    <span id="party-label">persone</span>
+                </div>
+                <button type="button" class="fp-btn-plus" id="party-plus">+</button>
+            </div>
+            <input type="hidden" id="party-size" name="party" value="2" required>
         </div>
-    </div>
-
-    <!-- Step 4: Orari -->
-    <div class="fp-step" data-step="4">
-        <h3>4. Scegli l'Orario</h3>
+        
+        <!-- Orari -->
         <div class="fp-field">
-            <div id="time-slots-container">
-                <div id="time-loading" style="display: none; text-align: center; padding: 20px; color: #666;">
-                    ⏳ Caricamento orari disponibili...
-                </div>
-                <div id="time-slots" class="fp-time-slots">
-                    <!-- Gli orari verranno caricati dinamicamente -->
-                </div>
-                <div id="time-info" style="display: none; font-size: 12px; color: #666; margin-top: 10px;">
-                    Seleziona un orario per continuare
-                </div>
+            <label>Orario preferito</label>
+            <div id="time-loading" style="display: none; text-align: center; padding: 20px; color: #666;">
+                ⏳ Caricamento orari disponibili...
+            </div>
+            <div id="time-slots" class="fp-time-slots">
+                <!-- Gli orari verranno caricati dinamicamente -->
+            </div>
+            <div id="time-info" style="display: none; font-size: 12px; color: #666; margin-top: 10px;">
+                Seleziona un orario per continuare
             </div>
         </div>
     </div>
 
-    <!-- Step 5: Dettagli -->
-    <div class="fp-step" data-step="5">
-        <h3>5. I Tuoi Dettagli</h3>
+    <!-- Step 3: Dettagli -->
+    <div class="fp-step" data-step="3">
+        <h3>3. I Tuoi Dettagli</h3>
         <div class="fp-field">
             <label for="customer-first-name">Nome *</label>
             <input type="text" id="customer-first-name" name="fp_resv_first_name" required autocomplete="given-name">
@@ -691,6 +813,80 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                 <input type="checkbox" name="fp_resv_marketing_consent" value="1" style="margin-top: 4px;">
                 <span>Acconsento al trattamento dei dati per comunicazioni marketing (opzionale)</span>
             </label>
+        </div>
+    </div>
+
+    <!-- Step 4: Riepilogo -->
+    <div class="fp-step" data-step="4">
+        <h3>4. Riepilogo Prenotazione</h3>
+        <div class="fp-summary">
+            <div class="fp-summary-section">
+                <h4>📅 Dettagli Prenotazione</h4>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Servizio:</span>
+                    <span class="fp-summary-value" id="summary-meal">-</span>
+                </div>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Data:</span>
+                    <span class="fp-summary-value" id="summary-date">-</span>
+                </div>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Orario:</span>
+                    <span class="fp-summary-value" id="summary-time">-</span>
+                </div>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Persone:</span>
+                    <span class="fp-summary-value" id="summary-party">-</span>
+                </div>
+            </div>
+            
+            <div class="fp-summary-section">
+                <h4>👤 Dettagli Personali</h4>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Nome:</span>
+                    <span class="fp-summary-value" id="summary-name">-</span>
+                </div>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Email:</span>
+                    <span class="fp-summary-value" id="summary-email">-</span>
+                </div>
+                <div class="fp-summary-item">
+                    <span class="fp-summary-label">Telefono:</span>
+                    <span class="fp-summary-value" id="summary-phone">-</span>
+                </div>
+                <div class="fp-summary-item" id="summary-occasion-row" style="display: none;">
+                    <span class="fp-summary-label">Occasione:</span>
+                    <span class="fp-summary-value" id="summary-occasion">-</span>
+                </div>
+                <div class="fp-summary-item" id="summary-notes-row" style="display: none;">
+                    <span class="fp-summary-label">Note:</span>
+                    <span class="fp-summary-value" id="summary-notes">-</span>
+                </div>
+                <div class="fp-summary-item" id="summary-allergies-row" style="display: none;">
+                    <span class="fp-summary-label">Allergie:</span>
+                    <span class="fp-summary-value" id="summary-allergies">-</span>
+                </div>
+            </div>
+            
+            <div class="fp-summary-section" id="summary-extras-row" style="display: none;">
+                <h4>🔧 Servizi Aggiuntivi</h4>
+                <div class="fp-summary-item" id="summary-wheelchair-row" style="display: none;">
+                    <span class="fp-summary-label">Tavolo accessibile:</span>
+                    <span class="fp-summary-value">Sì</span>
+                </div>
+                <div class="fp-summary-item" id="summary-pets-row" style="display: none;">
+                    <span class="fp-summary-label">Animale domestico:</span>
+                    <span class="fp-summary-value">Sì</span>
+                </div>
+                <div class="fp-summary-item" id="summary-highchair-row" style="display: none;">
+                    <span class="fp-summary-label">Seggioloni:</span>
+                    <span class="fp-summary-value" id="summary-highchair">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fp-summary-note">
+            <p>📝 <strong>Verifica attentamente tutti i dati</strong> prima di confermare la prenotazione. Una volta inviata, riceverai una email di conferma.</p>
         </div>
     </div>
 

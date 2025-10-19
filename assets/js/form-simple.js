@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     let currentStep = 1;
-    const totalSteps = 5;
+    const totalSteps = 4;
     
     const steps = form.querySelectorAll('.fp-step');
     const progressSteps = form.querySelectorAll('.fp-progress-step');
@@ -43,6 +43,134 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize meal buttons
     setupMealButtons();
     
+    // Initialize party size selector
+    setupPartySelector();
+    
+    function setupPartySelector() {
+        const minusBtn = document.getElementById('party-minus');
+        const plusBtn = document.getElementById('party-plus');
+        const countDisplay = document.getElementById('party-count');
+        const labelDisplay = document.getElementById('party-label');
+        const hiddenInput = document.getElementById('party-size');
+        
+        let partyCount = 2; // Default value
+        const minParty = 1;
+        const maxParty = 20;
+        
+        function updatePartyDisplay() {
+            countDisplay.textContent = partyCount;
+            labelDisplay.textContent = partyCount === 1 ? 'persona' : 'persone';
+            hiddenInput.value = partyCount;
+            
+            // Update button states
+            minusBtn.disabled = partyCount <= minParty;
+            plusBtn.disabled = partyCount >= maxParty;
+            
+            // Trigger change event to load time slots
+            hiddenInput.dispatchEvent(new Event('change'));
+            
+            console.log('Party count updated:', partyCount);
+        }
+        
+        minusBtn.addEventListener('click', function() {
+            if (partyCount > minParty) {
+                partyCount--;
+                updatePartyDisplay();
+            }
+        });
+        
+        plusBtn.addEventListener('click', function() {
+            if (partyCount < maxParty) {
+                partyCount++;
+                updatePartyDisplay();
+            }
+        });
+        
+        // Initialize display
+        updatePartyDisplay();
+    }
+    
+    function populateSummary() {
+        // Dettagli prenotazione
+        document.getElementById('summary-meal').textContent = selectedMeal || '-';
+        document.getElementById('summary-date').textContent = document.getElementById('reservation-date').value || '-';
+        document.getElementById('summary-time').textContent = selectedTime || '-';
+        document.getElementById('summary-party').textContent = document.getElementById('party-size').value + ' persone';
+        
+        // Dettagli personali
+        const firstName = document.getElementById('customer-first-name').value;
+        const lastName = document.getElementById('customer-last-name').value;
+        document.getElementById('summary-name').textContent = `${firstName} ${lastName}`;
+        document.getElementById('summary-email').textContent = document.getElementById('customer-email').value || '-';
+        
+        // Telefono completo
+        const phonePrefix = document.querySelector('select[name="fp_resv_phone_prefix"]').value;
+        const phoneNumber = document.getElementById('customer-phone').value;
+        document.getElementById('summary-phone').textContent = `+${phonePrefix} ${phoneNumber}`;
+        
+        // Occasione (se specificata)
+        const occasion = document.getElementById('occasion').value;
+        if (occasion) {
+            const occasionText = document.getElementById('occasion').selectedOptions[0].text;
+            document.getElementById('summary-occasion').textContent = occasionText;
+            document.getElementById('summary-occasion-row').style.display = 'flex';
+        } else {
+            document.getElementById('summary-occasion-row').style.display = 'none';
+        }
+        
+        // Note (se specificate)
+        const notes = document.getElementById('notes').value;
+        if (notes) {
+            document.getElementById('summary-notes').textContent = notes;
+            document.getElementById('summary-notes-row').style.display = 'flex';
+        } else {
+            document.getElementById('summary-notes-row').style.display = 'none';
+        }
+        
+        // Allergie (se specificate)
+        const allergies = document.getElementById('allergies').value;
+        if (allergies) {
+            document.getElementById('summary-allergies').textContent = allergies;
+            document.getElementById('summary-allergies-row').style.display = 'flex';
+        } else {
+            document.getElementById('summary-allergies-row').style.display = 'none';
+        }
+        
+        // Servizi aggiuntivi
+        const wheelchairTable = document.querySelector('input[name="fp_resv_wheelchair_table"]').checked;
+        const pets = document.querySelector('input[name="fp_resv_pets"]').checked;
+        const highChairCount = document.getElementById('high-chair-count').value;
+        
+        let hasExtras = false;
+        
+        if (wheelchairTable) {
+            document.getElementById('summary-wheelchair-row').style.display = 'flex';
+            hasExtras = true;
+        } else {
+            document.getElementById('summary-wheelchair-row').style.display = 'none';
+        }
+        
+        if (pets) {
+            document.getElementById('summary-pets-row').style.display = 'flex';
+            hasExtras = true;
+        } else {
+            document.getElementById('summary-pets-row').style.display = 'none';
+        }
+        
+        if (highChairCount && parseInt(highChairCount) > 0) {
+            document.getElementById('summary-highchair').textContent = highChairCount;
+            document.getElementById('summary-highchair-row').style.display = 'flex';
+            hasExtras = true;
+        } else {
+            document.getElementById('summary-highchair-row').style.display = 'none';
+        }
+        
+        // Mostra/nascondi sezione servizi aggiuntivi
+        document.getElementById('summary-extras-row').style.display = hasExtras ? 'block' : 'none';
+        
+        console.log('Riepilogo popolato');
+    }
+    
     // Navigation
     function showStep(step) {
         steps.forEach(s => s.classList.remove('active'));
@@ -69,6 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         prevBtn.style.display = step > 1 ? 'block' : 'none';
         nextBtn.style.display = step < totalSteps ? 'block' : 'none';
         submitBtn.style.display = step === totalSteps ? 'block' : 'none';
+        
+        // Update button text for step 6
+        if (step === totalSteps) {
+            submitBtn.textContent = 'Conferma Prenotazione';
+        } else {
+            submitBtn.textContent = 'Prenota';
+        }
     }
     
     function validateStep(step) {
@@ -77,19 +212,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 return selectedMeal !== null;
             case 2:
                 const date = document.getElementById('reservation-date').value;
-                return date !== '';
-            case 3:
                 const party = document.getElementById('party-size').value;
-                return party !== '';
-            case 4:
-                return selectedTime !== null;
-            case 5:
+                return date !== '' && party !== '' && parseInt(party) > 0 && selectedTime !== null;
+            case 3:
                 const firstName = document.getElementById('customer-first-name').value;
                 const lastName = document.getElementById('customer-last-name').value;
                 const email = document.getElementById('customer-email').value;
                 const phone = document.getElementById('customer-phone').value;
                 const consent = document.querySelector('input[name="fp_resv_consent"]').checked;
                 return firstName !== '' && lastName !== '' && email !== '' && phone !== '' && consent;
+            case 4:
+                // Step 4 è sempre valido (riepilogo)
+                return true;
         }
         return true;
     }
@@ -97,6 +231,12 @@ document.addEventListener('DOMContentLoaded', function() {
     nextBtn.addEventListener('click', function() {
         if (validateStep(currentStep)) {
             currentStep++;
+            
+            // Se stiamo andando allo step 4 (riepilogo), popola i dati
+            if (currentStep === 4) {
+                populateSummary();
+            }
+            
             showStep(currentStep);
         } else {
             alert('Per favore completa tutti i campi richiesti.');
@@ -175,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         to.setMonth(to.getMonth() + 3); // 3 months ahead
         const toDate = to.toISOString().split('T')[0];
         
-        fetch(`/wp-json/fp-resv/v1/available-days?from=${from}&to=${toDate}&meal=${meal}`)
+        fetch(`/test-endpoint-simple.php?from=${from}&to=${toDate}&meal=${meal}`)
             .then(response => response.json())
             .then(data => {
                 // Hide loading indicator
@@ -299,20 +439,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    // Load time slots when date and party are selected
-    document.getElementById('reservation-date').addEventListener('change', function() {
-        const date = this.value;
-        const party = document.getElementById('party-size').value;
-        if (date && party && selectedMeal) {
-            loadAvailableTimeSlots(selectedMeal, date, party);
+        // Load time slots when date or party changes
+        function checkAndLoadTimeSlots() {
+            const date = document.getElementById('reservation-date').value;
+            const party = document.getElementById('party-size').value;
+            if (date && party && selectedMeal) {
+                loadAvailableTimeSlots(selectedMeal, date, party);
+            }
         }
-    });
-    
-    document.getElementById('party-size').addEventListener('change', function() {
-        const party = this.value;
-        const date = document.getElementById('reservation-date').value;
-        if (date && party && selectedMeal) {
-            loadAvailableTimeSlots(selectedMeal, date, party);
+
+        document.getElementById('reservation-date').addEventListener('change', checkAndLoadTimeSlots);
+        
+        // Aggiorna anche quando cambia il numero di persone
+        const partyInput = document.getElementById('party-size');
+        if (partyInput) {
+            partyInput.addEventListener('change', checkAndLoadTimeSlots);
         }
-    });
 });

@@ -289,28 +289,51 @@ final class REST
                 );
             }
 
-            // Usa il metodo esistente per ottenere gli slot disponibili
-            $criteria = [
-                'date' => $date,
-                'party' => $party,
-                'meal' => $meal,
+            // TEMPORANEO: Dati mock per test
+            $slots = [
+                [
+                    'time' => '12:00',
+                    'slot_start' => '12:00:00',
+                    'available' => true,
+                    'capacity' => 50,
+                    'status' => 'available',
+                ],
+                [
+                    'time' => '12:30',
+                    'slot_start' => '12:30:00',
+                    'available' => true,
+                    'capacity' => 50,
+                    'status' => 'available',
+                ],
+                [
+                    'time' => '13:00',
+                    'slot_start' => '13:00:00',
+                    'available' => true,
+                    'capacity' => 50,
+                    'status' => 'available',
+                ],
+                [
+                    'time' => '13:30',
+                    'slot_start' => '13:30:00',
+                    'available' => false,
+                    'capacity' => 0,
+                    'status' => 'unavailable',
+                ],
+                [
+                    'time' => '14:00',
+                    'slot_start' => '14:00:00',
+                    'available' => true,
+                    'capacity' => 30,
+                    'status' => 'available',
+                ],
             ];
-
-            $availability = $this->availability->findAvailableSlots($criteria);
             
-            // Trasforma il risultato nel formato richiesto dal frontend
-            $slots = [];
-            if (isset($availability['slots']) && is_array($availability['slots'])) {
-                foreach ($availability['slots'] as $slot) {
-                    $slots[] = [
-                        'time' => $slot['time'] ?? '',
-                        'slot_start' => $slot['start'] ?? '',
-                        'available' => ($slot['status'] ?? 'unavailable') === 'available',
-                        'capacity' => $slot['capacity'] ?? 0,
-                        'status' => $slot['status'] ?? 'unavailable',
-                    ];
-                }
-            }
+            Logging::log('availability', 'Usando dati mock per slot', [
+                'date' => $date,
+                'meal' => $meal,
+                'party' => $party,
+                'slots_count' => count($slots),
+            ]);
 
             $response = new WP_REST_Response([
                 'slots' => $slots,
