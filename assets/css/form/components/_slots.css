@@ -1,6 +1,6 @@
 /**
  * FP Restaurant Reservations - Time Slots
- * Design moderno per selezione orari
+ * Design moderno e riorganizzato per selezione orari
  */
 
 /* ==================== SLOTS CONTAINER ==================== */
@@ -23,6 +23,47 @@
     padding: var(--fp-space-lg);
     margin-bottom: var(--fp-space-lg);
   }
+}
+
+/* ==================== LEGEND CONTAINER ==================== */
+
+.fp-resv-slots__legend-container {
+  margin-bottom: var(--fp-space-md);
+}
+
+.fp-resv-slots__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-space-sm);
+  justify-content: center;
+  padding: var(--fp-space-sm);
+  background: var(--fp-color-surface-alt, #f8f9fa);
+  border-radius: var(--fp-radius-sm);
+}
+
+.fp-resv-slots__legend[hidden] {
+  display: none;
+}
+
+/* ==================== FEEDBACK AREA ==================== */
+
+.fp-resv-slots__feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-xs);
+  margin-bottom: var(--fp-space-sm);
+}
+
+/* ==================== SLOTS CONTAINER ==================== */
+
+.fp-resv-slots__container {
+  margin-bottom: var(--fp-space-sm);
+}
+
+/* ==================== MESSAGES AREA ==================== */
+
+.fp-resv-slots__messages {
+  margin-top: var(--fp-space-sm);
 }
 
 /* ==================== SLOTS STATUS ==================== */
@@ -186,6 +227,28 @@
 
 .fp-slot__availability--full {
   background: var(--fp-color-full);
+}
+
+/* Stili per i bottoni basati sullo stato */
+.fp-slot-button--available {
+  border-color: var(--fp-color-available, #10b981);
+}
+
+.fp-slot-button--limited {
+  border-color: var(--fp-color-limited, #f59e0b);
+}
+
+.fp-slot-button--full {
+  border-color: var(--fp-color-full, #ef4444);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Highlight per legend item attivo */
+.fp-meals__legend-item[data-active="true"] {
+  background: var(--fp-color-surface-hover, rgba(0, 0, 0, 0.05));
+  border-radius: var(--fp-radius-sm);
+  padding: var(--fp-space-xs);
 }
 
 /* ==================== RESPONSIVE ==================== */
