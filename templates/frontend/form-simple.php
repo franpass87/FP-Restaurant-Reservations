@@ -18,147 +18,252 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
 <div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
     <style>
         .fp-resv-simple {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: white;
+            background: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #e5e5e5;
         }
         
         .fp-resv-simple h2 {
-            color: #333;
+            color: #000000;
             margin-bottom: 20px;
             text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
         
         .fp-step {
             display: none;
-            padding: 20px 0;
+            padding: 15px 0;
         }
         
         .fp-step.active {
             display: block;
         }
         
+        .fp-step h3 {
+            color: #000000;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+        }
+        
         .fp-field {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         
         .fp-field label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: 600;
-            color: #555;
+            color: #333333;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .fp-field input,
-        .fp-field select {
+        .fp-field select,
+        .fp-field textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             box-sizing: border-box;
+            background: #ffffff;
+            color: #000000;
+            transition: all 0.3s ease;
         }
         
         .fp-field input:focus,
-        .fp-field select:focus {
+        .fp-field select:focus,
+        .fp-field textarea:focus {
             outline: none;
-            border-color: #007cba;
+            border-color: #000000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+        
+        .fp-field input::placeholder,
+        .fp-field textarea::placeholder {
+            color: #999999;
         }
         
         .fp-meals {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         
         .fp-meal-btn {
-            padding: 15px 20px;
-            border: 2px solid #ddd;
-            background: white;
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            background: #ffffff;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: #333333;
         }
         
         .fp-meal-btn:hover {
-            border-color: #007cba;
+            border-color: #666666;
+            background: #f8f8f8;
         }
         
         .fp-meal-btn.selected {
-            background: #007cba;
-            color: white;
-            border-color: #007cba;
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
         }
         
         .fp-buttons {
             display: flex;
             gap: 10px;
             justify-content: space-between;
-            margin-top: 30px;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
         }
         
         .fp-btn {
-            padding: 12px 24px;
-            border: none;
+            padding: 10px 20px;
+            border: 2px solid;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .fp-btn-primary {
-            background: #007cba;
-            color: white;
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
         }
         
         .fp-btn-primary:hover {
-            background: #005a87;
+            background: #333333;
+            border-color: #333333;
         }
         
         .fp-btn-secondary {
-            background: #f0f0f0;
-            color: #333;
+            background: #ffffff;
+            color: #000000;
+            border-color: #e0e0e0;
         }
         
         .fp-btn-secondary:hover {
-            background: #e0e0e0;
+            background: #f8f8f8;
+            border-color: #666666;
         }
         
         .fp-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
         
         .fp-progress {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            padding: 15px 0;
         }
         
         .fp-progress-step {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: #ddd;
+            background: #f0f0f0;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 10px;
-            font-weight: bold;
-            color: white;
+            margin: 0 6px;
+            font-weight: 700;
+            color: #999999;
+            font-size: 12px;
+            border: 2px solid #f0f0f0;
+            transition: all 0.3s ease;
         }
         
         .fp-progress-step.active {
-            background: #007cba;
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
         }
         
         .fp-progress-step.completed {
-            background: #28a745;
+            background: #666666;
+            color: #ffffff;
+            border-color: #666666;
+        }
+        
+        /* Checkbox styling */
+        .fp-field input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+        
+        .fp-field label[style*="display: flex"] {
+            align-items: flex-start;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+            line-height: 1.5;
+        }
+        
+        /* Phone prefix styling */
+        .fp-field div[style*="display: flex"] {
+            align-items: center;
+        }
+        
+        .fp-field div[style*="display: flex"] select {
+            width: 120px;
+            margin-right: 8px;
+        }
+        
+        .fp-field div[style*="display: flex"] input {
+            flex: 1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .fp-resv-simple {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .fp-meals {
+                flex-direction: column;
+            }
+            
+            .fp-meal-btn {
+                min-width: auto;
+            }
+            
+            .fp-buttons {
+                flex-direction: column;
+            }
+            
+            .fp-progress-step {
+                width: 28px;
+                height: 28px;
+                margin: 0 3px;
+            }
         }
     </style>
 
