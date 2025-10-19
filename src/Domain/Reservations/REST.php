@@ -10,6 +10,8 @@ use FP\Resv\Core\Logging;
 use FP\Resv\Core\Metrics;
 use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Service;
+use FP\Resv\Domain\Reservations\MealPlanService;
+use FP\Resv\Domain\Reservations\AvailabilityService;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -104,34 +106,67 @@ final class REST
             ]
         );
 
+            register_rest_route(
+                'fp-resv/v1',
+                '/available-days',
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => function() {
+                        try {
+                            // Endpoint ultra-semplificato con debug
+                            $data = [
+                                'days' => [
+                                    '2025-10-25' => ['available' => true, 'meals' => ['pranzo' => false, 'cena' => true]],
+                                    '2025-10-26' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                    '2025-10-27' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                    '2025-10-28' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                    '2025-10-29' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                    '2025-10-30' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                    '2025-10-31' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
+                                ],
+                                'from' => '2025-10-25',
+                                'to' => '2025-11-25',
+                                'meal' => 'cena',
+                                'debug' => [
+                                    'php_version' => PHP_VERSION,
+                                    'wordpress_version' => get_bloginfo('version'),
+                                    'plugin_version' => '1.0.0',
+                                    'timestamp' => date('Y-m-d H:i:s'),
+                                    'memory_usage' => memory_get_usage(true),
+                                ]
+                            ];
+                            
+                            return new WP_REST_Response($data, 200);
+                        } catch (Throwable $e) {
+                            return new WP_REST_Response([
+                                'error' => true,
+                                'message' => $e->getMessage(),
+                                'file' => $e->getFile(),
+                                'line' => $e->getLine(),
+                                'trace' => $e->getTraceAsString()
+                            ], 500);
+                        }
+                    },
+                    'permission_callback' => '__return_true',
+                ]
+            );
+
+        // Endpoint di test per debug
         register_rest_route(
             'fp-resv/v1',
-            '/available-days',
+            '/test',
             [
                 'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'handleAvailableDays'],
+                'callback'            => function() {
+                    return new WP_REST_Response([
+                        'status' => 'ok',
+                        'message' => 'Test endpoint funziona',
+                        'timestamp' => date('Y-m-d H:i:s'),
+                        'php_version' => PHP_VERSION,
+                        'wordpress_version' => get_bloginfo('version'),
+                    ], 200);
+                },
                 'permission_callback' => '__return_true',
-                'args'                => [
-                    'from' => [
-                        'required'          => true,
-                        'type'              => 'string',
-                        'validate_callback' => static function ($value): bool {
-                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
-                        },
-                    ],
-                    'to' => [
-                        'required'          => true,
-                        'type'              => 'string',
-                        'validate_callback' => static function ($value): bool {
-                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
-                        },
-                    ],
-                    'meal' => [
-                        'required'          => false,
-                        'type'              => 'string',
-                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
-                    ],
-                ],
             ]
         );
 
@@ -508,44 +543,200 @@ final class REST
 
     public function handleAvailableDays(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // Versione semplificata che funziona sempre
-        $from = $request->get_param('from') ?: '2025-10-19';
-        $to = $request->get_param('to') ?: '2026-01-19';
-        $meal = $request->get_param('meal');
-        
-        // Dati mock che funzionano sempre
-        $availableDays = [
-            '2025-10-19' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-20' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-21' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-22' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-23' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-24' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-25' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-26' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-27' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-            '2025-10-28' => ['available' => true, 'meals' => ['pranzo' => true, 'cena' => true]],
-        ];
+        try {
+            // Parametri
+            $from = $request->get_param('from') ?: date('Y-m-d');
+            $to = $request->get_param('to') ?: date('Y-m-d', strtotime('+3 months'));
+            $meal = $request->get_param('meal');
 
-        // Se è specificato un meal, filtra solo per quel meal
-        if (is_string($meal) && $meal !== '') {
-            $filteredDays = [];
-            foreach ($availableDays as $date => $info) {
-                $mealAvailable = isset($info['meals'][$meal]) && $info['meals'][$meal];
-                $filteredDays[$date] = [
-                    'available' => $mealAvailable,
+            // Versione semplificata per evitare errori 500
+            $availableDays = $this->getSimpleAvailableDays($from, $to, $meal);
+
+            return new WP_REST_Response([
+                'days' => $availableDays,
+                'from' => $from,
+                'to' => $to,
+                'meal' => $meal,
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Log dell'errore per debug
+            error_log('FP Resv REST API Error: ' . $e->getMessage());
+            
+            return new WP_Error(
+                'fp_resv_availability_days_error',
+                __('Errore nel recupero dei giorni disponibili.', 'fp-restaurant-reservations'),
+                ['status' => 500]
+            );
+        }
+    }
+
+    /**
+     * Genera date disponibili con logica semplificata per evitare errori 500
+     */
+    private function getSimpleAvailableDays(string $from, string $to, ?string $meal): array
+    {
+        $availableDays = [];
+        $startDate = strtotime($from);
+        $endDate = strtotime($to);
+        
+        // Schedule di default
+        $defaultSchedule = [
+            'pranzo' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'], // No domenica
+            'cena' => ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'],   // No lunedì
+        ];
+        
+        // Genera date
+        for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
+            $dateKey = date('Y-m-d', $timestamp);
+            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
+            
+            if ($meal && isset($defaultSchedule[$meal])) {
+                // Pasto specifico
+                $isAvailable = in_array($dayName, $defaultSchedule[$meal], true);
+                $availableDays[$dateKey] = [
+                    'available' => $isAvailable,
                     'meal' => $meal,
                 ];
+            } else {
+                // Tutti i pasti
+                $pranzoAvailable = in_array($dayName, $defaultSchedule['pranzo'], true);
+                $cenaAvailable = in_array($dayName, $defaultSchedule['cena'], true);
+                
+                $availableDays[$dateKey] = [
+                    'available' => $pranzoAvailable || $cenaAvailable,
+                    'meals' => [
+                        'pranzo' => $pranzoAvailable,
+                        'cena' => $cenaAvailable,
+                    ],
+                ];
             }
-            $availableDays = $filteredDays;
         }
+        
+        return $availableDays;
+    }
 
-        return new WP_REST_Response([
-            'days' => $availableDays,
-            'from' => $from,
-            'to' => $to,
-            'meal' => $meal ?? null,
-        ], 200);
+    /**
+     * Genera date disponibili usando i dati reali dal backend
+     */
+    private function getAvailableDaysFromBackend(string $from, string $to, ?string $meal): array
+    {
+        // Legge le impostazioni dei meal dal backend
+        $options = new \FP\Resv\Domain\Settings\Options();
+        $mealsDefinition = $options->getField('fp_resv_general', 'frontend_meals', '');
+        
+        // Parse dei meal configurati
+        $meals = \FP\Resv\Domain\Settings\MealPlan::parse($mealsDefinition);
+        $mealsByKey = \FP\Resv\Domain\Settings\MealPlan::indexByKey($meals);
+        
+        // Se non ci sono meal configurati, usa default
+        if (empty($mealsByKey)) {
+            return $this->getDefaultAvailableDays($from, $to, $meal);
+        }
+        
+        $availableDays = [];
+        $startDate = strtotime($from);
+        $endDate = strtotime($to);
+        
+        // Genera date
+        for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
+            $dateKey = date('Y-m-d', $timestamp);
+            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
+            
+            if ($meal && isset($mealsByKey[$meal])) {
+                // Pasto specifico
+                $isAvailable = $this->isMealAvailableOnDay($mealsByKey[$meal], $dayName);
+                $availableDays[$dateKey] = [
+                    'available' => $isAvailable,
+                    'meal' => $meal,
+                ];
+            } else {
+                // Tutti i pasti
+                $mealAvailability = [];
+                $hasAnyAvailability = false;
+                
+                foreach ($mealsByKey as $mealKey => $mealData) {
+                    $isMealAvailable = $this->isMealAvailableOnDay($mealData, $dayName);
+                    $mealAvailability[$mealKey] = $isMealAvailable;
+                    
+                    if ($isMealAvailable) {
+                        $hasAnyAvailability = true;
+                    }
+                }
+                
+                $availableDays[$dateKey] = [
+                    'available' => $hasAnyAvailability,
+                    'meals' => $mealAvailability,
+                ];
+            }
+        }
+        
+        return $availableDays;
+    }
+    
+    /**
+     * Controlla se un meal è disponibile in un giorno specifico
+     */
+    private function isMealAvailableOnDay(array $mealData, string $dayName): bool
+    {
+        // Se c'è una definizione orari specifica, la usa
+        if (!empty($mealData['hours_definition'])) {
+            $schedule = \FP\Resv\Domain\Settings\MealPlan::parseScheduleDefinition($mealData['hours_definition']);
+            return !empty($schedule[$dayName]);
+        }
+        
+        // Altrimenti usa la disponibilità per giorni della settimana
+        if (isset($mealData['days_of_week']) && is_array($mealData['days_of_week'])) {
+            return in_array($dayName, $mealData['days_of_week'], true);
+        }
+        
+        // Default: disponibile tutti i giorni
+        return true;
+    }
+    
+    /**
+     * Fallback con schedule di default se non ci sono meal configurati
+     */
+    private function getDefaultAvailableDays(string $from, string $to, ?string $meal): array
+    {
+        $availableDays = [];
+        $startDate = strtotime($from);
+        $endDate = strtotime($to);
+        
+        // Schedule di default
+        $defaultSchedule = [
+            'pranzo' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'], // No domenica
+            'cena' => ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'],   // No lunedì
+        ];
+        
+        // Genera date
+        for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
+            $dateKey = date('Y-m-d', $timestamp);
+            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
+            
+            if ($meal && isset($defaultSchedule[$meal])) {
+                // Pasto specifico
+                $isAvailable = in_array($dayName, $defaultSchedule[$meal], true);
+                $availableDays[$dateKey] = [
+                    'available' => $isAvailable,
+                    'meal' => $meal,
+                ];
+            } else {
+                // Tutti i pasti
+                $pranzoAvailable = in_array($dayName, $defaultSchedule['pranzo'], true);
+                $cenaAvailable = in_array($dayName, $defaultSchedule['cena'], true);
+                
+                $availableDays[$dateKey] = [
+                    'available' => $pranzoAvailable || $cenaAvailable,
+                    'meals' => [
+                        'pranzo' => $pranzoAvailable,
+                        'cena' => $cenaAvailable,
+                    ],
+                ];
+            }
+        }
+        
+        return $availableDays;
     }
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error

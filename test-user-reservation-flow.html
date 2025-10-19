@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulazione Utente - Prenotazione</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .simulation-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #007cba;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .step h3 {
+            color: #007cba;
+            margin-top: 0;
+        }
+        .form-simulation {
+            background: #ffffff;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .meal-btn {
+            display: inline-block;
+            padding: 12px 20px;
+            margin: 5px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .meal-btn:hover, .meal-btn.selected {
+            border-color: #007cba;
+            background: #007cba;
+            color: white;
+        }
+        .date-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .time-slot {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .time-slot:hover, .time-slot.selected {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+        .form-field {
+            margin: 15px 0;
+        }
+        .form-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-field input, .form-field select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .submit-btn {
+            background: #007cba;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .submit-btn:hover {
+            background: #005a87;
+        }
+        .result {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <h1>🎭 Simulazione Utente - Prenotazione Ristorante</h1>
+        <p><strong>Scenario:</strong> Un cliente vuole prenotare un tavolo per 4 persone per cena il 25 ottobre 2025.</p>
+        
+        <div class="step">
+            <h3>📱 Step 1: Accesso al Sito</h3>
+            <p>L'utente accede al sito web del ristorante e trova il form di prenotazione.</p>
+            <div class="log" id="step1-log">
+                [14:30:15] Utente accede al sito web<br>
+                [14:30:16] Caricamento form di prenotazione<br>
+                [14:30:17] Form caricato correttamente<br>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🍽️ Step 2: Selezione Pasto</h3>
+            <p>L'utente deve scegliere tra Pranzo e Cena.</p>
+            <div class="form-simulation">
+                <h4>Seleziona il pasto:</h4>
+                <button class="meal-btn" onclick="selectMeal('pranzo', this)">🍽️ Pranzo</button>
+                <button class="meal-btn" onclick="selectMeal('cena', this)">🌙 Cena</button>
+                <div class="log" id="step2-log">
+                    [14:30:18] Caricamento date disponibili per: <span id="selected-meal">nessuno</span><br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>📅 Step 3: Selezione Data</h3>
+            <p>L'utente seleziona la data desiderata.</p>
+            <div class="form-simulation">
+                <div class="form-field">
+                    <label for="reservation-date">Data prenotazione:</label>
+                    <input type="date" id="reservation-date" onchange="selectDate(this.value)">
+                </div>
+                <div class="log" id="step3-log">
+                    [14:30:19] Date disponibili caricate<br>
+                    [14:30:20] Data selezionata: <span id="selected-date">nessuna</span><br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>👥 Step 4: Numero Persone</h3>
+            <p>L'utente specifica il numero di persone.</p>
+            <div class="form-simulation">
+                <div class="form-field">
+                    <label for="party-size">Numero di persone:</label>
+                    <select id="party-size" onchange="selectPartySize(this.value)">
+                        <option value="">Seleziona...</option>
+                        <option value="1">1 persona</option>
+                        <option value="2">2 persone</option>
+                        <option value="3">3 persone</option>
+                        <option value="4">4 persone</option>
+                        <option value="5">5 persone</option>
+                        <option value="6">6 persone</option>
+                        <option value="7">7 persone</option>
+                        <option value="8">8 persone</option>
+                    </select>
+                </div>
+                <div class="log" id="step4-log">
+                    [14:30:21] Numero persone selezionato: <span id="selected-party">nessuno</span><br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>⏰ Step 5: Selezione Orario</h3>
+            <p>L'utente sceglie l'orario preferito tra quelli disponibili.</p>
+            <div class="form-simulation">
+                <h4>Orari disponibili:</h4>
+                <div id="time-slots">
+                    <div class="time-slot" onclick="selectTime('19:00', this)">19:00</div>
+                    <div class="time-slot" onclick="selectTime('19:30', this)">19:30</div>
+                    <div class="time-slot" onclick="selectTime('20:00', this)">20:00</div>
+                    <div class="time-slot" onclick="selectTime('20:30', this)">20:30</div>
+                    <div class="time-slot" onclick="selectTime('21:00', this)">21:00</div>
+                    <div class="time-slot" onclick="selectTime('21:30', this)">21:30</div>
+                </div>
+                <div class="log" id="step5-log">
+                    [14:30:22] Orari disponibili caricati<br>
+                    [14:30:23] Orario selezionato: <span id="selected-time">nessuno</span><br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>📝 Step 6: Dati Personali</h3>
+            <p>L'utente inserisce i suoi dati di contatto.</p>
+            <div class="form-simulation">
+                <div class="form-field">
+                    <label for="customer-name">Nome completo:</label>
+                    <input type="text" id="customer-name" placeholder="Mario Rossi">
+                </div>
+                <div class="form-field">
+                    <label for="customer-email">Email:</label>
+                    <input type="email" id="customer-email" placeholder="mario.rossi@email.com">
+                </div>
+                <div class="form-field">
+                    <label for="customer-phone">Telefono:</label>
+                    <input type="tel" id="customer-phone" placeholder="+39 123 456 7890">
+                </div>
+                <div class="form-field">
+                    <label for="special-requests">Richieste speciali (opzionale):</label>
+                    <input type="text" id="special-requests" placeholder="Tavolo vicino alla finestra">
+                </div>
+                <div class="log" id="step6-log">
+                    [14:30:24] Dati personali inseriti<br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>✅ Step 7: Conferma e Invio</h3>
+            <p>L'utente conferma i dati e invia la prenotazione.</p>
+            <div class="form-simulation">
+                <h4>Riepilogo prenotazione:</h4>
+                <div id="reservation-summary">
+                    <p><strong>Pasto:</strong> <span id="summary-meal">-</span></p>
+                    <p><strong>Data:</strong> <span id="summary-date">-</span></p>
+                    <p><strong>Orario:</strong> <span id="summary-time">-</span></p>
+                    <p><strong>Persone:</strong> <span id="summary-party">-</span></p>
+                    <p><strong>Nome:</strong> <span id="summary-name">-</span></p>
+                    <p><strong>Email:</strong> <span id="summary-email">-</span></p>
+                    <p><strong>Telefono:</strong> <span id="summary-phone">-</span></p>
+                </div>
+                <button class="submit-btn" onclick="submitReservation()">Conferma Prenotazione</button>
+                <div class="log" id="step7-log">
+                    [14:30:25] Invio prenotazione in corso...<br>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🎉 Risultato</h3>
+            <div id="reservation-result" style="display: none;">
+                <div class="result">
+                    <h4>✅ Prenotazione Confermata!</h4>
+                    <p><strong>Numero prenotazione:</strong> <span id="reservation-id">-</span></p>
+                    <p><strong>Status:</strong> <span id="reservation-status">-</span></p>
+                    <p><strong>Link gestione:</strong> <a href="#" id="manage-link">Clicca qui per gestire la prenotazione</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMeal = null;
+        let selectedDate = null;
+        let selectedTime = null;
+        let selectedParty = null;
+
+        function selectMeal(meal, element) {
+            // Rimuovi selezione precedente
+            document.querySelectorAll('.meal-btn').forEach(btn => btn.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            selectedMeal = meal;
+            document.getElementById('selected-meal').textContent = meal;
+            document.getElementById('step2-log').innerHTML += `[${new Date().toLocaleTimeString()}] Pasto selezionato: ${meal}<br>`;
+            
+            // Simula caricamento date disponibili
+            setTimeout(() => {
+                document.getElementById('step2-log').innerHTML += `[${new Date().toLocaleTimeString()}] Date disponibili caricate per ${meal}<br>`;
+            }, 500);
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            document.getElementById('selected-date').textContent = date;
+            document.getElementById('step3-log').innerHTML += `[${new Date().toLocaleTimeString()}] Data selezionata: ${date}<br>`;
+            
+            // Simula caricamento orari disponibili
+            setTimeout(() => {
+                document.getElementById('step3-log').innerHTML += `[${new Date().toLocaleTimeString()}] Orari disponibili caricati per ${date}<br>`;
+            }, 500);
+        }
+
+        function selectPartySize(party) {
+            selectedParty = party;
+            document.getElementById('selected-party').textContent = party + ' persone';
+            document.getElementById('step4-log').innerHTML += `[${new Date().toLocaleTimeString()}] Numero persone: ${party}<br>`;
+        }
+
+        function selectTime(time, element) {
+            // Rimuovi selezione precedente
+            document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            selectedTime = time;
+            document.getElementById('selected-time').textContent = time;
+            document.getElementById('step5-log').innerHTML += `[${new Date().toLocaleTimeString()}] Orario selezionato: ${time}<br>`;
+        }
+
+        function submitReservation() {
+            // Aggiorna riepilogo
+            document.getElementById('summary-meal').textContent = selectedMeal || '-';
+            document.getElementById('summary-date').textContent = selectedDate || '-';
+            document.getElementById('summary-time').textContent = selectedTime || '-';
+            document.getElementById('summary-party').textContent = selectedParty ? selectedParty + ' persone' : '-';
+            document.getElementById('summary-name').textContent = document.getElementById('customer-name').value || '-';
+            document.getElementById('summary-email').textContent = document.getElementById('customer-email').value || '-';
+            document.getElementById('summary-phone').textContent = document.getElementById('customer-phone').value || '-';
+
+            // Simula invio prenotazione
+            document.getElementById('step7-log').innerHTML += `[${new Date().toLocaleTimeString()}] Invio dati al server...<br>`;
+            
+            setTimeout(() => {
+                document.getElementById('step7-log').innerHTML += `[${new Date().toLocaleTimeString()}] Prenotazione creata con successo!<br>`;
+                
+                // Mostra risultato
+                const reservationId = 'RES-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                document.getElementById('reservation-id').textContent = reservationId;
+                document.getElementById('reservation-status').textContent = 'Confermata';
+                document.getElementById('manage-link').href = `#manage-${reservationId}`;
+                document.getElementById('reservation-result').style.display = 'block';
+                
+                // Simula notifica email
+                setTimeout(() => {
+                    document.getElementById('step7-log').innerHTML += `[${new Date().toLocaleTimeString()}] Email di conferma inviata<br>`;
+                }, 1000);
+            }, 2000);
+        }
+
+        // Simula caricamento iniziale
+        window.onload = function() {
+            setTimeout(() => {
+                document.getElementById('step1-log').innerHTML += `[${new Date().toLocaleTimeString()}] Form pronto per l'uso<br>`;
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

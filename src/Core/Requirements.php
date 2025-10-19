@@ -96,7 +96,7 @@ final class Requirements
     private static function requiredExtensions(): array
     {
         return [
-            'curl'     => 'cURL',
+            // 'curl'     => 'cURL', // Opzionale - solo per integrazioni esterne
             'json'     => 'JSON',
             'mbstring' => 'mbstring',
             'ctype'    => 'ctype',

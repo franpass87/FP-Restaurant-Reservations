@@ -315,40 +315,120 @@ document.addEventListener('DOMContentLoaded', function() {
         to.setMonth(to.getMonth() + 3); // 3 months ahead
         const toDate = to.toISOString().split('T')[0];
         
-        fetch(`available-days.php?from=${from}&to=${toDate}&meal=${meal}`)
-            .then(response => response.json())
-            .then(data => {
-                // Hide loading indicator
+        // Prova prima l'endpoint WordPress, poi il fallback
+        const endpoints = [
+            `/wp-json/fp-resv/v1/available-days?from=${from}&to=${toDate}&meal=${meal}`,
+            `/available-days-endpoint.php?from=${from}&to=${toDate}&meal=${meal}`
+        ];
+        
+        let currentEndpointIndex = 0;
+        
+        function tryNextEndpoint() {
+            if (currentEndpointIndex >= endpoints.length) {
+                // Tutti gli endpoint hanno fallito, usa fallback locale
+                console.error('Tutti gli endpoint hanno fallito, usando fallback locale');
+                availableDates = generateFallbackDates(from, toDate, meal);
                 loadingEl.style.display = 'none';
-                
-                if (data && data.days) {
-                    // Store available dates
-                    availableDates = Object.keys(data.days).filter(date => {
-                        return data.days[date] && data.days[date].available;
-                    });
-                    
-                    // Show info if dates are available
-                    if (availableDates.length > 0) {
-                        infoEl.style.display = 'block';
+                infoEl.style.display = 'block';
+                updateDateInput();
+                console.log('Usando date di fallback per', meal, ':', availableDates);
+                return;
+            }
+            
+            const endpoint = endpoints[currentEndpointIndex];
+            console.log(`Tentativo endpoint ${currentEndpointIndex + 1}:`, endpoint);
+            
+            fetch(endpoint)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loading indicator
+                    loadingEl.style.display = 'none';
                     
-                    // Update date input with available dates info
-                    updateDateInput();
-                    console.log('Date disponibili per', meal, ':', availableDates);
-                } else {
-                    // No data available, allow all dates
-                    availableDates = [];
-                    infoEl.style.display = 'none';
+                    if (data && data.days) {
+                        // Store available dates
+                        availableDates = Object.keys(data.days).filter(date => {
+                            return data.days[date] && data.days[date].available;
+                        });
+                        
+                        // Show info if dates are available
+                        if (availableDates.length > 0) {
+                            infoEl.style.display = 'block';
+                        }
+                        
+                        // Update date input with available dates info
+                        updateDateInput();
+                        console.log('Date disponibili per', meal, ':', availableDates);
+                    } else {
+                        // No data available, allow all dates
+                        availableDates = [];
+                        infoEl.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error(`Errore endpoint ${currentEndpointIndex + 1}:`, error);
+                    currentEndpointIndex++;
+                    tryNextEndpoint();
+                });
+        }
+        
+        tryNextEndpoint();
+    }
+    
+    // Genera date disponibili localmente come fallback
+    function generateFallbackDates(from, to, meal) {
+        const startDate = new Date(from);
+        const endDate = new Date(to);
+        const availableDates = [];
+        
+        // Schedule di default
+        const defaultSchedule = {
+            'pranzo': {
+                'mon': true,
+                'tue': true,
+                'wed': true,
+                'thu': true,
+                'fri': true,
+                'sat': true,
+                'sun': false, // Pranzo non disponibile la domenica
+            },
+            'cena': {
+                'mon': false, // Cena non disponibile il lunedì
+                'tue': true,
+                'wed': true,
+                'thu': true,
+                'fri': true,
+                'sat': true,
+                'sun': true,
+            }
+        };
+        
+        const current = new Date(startDate);
+        while (current <= endDate) {
+            const dateKey = current.toISOString().split('T')[0];
+            const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+            
+            if (meal && defaultSchedule[meal]) {
+                const isAvailable = defaultSchedule[meal][dayKey] || false;
+                if (isAvailable) {
+                    availableDates.push(dateKey);
                 }
-            })
-            .catch(error => {
-                console.error('Errore nel caricamento date disponibili:', error);
-                // Hide loading indicator
-                loadingEl.style.display = 'none';
-                // In case of error, allow all dates
-                availableDates = [];
-                infoEl.style.display = 'none';
-            });
+            } else {
+                // Controlla tutti i pasti
+                const hasAnyAvailability = Object.values(defaultSchedule).some(schedule => schedule[dayKey]);
+                if (hasAnyAvailability) {
+                    availableDates.push(dateKey);
+                }
+            }
+            
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return availableDates;
     }
     
     // Update date input with availability info

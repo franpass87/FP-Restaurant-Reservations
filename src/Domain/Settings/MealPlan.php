@@ -522,4 +522,44 @@ final class MealPlan
 
         return null;
     }
+
+    /**
+     * Parse schedule definition string into array format
+     */
+    public static function parseScheduleDefinition(string $definition): array
+    {
+        $schedule = [];
+        $lines = preg_split('/\n/', $definition) ?: [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || !str_contains($line, '=')) {
+                continue;
+            }
+
+            [$day, $ranges] = array_map('trim', explode('=', $line, 2));
+            $day = strtolower($day);
+
+            $segments = preg_split('/[|,]/', $ranges) ?: [];
+            foreach ($segments as $segment) {
+                $segment = trim($segment);
+                if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
+                    continue;
+                }
+
+                $start = ((int) $matches[1] * 60) + (int) $matches[2];
+                $end = ((int) $matches[3] * 60) + (int) $matches[4];
+                if ($end <= $start) {
+                    continue;
+                }
+
+                $schedule[$day][] = [
+                    'start' => $start,
+                    'end' => $end,
+                ];
+            }
+        }
+
+        return $schedule;
+    }
 }

@@ -162,13 +162,7 @@ class Availability
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
             
-            // Log diagnostico per capire perché non ci sono slot
-            Logging::log('availability', 'Nessuna disponibilità - schedule vuoto', [
-                'date' => $dayStart->format('Y-m-d'),
-                'meal_key' => $criteria['meal'] ?? 'none',
-                'meal_settings_schedule' => $mealSettings['schedule'],
-                'day_key' => $dayKey,
-            ]);
+            // Nessuna disponibilità
             
             return [
                 'date' => $dayStart->format('Y-m-d'),
@@ -450,13 +444,7 @@ class Availability
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
             
-            // Log diagnostico per capire perché non ci sono slot
-            Logging::log('availability', 'Nessuna disponibilità - schedule vuoto', [
-                'date' => $dayStart->format('Y-m-d'),
-                'meal_key' => $mealKey,
-                'meal_settings_schedule' => $mealSettings['schedule'],
-                'day_key' => $dayKey,
-            ]);
+            // Nessuna disponibilità
             
             return [
                 'date'      => $dayStart->format('Y-m-d'),
@@ -691,86 +679,27 @@ class Availability
         
         $capacityLimit      = null;
 
-        // Log diagnostico sempre attivo
-        Logging::log('availability', 'resolveMealSettings chiamato', [
-            'meal_key' => $mealKey,
-            'default_schedule_raw' => $defaultScheduleRaw,
-            'default_schedule_map' => $scheduleMap,
-            'slot_interval' => $slotInterval,
-            'turnover_minutes' => $turnoverMinutes,
-            'buffer_minutes' => $bufferMinutes,
-            'max_parallel' => $maxParallel,
-        ]);
-
-        // Debug logging aggiuntivo se WP_DEBUG è abilitato
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                '[FP-RESV] resolveMealSettings - mealKey: %s, default schedule raw: %s, default schedule map: %s',
-                $mealKey,
-                $defaultScheduleRaw,
-                wp_json_encode($scheduleMap) ?: 'empty'
-            ));
-        }
+        // Log disabilitati per evitare errori
 
         if ($mealKey !== '') {
             $plan = $this->getMealPlan();
             
-            Logging::log('availability', 'Meal plan caricato', [
-                'meal_key' => $mealKey,
-                'plan_keys' => array_keys($plan),
-                'meal_exists' => isset($plan[$mealKey]),
-            ]);
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log(sprintf(
-                    '[FP-RESV] resolveMealSettings - meal plan: %s',
-                    wp_json_encode($plan) ?: 'empty'
-                ));
-            }
+            // Log disabilitati
             
             if (isset($plan[$mealKey])) {
                 $meal = $plan[$mealKey];
                 
-                Logging::log('availability', 'Meal trovato', [
-                    'meal_key' => $mealKey,
-                    'has_hours_definition' => !empty($meal['hours_definition']),
-                    'hours_definition' => $meal['hours_definition'] ?? null,
-                ]);
-                
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log(sprintf(
-                        '[FP-RESV] resolveMealSettings - selected meal: %s',
-                        wp_json_encode($meal) ?: 'empty'
-                    ));
-                }
+                // Log disabilitati
                 
                 if (!empty($meal['hours_definition'])) {
                     $mealSchedule = $this->parseScheduleDefinition((string) $meal['hours_definition']);
                     
-                    Logging::log('availability', 'Schedule del meal parsato', [
-                        'meal_key' => $mealKey,
-                        'meal_schedule' => $mealSchedule,
-                        'is_empty' => $mealSchedule === [],
-                    ]);
-                    
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log(sprintf(
-                            '[FP-RESV] resolveMealSettings - meal schedule: %s',
-                            wp_json_encode($mealSchedule) ?: 'empty'
-                        ));
-                    }
+                    // Log disabilitati
                     if ($mealSchedule !== []) {
                         $scheduleMap = $mealSchedule;
                     }
                 } else {
-                    Logging::log('availability', 'WARNING: meal senza hours_definition', [
-                        'meal_key' => $mealKey,
-                        'using_default' => true,
-                    ]);
-                    
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('[FP-RESV] resolveMealSettings - WARNING: meal has no hours_definition, using default schedule');
-                    }
+                    // Usa schedule di default
                 }
 
                 if (!empty($meal['slot_interval'])) {
@@ -793,17 +722,7 @@ class Availability
                     $capacityLimit = max(1, (int) $meal['capacity']);
                 }
             } else {
-                Logging::log('availability', 'WARNING: meal_key non trovato nel plan', [
-                    'meal_key' => $mealKey,
-                    'available_keys' => array_keys($plan),
-                ]);
-                
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log(sprintf(
-                        '[FP-RESV] resolveMealSettings - WARNING: meal key "%s" not found in meal plan',
-                        $mealKey
-                    ));
-                }
+                // Meal key non trovato, usa default
             }
         }
 
@@ -820,19 +739,9 @@ class Availability
             'capacity_limit' => $capacityLimit,
         ];
 
-        Logging::log('availability', 'resolveMealSettings risultato finale', [
-            'meal_key' => $mealKey,
-            'schedule_days' => array_keys($scheduleMap),
-            'schedule_empty' => $scheduleMap === [],
-            'result' => $result,
-        ]);
+        // Log disabilitati
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                '[FP-RESV] resolveMealSettings - final result: %s',
-                wp_json_encode($result) ?: 'empty'
-            ));
-        }
+        // Log disabilitati
 
         return $result;
     }
@@ -870,25 +779,7 @@ class Availability
             }
         }
 
-        Logging::log('availability', 'resolveScheduleForDay', [
-            'date' => $day->format('Y-m-d'),
-            'day_key' => $dayKey,
-            'schedule_for_day' => $schedule,
-            'schedule_is_empty' => $schedule === [],
-            'available_days' => array_keys($scheduleMap),
-            'mapping_used' => empty($scheduleMap[$dayKey]) ? 'italian_mapping' : 'direct',
-        ]);
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                '[FP-RESV] resolveScheduleForDay - date: %s, dayKey: %s, schedule: %s, full scheduleMap: %s, mapping: %s',
-                $day->format('Y-m-d'),
-                $dayKey,
-                wp_json_encode($schedule) ?: 'empty',
-                wp_json_encode($scheduleMap) ?: 'empty',
-                empty($scheduleMap[$dayKey]) ? 'italian' : 'direct'
-            ));
-        }
+        // Log disabilitati
 
         return $schedule;
     }

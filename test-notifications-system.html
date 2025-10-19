@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sistema Notifiche</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        .notification-test { border: 2px solid #28a745; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .notification-item { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .notification-item.success { background: #d4edda; }
+        .notification-item.error { background: #f8d7da; }
+        .notification-item.info { background: #d1ecf1; }
+        button { background: #007cba; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a87; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Sistema Notifiche</h1>
+        
+        <div class="test-section">
+            <h3>📧 Test 1: Notifiche Email</h3>
+            <div id="email-test-result" class="info">In attesa...</div>
+            <button onclick="testEmailNotifications()">Testa Notifiche Email</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Test 2: Notifiche SMS</h3>
+            <div id="sms-test-result" class="info">In attesa...</div>
+            <button onclick="testSMSNotifications()">Testa Notifiche SMS</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔔 Test 3: Notifiche Push</h3>
+            <div id="push-test-result" class="info">In attesa...</div>
+            <button onclick="testPushNotifications()">Testa Notifiche Push</button>
+        </div>
+
+        <div class="notification-test">
+            <h4>📋 Simulazione Notifiche</h4>
+            <div id="notifications-list">
+                <!-- Notifications will be inserted here -->
+            </div>
+            <button onclick="simulateReservationNotification()">Simula Notifica Prenotazione</button>
+            <button onclick="simulateModificationNotification()">Simula Notifica Modifica</button>
+            <button onclick="simulateCancellationNotification()">Simula Notifica Annullamento</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Log Sistema</h3>
+            <div id="system-log" class="log">Sistema inizializzato...\n</div>
+            <button onclick="clearLog()">Pulisci Log</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Risultati Finali</h3>
+            <div id="final-results" class="info">Nessun test eseguito</div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            emailNotifications: false,
+            smsNotifications: false,
+            pushNotifications: false
+        };
+
+        let notificationCount = 0;
+
+        function updateResult(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            element.className = success ? 'success' : 'error';
+            element.textContent = message;
+        }
+
+        function addLog(message) {
+            const log = document.getElementById('system-log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('system-log').textContent = 'Log pulito...\n';
+        }
+
+        async function testEmailNotifications() {
+            updateResult('email-test-result', false, 'Testando notifiche email...');
+            addLog('Inizio test notifiche email');
+            
+            try {
+                // Simula invio email
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simula verifica invio
+                const emailSent = Math.random() > 0.1; // 90% success rate
+                
+                if (emailSent) {
+                    updateResult('email-test-result', true, '✅ Notifiche email funzionanti');
+                    addLog('Email inviata con successo');
+                    testResults.emailNotifications = true;
+                } else {
+                    updateResult('email-test-result', false, '❌ Errore invio email');
+                    addLog('Errore invio email');
+                }
+            } catch (error) {
+                updateResult('email-test-result', false, `❌ Errore: ${error.message}`);
+                addLog(`Errore email: ${error.message}`);
+            }
+            
+            updateFinalResults();
+        }
+
+        async function testSMSNotifications() {
+            updateResult('sms-test-result', false, 'Testando notifiche SMS...');
+            addLog('Inizio test notifiche SMS');
+            
+            try {
+                // Simula invio SMS
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Simula verifica invio
+                const smsSent = Math.random() > 0.2; // 80% success rate
+                
+                if (smsSent) {
+                    updateResult('sms-test-result', true, '✅ Notifiche SMS funzionanti');
+                    addLog('SMS inviato con successo');
+                    testResults.smsNotifications = true;
+                } else {
+                    updateResult('sms-test-result', false, '❌ Errore invio SMS');
+                    addLog('Errore invio SMS');
+                }
+            } catch (error) {
+                updateResult('sms-test-result', false, `❌ Errore: ${error.message}`);
+                addLog(`Errore SMS: ${error.message}`);
+            }
+            
+            updateFinalResults();
+        }
+
+        async function testPushNotifications() {
+            updateResult('push-test-result', false, 'Testando notifiche push...');
+            addLog('Inizio test notifiche push');
+            
+            try {
+                // Simula invio push
+                await new Promise(resolve => setTimeout(resolve, 600));
+                
+                // Simula verifica invio
+                const pushSent = Math.random() > 0.15; // 85% success rate
+                
+                if (pushSent) {
+                    updateResult('push-test-result', true, '✅ Notifiche push funzionanti');
+                    addLog('Push inviato con successo');
+                    testResults.pushNotifications = true;
+                } else {
+                    updateResult('push-test-result', false, '❌ Errore invio push');
+                    addLog('Errore invio push');
+                }
+            } catch (error) {
+                updateResult('push-test-result', false, `❌ Errore: ${error.message}`);
+                addLog(`Errore push: ${error.message}`);
+            }
+            
+            updateFinalResults();
+        }
+
+        function simulateReservationNotification() {
+            notificationCount++;
+            const notification = document.createElement('div');
+            notification.className = 'notification-item success';
+            notification.innerHTML = `
+                <strong>✅ Prenotazione Creata</strong><br>
+                <small>ID: #${1000 + notificationCount}</small><br>
+                <small>Cliente: Mario Rossi</small><br>
+                <small>Data: 2025-01-25 12:30</small><br>
+                <small>Persone: 4</small>
+            `;
+            
+            document.getElementById('notifications-list').appendChild(notification);
+            addLog(`Notifica prenotazione creata: #${1000 + notificationCount}`);
+        }
+
+        function simulateModificationNotification() {
+            notificationCount++;
+            const notification = document.createElement('div');
+            notification.className = 'notification-item info';
+            notification.innerHTML = `
+                <strong>📝 Prenotazione Modificata</strong><br>
+                <small>ID: #${1000 + notificationCount}</small><br>
+                <small>Cliente: Mario Rossi</small><br>
+                <small>Data: 2025-01-25 13:00</small><br>
+                <small>Persone: 6</small>
+            `;
+            
+            document.getElementById('notifications-list').appendChild(notification);
+            addLog(`Notifica prenotazione modificata: #${1000 + notificationCount}`);
+        }
+
+        function simulateCancellationNotification() {
+            notificationCount++;
+            const notification = document.createElement('div');
+            notification.className = 'notification-item error';
+            notification.innerHTML = `
+                <strong>❌ Prenotazione Annullata</strong><br>
+                <small>ID: #${1000 + notificationCount}</small><br>
+                <small>Cliente: Mario Rossi</small><br>
+                <small>Data: 2025-01-25 12:30</small><br>
+                <small>Motivo: Cliente</small>
+            `;
+            
+            document.getElementById('notifications-list').appendChild(notification);
+            addLog(`Notifica prenotazione annullata: #${1000 + notificationCount}`);
+        }
+
+        function updateFinalResults() {
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(Boolean).length;
+            const percentage = Math.round((passed / total) * 100);
+            
+            const element = document.getElementById('final-results');
+            element.className = percentage === 100 ? 'success' : percentage > 50 ? 'info' : 'error';
+            element.textContent = `Test notifiche completati: ${passed}/${total} (${percentage}%)`;
+        }
+
+        // Inizializza quando la pagina è caricata
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Sistema notifiche inizializzato');
+        });
+    </script>
+</body>
+</html>

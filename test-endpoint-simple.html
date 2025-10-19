@@ -1,41 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <title>Test Endpoint Available Days</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Endpoint Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .result {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+    </style>
 </head>
 <body>
-    <h1>Test Endpoint Available Days</h1>
-    <button onclick="testEndpoint()">Test Endpoint</button>
-    <div id="result"></div>
+    <h1>🧪 Test Endpoint Simple</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: WordPress REST API</h3>
+        <button onclick="testWordPressAPI()">Test /wp-json/fp-resv/v1/available-days</button>
+        <div id="wp-api-result" class="result">Risultato...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Endpoint Standalone</h3>
+        <button onclick="testStandaloneEndpoint()">Test /available-days-standalone.php</button>
+        <div id="standalone-result" class="result">Risultato...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Endpoint Originale</h3>
+        <button onclick="testOriginalEndpoint()">Test /available-days-endpoint.php</button>
+        <div id="original-result" class="result">Risultato...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Test File HTML</h3>
+        <button onclick="testHTMLFile()">Test /test-endpoint-simple.html</button>
+        <div id="html-result" class="result">Risultato...</div>
+    </div>
 
     <script>
-    function testEndpoint() {
-        const url = '/wp-json/fp-resv/v1/available-days?from=2025-10-19&to=2026-01-19&meal=pranzo';
-        console.log('Testing URL:', url);
-        
-        fetch(url)
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                return response.text();
-            })
-            .then(text => {
-                console.log('Response text:', text);
-                document.getElementById('result').innerHTML = '<pre>' + text + '</pre>';
+        async function testWordPressAPI() {
+            const result = document.getElementById('wp-api-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const response = await fetch('/wp-json/fp-resv/v1/available-days?from=2025-10-25&to=2025-11-25&meal=cena');
+                const data = await response.text();
                 
-                // Prova a parsare come JSON
-                try {
-                    const json = JSON.parse(text);
-                    console.log('JSON parsed:', json);
-                } catch (e) {
-                    console.log('JSON parse error:', e);
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.textContent = `✅ SUCCESS (${response.status})\n${data}`;
+                } else {
+                    result.className = 'result error';
+                    result.textContent = `❌ ERROR (${response.status})\n${data}`;
                 }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                document.getElementById('result').innerHTML = '<pre>Error: ' + error.message + '</pre>';
-            });
-    }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ EXCEPTION\n${error.message}`;
+            }
+        }
+
+        async function testStandaloneEndpoint() {
+            const result = document.getElementById('standalone-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const response = await fetch('/available-days-standalone.php?from=2025-10-25&to=2025-11-25&meal=cena');
+                const data = await response.text();
+                
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.textContent = `✅ SUCCESS (${response.status})\n${data}`;
+                } else {
+                    result.className = 'result error';
+                    result.textContent = `❌ ERROR (${response.status})\n${data}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ EXCEPTION\n${error.message}`;
+            }
+        }
+
+        async function testOriginalEndpoint() {
+            const result = document.getElementById('original-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const response = await fetch('/available-days-endpoint.php?from=2025-10-25&to=2025-11-25&meal=cena');
+                const data = await response.text();
+                
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.textContent = `✅ SUCCESS (${response.status})\n${data}`;
+                } else {
+                    result.className = 'result error';
+                    result.textContent = `❌ ERROR (${response.status})\n${data}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ EXCEPTION\n${error.message}`;
+            }
+        }
+
+        async function testHTMLFile() {
+            const result = document.getElementById('html-result');
+            result.textContent = 'Testando...';
+            
+            try {
+                const response = await fetch('/test-endpoint-simple.html');
+                const data = await response.text();
+                
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.textContent = `✅ SUCCESS (${response.status})\nFile HTML accessibile`;
+                } else {
+                    result.className = 'result error';
+                    result.textContent = `❌ ERROR (${response.status})\n${data}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ EXCEPTION\n${error.message}`;
+            }
+        }
+
+        // Test automatico al caricamento
+        window.onload = function() {
+            setTimeout(() => {
+                testHTMLFile();
+            }, 1000);
+        };
     </script>
 </body>
 </html>

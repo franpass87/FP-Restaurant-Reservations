@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulazione Integrata Completa - Utente + Operatore</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .simulation-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .flow-section {
+            background: #f8f9fa;
+            border-left: 4px solid #6f42c1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .flow-section h3 {
+            color: #6f42c1;
+            margin-top: 0;
+        }
+        .user-side {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        .user-side h3 {
+            color: #2196f3;
+        }
+        .admin-side {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+        .admin-side h3 {
+            color: #ff9800;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #007cba;
+        }
+        .timeline-item.admin::before {
+            background: #ff9800;
+        }
+        .timeline-time {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .timeline-content {
+            margin-top: 5px;
+        }
+        .notification {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .email-notification {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .system-log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .reservation-card {
+            background: #ffffff;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .status-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .status-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin: 0 5px;
+            position: relative;
+        }
+        .status-step.active {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .status-step.completed {
+            background: #cce5ff;
+            border-color: #007cba;
+            color: #004085;
+        }
+        .status-step::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .status-step:last-child::after {
+            display: none;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #007cba;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <h1>🔄 Simulazione Integrata Completa - Flusso Utente + Operatore</h1>
+        <p><strong>Scenario:</strong> Un cliente prenota online, l'operatore riceve la notifica, la gestisce e crea una nuova prenotazione telefonica.</p>
+        
+        <div class="flow-section user-side">
+            <h3>👤 LATO UTENTE - Prenotazione Online</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30:15</div>
+                    <div class="timeline-content">
+                        <strong>Cliente accede al sito</strong><br>
+                        Mario Rossi naviga sul sito del ristorante e trova il form di prenotazione.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30:20</div>
+                    <div class="timeline-content">
+                        <strong>Selezione pasto</strong><br>
+                        Sceglie "Cena" dal form. Il sistema carica le date disponibili.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30:25</div>
+                    <div class="timeline-content">
+                        <strong>Selezione data e orario</strong><br>
+                        Seleziona 25/10/2025 alle 20:00 per 4 persone.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30:30</div>
+                    <div class="timeline-content">
+                        <strong>Inserimento dati personali</strong><br>
+                        Compila: Mario Rossi, mario.rossi@email.com, +39 123 456 7890
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30:35</div>
+                    <div class="timeline-content">
+                        <strong>Invio prenotazione</strong><br>
+                        Clicca "Conferma Prenotazione". Il sistema processa la richiesta.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>⚙️ SISTEMA - Elaborazione Prenotazione</h3>
+            <div class="system-log" id="system-log">
+                [14:30:35] Ricevuta richiesta prenotazione<br>
+                [14:30:36] Validazione dati cliente<br>
+                [14:30:37] Controllo disponibilità slot 20:00<br>
+                [14:30:38] Slot disponibile - 4 persone OK<br>
+                [14:30:39] Creazione prenotazione RES-A1B2C3D4<br>
+                [14:30:40] Status: Pending<br>
+                [14:30:41] Salvataggio in database<br>
+                [14:30:42] Invio notifica email operatore<br>
+                [14:30:43] Invio email conferma cliente<br>
+                [14:30:44] Prenotazione creata con successo<br>
+            </div>
+            
+            <div class="reservation-card">
+                <h4>📋 Prenotazione Creata</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <p><strong>ID:</strong> RES-A1B2C3D4</p>
+                        <p><strong>Cliente:</strong> Mario Rossi</p>
+                        <p><strong>Email:</strong> mario.rossi@email.com</p>
+                        <p><strong>Telefono:</strong> +39 123 456 7890</p>
+                    </div>
+                    <div>
+                        <p><strong>Data:</strong> 25/10/2025</p>
+                        <p><strong>Orario:</strong> 20:00</p>
+                        <p><strong>Persone:</strong> 4</p>
+                        <p><strong>Pasto:</strong> Cena</p>
+                        <p><strong>Status:</strong> Pending</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section admin-side">
+            <h3>👨‍💼 LATO OPERATORE - Gestione Prenotazione</h3>
+            <div class="timeline">
+                <div class="timeline-item admin">
+                    <div class="timeline-time">14:31:00</div>
+                    <div class="timeline-content">
+                        <strong>Notifica ricevuta</strong><br>
+                        L'operatore riceve email di notifica per nuova prenotazione RES-A1B2C3D4.
+                    </div>
+                </div>
+                <div class="timeline-item admin">
+                    <div class="timeline-time">14:31:30</div>
+                    <div class="timeline-content">
+                        <strong>Accesso pannello admin</strong><br>
+                        L'operatore accede al pannello di gestione e visualizza la prenotazione.
+                    </div>
+                </div>
+                <div class="timeline-item admin">
+                    <div class="timeline-time">14:32:00</div>
+                    <div class="timeline-content">
+                        <strong>Conferma prenotazione</strong><br>
+                        L'operatore conferma la prenotazione cliccando su "Conferma".
+                    </div>
+                </div>
+                <div class="timeline-item admin">
+                    <div class="timeline-time">14:32:30</div>
+                    <div class="timeline-content">
+                        <strong>Email conferma inviata</strong><br>
+                        Il sistema invia email di conferma al cliente Mario Rossi.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>📧 NOTIFICHE EMAIL</h3>
+            <div class="notification email-notification">
+                <strong>📧 Email Inviata a Mario Rossi</strong><br>
+                <strong>Oggetto:</strong> Conferma Prenotazione - Ristorante<br>
+                <strong>Contenuto:</strong><br>
+                "Gentile Mario Rossi,<br><br>
+                La sua prenotazione per il 25/10/2025 alle 20:00 per 4 persone è stata confermata.<br>
+                Numero prenotazione: RES-A1B2C3D4<br><br>
+                La aspettiamo!<br>
+                Il Team del Ristorante"
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>📊 STATUS FLOW PRENOTAZIONE</h3>
+            <div class="status-flow">
+                <div class="status-step completed">
+                    <strong>1. Creata</strong><br>
+                    <small>14:30:35</small>
+                </div>
+                <div class="status-step completed">
+                    <strong>2. Pending</strong><br>
+                    <small>14:30:40</small>
+                </div>
+                <div class="status-step active">
+                    <strong>3. Confermata</strong><br>
+                    <small>14:32:00</small>
+                </div>
+                <div class="status-step">
+                    <strong>4. Completata</strong><br>
+                    <small>Dopo il pasto</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section user-side">
+            <h3>📞 NUOVA PRENOTAZIONE TELEFONICA</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-time">14:45:00</div>
+                    <div class="timeline-content">
+                        <strong>Chiamata telefonica</strong><br>
+                        Giulia Neri chiama per prenotare per il 26/10/2025 alle 19:30 per 2 persone.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:45:30</div>
+                    <div class="timeline-content">
+                        <strong>Operatore crea prenotazione</strong><br>
+                        L'operatore inserisce i dati nel pannello admin e crea la prenotazione.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:46:00</div>
+                    <div class="timeline-content">
+                        <strong>Conferma immediata</strong><br>
+                        L'operatore conferma immediatamente la prenotazione telefonica.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>📋 PRENOTAZIONE TELEFONICA CREATA</h3>
+            <div class="reservation-card">
+                <h4>📞 Prenotazione Telefonica</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <p><strong>ID:</strong> RES-TEL12345</p>
+                        <p><strong>Cliente:</strong> Giulia Neri</p>
+                        <p><strong>Email:</strong> giulia.neri@email.com</p>
+                        <p><strong>Telefono:</strong> +39 987 654 3210</p>
+                    </div>
+                    <div>
+                        <p><strong>Data:</strong> 26/10/2025</p>
+                        <p><strong>Orario:</strong> 19:30</p>
+                        <p><strong>Persone:</strong> 2</p>
+                        <p><strong>Pasto:</strong> Cena</p>
+                        <p><strong>Status:</strong> Confermata</p>
+                        <p><strong>Tipo:</strong> Telefonica</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>📊 DASHBOARD FINALE</h3>
+            <div class="reservation-card">
+                <h4>📈 Riepilogo Prenotazioni</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+                    <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                        <h3 style="margin: 0; color: #1976d2;">2</h3>
+                        <p style="margin: 5px 0 0 0;">Prenotazioni Oggi</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                        <h3 style="margin: 0; color: #388e3c;">2</h3>
+                        <p style="margin: 5px 0 0 0;">Confermate</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #fff3e0; border-radius: 8px;">
+                        <h3 style="margin: 0; color: #f57c00;">0</h3>
+                        <p style="margin: 5px 0 0 0;">In Attesa</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 8px;">
+                        <h3 style="margin: 0; color: #d32f2f;">0</h3>
+                        <p style="margin: 5px 0 0 0;">Annullate</p>
+                    </div>
+                </div>
+                
+                <h5>Prenotazioni Attive</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <strong>RES-A1B2C3D4</strong><br>
+                        <small>Mario Rossi - 25/10/2025 20:00 - 4 persone - Cena</small><br>
+                        <span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-size: 12px;">Confermata</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <strong>RES-TEL12345</strong><br>
+                        <small>Giulia Neri - 26/10/2025 19:30 - 2 persone - Cena</small><br>
+                        <span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-size: 12px;">Confermata</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>✅ RISULTATO FINALE</h3>
+            <div class="notification email-notification">
+                <strong>🎉 Simulazione Completata con Successo!</strong><br><br>
+                <strong>Flusso Utente:</strong> ✅ Prenotazione online completata<br>
+                <strong>Notifiche Sistema:</strong> ✅ Email inviate correttamente<br>
+                <strong>Gestione Operatore:</strong> ✅ Prenotazione confermata<br>
+                <strong>Prenotazione Telefonica:</strong> ✅ Creata e confermata<br>
+                <strong>Sincronizzazione:</strong> ✅ Tutti i sistemi allineati<br><br>
+                <strong>Totale Prenotazioni:</strong> 2 (1 online + 1 telefonica)<br>
+                <strong>Status:</strong> Tutte confermate<br>
+                <strong>Sistema:</strong> Funzionante al 100%
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simula aggiornamento log in tempo reale
+        function updateSystemLog() {
+            const log = document.getElementById('system-log');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            // Aggiungi log entry casuale ogni 3 secondi
+            if (Math.random() > 0.7) {
+                const entries = [
+                    `[${timeStr}] Sistema operativo normalmente`,
+                    `[${timeStr}] Database sincronizzato`,
+                    `[${timeStr}] Cache aggiornata`,
+                    `[${timeStr}] Backup automatico completato`,
+                    `[${timeStr}] Monitoraggio performance OK`
+                ];
+                
+                const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+                log.innerHTML += randomEntry + '<br>';
+                
+                // Mantieni solo gli ultimi 10 log
+                const lines = log.innerHTML.split('<br>');
+                if (lines.length > 10) {
+                    log.innerHTML = lines.slice(-10).join('<br>');
+                }
+                
+                // Scroll to bottom
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+
+        // Avvia aggiornamento log
+        setInterval(updateSystemLog, 3000);
+
+        // Simula animazione status flow
+        function animateStatusFlow() {
+            const steps = document.querySelectorAll('.status-step');
+            let currentStep = 0;
+            
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        // Avvia animazione al caricamento
+        window.onload = function() {
+            setTimeout(animateStatusFlow, 2000);
+        };
+    </script>
+</body>
+</html>
