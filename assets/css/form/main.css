@@ -69,8 +69,8 @@
 
 /* ==================== OVERRIDE & FIXES ==================== */
 
-/* FIX CONTRASTI - IMPORTANTISSIMO! */
-@import './FIX-CONTRASTI-VISIBILITA.css';
+/* FIX CONTRASTI - DISABILITATO (causava override forzati) */
+/* @import './FIX-CONTRASTI-VISIBILITA.css'; */
 
 /* SPAZIATURE AUMENTATE - Box più ariosi */
 @import './SPAZIATURE-AUMENTATE.css';

@@ -10,7 +10,8 @@
 @import './form/_variables-thefork.css';
 
 /* ==================== IMPORTA FIX CONTRASTI E VISIBILITÀ ==================== */
-@import './form/FIX-CONTRASTI-VISIBILITA.css';
+/* DISABILITATO - Causava override forzati con !important */
+/* @import './form/FIX-CONTRASTI-VISIBILITA.css'; */
 
 /* ==================== BASE & RESET ==================== */
 
