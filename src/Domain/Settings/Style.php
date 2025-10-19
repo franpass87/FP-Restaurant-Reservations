@@ -37,14 +37,14 @@ final class Style
     public function getDefaults(): array
     {
         return [
-            'style_palette'          => 'neutral', // B/W palette di default
-            'style_primary_color'    => '#000000', // Nero di default
-            'style_button_bg'        => '#000000', // Bottoni neri
+            'style_palette'          => 'grayscale', // Palette grigia professionale di default
+            'style_primary_color'    => '#374151', // Grigio scuro professionale
+            'style_button_bg'        => '#374151', // Bottoni grigi eleganti
             'style_button_text'      => '#ffffff', // Testo bianco
             'style_font_family'      => '"Inter", sans-serif',
             'style_font_size'        => '16',
             'style_heading_weight'   => '600',
-            'style_border_radius'    => '8',
+            'style_border_radius'    => '12', // Bordi più arrotondati
             'style_shadow_level'     => 'soft',
             'style_spacing_scale'    => 'cozy',
             'style_focus_ring_width' => '3',
@@ -64,6 +64,18 @@ final class Style
     public function getPalettes(): array
     {
         return [
+            'grayscale' => [
+                'background'      => '#f9fafb',
+                'surface'         => '#ffffff',
+                'text'            => '#111827',
+                'muted'           => '#6b7280',
+                'accent'          => '#374151',
+                'dark_background' => '#111827',
+                'dark_surface'    => '#1f2937',
+                'dark_text'       => '#f9fafb',
+                'dark_muted'      => '#9ca3af',
+                'dark_accent'     => '#4b5563',
+            ],
             'brand' => [
                 'background'      => '#f9f7f8',
                 'surface'         => '#ffffff',

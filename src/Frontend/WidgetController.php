@@ -149,7 +149,7 @@ final class WidgetController
         
         /* Spaziatura link Privacy Policy */
         html body .fp-resv-simple .fp-field a {
-            margin: 0 2px !important;
+            margin: 0 4px !important;
             display: inline !important;
         }
         

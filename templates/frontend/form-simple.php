@@ -122,28 +122,29 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-field textarea {
             width: 100%;
             padding: 12px 14px;
-            border: 1.5px solid #e8e8e8;
-            border-radius: 8px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 12px;
             font-size: 14px;
             box-sizing: border-box;
-            background: #ffffff;
-            color: #000000;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            color: #374151;
             transition: all 0.2s ease;
             font-family: inherit;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
         }
         
         .fp-field input:focus,
         .fp-field select:focus,
         .fp-field textarea:focus {
             outline: none;
-            border-color: #000000;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.1), 0 4px 12px 0 rgba(55, 65, 81, 0.15);
             transform: translateY(-1px);
         }
         
         .fp-field input::placeholder,
         .fp-field textarea::placeholder {
-            color: #999999;
+            color: #9ca3af;
         }
         
         .fp-meals {
@@ -155,17 +156,18 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-meal-btn {
             padding: 12px 16px;
-            border: 1.5px solid #e8e8e8;
-            background: #ffffff;
-            border-radius: 8px;
+            border: 1.5px solid #d1d5db;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border-radius: 12px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 500;
             transition: all 0.2s ease;
             text-align: center;
-            color: #2c2c2c;
+            color: #374151;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
         }
         
         .fp-meal-btn::before {
@@ -175,15 +177,15 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
+            background: linear-gradient(90deg, transparent, rgba(55, 65, 81, 0.1), transparent);
             transition: left 0.5s ease;
         }
         
         .fp-meal-btn:hover {
-            border-color: #000000;
-            background: #fafafa;
+            border-color: #374151;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px 0 rgba(55, 65, 81, 0.15);
         }
         
         .fp-meal-btn:hover::before {
@@ -191,11 +193,11 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         }
         
         .fp-meal-btn.selected {
-            background: #000000;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
             color: #ffffff;
-            border-color: #000000;
+            border-color: #374151;
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 20px 0 rgba(55, 65, 81, 0.25);
         }
         
         .fp-buttons {
@@ -236,29 +238,34 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         }
         
         .fp-btn-primary {
-            background: #000000;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
             color: #ffffff;
-            border-color: #000000;
+            border-color: #374151;
+            box-shadow: 0 4px 14px 0 rgba(55, 65, 81, 0.25);
+            font-weight: 600;
+            letter-spacing: 0.025em;
         }
         
         .fp-btn-primary:hover {
-            background: #1a1a1a;
-            border-color: #1a1a1a;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border-color: #1f2937;
+            box-shadow: 0 6px 20px 0 rgba(55, 65, 81, 0.35);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
         .fp-btn-secondary {
-            background: #ffffff;
-            color: #2c2c2c;
-            border-color: #e8e8e8;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            color: #374151;
+            border-color: #d1d5db;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            font-weight: 500;
         }
         
         .fp-btn-secondary:hover {
-            background: #f8f8f8;
-            border-color: #000000;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-color: #9ca3af;
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
             transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .fp-btn:disabled {
@@ -328,20 +335,21 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             margin-right: 10px !important;
             transform: none !important;
             cursor: pointer !important;
-            accent-color: #000000 !important;
+            accent-color: #374151 !important;
             flex-shrink: 0 !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
             appearance: none !important;
-            border: 2px solid #ccc !important;
-            border-radius: 3px !important;
-            background: #fff !important;
+            border: 2px solid #d1d5db !important;
+            border-radius: 6px !important;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08) !important;
         }
         
         #fp-resv-default .fp-field input[type="checkbox"]:checked,
         .fp-resv-simple .fp-field input[type="checkbox"]:checked {
-            background: #000 !important;
-            border-color: #000 !important;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+            border-color: #374151 !important;
         }
         
         .fp-field label {
@@ -385,7 +393,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         /* Spaziatura link Privacy Policy */
         .fp-resv-simple .fp-field a {
-            margin: 0 2px !important;
+            margin: 0 4px !important;
             display: inline !important;
         }
         
@@ -547,29 +555,33 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            border: 2px solid #000000;
-            background: #ffffff;
-            color: #000000;
+            border: 2px solid #d1d5db;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            color: #374151;
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
         }
         
         .fp-btn-minus:hover, .fp-btn-plus:hover {
-            background: #000000;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
             color: #ffffff;
-            transform: scale(1.1);
+            border-color: #374151;
+            box-shadow: 0 4px 14px 0 rgba(55, 65, 81, 0.25);
+            transform: translateY(-1px);
         }
         
         .fp-btn-minus:disabled, .fp-btn-plus:disabled {
-            background: #f5f5f5;
-            color: #999;
-            border-color: #e8e8e8;
+            background: #f3f4f6;
+            color: #9ca3af;
+            border-color: #d1d5db;
             cursor: not-allowed;
+            box-shadow: none;
             transform: none;
         }
         
@@ -871,7 +883,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-field">
             <label for="customer-phone">Telefono *</label>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <select name="fp_resv_phone_prefix" style="width: 140px !important; padding: 12px 8px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 13px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit; flex-shrink: 0 !important; max-width: 140px !important; min-width: 140px !important;">
+                <select name="fp_resv_phone_prefix" style="width: 140px !important; padding: 12px 8px; border: 1.5px solid #d1d5db; border-radius: 12px; font-size: 13px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); color: #374151; transition: all 0.2s ease; font-family: inherit; flex-shrink: 0 !important; max-width: 140px !important; min-width: 140px !important; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);">
                     <?php 
                     $phonePrefixes = $config['phone_prefixes'] ?? [];
                     $defaultPhoneCode = $config['defaults']['phone_country_code'] ?? '39';
@@ -905,7 +917,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                         <option value="1">🇺🇸 +1 · Stati Uniti</option>
                     <?php endif; ?>
                 </select>
-                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1 !important; min-width: 0 !important; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 14px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit;">
+                <input type="tel" id="customer-phone" name="fp_resv_phone" required autocomplete="tel" placeholder="123 456 7890" style="flex: 1 !important; min-width: 0 !important; padding: 12px 14px; border: 1.5px solid #d1d5db; border-radius: 12px; font-size: 14px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); color: #374151; transition: all 0.2s ease; font-family: inherit; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);">
             </div>
         </div>
         <div class="fp-field">
@@ -944,7 +956,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
                 </label>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label for="high-chair-count">Seggioloni:</label>
-                    <input type="number" id="high-chair-count" name="fp_resv_high_chair_count" value="0" min="0" max="10" style="width: 70px; padding: 8px 10px; border: 1.5px solid #e8e8e8; border-radius: 6px; font-size: 13px; background: #ffffff; color: #000000; transition: all 0.2s ease; font-family: inherit; text-align: center;">
+                    <input type="number" id="high-chair-count" name="fp_resv_high_chair_count" value="0" min="0" max="10" style="width: 70px; padding: 8px 10px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 13px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); color: #374151; transition: all 0.2s ease; font-family: inherit; text-align: center; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);">
                 </div>
             </div>
         </div>
