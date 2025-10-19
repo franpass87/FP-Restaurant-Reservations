@@ -181,9 +181,15 @@ function Et(a) {
   return et(a, "data-fp-resv-section");
 }
 function B(a) {
-  if (!a || !a.includes("-"))
+  if (!a || typeof a != "string" || /^\d{4}-\d{2}-\d{2}$/.test(a))
     return a;
-  const t = a.split("-");
+  let t;
+  if (a.includes("/"))
+    t = a.split("/");
+  else if (a.includes("-"))
+    t = a.split("-");
+  else
+    return a;
   return t.length === 3 && t[0].length <= 2 ? `${t[2]}-${t[1].padStart(2, "0")}-${t[0].padStart(2, "0")}` : a;
 }
 class it {
@@ -297,7 +303,12 @@ class it {
     }
     this.availableDaysCache = {}, this.availableDaysLoading = !1, this.availableDaysCachedMeal = null, this.flatpickrInstance = window.flatpickr(this.dateField, {
       minDate: "today",
-      dateFormat: "d-m-Y",
+      dateFormat: "Y-m-d",
+      // Formato ISO per il backend (nel campo hidden)
+      altInput: !0,
+      // Mostra un input alternativo all'utente
+      altFormat: "d/m/Y",
+      // Formato italiano mostrato all'utente
       locale: window.flatpickr.l10ns.it || "it",
       enable: [],
       // Inizialmente nessun giorno abilitato, lo aggiorneremo dopo il caricamento
@@ -819,10 +830,10 @@ class it {
     const t = this.form.querySelector('[data-fp-resv-field="date"]'), e = this.form.querySelector('[data-fp-resv-field="time"]'), i = this.form.querySelector('[data-fp-resv-field="party"]'), s = this.form.querySelector('[data-fp-resv-field="first_name"]'), n = this.form.querySelector('[data-fp-resv-field="last_name"]'), r = this.form.querySelector('[data-fp-resv-field="email"]'), o = this.form.querySelector('[data-fp-resv-field="phone"]'), c = this.form.querySelector('[data-fp-resv-field="notes"]'), h = this.form.querySelector('[data-fp-resv-field="high_chair_count"]'), v = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]'), m = this.form.querySelector('[data-fp-resv-field="pets"]');
     let R = "";
     s && s.value && (R = s.value.trim()), n && n.value && (R = (R + " " + n.value.trim()).trim());
-    let C = "";
-    if (r && r.value && (C = r.value.trim()), o && o.value) {
+    let F = "";
+    if (r && r.value && (F = r.value.trim()), o && o.value) {
       const S = this.getPhoneCountryCode(), V = (S ? "+" + S + " " : "") + o.value.trim();
-      C = C !== "" ? C + " / " + V : V;
+      F = F !== "" ? F + " / " + V : V;
     }
     const w = [];
     h && typeof h.value == "string" && parseInt(h.value, 10) > 0 && w.push("Seggioloni: " + parseInt(h.value, 10)), v && "checked" in v && v.checked && w.push("Tavolo accessibile per sedia a rotelle"), m && "checked" in m && m.checked && w.push("Animali domestici");
@@ -842,7 +853,7 @@ class it {
           S.textContent = R;
           break;
         case "contact":
-          S.textContent = C;
+          S.textContent = F;
           break;
         case "notes":
           S.textContent = c && c.value ? c.value : "";
@@ -895,8 +906,8 @@ class it {
         let m;
         try {
           m = h ? JSON.parse(h) : {};
-        } catch (C) {
-          console.error("[FP-RESV] Errore parsing risposta errore:", C), m = { message: "Risposta non valida dal server" };
+        } catch (F) {
+          console.error("[FP-RESV] Errore parsing risposta errore:", F), m = { message: "Risposta non valida dal server" };
         }
         if (console.error("[FP-RESV] Errore API:", {
           status: c.status,
@@ -904,9 +915,9 @@ class it {
           errorPayload: m
         }), c.status === 403 && !this.state.nonceRetried) {
           console.warn("[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce..."), await new Promise((w) => setTimeout(w, 500));
-          const C = await this.refreshNonce();
-          if (console.log("[FP-RESV] Nonce fresco ottenuto:", C ? C.substring(0, 10) + "..." : "FALLITO"), C) {
-            this.state.nonceRetried = !0, s.fp_resv_nonce = C, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((b) => setTimeout(b, 200));
+          const F = await this.refreshNonce();
+          if (console.log("[FP-RESV] Nonce fresco ottenuto:", F ? F.substring(0, 10) + "..." : "FALLITO"), F) {
+            this.state.nonceRetried = !0, s.fp_resv_nonce = F, console.log("[FP-RESV] Retry con nuovo nonce..."), await new Promise((b) => setTimeout(b, 200));
             const w = await fetch(n, {
               method: "POST",
               headers: {
@@ -1382,7 +1393,7 @@ document.addEventListener("fp-resv:tracking:push", function(a) {
   const i = t.payload || t.data || {};
   g(e, i && typeof i == "object" ? i : {});
 });
-const wt = 400, Ct = 6e4, Ft = 3, Z = 600;
+const wt = 400, Ft = 6e4, Ct = 3, Z = 600;
 function Pt(a, t) {
   let e;
   try {
@@ -1406,10 +1417,10 @@ function _t(a) {
     const u = l.trim().toLowerCase();
     if (u === "")
       return "";
-    const f = ((A) => typeof A.normalize == "function" ? A.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : A)(u), y = (A) => A.some((d) => f.startsWith(d)), F = (A) => A.some((d) => f.includes(d));
-    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : u === "waitlist" || u === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || F(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : u;
+    const f = ((A) => typeof A.normalize == "function" ? A.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : A)(u), y = (A) => A.some((d) => f.startsWith(d)), C = (A) => A.some((d) => f.includes(d));
+    return y(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? "available" : u === "waitlist" || u === "busy" || y(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || C(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? "limited" : y(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? "full" : u;
   }
-  function C(l, u) {
+  function F(l, u) {
     const p = Array.isArray(l) ? l : [], f = p.length;
     if (f === 0)
       return u === !1 ? { state: "unavailable", slots: 0 } : { state: "full", slots: 0 };
@@ -1444,7 +1455,7 @@ function _t(a) {
   }
   function q(l) {
     s && (s.hidden = !1);
-    const u = l && typeof l == "object", p = u && typeof l.meal == "string" ? l.meal.trim() : "", f = u && typeof l.date == "string" ? l.date.trim() : "", y = u && typeof l.party < "u" ? String(l.party).trim() : "", F = u && !!l.requiresMeal, A = p !== "", E = f !== "" && (y !== "" && y !== "0") && (!F || A), _ = F && !A ? a.strings && a.strings.selectMeal || "" : E && a.strings && a.strings.slotsEmpty || "";
+    const u = l && typeof l == "object", p = u && typeof l.meal == "string" ? l.meal.trim() : "", f = u && typeof l.date == "string" ? l.date.trim() : "", y = u && typeof l.party < "u" ? String(l.party).trim() : "", C = u && !!l.requiresMeal, A = p !== "", E = f !== "" && (y !== "" && y !== "0") && (!C || A), _ = C && !A ? a.strings && a.strings.selectMeal || "" : E && a.strings && a.strings.slotsEmpty || "";
     b(_, "idle"), i && j(i), w(l, { state: E ? "unavailable" : "unknown", slots: 0 });
   }
   function V() {
@@ -1484,12 +1495,12 @@ function _t(a) {
       q(u);
       return;
     }
-    f.forEach((F) => {
+    f.forEach((C) => {
       const A = document.createElement("li"), d = document.createElement("button");
-      d.type = "button", d.textContent = F.label || "", d.dataset.slot = F.start || "", d.dataset.slotStatus = F.status || "", d.setAttribute("aria-pressed", v && v.start === F.start ? "true" : "false"), d.addEventListener("click", () => nt(F, d)), A.appendChild(d), i.appendChild(A);
+      d.type = "button", d.textContent = C.label || "", d.dataset.slot = C.start || "", d.dataset.slotStatus = C.status || "", d.setAttribute("aria-pressed", v && v.start === C.start ? "true" : "false"), d.addEventListener("click", () => nt(C, d)), A.appendChild(d), i.appendChild(A);
     }), b(a.strings && a.strings.slotsUpdated || "", !1);
     const y = !!(l && (typeof l.has_availability < "u" && l.has_availability || l.meta && l.meta.has_availability));
-    w(u, C(f, y));
+    w(u, F(f, y));
   }
   function M(l, u) {
     if (h = l, !l || !l.date || !l.party) {
@@ -1497,13 +1508,13 @@ function _t(a) {
       return;
     }
     const p = ++m, f = JSON.stringify([l.date, l.meal, l.party]), y = o.get(f);
-    if (y && Date.now() - y.timestamp < Ct && u === 0) {
+    if (y && Date.now() - y.timestamp < Ft && u === 0) {
       K(y.payload, l, p);
       return;
     }
     W(), V(), S(), b(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), w(l, { state: "loading", slots: 0 });
-    const F = Pt(a.endpoint, l), A = performance.now();
-    fetch(F, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((d) => d.json().catch(() => ({})).then((x) => {
+    const C = Pt(a.endpoint, l), A = performance.now();
+    fetch(C, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((d) => d.json().catch(() => ({})).then((x) => {
       if (!d.ok) {
         const E = new Error("availability_error");
         E.status = d.status, E.payload = x;
@@ -1533,7 +1544,7 @@ function _t(a) {
         const N = Number.parseInt(E.retry_after, 10);
         Number.isFinite(N) && (k = N);
       }
-      if (u >= Ft - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
+      if (u >= Ct - 1 ? !1 : _ === 429 || _ >= 500 && _ < 600 ? !0 : _ === 0) {
         const N = u + 1;
         typeof a.onRetry == "function" && a.onRetry(N);
         const dt = k > 0 ? Math.max(k * 1e3, Z) : Z * Math.pow(2, u);
