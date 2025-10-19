@@ -195,12 +195,12 @@
 
 /* ==================== FEEDBACK CONTAINER ==================== */
 
-.fp-resv-widget__feedback {
+.fp-resv-feedback {
   display: grid;
   gap: var(--fp-space-md);
 }
 
-.fp-resv-widget__feedback .fp-alert {
+.fp-resv-feedback .fp-alert {
   margin: 0;
 }
 

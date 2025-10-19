@@ -38,7 +38,7 @@
   border: 1px solid var(--fp-color-border-light);
 }
 
-.fp-resv-widget__form {
+.fp-resv-form {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -47,7 +47,7 @@
 
 /* ==================== TOPBAR - HEADER ELEGANTE ==================== */
 
-.fp-resv-widget__topbar {
+.fp-resv-topbar {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -57,11 +57,11 @@
   border-bottom: 1px solid var(--fp-color-border-light);
 }
 
-.fp-resv-widget__titles {
+.fp-resv-titles {
   flex: 1;
 }
 
-.fp-resv-widget__headline {
+.fp-resv-headline {
   font-family: var(--fp-font-display);
   font-size: var(--fp-text-3xl);
   font-weight: var(--fp-font-bold);
@@ -71,7 +71,7 @@
   letter-spacing: var(--fp-tracking-tight);
 }
 
-.fp-resv-widget__subheadline {
+.fp-resv-subheadline {
   font-size: var(--fp-text-base);
   color: var(--fp-color-text-secondary);
   margin: 0;
@@ -79,25 +79,7 @@
   font-weight: var(--fp-font-normal);
 }
 
-.fp-resv-widget__pdf {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--fp-space-sm) var(--fp-space-lg);
-  font-size: var(--fp-text-sm);
-  font-weight: var(--fp-font-semibold);
-  color: var(--fp-color-text);
-  background: var(--fp-color-surface);
-  border: 1px solid var(--fp-color-border);
-  border-radius: var(--fp-radius-full);
-  text-decoration: none;
-  transition: all var(--fp-transition-base);
-  white-space: nowrap;
-}
-
-.fp-resv-widget__pdf:hover {
-  background: var(--fp-color-primary);
-  color: var(--fp-color-text-inverse);
-  border-color: var(--fp-color-primary);
+/* PDF button styles are now handled by .fp-btn and .fp-btn--ghost in the template */
   transform: translateY(-1px);
   box-shadow: var(--fp-shadow-md);
 }
@@ -224,7 +206,7 @@
 
 /* ==================== STEPS - CLEAN SECTIONS ==================== */
 
-.fp-resv-widget__steps {
+.fp-resv-steps {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -650,7 +632,7 @@
 
 /* ==================== SUBMIT AREA ==================== */
 
-.fp-resv-widget__actions {
+.fp-resv-actions {
   display: flex;
   flex-direction: column;
   gap: var(--fp-space-md);
@@ -667,7 +649,7 @@
   font-weight: var(--fp-font-bold);
 }
 
-.fp-resv-widget__submit-hint {
+.fp-resv-submit-hint {
   text-align: center;
   font-size: var(--fp-text-sm);
   color: var(--fp-color-text-secondary);
@@ -1008,18 +990,13 @@
     box-shadow: var(--fp-shadow-md);
   }
   
-  .fp-resv-widget__headline {
+  .fp-resv-headline {
     font-size: var(--fp-text-2xl);
   }
   
-  .fp-resv-widget__topbar {
+  .fp-resv-topbar {
     flex-direction: column;
     gap: var(--fp-space-md);
-  }
-  
-  .fp-resv-widget__pdf {
-    width: 100%;
-    justify-content: center;
   }
   
   .fp-meals__list {

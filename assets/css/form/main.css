@@ -104,7 +104,7 @@ div[data-fp-resv-app].fp-resv-widget,
 }
 
 /* Ensure form element is visible */
-.fp-resv-widget .fp-resv-widget__form,
+.fp-resv-widget .fp-resv-form,
 .fp-resv-widget form[data-fp-resv-form],
 .fp-resv form,
 form[data-fp-resv-form] {
