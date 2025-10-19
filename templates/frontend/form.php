@@ -92,9 +92,9 @@ $styleId   = $styleHash !== '' ? 'fp-resv-style-' . $styleHash : 'fp-resv-style-
 
 // Output inline styles using WordPress best practices
 // This avoids WPBakery escaping issues while being more semantic
-// NOTE: CSS Bridge in form/_variables-bridge.css ensures compatibility between
-//       dynamic (--fp-resv-*) and static (--fp-color-*) variable systems
-if ($styleCss !== '') {
+// NOTE: CSS dinamico DISABILITATO - Si usano solo CSS statici da form.css
+//       Il bridge in form/_variables-bridge.css garantisce comunque la compatibilità
+if ($styleCss !== '' && false) { // ← Forzato a false per disabilitare CSS dinamico
     // Check if we're in a WPBakery/Visual Composer context
     $isWPBakery = function_exists('vc_is_inline') && vc_is_inline();
     

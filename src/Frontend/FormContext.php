@@ -187,8 +187,17 @@ final class FormContext
             $fallbackLocale
         );
 
-        $styleService = new Style($this->options);
-        $stylePayload = $styleService->buildFrontend($config['formId']);
+        // DISABILITATO: CSS dinamico non necessario, si usano solo file CSS statici
+        // $styleService = new Style($this->options);
+        // $stylePayload = $styleService->buildFrontend($config['formId']);
+        
+        // Payload vuoto - il form userà solo CSS statici da form.css
+        $stylePayload = [
+            'css' => '',
+            'hash' => '',
+            'tokens' => [],
+            'settings' => [],
+        ];
 
         $pdfMapKeys = [];
         if (isset($languageSettings['pdf_urls']) && is_array($languageSettings['pdf_urls'])) {
