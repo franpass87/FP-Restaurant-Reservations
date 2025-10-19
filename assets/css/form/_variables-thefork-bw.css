@@ -1,0 +1,202 @@
+/**
+ * TheFork Design System - Black & White Edition
+ * Palette elegante in scala di grigi per un look professionale e minimal
+ * 
+ * @version 1.0.0
+ * @description Variabili ispirate a TheFork ma con colori neutri
+ */
+
+:root {
+  /* ==================== PALETTE COLORI B/W ==================== */
+  
+  /* Primari - Scala di Grigi Eleganti */
+  --fp-color-primary: #000000;              /* Nero puro per CTA e elementi principali */
+  --fp-color-primary-hover: #1a1a1a;        /* Nero soft per hover */
+  --fp-color-primary-light: #f5f5f5;        /* Grigio chiarissimo per background */
+  --fp-color-primary-dark: #000000;         /* Nero per enfasi */
+  
+  /* Superfici */
+  --fp-color-surface: #ffffff;              /* Bianco puro per card e form */
+  --fp-color-surface-alt: #fafafa;          /* Off-white per aree alternative */
+  --fp-color-surface-hover: #f5f5f5;        /* Hover state su superfici */
+  
+  /* Testo */
+  --fp-color-text: #1a1a1a;                 /* Nero soft per testo principale */
+  --fp-color-text-secondary: #666666;       /* Grigio medio per testo secondario */
+  --fp-color-text-muted: #999999;           /* Grigio chiaro per hint/label */
+  --fp-color-text-inverse: #ffffff;         /* Bianco per testo su sfondo scuro */
+  
+  /* Bordi */
+  --fp-color-border: #e0e0e0;               /* Grigio chiaro per bordi normali */
+  --fp-color-border-hover: #bdbdbd;         /* Grigio medio per hover */
+  --fp-color-border-light: #f0f0f0;         /* Grigio chiarissimo per divisori sottili */
+  --fp-color-divider: #eeeeee;              /* Divisori */
+  
+  /* Stati */
+  --fp-color-success: #2e7d32;              /* Verde scuro per successo */
+  --fp-color-success-light: #e8f5e9;        /* Verde chiaro per background */
+  --fp-color-success-dark: #1b5e20;         /* Verde più scuro */
+  
+  --fp-color-error: #d32f2f;                /* Rosso per errori */
+  --fp-color-error-light: #ffebee;          /* Rosso chiaro per background */
+  
+  --fp-color-warning: #f57c00;              /* Arancione per warning */
+  --fp-color-warning-light: #fff3e0;        /* Arancione chiaro */
+  
+  --fp-color-info: #424242;                 /* Grigio scuro per info */
+  --fp-color-info-light: #f5f5f5;           /* Grigio chiarissimo per info background */
+  
+  /* ==================== TIPOGRAFIA ==================== */
+  
+  /* Font families - TheFork usa font eleganti */
+  --fp-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fp-font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  /* Font sizes - Scala modulare TheFork */
+  --fp-text-xs: 0.75rem;      /* 12px */
+  --fp-text-sm: 0.875rem;     /* 14px */
+  --fp-text-base: 1rem;       /* 16px */
+  --fp-text-lg: 1.125rem;     /* 18px */
+  --fp-text-xl: 1.25rem;      /* 20px */
+  --fp-text-2xl: 1.5rem;      /* 24px */
+  --fp-text-3xl: 1.875rem;    /* 30px */
+  --fp-text-4xl: 2.25rem;     /* 36px */
+  
+  /* Font weights */
+  --fp-font-normal: 400;
+  --fp-font-medium: 500;
+  --fp-font-semibold: 600;
+  --fp-font-bold: 700;
+  
+  /* Line heights */
+  --fp-leading-tight: 1.25;
+  --fp-leading-snug: 1.375;
+  --fp-leading-normal: 1.5;
+  --fp-leading-relaxed: 1.625;
+  --fp-leading-loose: 2;
+  
+  /* Letter spacing */
+  --fp-tracking-tight: -0.025em;
+  --fp-tracking-normal: 0;
+  --fp-tracking-wide: 0.025em;
+  
+  /* ==================== SPACING - Sistema 8pt Grid ==================== */
+  
+  --fp-space-xs: 0.25rem;     /* 4px */
+  --fp-space-sm: 0.5rem;      /* 8px */
+  --fp-space-md: 1rem;        /* 16px */
+  --fp-space-lg: 1.5rem;      /* 24px */
+  --fp-space-xl: 2rem;        /* 32px */
+  --fp-space-2xl: 3rem;       /* 48px */
+  --fp-space-3xl: 4rem;       /* 64px */
+  
+  /* ==================== DIMENSIONI ==================== */
+  
+  /* Input heights - TheFork usa input generosi */
+  --fp-input-height-sm: 40px;
+  --fp-input-height-md: 52px;    /* Standard TheFork */
+  --fp-input-height-lg: 60px;
+  
+  /* Button heights */
+  --fp-button-height-sm: 36px;
+  --fp-button-height-md: 48px;   /* Standard */
+  --fp-button-height-lg: 56px;
+  
+  /* Form width */
+  --fp-form-max-width: 720px;    /* TheFork style: form stretti e centrati */
+  
+  /* ==================== BORDER RADIUS - TheFork Style ==================== */
+  
+  --fp-radius-sm: 4px;
+  --fp-radius-md: 8px;
+  --fp-radius-lg: 12px;
+  --fp-radius-xl: 16px;
+  --fp-radius-2xl: 24px;
+  --fp-radius-full: 9999px;      /* Pill buttons */
+  
+  /* ==================== SHADOWS - Subtle & Elegant ==================== */
+  
+  --fp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --fp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --fp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --fp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --fp-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  
+  /* Focus shadows */
+  --fp-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  --fp-shadow-focus-error: 0 0 0 3px rgba(211, 47, 47, 0.1);
+  
+  /* ==================== TRANSITIONS ==================== */
+  
+  --fp-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Easing personalizzati TheFork-style */
+  --fp-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --fp-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --fp-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --fp-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* ==================== Z-INDEX SCALE ==================== */
+  
+  --fp-z-base: 1;
+  --fp-z-dropdown: 1000;
+  --fp-z-sticky: 1100;
+  --fp-z-fixed: 1200;
+  --fp-z-modal-backdrop: 1300;
+  --fp-z-modal: 1400;
+  --fp-z-popover: 1500;
+  --fp-z-tooltip: 1600;
+  
+  /* ==================== BREAKPOINTS ==================== */
+  
+  --fp-screen-sm: 640px;
+  --fp-screen-md: 768px;
+  --fp-screen-lg: 1024px;
+  --fp-screen-xl: 1280px;
+  
+  /* ==================== GRADIENTS - Subtle B/W ==================== */
+  
+  --fp-gradient-primary: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --fp-gradient-surface: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  --fp-gradient-overlay: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.05) 100%);
+  
+  /* ==================== OPACITIES ==================== */
+  
+  --fp-opacity-disabled: 0.5;
+  --fp-opacity-hover: 0.8;
+  --fp-opacity-subtle: 0.6;
+  
+  /* ==================== THEFORK SPECIFIC ==================== */
+  
+  /* Card styling */
+  --fp-card-padding: var(--fp-space-xl);
+  --fp-card-radius: var(--fp-radius-xl);
+  --fp-card-shadow: var(--fp-shadow-md);
+  
+  /* Input styling */
+  --fp-input-padding-x: var(--fp-space-lg);
+  --fp-input-padding-y: var(--fp-space-md);
+  --fp-input-border-width: 1px;
+  --fp-input-focus-border-width: 2px;
+  
+  /* Button styling */
+  --fp-button-padding-x: var(--fp-space-2xl);
+  --fp-button-padding-y: var(--fp-space-md);
+  
+  /* Progress indicator */
+  --fp-progress-height: 4px;
+  --fp-progress-bg: var(--fp-color-border-light);
+  --fp-progress-fill: var(--fp-color-primary);
+}
+
+/* ==================== DARK MODE READY (Optional) ==================== */
+
+@media (prefers-color-scheme: dark) {
+  /* 
+   * Se vuoi supportare dark mode in futuro, 
+   * puoi aggiungere qui le variabili invertite
+   */
+}
