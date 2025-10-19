@@ -1,4 +1,7 @@
 import { formatDebugMessage } from './debug.js';
+import { normalizeAvailabilityState, AVAILABILITY_STATES } from './constants/availability-states.js';
+import { createSlotsRenderer, summarizeSlots as calculateSlotsSummary } from './components/slots-renderer.js';
+import { createAvailabilityLegend } from './components/availability-legend.js';
 
 const DEBOUNCE_MS = 400;
 const CACHE_TTL_MS = 60000;
@@ -25,12 +28,6 @@ function buildUrl(base, params) {
     return url.toString();
 }
 
-function clearChildren(node) {
-    while (node.firstChild) {
-        node.removeChild(node.firstChild);
-    }
-}
-
 export function createAvailabilityController(options) {
     const root = options.root;
     const statusEl = root.querySelector('[data-fp-resv-slots-status]');
@@ -38,6 +35,7 @@ export function createAvailabilityController(options) {
     const emptyEl = root.querySelector('[data-fp-resv-slots-empty]');
     const boundaryEl = root.querySelector('[data-fp-resv-slots-boundary]');
     const retryButton = boundaryEl ? boundaryEl.querySelector('[data-fp-resv-slots-retry]') : null;
+    const legendEl = root.querySelector('[data-fp-resv-slots-legend]');
 
     const cache = new Map();
     let debounceId = null;
@@ -45,89 +43,19 @@ export function createAvailabilityController(options) {
     let currentSelection = null;
     let activeRequestToken = 0;
 
-    function normalizeSlotStatus(status) {
-        if (typeof status !== 'string') {
-            return '';
-        }
+    // Inizializza i componenti
+    const slotsRenderer = createSlotsRenderer({
+        listElement: listEl,
+        skeletonCount: options.skeletonCount || 4,
+    });
 
-        const normalized = status.trim().toLowerCase();
-        if (normalized === '') {
-            return '';
-        }
+    const legend = createAvailabilityLegend(legendEl);
 
-        const stripDiacritics = (value) => {
-            if (typeof value.normalize === 'function') {
-                return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            }
+    // Usa la funzione importata per normalizzare lo stato
+    const normalizeSlotStatus = normalizeAvailabilityState;
 
-            return value;
-        };
-
-        const ascii = stripDiacritics(normalized);
-        const matchesStart = (candidates) => candidates.some((candidate) => ascii.startsWith(candidate));
-        const matchesAnywhere = (candidates) => candidates.some((candidate) => ascii.includes(candidate));
-
-        if (matchesStart(['available', 'open', 'disponibil', 'disponible', 'liber', 'libre', 'apert', 'abiert'])) {
-            return 'available';
-        }
-
-        if (normalized === 'waitlist' || normalized === 'busy') {
-            return 'limited';
-        }
-
-        if (
-            matchesStart(['limited', 'limit', 'limitat', 'limite', 'cupos limit', 'attesa'])
-            || matchesAnywhere(['pochi posti', 'quasi pien', 'lista attesa', 'few spots', 'casi llen'])
-        ) {
-            return 'limited';
-        }
-
-        if (matchesStart(['full', 'complet', 'esaurit', 'soldout', 'sold out', 'agotad', 'chius', 'plen'])) {
-            return 'full';
-        }
-
-        return normalized;
-    }
-
-    function summarizeSlots(slots, hasAvailabilityFlag) {
-        const safeSlots = Array.isArray(slots) ? slots : [];
-        const slotCount = safeSlots.length;
-        
-        // Se non ci sono slot E hasAvailabilityFlag è false, 
-        // significa che la configurazione non prevede orari (non è "full")
-        if (slotCount === 0) {
-            // Se hasAvailabilityFlag è esplicitamente false, lo schedule è vuoto
-            if (hasAvailabilityFlag === false) {
-                return { state: 'unavailable', slots: 0 };
-            }
-            // Altrimenti è veramente pieno
-            return { state: 'full', slots: 0 };
-        }
-
-        const statuses = safeSlots
-            .map((slot) => normalizeSlotStatus(slot && slot.status))
-            .filter((status) => status !== '');
-
-        const hasLimited = statuses.some((status) => status === 'limited');
-        if (hasLimited) {
-            return { state: 'limited', slots: slotCount };
-        }
-
-        const hasAvailable = statuses.some((status) => status === 'available');
-        if (hasAvailable) {
-            return { state: 'available', slots: slotCount };
-        }
-
-        if (hasAvailabilityFlag) {
-            return { state: 'available', slots: slotCount };
-        }
-
-        if (statuses.length === 0) {
-            return { state: 'available', slots: slotCount };
-        }
-
-        return { state: 'full', slots: slotCount };
-    }
+    // Usa la funzione importata per riassumere gli slot
+    const summarizeSlots = calculateSlotsSummary;
 
     function notifyAvailability(params, summary) {
         if (typeof options.onAvailabilitySummary !== 'function') {
@@ -166,19 +94,7 @@ export function createAvailabilityController(options) {
     }
 
     function showSkeleton() {
-        if (!listEl) {
-            return;
-        }
-
-        clearChildren(listEl);
-        const count = options.skeletonCount || 4;
-        for (let index = 0; index < count; index += 1) {
-            const item = document.createElement('li');
-            const placeholder = document.createElement('span');
-            placeholder.className = 'fp-skeleton';
-            item.appendChild(placeholder);
-            listEl.appendChild(item);
-        }
+        slotsRenderer.showSkeleton();
     }
 
     function showEmpty(params) {
@@ -253,12 +169,9 @@ export function createAvailabilityController(options) {
     }
 
     function selectSlot(slot, button) {
-        const buttons = listEl ? listEl.querySelectorAll('button[data-slot]') : [];
-        Array.prototype.forEach.call(buttons, (item) => {
-            item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
-        });
-
         currentSelection = slot;
+        slotsRenderer.updateSelection(slot);
+        
         if (typeof options.onSlotSelected === 'function') {
             options.onSlotSelected(slot);
         }
@@ -266,14 +179,7 @@ export function createAvailabilityController(options) {
 
     function clearSelectionState() {
         currentSelection = null;
-        if (!listEl) {
-            return;
-        }
-
-        const buttons = listEl.querySelectorAll('button[data-slot]');
-        Array.prototype.forEach.call(buttons, (button) => {
-            button.setAttribute('aria-pressed', 'false');
-        });
+        slotsRenderer.updateSelection(null);
     }
 
     function renderSlots(payload, params, requestToken) {
@@ -291,25 +197,17 @@ export function createAvailabilityController(options) {
             return;
         }
 
-        clearChildren(listEl);
         const slots = payload && Array.isArray(payload.slots) ? payload.slots : [];
         if (slots.length === 0) {
             showEmpty(params);
             return;
         }
 
-        slots.forEach((slot) => {
-            const item = document.createElement('li');
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = slot.label || '';
-            button.dataset.slot = slot.start || '';
-            button.dataset.slotStatus = slot.status || '';
-            button.setAttribute('aria-pressed', currentSelection && currentSelection.start === slot.start ? 'true' : 'false');
-            button.addEventListener('click', () => selectSlot(slot, button));
-            item.appendChild(button);
-            listEl.appendChild(item);
-        });
+        // Usa il renderer per mostrare gli slot
+        slotsRenderer.renderSlots(slots, currentSelection, selectSlot);
+
+        // Mostra la legenda se ci sono slot
+        legend.show();
 
         setStatus((options.strings && options.strings.slotsUpdated) || '', false);
         const hasAvailabilityFlag = Boolean(
@@ -319,7 +217,14 @@ export function createAvailabilityController(options) {
                 || (payload.meta && payload.meta.has_availability)
             )
         );
-        notifyAvailability(params, summarizeSlots(slots, hasAvailabilityFlag));
+        
+        const summary = summarizeSlots(slots, hasAvailabilityFlag);
+        notifyAvailability(params, summary);
+        
+        // Aggiorna la legenda per evidenziare lo stato corrente
+        if (summary && summary.state) {
+            legend.updateLegendState(summary.state);
+        }
     }
 
     function request(params, attempt) {
