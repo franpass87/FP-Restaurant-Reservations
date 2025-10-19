@@ -1274,10 +1274,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>"></script>
-
 <script>
-// Sistema Notice Inline
+// Sistema Notice Inline - DEVE essere caricato PRIMA del form-simple.js
 class NoticeManager {
     constructor() {
         this.container = document.getElementById('fp-notice-container');
@@ -1286,7 +1284,20 @@ class NoticeManager {
     }
     
     init() {
-        if (!this.container) return;
+        // Se il container non esiste ancora, aspetta che il DOM sia pronto
+        if (!this.container) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.container = document.getElementById('fp-notice-container');
+                    this.overrideExistingNotifications();
+                });
+            } else {
+                // DOM già pronto, riprova a trovare il container
+                this.container = document.getElementById('fp-notice-container');
+                this.overrideExistingNotifications();
+            }
+            return;
+        }
         
         // Override delle funzioni di notifica esistenti
         this.overrideExistingNotifications();
@@ -1321,7 +1332,16 @@ class NoticeManager {
     }
     
     show(type, message, duration = 5000) {
-        if (!this.container) return;
+        // Se il container non esiste, riprova a trovarlo
+        if (!this.container) {
+            this.container = document.getElementById('fp-notice-container');
+        }
+        
+        // Se ancora non esiste, usa alert come fallback
+        if (!this.container) {
+            alert(message);
+            return null;
+        }
         
         const id = Date.now() + Math.random();
         const notice = this.createNotice(id, type, message);
@@ -1418,14 +1438,25 @@ class NoticeManager {
     }
 }
 
-// Inizializza il sistema di notice quando il DOM è pronto
-document.addEventListener('DOMContentLoaded', function() {
-    window.fpNoticeManager = new NoticeManager();
-    
-    // Esempi di utilizzo (da rimuovere in produzione)
-    // window.fpNoticeManager.success('Prenotazione completata con successo!');
-    // window.fpNoticeManager.error('Errore durante l\'invio della prenotazione');
-    // window.fpNoticeManager.warning('Attenzione: alcuni campi sono obbligatori');
-    // window.fpNoticeManager.info('Informazione: il ristorante è chiuso il lunedì');
-});
+// Inizializza il sistema di notice immediatamente
+window.fpNoticeManager = new NoticeManager();
+
+// Test immediato per verificare che il sistema funzioni
+setTimeout(() => {
+    if (window.fpNoticeManager) {
+        console.log('Notice Manager inizializzato correttamente');
+        // Test con un notice di info
+        window.fpNoticeManager.info('Sistema di notifiche attivo!', 3000);
+    } else {
+        console.error('Notice Manager non inizializzato');
+    }
+}, 1000);
+
+// Esempi di utilizzo (da rimuovere in produzione)
+// window.fpNoticeManager.success('Prenotazione completata con successo!');
+// window.fpNoticeManager.error('Errore durante l\'invio della prenotazione');
+// window.fpNoticeManager.warning('Attenzione: alcuni campi sono obbligatori');
+// window.fpNoticeManager.info('Informazione: il ristorante è chiuso il lunedì');
 </script>
+
+<script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>"></script>

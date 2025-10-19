@@ -12,9 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Funzione helper per mostrare notice
     function showNotice(type, message, duration = 5000) {
+        console.log('showNotice chiamata:', type, message);
         if (window.fpNoticeManager) {
+            console.log('Usando NoticeManager');
             return window.fpNoticeManager.show(type, message, duration);
         } else {
+            console.log('NoticeManager non disponibile, usando alert');
             // Fallback a alert se il notice manager non è disponibile
             alert(message);
         }
