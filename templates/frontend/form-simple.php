@@ -346,7 +346,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-field label {
             display: flex !important;
-            align-items: center !important;
+            align-items: flex-start !important;
             gap: 0 !important;
             cursor: pointer !important;
             font-size: 14px !important;
@@ -357,13 +357,21 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         /* Stile specifico per i checkbox dei servizi aggiuntivi */
         .fp-field div label {
             display: flex !important;
-            align-items: center !important;
+            align-items: flex-start !important;
             gap: 0 !important;
             margin-bottom: 8px !important;
         }
         
         .fp-field div label input[type="checkbox"] {
             margin-right: 10px !important;
+            margin-top: 2px !important;
+        }
+        
+        /* Allineamento specifico per checkbox */
+        #fp-resv-default .fp-field input[type="checkbox"],
+        .fp-resv-simple .fp-field input[type="checkbox"] {
+            margin-top: 2px !important;
+            align-self: flex-start !important;
         }
         
         /* Input date - permette click su tutta l'area */
@@ -394,20 +402,36 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             line-height: 1.5;
         }
         
-        /* Phone prefix styling */
-        .fp-field div[style*="display: flex"] {
-            align-items: center;
+        /* Phone prefix styling - ALTA SPECIFICITÀ per sovrascrivere tema */
+        .fp-resv-simple .fp-field div[style*="display: flex"] {
+            align-items: center !important;
         }
         
-        .fp-field div[style*="display: flex"] select {
-            width: 140px;
-            margin-right: 8px;
-            flex-shrink: 0;
+        .fp-resv-simple .fp-field div[style*="display: flex"] select {
+            width: 140px !important;
+            margin-right: 8px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
         }
         
-        .fp-field div[style*="display: flex"] input {
-            flex: 1;
-            min-width: 0;
+        .fp-resv-simple .fp-field div[style*="display: flex"] input {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        
+        /* Override specifico per il campo telefono */
+        .fp-resv-simple select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+        }
+        
+        /* Override con specificità MASSIMA per il tema Salient */
+        body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
         }
         
         /* Time slots styling */

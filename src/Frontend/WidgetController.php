@@ -51,6 +51,7 @@ final class WidgetController
         add_filter('wpb_js_composer_shortcode_content', [$this, 'preventWPBakeryEscape'], 10, 2);
         
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('wp_head', [$this, 'addOverrideCss'], 999); // Carica dopo il CSS del tema
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
         
         // Force shortcode execution if content contains it but theme doesn't process it
@@ -77,6 +78,47 @@ final class WidgetController
         }
         
         return $content;
+    }
+    
+    /**
+     * Aggiunge CSS di override con priorità alta per sovrascrivere il tema
+     */
+    public function addOverrideCss(): void
+    {
+        if (!$this->shouldEnqueueAssets()) {
+            return;
+        }
+        
+        echo '<style id="fp-resv-override-css" type="text/css">
+        /* Override tema Salient - SPECIFICITÀ MASSIMA */
+        body .fp-resv-simple select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
+        }
+        
+        body .fp-resv-simple .fp-field div[style*="display: flex"] select {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+        }
+        
+        body .fp-resv-simple .fp-field div[style*="display: flex"] input {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        
+        /* Allineamento checkbox */
+        body .fp-resv-simple .fp-field label {
+            align-items: flex-start !important;
+        }
+        
+        body .fp-resv-simple .fp-field input[type="checkbox"] {
+            margin-top: 2px !important;
+            align-self: flex-start !important;
+        }
+        </style>';
     }
     
     /**
@@ -157,6 +199,24 @@ final class WidgetController
         }
         ';
         wp_add_inline_style('fp-resv-form', $inlineCss);
+        
+        // CSS aggiuntivo per sovrascrivere il tema Salient
+        $overrideCss = '
+        /* Override tema Salient per form semplice */
+        .fp-resv-simple select[name="fp_resv_phone_prefix"] {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+            min-width: 140px !important;
+        }
+        
+        .fp-resv-simple .fp-field div[style*="display: flex"] select {
+            width: 140px !important;
+            flex-shrink: 0 !important;
+            max-width: 140px !important;
+        }
+        ';
+        wp_add_inline_style('fp-resv-form', $overrideCss);
 
         // Enqueue Flatpickr JS
         wp_register_script(
