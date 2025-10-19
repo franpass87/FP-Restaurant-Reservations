@@ -1,6 +1,15 @@
 /**
  * FP Restaurant Reservations - Layout System
  * Design moderno mobile-first
+ * 
+ * ⚠️ NOTA: Questo file è importato SOLO in form/main.css
+ * Il sistema principale usa form-thefork-bw.css che ha tutte
+ * le definizioni necessarie integrate.
+ * 
+ * Alcune definizioni in questo file (es. .fp-resv-fields--grid)
+ * sono DUPLICATE e potrebbero essere rimosse in futuro.
+ * 
+ * STATUS: Mantenuto per compatibilità con main.css (non usato attivamente)
  */
 
 /* ==================== CONTAINER PRINCIPALE ==================== */

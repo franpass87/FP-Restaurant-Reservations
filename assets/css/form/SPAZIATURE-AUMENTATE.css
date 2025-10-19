@@ -1,10 +1,22 @@
 /**
  * FP Restaurant Reservations - Spaziature Bilanciate
  * 
- * Fix: Ridotte le spaziature eccessive per un layout più compatto
+ * ⚠️ DEPRECATO - NON PIÙ UTILIZZATO
  * 
- * Data: 12 Ottobre 2025
- * Ultimo aggiornamento: 18 Ottobre 2025
+ * Questo file NON viene più importato nel sistema principale.
+ * Il sistema ora usa form-thefork-bw.css che ha spacing corretti
+ * con variabili CSS senza bisogno di !important.
+ * 
+ * PROBLEMI IDENTIFICATI:
+ * - Override forzati con !important
+ * - Spacing mobile troppo stretti (8px)
+ * - Conflitto con sistema variabili CSS
+ * 
+ * Data creazione: 12 Ottobre 2025
+ * Data deprecazione: 19 Ottobre 2025
+ * 
+ * STATO: File mantenuto per riferimento ma NON importato.
+ * Può essere eliminato in futuro.
  */
 
 /* ==================== MARGINI GENERALI PIÙ AMPI ==================== */
