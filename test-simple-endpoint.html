@@ -26,7 +26,7 @@
             
             try {
                 console.log('Faccio la richiesta a test-endpoint-simple.php');
-                const response = await fetch('test-endpoint-simple.php?from=2025-10-19&to=2026-01-19&meal=pranzo');
+                const response = await fetch('./test-endpoint-simple.php?from=2025-10-19&to=2026-01-19&meal=pranzo');
                 
                 console.log('Risposta ricevuta:', response);
                 console.log('Status:', response.status);

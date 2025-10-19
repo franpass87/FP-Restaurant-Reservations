@@ -347,7 +347,7 @@
                 to.setMonth(to.getMonth() + 3); // 3 months ahead
                 const toDate = to.toISOString().split('T')[0];
                 
-                const url = `test-endpoint-simple.php?from=${today}&to=${toDate}&meal=${meal}`;
+                const url = `./test-endpoint-simple.php?from=${today}&to=${toDate}&meal=${meal}`;
                 console.log('URL richiesta:', url);
                 
                 fetch(url)
