@@ -137,6 +137,45 @@
   }
 }
 
+/* ==================== FORM FIELDS GRID ==================== */
+
+/* Base grid per campi del form */
+.fp-resv-fields--grid {
+  display: grid;
+  gap: var(--fp-space-md);
+  grid-template-columns: 1fr;
+}
+
+/* Griglia a 2 colonne per campi affiancati (es. nome/cognome, email/telefono) */
+.fp-resv-fields--2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Griglia per extras (checkbox e seggioloni) */
+.fp-resv-fields--extras {
+  grid-template-columns: 1fr;
+  gap: var(--fp-space-sm);
+}
+
+/* Responsive: torna a 1 colonna su mobile */
+@media (max-width: 640px) {
+  .fp-resv-fields--2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive: su tablet mantieni 2 colonne per i campi principali */
+@media (min-width: 641px) {
+  .fp-resv-fields--2col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Gli extras rimangono in colonna singola anche su tablet */
+  .fp-resv-fields--extras {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ==================== FLEX UTILITIES ==================== */
 
 .fp-flex {
