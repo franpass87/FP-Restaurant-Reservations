@@ -1,0 +1,111 @@
+/**
+ * FP Restaurant Reservations - Fieldset Styles
+ * Stili per fieldset e legend
+ */
+
+/* ==================== BASE FIELDSET ==================== */
+
+.fp-fieldset {
+  border: 1.5px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-md);
+  padding: var(--fp-space-lg);
+  margin: var(--fp-space-md) 0;
+  background: var(--fp-color-surface);
+}
+
+.fp-fieldset legend {
+  padding: 0 var(--fp-space-sm);
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-font-semibold);
+  color: var(--fp-color-text);
+}
+
+/* ==================== EXTRA REQUESTS FIELDSET ==================== */
+
+.fp-resv-extra {
+  border: 1.5px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-md);
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  background: linear-gradient(145deg, rgba(248, 250, 252, 0.97) 0%, var(--fp-color-surface-alt, #f8fafc) 100%);
+  box-shadow: 
+    0 2px 10px rgba(15, 23, 42, 0.04),
+    0 1px 4px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  margin: var(--fp-space-md) 0;
+}
+
+.fp-resv-extra__title {
+  margin: 0 0 var(--fp-space-md) 0;
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-font-bold);
+  color: var(--fp-color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--fp-space-sm);
+  padding: 0;
+}
+
+.fp-resv-extra__title::before {
+  content: '';
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--fp-color-primary);
+  flex-shrink: 0;
+}
+
+/* Grid interno per gli extras */
+.fp-resv-extra .fp-resv-fields--grid,
+.fp-resv-extra .fp-resv-fields--extras {
+  gap: var(--fp-space-sm);
+  grid-template-columns: 1fr;
+}
+
+/* ==================== CHECKBOX FIELDS ==================== */
+
+.fp-resv-field--checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fp-space-sm);
+}
+
+.fp-resv-field--checkbox .fp-checkbox {
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.fp-resv-field--checkbox span {
+  flex: 1;
+  line-height: var(--fp-leading-normal);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (min-width: 768px) {
+  .fp-resv-extra {
+    padding: clamp(1.25rem, 2.8vw, 1.75rem);
+  }
+  
+  .fp-resv-extra__title {
+    font-size: var(--fp-text-lg);
+    margin-bottom: var(--fp-space-lg);
+  }
+  
+  .fp-resv-extra .fp-resv-fields--grid {
+    gap: var(--fp-space-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .fp-resv-extra {
+    padding: var(--fp-space-md);
+  }
+  
+  .fp-resv-extra__title {
+    font-size: var(--fp-text-base);
+  }
+  
+  .fp-resv-extra .fp-resv-fields--grid {
+    gap: var(--fp-space-sm);
+  }
+}

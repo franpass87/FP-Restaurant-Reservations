@@ -271,6 +271,26 @@
   min-width: 0;
 }
 
+/* Phone input ottimizzato per la griglia a 2 colonne */
+.fp-resv-fields--2col .fp-resv-phone-input {
+  width: 100%;
+}
+
+/* Static prefix per telefono */
+.fp-resv-phone-input__static {
+  display: flex;
+  align-items: center;
+  padding: var(--fp-space-sm) var(--fp-space-md);
+  background: var(--fp-color-surface-alt);
+  border: 1px solid var(--fp-color-border);
+  border-radius: var(--fp-radius-md);
+  color: var(--fp-color-text-muted);
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-font-semibold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* ==================== PARTY INPUT (con +/-) ==================== */
 
 .fp-resv-party-input-wrapper {

@@ -37,6 +37,24 @@
     width: 100%;
   }
   
+  /* Form fields: forza 1 colonna su mobile */
+  .fp-resv-fields--2col {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Phone input su mobile: stack verticale per migliore UX */
+  .fp-resv-phone-input {
+    flex-direction: column;
+  }
+  
+  .fp-resv-phone-input .fp-input--prefix {
+    width: 100%;
+  }
+  
+  .fp-resv-phone-input .fp-input {
+    width: 100%;
+  }
+  
   /* Progress */
   .fp-progress {
     gap: var(--fp-space-xs);
@@ -165,9 +183,15 @@
   }
   
   /* Maintain single column for extra requests */
-  .fp-resv-extra .fp-resv-fields--grid {
+  .fp-resv-extra .fp-resv-fields--grid,
+  .fp-resv-extra .fp-resv-fields--extras {
     grid-template-columns: 1fr;
     gap: var(--fp-space-md);
+  }
+  
+  /* Form fields: mantieni 2 colonne su tablet per campi principali */
+  .fp-resv-fields--2col {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -211,9 +235,17 @@
     gap: var(--fp-space-lg);
   }
   
-  /* Email field full width */
-  .fp-resv-fields--grid .fp-resv-field--email {
-    grid-column: 1 / -1;
+  /* Form fields: mantieni griglia a 2 colonne su desktop */
+  .fp-resv-fields--2col {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--fp-space-lg);
+  }
+  
+  /* Extra requests: mantieni 1 colonna anche su desktop */
+  .fp-resv-extra .fp-resv-fields--grid,
+  .fp-resv-extra .fp-resv-fields--extras {
+    grid-template-columns: 1fr;
+    gap: var(--fp-space-md);
   }
   
   /* Progress centrata */

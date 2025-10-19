@@ -1679,6 +1679,7 @@ class FormApp {
         const extraHighChairs = this.form.querySelector('[data-fp-resv-field="high_chair_count"]');
         const extraWheelchair = this.form.querySelector('[data-fp-resv-field="wheelchair_table"]');
         const extraPets = this.form.querySelector('[data-fp-resv-field="pets"]');
+        const occasion = this.form.querySelector('[data-fp-resv-field="occasion"]');
 
         let nameValue = '';
         if (firstName && firstName.value) {
@@ -1697,6 +1698,21 @@ class FormApp {
             const prefixDisplay = prefixCode ? '+' + prefixCode + ' ' : '';
             const phoneDisplay = prefixDisplay + phone.value.trim();
             contactValue = contactValue !== '' ? contactValue + ' / ' + phoneDisplay : phoneDisplay;
+        }
+
+        // Mappa le occasioni per mostrare le etichette localizzate
+        const occasionLabels = {
+            'birthday': 'Compleanno',
+            'anniversary': 'Anniversario',
+            'business': 'Cena di lavoro',
+            'celebration': 'Festa/Celebrazione',
+            'romantic': 'Cena romantica',
+            'other': 'Altro'
+        };
+        
+        let occasionText = '';
+        if (occasion && occasion.value && occasion.value !== '') {
+            occasionText = occasionLabels[occasion.value] || occasion.value;
         }
 
         const extras = [];
@@ -1732,11 +1748,26 @@ class FormApp {
                 case 'notes':
                     target.textContent = notes && notes.value ? notes.value : '';
                     break;
+                case 'occasion':
+                    target.textContent = occasionText;
+                    break;
                 case 'extras':
                     target.textContent = extrasText;
                     break;
             }
         });
+        
+        // Nascondi la riga dell'occasione nel summary se è vuota
+        const occasionRow = this.form ? this.form.querySelector('[data-fp-resv-summary-occasion-row]') : null;
+        if (occasionRow) {
+            if (occasionText === '') {
+                occasionRow.hidden = true;
+                occasionRow.style.display = 'none';
+            } else {
+                occasionRow.hidden = false;
+                occasionRow.style.display = '';
+            }
+        }
     }
 
     async handleSubmit(event) {

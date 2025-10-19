@@ -53,6 +53,9 @@
 /* Summary (riepilogo finale) */
 @import './components/_summary.css';
 
+/* Fieldset (richieste aggiuntive) */
+@import './components/_fieldset.css';
+
 /* ==================== UTILITIES & RESPONSIVE ==================== */
 
 /* Classi utility */
