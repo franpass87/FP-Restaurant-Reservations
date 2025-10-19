@@ -15,6 +15,7 @@ $meals = $context['meals'] ?? [];
 $formId = $config['formId'] ?? 'fp-resv-simple';
 ?>
 
+<!-- FORM SEMPLICE ATTIVO: <?php echo date('H:i:s'); ?> -->
 <div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
     <style>
         .fp-resv-simple {

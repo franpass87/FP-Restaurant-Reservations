@@ -10,6 +10,7 @@ if (!isset($context) || !is_array($context)) {
 }
 
 // USA IL FORM SEMPLICE
+echo "<!-- FORM SEMPLICE CARICATO: " . date('H:i:s') . " -->";
 include __DIR__ . '/form-simple.php';
 return;
 

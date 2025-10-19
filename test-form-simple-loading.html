@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Caricamento Form Semplice</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .checklist {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .checklist ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Test Caricamento Form Semplice</h1>
+        
+        <div class="status warning">
+            <strong>⚠️ Problema Identificato</strong><br>
+            Il form che vedi nell'HTML è ancora quello complesso originale, non quello semplificato.
+        </div>
+
+        <div class="checklist">
+            <h3>📋 Cosa Verificare</h3>
+            <p>Vai al tuo sito e controlla il codice sorgente della pagina:</p>
+            <ul>
+                <li><strong>Cerca questo commento:</strong> <code>&lt;!-- FORM SEMPLICE CARICATO: --&gt;</code></li>
+                <li><strong>Cerca questo commento:</strong> <code>&lt;!-- FORM SEMPLICE ATTIVO: --&gt;</code></li>
+                <li><strong>Verifica la classe:</strong> Il form dovrebbe avere <code>class="fp-resv-simple"</code></li>
+                <li><strong>Controlla il CSS:</strong> Dovrebbe esserci CSS inline con <code>max-width: 480px</code></li>
+            </ul>
+        </div>
+
+        <div class="status error">
+            <strong>❌ Se NON Vedi i Commenti</strong>
+            <p>Significa che il form semplice non viene caricato. Possibili cause:</p>
+            <ol>
+                <li><strong>Cache del server</strong> - Il server sta servendo una versione cached</li>
+                <li><strong>Plugin di cache</strong> - Un plugin sta cachando il template</li>
+                <li><strong>File non aggiornato</strong> - Il file non è stato salvato correttamente</li>
+                <li><strong>Template sbagliato</strong> - WordPress sta usando un altro template</li>
+            </ol>
+        </div>
+
+        <div class="checklist">
+            <h3>🔧 Soluzioni da Provare</h3>
+            <ol>
+                <li><strong>Hard refresh</strong> - Ctrl+F5 o Cmd+Shift+R</li>
+                <li><strong>Modalità incognito</strong> - Apri una finestra incognito</li>
+                <li><strong>Pulisci cache plugin</strong> - Se hai plugin di cache, puliscili</li>
+                <li><strong>Verifica file</strong> - Controlla che i file siano stati salvati</li>
+                <li><strong>Disabilita cache</strong> - Temporaneamente disabilita plugin di cache</li>
+            </ol>
+        </div>
+
+        <div class="code-block">
+# Verifica che i file siano stati modificati
+ls -la templates/frontend/form.php
+ls -la templates/frontend/form-simple.php
+
+# Controlla il contenuto
+grep "FORM SEMPLICE" templates/frontend/form.php
+grep "FORM SEMPLICE" templates/frontend/form-simple.php
+        </div>
+
+        <div class="status success">
+            <strong>✅ Se Vedi i Commenti</strong>
+            <p>Perfetto! Il form semplice viene caricato. Le modifiche estetiche dovrebbero essere visibili.</p>
+        </div>
+
+        <div class="checklist">
+            <h3>🎯 Modifiche Estetiche da Verificare</h3>
+            <ul>
+                <li>✅ <strong>Form più compatto</strong> - max-width: 480px</li>
+                <li>✅ <strong>Spaziature ridotte</strong> - padding: 24px 20px</li>
+                <li>✅ <strong>Font size ridotti</strong> - 14px per input, 13px per label</li>
+                <li>✅ <strong>Progress bar più piccola</strong> - Step 32px</li>
+                <li>✅ <strong>Transizioni fluide</strong> - Slide orizzontale</li>
+                <li>✅ <strong>Prefissi telefonici</strong> - Nomi paesi completi</li>
+            </ul>
+        </div>
+
+        <div class="checklist">
+            <h3>🌐 Test URL</h3>
+            <p>Vai alla pagina con il form e fai un hard refresh:</p>
+            <a href="#" class="button" onclick="window.open(window.location.href, '_blank')">
+                Apri Form in Nuova Tab
+            </a>
+        </div>
+
+        <div class="timestamp">
+            Test generato il <?php echo date('d/m/Y H:i:s'); ?>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 Test Caricamento Form Semplice - ' + new Date().toLocaleString());
+        
+        // Verifica se siamo nella pagina del form
+        if (document.querySelector('.fp-resv-simple')) {
+            console.log('✅ Form semplice trovato nella pagina');
+            
+            // Verifica modifiche specifiche
+            const form = document.querySelector('.fp-resv-simple');
+            const computedStyle = window.getComputedStyle(form);
+            
+            console.log('📏 Padding container:', computedStyle.padding);
+            console.log('📐 Max-width:', computedStyle.maxWidth);
+            
+            // Verifica se è il form semplice (max-width 480px)
+            if (computedStyle.maxWidth === '480px') {
+                console.log('✅ Form semplice caricato correttamente!');
+            } else {
+                console.log('❌ Form complesso ancora attivo');
+            }
+            
+        } else {
+            console.log('❌ Form semplice non trovato in questa pagina');
+            console.log('💡 Vai alla pagina con il form per vedere le modifiche');
+        }
+    </script>
+</body>
+</html>
