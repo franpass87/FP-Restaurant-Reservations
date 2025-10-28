@@ -633,8 +633,23 @@ final class REST
             $to = $request->get_param('to') ?: date('Y-m-d', strtotime('+3 months'));
             $meal = $request->get_param('meal');
 
-            // Versione semplificata per evitare errori 500
-            $availableDays = $this->getSimpleAvailableDays($from, $to, $meal);
+            // Usa la configurazione REALE dal meal plan invece di dati hardcoded
+            $allDaysData = $this->availability->findAvailableDaysForAllMeals($from, $to);
+            
+            // Se è stato specificato un meal, filtra solo i giorni disponibili per quel meal
+            if ($meal && is_string($meal) && $meal !== '') {
+                $availableDays = [];
+                foreach ($allDaysData as $date => $dayInfo) {
+                    $mealAvailable = isset($dayInfo['meals'][$meal]) && $dayInfo['meals'][$meal];
+                    $availableDays[$date] = [
+                        'available' => $mealAvailable,
+                        'meal' => $meal,
+                    ];
+                }
+            } else {
+                // Nessun meal specificato: ritorna tutti i giorni con info per ogni meal
+                $availableDays = $allDaysData;
+            }
 
             return new WP_REST_Response([
                 'days' => $availableDays,
@@ -646,6 +661,7 @@ final class REST
         } catch (\Exception $e) {
             // Log dell'errore per debug
             error_log('FP Resv REST API Error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             
             return new WP_Error(
                 'fp_resv_availability_days_error',
@@ -655,50 +671,6 @@ final class REST
         }
     }
 
-    /**
-     * Genera date disponibili con logica semplificata per evitare errori 500
-     */
-    private function getSimpleAvailableDays(string $from, string $to, ?string $meal): array
-    {
-        $availableDays = [];
-        $startDate = strtotime($from);
-        $endDate = strtotime($to);
-        
-        // Schedule di default
-        $defaultSchedule = [
-            'pranzo' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'], // No domenica
-            'cena' => ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'],   // No lunedì
-        ];
-        
-        // Genera date
-        for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
-            $dateKey = date('Y-m-d', $timestamp);
-            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
-            
-            if ($meal && isset($defaultSchedule[$meal])) {
-                // Pasto specifico
-                $isAvailable = in_array($dayName, $defaultSchedule[$meal], true);
-                $availableDays[$dateKey] = [
-                    'available' => $isAvailable,
-                    'meal' => $meal,
-                ];
-            } else {
-                // Tutti i pasti
-                $pranzoAvailable = in_array($dayName, $defaultSchedule['pranzo'], true);
-                $cenaAvailable = in_array($dayName, $defaultSchedule['cena'], true);
-                
-                $availableDays[$dateKey] = [
-                    'available' => $pranzoAvailable || $cenaAvailable,
-                    'meals' => [
-                        'pranzo' => $pranzoAvailable,
-                        'cena' => $cenaAvailable,
-                    ],
-                ];
-            }
-        }
-        
-        return $availableDays;
-    }
 
     /**
      * Genera date disponibili usando i dati reali dal backend

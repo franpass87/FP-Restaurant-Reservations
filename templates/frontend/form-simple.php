@@ -15,21 +15,22 @@ $meals = $context['meals'] ?? [];
 $formId = $config['formId'] ?? 'fp-resv-simple';
 ?>
 
-<!-- FORM SEMPLICE ATTIVO: <?php echo date('H:i:s'); ?> -->
-        <div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
-            <!-- FORM SEMPLICE ATTIVO: <?php echo date('H:i:s'); ?> -->
-            <style>
+<!-- Form Prenotazioni - Caricato: <?php echo date('H:i:s'); ?> -->
+<div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
+    <style>
         .fp-resv-simple {
-            max-width: 480px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 20px 24px;
+            padding: 24px 32px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            border-radius: 20px;
+            background: #ffffff;
+            border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
             border: 1px solid rgba(209, 213, 219, 0.2);
             position: relative;
             overflow: hidden;
+            /* Assicuriamo che gli elementi interattivi funzionino */
+            pointer-events: auto;
         }
         
         .fp-resv-simple::before {
@@ -69,7 +70,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-step {
             display: none;
-            padding: 24px;
+            padding: 20px;
             opacity: 0;
             transform: translateX(20px);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -78,9 +79,9 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             left: 0;
             right: 0;
             visibility: hidden;
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             border: 1px solid rgba(209, 213, 219, 0.3);
             margin-bottom: 20px;
         }
@@ -112,10 +113,10 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-steps-container {
             position: relative;
             min-height: 200px;
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            border-radius: 20px;
+            background: #f9fafb;
+            border-radius: 16px;
             padding: 20px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
         }
         
         .fp-step h3 {
@@ -140,8 +141,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         }
         
         .fp-field {
-            margin-bottom: 20px;
-            padding: 16px;
+            margin-bottom: 16px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.7);
             border-radius: 12px;
             border: 1px solid rgba(209, 213, 219, 0.2);
@@ -310,14 +311,14 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             width: 100%;
             padding: 12px 14px;
             border: 1.5px solid #d1d5db;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 14px;
             box-sizing: border-box;
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            background: #ffffff;
             color: #374151;
             transition: all 0.2s ease;
             font-family: inherit;
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
         
         .fp-field input:focus,
@@ -344,8 +345,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-meal-btn {
             padding: 12px 16px;
             border: 1.5px solid #d1d5db;
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            border-radius: 12px;
+            background: #ffffff;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 500;
@@ -370,9 +371,9 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-meal-btn:hover {
             border-color: #374151;
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            background: #f9fafb;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px 0 rgba(55, 65, 81, 0.15);
+            box-shadow: 0 4px 12px rgba(55, 65, 81, 0.12);
         }
         
         .fp-meal-btn:hover::before {
@@ -380,23 +381,23 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         }
         
         .fp-meal-btn.selected {
-            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            background: #374151;
             color: #ffffff;
             border-color: #374151;
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px 0 rgba(55, 65, 81, 0.25);
+            box-shadow: 0 4px 12px rgba(55, 65, 81, 0.2);
         }
         
         .fp-buttons {
             display: flex;
             gap: 12px;
             justify-content: space-between;
-            margin-top: 24px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 16px;
-            border: 1px solid rgba(209, 213, 219, 0.3);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            padding: 16px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         
         .fp-btn {
@@ -428,39 +429,57 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         }
         
         .fp-btn-primary {
-            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            background: #374151;
             color: #ffffff;
             border-color: #374151;
-            box-shadow: 0 4px 14px 0 rgba(55, 65, 81, 0.25);
+            box-shadow: 0 2px 8px rgba(55, 65, 81, 0.15);
             font-weight: 600;
             letter-spacing: 0.025em;
         }
         
         .fp-btn-primary:hover {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            background: #1f2937;
             border-color: #1f2937;
-            box-shadow: 0 6px 20px 0 rgba(55, 65, 81, 0.35);
+            box-shadow: 0 4px 12px rgba(55, 65, 81, 0.25);
             transform: translateY(-1px);
         }
         
         .fp-btn-secondary {
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            background: #ffffff;
             color: #374151;
             border-color: #d1d5db;
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             font-weight: 500;
         }
         
         .fp-btn-secondary:hover {
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            background: #f9fafb;
             border-color: #9ca3af;
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transform: translateY(-1px);
         }
         
         .fp-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+        }
+        
+        /* Assicuriamo che tutti gli elementi interattivi funzionino */
+        .fp-resv-simple button,
+        .fp-resv-simple input,
+        .fp-resv-simple select,
+        .fp-resv-simple textarea,
+        .fp-resv-simple a {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+        }
+        
+        .fp-resv-simple button:disabled,
+        .fp-resv-simple input:disabled,
+        .fp-resv-simple select:disabled,
+        .fp-resv-simple textarea:disabled {
+            cursor: not-allowed !important;
+            pointer-events: auto !important;
         }
         
         .fp-progress {
@@ -480,7 +499,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             transform: translate(-50%, -50%);
             width: 80%;
             height: 2px;
-            background: #f0f0f0;
+            background: #d1d5db;
             z-index: 1;
         }
         
@@ -519,8 +538,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         /* Checkbox styling - massima specificità per evitare conflitti */
         #fp-resv-default .fp-field input[type="checkbox"],
         .fp-resv-simple .fp-field input[type="checkbox"] {
-            width: 18px !important;
-            height: 18px !important;
+            width: 16px !important;
+            height: 16px !important;
             margin: 0 !important;
             margin-right: 10px !important;
             transform: none !important;
@@ -550,6 +569,24 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             font-size: 14px !important;
             line-height: 1.4 !important;
             margin-bottom: 0 !important;
+            color: #1f2937 !important;
+        }
+        
+        /* Testo checkbox e label in nero */
+        .fp-field label span,
+        .fp-field label > span {
+            color: #1f2937 !important;
+        }
+        
+        /* Link privacy in blu ma testo normale nero */
+        .fp-field label span a,
+        .fp-field label a {
+            color: #2563eb !important;
+            text-decoration: underline !important;
+        }
+        .fp-field label span a:hover,
+        .fp-field label a:hover {
+            color: #1d4ed8 !important;
         }
         
         /* Stile specifico per i checkbox dei servizi aggiuntivi */
@@ -733,12 +770,12 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-            padding: 20px;
-            background: #f8f8f8;
+            gap: 16px;
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 12px;
-            border: 2px solid #e8e8e8;
+            border: 1.5px solid #e5e7eb;
         }
         
         .fp-btn-minus, .fp-btn-plus {
@@ -782,9 +819,9 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         .fp-party-display #party-count {
             display: block;
-            font-size: 36px;
+            font-size: 28px;
             font-weight: bold;
-            color: #000000;
+            color: #111827;
             line-height: 1;
         }
         
@@ -885,8 +922,8 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         /* Responsive */
         @media (max-width: 640px) {
             .fp-resv-simple {
-                margin: 24px 32px;
-                padding: 24px 20px;
+                margin: 16px 12px;
+                padding: 20px 16px;
             }
             
             .fp-resv-simple h2 {
@@ -951,8 +988,9 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             }
             
             .fp-time-slot {
-                padding: 10px 12px;
+                padding: 12px 14px;
                 font-size: 12px;
+                min-height: 44px;
             }
             
             /* Phone prefix responsive */
@@ -1022,7 +1060,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         <!-- Data -->
         <div class="fp-field">
-            <label for="reservation-date">Data della prenotazione *</label>
+            <label for="reservation-date">Data *</label>
             <input type="date" id="reservation-date" name="date" required>
             <div id="date-loading" style="display: none; margin-top: 8px; font-size: 13px; color: #666;">
                 ⏳ Caricamento date disponibili...
@@ -1034,7 +1072,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         <!-- Persone -->
         <div class="fp-field">
-            <label>Numero di persone</label>
+            <label>Persone</label>
             <div class="fp-party-selector">
                 <button type="button" class="fp-btn-minus" id="party-minus">−</button>
                 <div class="fp-party-display">
@@ -1048,7 +1086,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         
         <!-- Orari -->
         <div class="fp-field">
-            <label>Orario preferito</label>
+            <label>Orario</label>
             <div id="time-loading" style="display: none; text-align: center; padding: 20px; color: #666;">
                 ⏳ Caricamento orari disponibili...
             </div>
@@ -1079,7 +1117,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         </div>
         <div class="fp-field">
             <label for="customer-phone">Telefono *</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="display: flex; gap: 8px; align-items: stretch;">
                 <select name="fp_resv_phone_prefix" style="width: 140px !important; padding: 12px 8px; border: 1.5px solid #d1d5db; border-radius: 12px; font-size: 13px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); color: #374151; transition: all 0.2s ease; font-family: inherit; flex-shrink: 0 !important; max-width: 140px !important; min-width: 140px !important; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);">
                     <?php 
                     $phonePrefixes = $config['phone_prefixes'] ?? [];
@@ -1144,12 +1182,12 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             <label>Servizi Aggiuntivi</label>
             <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" name="fp_resv_wheelchair_table" value="1" style="width: 18px; height: 18px; margin: 0; cursor: pointer;">
-                    <span>Tavolo accessibile per sedia a rotelle</span>
+                    <input type="checkbox" name="fp_resv_wheelchair_table" value="1" style="width: 16px; height: 16px; margin: 0; cursor: pointer; flex-shrink: 0;">
+                    <span style="color: #1f2937;">Tavolo accessibile per sedia a rotelle</span>
                 </label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" name="fp_resv_pets" value="1" style="width: 18px; height: 18px; margin: 0; cursor: pointer;">
-                    <span>Accompagnato da animale domestico</span>
+                    <input type="checkbox" name="fp_resv_pets" value="1" style="width: 16px; height: 16px; margin: 0; cursor: pointer; flex-shrink: 0;">
+                    <span style="color: #1f2937;">Accompagnato da animale domestico</span>
                 </label>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label for="high-chair-count">Seggioloni:</label>
@@ -1161,14 +1199,14 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <!-- Privacy -->
         <div class="fp-field">
             <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
-                <input type="checkbox" name="fp_resv_consent" required style="width: 18px; height: 18px; margin: 0; margin-top: 2px; cursor: pointer; flex-shrink: 0;">
-                <span>Accetto la <a href="#" target="_blank">Privacy Policy</a> e il trattamento dei miei dati personali *</span>
+                <input type="checkbox" name="fp_resv_consent" required style="width: 16px; height: 16px; margin: 0; margin-top: 2px; cursor: pointer; flex-shrink: 0;">
+                <span style="color: #1f2937;">Accetto la <a href="#" target="_blank" style="color: #2563eb; text-decoration: underline;">Privacy Policy</a> e il trattamento dei miei dati personali *</span>
             </label>
         </div>
         <div class="fp-field">
             <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
-                <input type="checkbox" name="fp_resv_marketing_consent" value="1" style="width: 18px; height: 18px; margin: 0; margin-top: 2px; cursor: pointer; flex-shrink: 0;">
-                <span>Acconsento al trattamento dei dati per comunicazioni marketing (opzionale)</span>
+                <input type="checkbox" name="fp_resv_marketing_consent" value="1" style="width: 16px; height: 16px; margin: 0; margin-top: 2px; cursor: pointer; flex-shrink: 0;">
+                <span style="color: #1f2937;">Acconsento al trattamento dei dati per comunicazioni marketing (opzionale)</span>
             </label>
         </div>
     </div>
@@ -1179,7 +1217,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         <div class="fp-section-divider"></div>
         <div class="fp-summary">
             <div class="fp-summary-section">
-                <h4>📅 Dettagli Prenotazione</h4>
+                <h4>📅 Quando</h4>
                 <div class="fp-summary-item">
                     <span class="fp-summary-label">Servizio:</span>
                     <span class="fp-summary-value" id="summary-meal">-</span>

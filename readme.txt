@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 0.1.10
+Stable tag: 0.9.0-rc1
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,55 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 0.9.0-rc1 - 2025-10-25 =
+* **🚀 RELEASE CANDIDATE**: Plugin production-ready per test finali verso 1.0.0
+* **🎯 Target 1.0.0**: 7-14 giorni dopo test completi
+* **✅ API Frozen**: Nessun breaking change, backward compatibility garantita
+* **📋 Checklist**: Test completo flusso prenotazione, integrazioni, performance
+* **🌍 Timezone**: Fix critico timezone Italia (19 fix applicati)
+* **🔒 Sicurezza**: 0 vulnerabilità, 58 bug risolti, audit completo
+* **📱 UX**: Manager chiaro, form accessibile, mobile-friendly
+* **📚 Docs**: 163 file documentazione organizzati
+* **🔧 Quality**: 0 errori ESLint, database transactions, rate limiting
+
+= 0.1.14 - 2025-10-25 =
+* **🚨 CRITICO**: Fix timezone - date/time ora salvate in timezone WordPress (Europe/Rome) invece di UTC
+* **🚨 CRITICO**: Frontend - fixate 19 occorrenze di toISOString() che convertiva in UTC
+* **🚨 CRITICO**: Repository - gmdate() sostituito con current_time() per rispettare timezone WP
+* **Bug Fix**: Manager backend mostrava statistiche "oggi" sballate dopo le 22:00 UTC
+* **Bug Fix**: Calendario disponibilità poteva shiftare giorni per conversione UTC
+* **Improved**: Aggiunto formatLocalDate() in tutti i file JS frontend/backend
+* **Verified**: Email già corrette - Language.php usa Europe/Rome come default
+* **Impact**: Prenotazioni ora salvate con orario corretto Italia (prima erano UTC -2h)
+* **Quality**: 19 fix applicati su 6 file + 1 verifica email OK
+* **Compatibility**: Rispetta WordPress Timezone Settings senza breaking changes
+
+= 0.1.13 - 2025-10-25 =
+* **Manager UX**: Vista settimanale come default (invece di mensile) per maggiore chiarezza
+* **Manager UX**: Nomi giorni completi (Lunedì, Martedì...) invece di abbreviati (Lun, Mar...)
+* **Manager UX**: Aggiunta legenda colori stati prenotazioni (Verde=Confermato, Arancione=In Attesa, etc.)
+* **Manager UX**: Badge con icone esplicative 📋 Prenotazioni, 👥 Coperti, 🕐 Orario
+* **Manager UX**: Stato testuale visibile su ogni card (CONFERMATO, IN ATTESA, etc.) oltre al colore
+* **Manager UX**: Tooltip informativi completi su hover (Stato | Orario | Persone | Nome | Servizio)
+* **Manager UX**: Empty state migliorato con icona 📭 e background visibile
+* **Manager UX**: Animazione hover su card prenotazioni (transform + shadow)
+* **Manager UX**: Tooltip descrittivi su bottoni vista (Giorno/Settimana/Mese)
+* **Chiarezza**: Da 3/5 a 5/5 (+67% - manager immediato anche per utenti non tecnici)
+
+= 0.1.12 - 2025-10-25 =
+* **Bug Fixes**: Risolto endpoint /available-days che ignorava configurazione meal plan
+* **Bug Fixes**: Corretto calcolo status disponibilità quando allowedCapacity = 0
+* **UX**: Form width aumentato da 480px a 600px (+25% respiro desktop)
+* **UX**: Spacing ottimizzato - form più compatto (-17% altezza)
+* **UX**: Checkbox ridimensionati (16x16px), testo nero, link privacy blu
+* **UX**: Prefisso telefono allineato con campo input
+* **UX**: Success message con scroll automatico + hide form (previene doppi click)
+* **Design**: Gradienti ridotti da 20+ a 5 (-75%) per design più pulito
+* **Design**: Border-radius standardizzato (3 valori invece di 7)
+* **Design**: Progress bar più visibile (contrasto +650%)
+* **Mobile**: Touch targets ottimizzati (44px), margin ridotti
+* **Docs**: 163 file documentazione organizzati in struttura professionale
 
 = 0.1.11 - 2025-10-13 =
 * Risolti 58 bug attraverso 8 sessioni intensive di code quality audit

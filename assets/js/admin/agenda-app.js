@@ -237,8 +237,15 @@ class ReservationManager {
         }
     }
 
+    /**
+     * Formatta data nel timezone locale (NON UTC!)
+     * CRITICO: toISOString() converte sempre in UTC e può causare shift di giorno
+     */
     formatDate(date) {
-        return date.toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // ============================================
@@ -760,11 +767,11 @@ class ReservationManager {
         
         // Days of month
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = this.formatDate(today); // Timezone locale!
         
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.formatDate(date); // Timezone locale!
             const reservations = reservationsByDate[dateStr] || [];
             const count = reservations.length;
             const guests = reservations.reduce((sum, r) => sum + (r.party || 0), 0);
@@ -892,12 +899,12 @@ class ReservationManager {
         
         // Giorni della settimana
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = this.formatDate(today); // Timezone locale!
         
         for (let i = 0; i < 7; i++) {
             const date = new Date(monday);
             date.setDate(monday.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.formatDate(date); // Timezone locale!
             const reservations = reservationsByDate[dateStr] || [];
             const dayNumber = date.getDate();
             
@@ -1244,7 +1251,7 @@ class ReservationManager {
     }
 
     renderNewReservationStep1() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.formatDate(new Date()); // Timezone locale!
         
         // Genera opzioni meal dinamicamente
         let mealOptions = '<option value="">Seleziona servizio...</option>';
@@ -1811,7 +1818,7 @@ class ReservationManager {
         const url = URL.createObjectURL(blob);
         
         const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
+        const dateStr = this.formatDate(today); // Timezone locale!
         const filename = `prenotazioni_${dateStr}.csv`;
         
         link.setAttribute('href', url);

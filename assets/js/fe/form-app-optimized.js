@@ -186,8 +186,18 @@ export class FormApp {
     initializeDateField() {
         if (!this.dateField) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.formatLocalDate(new Date()); // Timezone locale!
         this.dateField.setAttribute('min', today);
+    }
+
+    /**
+     * Formatta data nel timezone locale (NON UTC!)
+     */
+    formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     /**

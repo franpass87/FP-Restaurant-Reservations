@@ -379,8 +379,9 @@ class FormApp {
         const future = new Date();
         future.setDate(future.getDate() + 90); // 90 giorni nel futuro
 
-        const from = today.toISOString().split('T')[0];
-        const to = future.toISOString().split('T')[0];
+        // Usa timezone locale (NON UTC!) - importante per Italia
+        const from = this.formatLocalDate(today);
+        const to = this.formatLocalDate(future);
 
         const endpoint = this.getRestRoot() + '/available-days';
         const url = new URL(endpoint, window.location.origin);
@@ -556,6 +557,19 @@ class FormApp {
             return window.fpResvSettings.restRoot;
         }
         return '/wp-json/fp-resv/v1';
+    }
+
+    /**
+     * Formatta una data nel timezone locale (YYYY-MM-DD) senza convertire in UTC
+     * IMPORTANTE: toISOString() converte sempre in UTC, causando problemi con timezone
+     * @param {Date} date - Oggetto Date
+     * @returns {string} Data formattata in YYYY-MM-DD nel timezone locale
+     */
+    formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     getSelectedMeal() {
@@ -1977,22 +1991,40 @@ class FormApp {
         if (this.successAlert) {
             this.successAlert.textContent = message;
             this.successAlert.hidden = false;
-            if (typeof this.successAlert.focus === 'function') {
-                this.successAlert.focus();
-            }
+            
+            // Scroll al messaggio di successo IMMEDIATAMENTE
+            setTimeout(() => {
+                this.successAlert.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // Focus per screen reader
+                if (typeof this.successAlert.focus === 'function') {
+                    this.successAlert.focus();
+                }
+            }, 100);
         }
 
-        // Disabilita il form dopo successo
+        // NASCONDE COMPLETAMENTE IL FORM dopo successo
         if (this.form) {
             this.form.setAttribute('data-state', 'submitted');
-            const inputs = this.form.querySelectorAll('input, select, textarea, button');
-            Array.prototype.forEach.call(inputs, (el) => {
-                try {
-                    el.setAttribute('disabled', 'disabled');
-                } catch (e) {
-                    // noop
+            
+            // Nasconde il form con animazione fade out
+            this.form.style.transition = 'opacity 0.3s ease-out';
+            this.form.style.opacity = '0';
+            
+            setTimeout(() => {
+                this.form.style.display = 'none';
+                
+                // Scroll di nuovo al messaggio dopo che il form è nascosto
+                if (this.successAlert) {
+                    this.successAlert.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
                 }
-            });
+            }, 300);
         }
 
         if (data && Array.isArray(data.tracking)) {

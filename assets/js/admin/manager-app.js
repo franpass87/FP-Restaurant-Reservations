@@ -19,7 +19,7 @@ class ReservationManager {
         // State management
         this.state = {
             currentDate: new Date(),
-            currentView: 'month', // Inizia con vista mese per vedere più prenotazioni
+            currentView: 'week', // Vista settimanale di default per maggiore chiarezza
             filters: {
                 service: '',
                 status: '',
@@ -416,9 +416,11 @@ class ReservationManager {
         }
     }
 
+    /**
+     * Formatta data nel timezone locale (NON UTC!)
+     * CRITICO: toISOString() converte sempre in UTC e può causare shift di giorno
+     */
     formatDate(date) {
-        // NON usare toISOString() perché converte in UTC causando problemi timezone!
-        // Usa invece getFullYear, getMonth, getDate per ottenere la data locale
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -972,11 +974,11 @@ class ReservationManager {
         
         // Days of month
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = this.formatDate(today); // Usa timezone locale, non UTC!
         
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.formatDate(date); // Usa timezone locale, non UTC!
             const reservations = reservationsByDate[dateStr] || [];
             const count = reservations.length;
             const guests = reservations.reduce((sum, r) => sum + (r.party || 0), 0);
@@ -1069,9 +1071,9 @@ class ReservationManager {
         // Raggruppa prenotazioni per data
         const reservationsByDate = {};
         
-        // Filtra solo prenotazioni della settimana corrente
-        const weekStart = monday.toISOString().split('T')[0];
-        const weekEnd = sunday.toISOString().split('T')[0];
+        // Filtra solo prenotazioni della settimana corrente (timezone locale!)
+        const weekStart = this.formatDate(monday);
+        const weekEnd = this.formatDate(sunday);
         
         this.state.reservations.forEach(resv => {
             const date = resv.date;
@@ -1085,8 +1087,8 @@ class ReservationManager {
             }
         });
         
-        // Nome giorni
-        const dayNames = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+        // Nome giorni (completi per chiarezza)
+        const dayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
         
         // Header con navigazione settimana
         const mondayStr = this.formatItalianDate(monday);
@@ -1094,7 +1096,7 @@ class ReservationManager {
         
         let html = `
             <div class="fp-week-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Settimana ${mondayStr} - ${sundayStr}</h2>
+                <h2 style="margin: 0; font-size: 20px; font-weight: 600;">📅 Settimana ${mondayStr} - ${sundayStr}</h2>
                 <div class="fp-week-nav" style="display: flex; gap: 10px; align-items: center;">
                     <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
@@ -1107,18 +1109,43 @@ class ReservationManager {
                     </button>
                 </div>
             </div>
+            
+            <!-- Legenda Colori Stati -->
+            <div class="fp-week-legend" style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 8px; flex-wrap: wrap; align-items: center;">
+                <div style="font-weight: 600; color: #374151; margin-right: 8px;">Stati Prenotazioni:</div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <div style="width: 16px; height: 16px; background: #10b981; border-radius: 3px;"></div>
+                    <span style="color: #374151;">Confermato</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <div style="width: 16px; height: 16px; background: #f59e0b; border-radius: 3px;"></div>
+                    <span style="color: #374151;">In Attesa</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <div style="width: 16px; height: 16px; background: #3b82f6; border-radius: 3px;"></div>
+                    <span style="color: #374151;">Visitato</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <div style="width: 16px; height: 16px; background: #ef4444; border-radius: 3px;"></div>
+                    <span style="color: #374151;">No-Show</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <div style="width: 16px; height: 16px; background: #6b7280; border-radius: 3px;"></div>
+                    <span style="color: #374151;">Cancellato</span>
+                </div>
+            </div>
 
             <div class="fp-week-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
         `;
         
         // Giorni della settimana
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = this.formatDate(today); // Timezone locale!
         
         for (let i = 0; i < 7; i++) {
             const date = new Date(monday);
             date.setDate(monday.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.formatDate(date); // Timezone locale!
             const reservations = reservationsByDate[dateStr] || [];
             const dayNumber = date.getDate();
             
@@ -1150,8 +1177,8 @@ class ReservationManager {
                     </div>
                     ${reservations.length > 0 ? `
                         <div class="fp-week-day__stats" style="display: flex; gap: 8px; margin-bottom: 10px;">
-                            <div class="fp-week-day__count" style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 12px; font-weight: 600;">${reservations.length} pren.</div>
-                            <div class="fp-week-day__guests" style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 12px; font-weight: 600;">${totalGuests} coperti</div>
+                            <div class="fp-week-day__count" style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 12px; font-weight: 600;" title="${reservations.length} Prenotazioni">📋 ${reservations.length}</div>
+                            <div class="fp-week-day__guests" style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 12px; font-weight: 600;" title="${totalGuests} Coperti Totali">👥 ${totalGuests}</div>
                         </div>
                         <div class="fp-week-day__reservations" style="display: flex; flex-direction: column; gap: 6px;">
                             ${reservations.slice(0, 5).map(resv => {
@@ -1162,23 +1189,36 @@ class ReservationManager {
                                     no_show: '#ef4444',
                                     cancelled: '#6b7280',
                                 };
+                                const statusLabels = {
+                                    confirmed: 'Confermato',
+                                    pending: 'In Attesa',
+                                    visited: 'Visitato',
+                                    no_show: 'No-Show',
+                                    cancelled: 'Cancellato',
+                                };
                                 const statusColor = statusColors[resv.status] || '#6b7280';
+                                const statusLabel = statusLabels[resv.status] || resv.status;
                                 const customer = this.getCustomerData(resv);
                                 const guestName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email;
+                                const meal = resv.meal || 'N/A';
+                                
+                                const tooltipText = `${statusLabel} | ${resv.time} | ${resv.party} persone | ${guestName}${meal !== 'N/A' ? ' | ' + meal : ''}`;
                                 
                                 return `
                                     <div class="fp-week-reservation" data-id="${resv.id}" data-action="view-reservation" 
-                                         style="background: #f9fafb; padding: 8px; border-radius: 6px; cursor: pointer; border-left: 3px solid ${statusColor}; transition: all 0.2s;"
-                                         onmouseover="this.style.background='#e5e7eb'" 
-                                         onmouseout="this.style.background='#f9fafb'">
+                                         title="${this.escapeHtml(tooltipText)}"
+                                         style="background: #f9fafb; padding: 8px; border-radius: 6px; cursor: pointer; border-left: 3px solid ${statusColor}; transition: all 0.2s; position: relative;"
+                                         onmouseover="this.style.background='#e5e7eb'; this.style.transform='translateX(2px)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" 
+                                         onmouseout="this.style.background='#f9fafb'; this.style.transform='translateX(0)'; this.style.boxShadow='none'">
                                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div class="fp-week-reservation__time" style="font-weight: 600; color: #374151; font-size: 13px;">${resv.time}</div>
-                                            <div class="fp-week-reservation__party" style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 4px;">
+                                            <div class="fp-week-reservation__time" style="font-weight: 600; color: #374151; font-size: 13px;">🕐 ${resv.time}</div>
+                                            <div class="fp-week-reservation__party" style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 4px; background: #e0f2fe; padding: 2px 6px; border-radius: 8px; font-weight: 600;">
                                                 <span class="dashicons dashicons-groups" style="font-size: 14px;"></span>
                                                 ${resv.party}
                                             </div>
                                         </div>
-                                        <div class="fp-week-reservation__name" style="font-size: 12px; color: #6b7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHtml(guestName)}</div>
+                                        <div class="fp-week-reservation__name" style="font-size: 12px; color: #6b7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${this.escapeHtml(guestName)}</div>
+                                        <div class="fp-week-reservation__status" style="font-size: 10px; color: ${statusColor}; margin-top: 4px; font-weight: 600; text-transform: uppercase;">${statusLabel}</div>
                                     </div>
                                 `;
                             }).join('')}
@@ -1189,7 +1229,10 @@ class ReservationManager {
                             ` : ''}
                         </div>
                     ` : `
-                        <div class="fp-week-day__empty" style="text-align: center; color: #9ca3af; font-size: 13px; padding: 40px 10px;">Nessuna prenotazione</div>
+                        <div class="fp-week-day__empty" style="text-align: center; color: #6b7280; font-size: 14px; padding: 40px 10px; background: #f9fafb; border-radius: 6px;">
+                            <div style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;">📭</div>
+                            <div style="font-weight: 500;">Nessuna prenotazione</div>
+                        </div>
                     `}
                 </div>
             `;
@@ -1643,7 +1686,7 @@ class ReservationManager {
     }
 
     renderNewReservationStep1() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.formatDate(new Date()); // Timezone locale!
         
         // Genera opzioni meal dinamicamente
         let mealOptions = '<option value="">Seleziona servizio...</option>';
@@ -2138,7 +2181,7 @@ class ReservationManager {
         const url = URL.createObjectURL(blob);
         
         const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
+        const dateStr = this.formatDate(today); // Timezone locale!
         const filename = `prenotazioni_${dateStr}.csv`;
         
         link.setAttribute('href', url);
@@ -2189,7 +2232,7 @@ class ReservationManager {
         if (!stats) return;
         
         // Calcola statistiche per oggi, settimana e mese
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.formatDate(new Date()); // Timezone locale!
         const todayReservations = this.state.reservations.filter(r => r.date === today);
         const todayGuests = todayReservations.reduce((sum, r) => sum + r.party, 0);
         

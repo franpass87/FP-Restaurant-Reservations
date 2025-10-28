@@ -44,8 +44,8 @@ final class Repository
             'status'      => 'pending',
             'created_at'  => current_time('mysql'),
             'updated_at'  => current_time('mysql'),
-            'date'        => gmdate('Y-m-d'),
-            'time'        => gmdate('H:i:s'),
+            'date'        => current_time('Y-m-d'), // Usa timezone WordPress (non UTC!)
+            'time'        => current_time('H:i:s'), // Usa timezone WordPress (non UTC!)
             'party'       => 2,
             'room_id'     => null,
             'table_id'    => null,

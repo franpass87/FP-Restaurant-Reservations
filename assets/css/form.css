@@ -11,16 +11,34 @@
 
 /* ISOLAMENTO FORM SEMPLICE - Previene interferenze da altri CSS */
 .fp-resv-simple {
-    /* Reset completo per isolare il form semplice */
-    all: initial;
+    /* Reset selettivo per isolare il form semplice senza bloccare interazioni */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
     box-sizing: border-box !important;
+    /* Rimuoviamo all: initial che blocca le interazioni */
 }
 
 .fp-resv-simple *,
 .fp-resv-simple *::before,
 .fp-resv-simple *::after {
     box-sizing: border-box !important;
+}
+
+/* Assicuriamo che gli elementi interattivi funzionino correttamente */
+.fp-resv-simple button,
+.fp-resv-simple input,
+.fp-resv-simple select,
+.fp-resv-simple textarea,
+.fp-resv-simple a {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.fp-resv-simple button:disabled,
+.fp-resv-simple input:disabled,
+.fp-resv-simple select:disabled,
+.fp-resv-simple textarea:disabled {
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
 }
 
 /* ==================== FINE ==================== */

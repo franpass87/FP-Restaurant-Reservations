@@ -1198,7 +1198,13 @@ class Availability
         }
 
         $normalizedAllowed = max($allowedCapacity, 0);
+        // Se non c'è un limite configurato (allowedCapacity = 0), usa la capacità effettiva
         if ($normalizedAllowed === 0) {
+            // Verifica comunque se la capacità è sufficiente per il party
+            // e ritorna 'limited' se è sotto il 50% della capacità totale disponibile
+            if ($capacity < $party * 2) {
+                return 'limited';
+            }
             return 'available';
         }
 

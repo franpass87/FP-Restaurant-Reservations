@@ -310,9 +310,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Helper: formatta data locale (NON UTC come toISOString!)
+    function formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     // Set minimum date to today and load available dates
     let dateInput = document.getElementById('reservation-date');
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDate(new Date()); // Timezone locale!
     dateInput.min = today;
     
     // Store available dates globally
@@ -331,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const from = today;
         const to = new Date();
         to.setMonth(to.getMonth() + 3); // 3 months ahead
-        const toDate = to.toISOString().split('T')[0];
+        const toDate = formatLocalDate(to); // Timezone locale!
         
         // Prova prima l'endpoint WordPress, poi il fallback
         const endpoints = [
@@ -489,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const current = new Date(startDate);
         while (current <= endDate) {
-            const dateKey = current.toISOString().split('T')[0];
+            const dateKey = formatLocalDate(current); // Timezone locale!
             const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
             
             if (meal && defaultSchedule[meal]) {
@@ -527,7 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Usa la configurazione dal backend
         const current = new Date(startDate);
         while (current <= endDate) {
-            const dateKey = current.toISOString().split('T')[0];
+            const dateKey = formatLocalDate(current); // Timezone locale!
             const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
             
             // Controlla se il meal è disponibile in questo giorno

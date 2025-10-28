@@ -72,7 +72,7 @@ final class Plugin
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '0.1.11';
+    const VERSION = '0.9.0-rc1';
 
     /**
      * @var string|null
@@ -219,6 +219,11 @@ final class Plugin
         // Crea i ruoli personalizzati del plugin
         Roles::create();
 
+        // Set initial installation timestamp (solo prima installazione)
+        if (get_option('fp_resv_installed_at', false) === false) {
+            update_option('fp_resv_installed_at', current_time('mysql'), false);
+        }
+        
         // Set initial upgrade timestamp if not already set
         $upgradeTime = get_option('fp_resv_last_upgrade', false);
         if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {

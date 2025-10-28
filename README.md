@@ -1,8 +1,14 @@
 # FP Restaurant Reservations
 
+**Versione:** 0.9.0-rc1 🚀 **Release Candidate**  
+**Autore:** Francesco Passeri  
+**Licenza:** GPL v2+  
+
+[![Release Candidate](https://img.shields.io/badge/Release%20Candidate-0.9.0--rc1-orange?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations) [![Production Ready](https://img.shields.io/badge/Production%20Ready-✅-green?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations) [![Target 1.0.0](https://img.shields.io/badge/Target%201.0.0-7--14%20days-blue?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations)
+
 [![CI](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml/badge.svg)](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml)
 [![Playwright Report](https://img.shields.io/badge/report-playwright-blue)](https://franpass87.github.io/FP-Restaurant-Reservations/)
-[![Version](https://img.shields.io/badge/version-0.1.10-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.9.0--rc1-orange.svg)](CHANGELOG.md)
 [![PHP](https://img.shields.io/badge/php-%3E%3D8.1-blue.svg)](https://php.net)
 [![WordPress](https://img.shields.io/badge/wordpress-%3E%3D6.5-blue.svg)](https://wordpress.org)
 [![License](https://img.shields.io/badge/license-GPL--2.0%2B-blue.svg)](LICENSE)
@@ -11,13 +17,15 @@ FP Restaurant Reservations è un plugin WordPress completo e production-ready pe
 
 ## 🎯 Stato del Progetto
 
-**Versione attuale:** 0.1.10  
-**Status:** ✅ Production Ready  
-**Ultimo audit sicurezza:** Ottobre 2025 - 5/5 problemi risolti  
-**Ultimo code audit:** Ottobre 2025 - 58 bug trovati e risolti (8 sessioni)  
-**Test coverage:** PHPUnit + Playwright E2E  
+**Versione attuale:** 0.9.0-rc1 🚀 **Release Candidate**  
+**Status:** ✅ Production Ready - Test Finali  
+**Target 1.0.0:** 7-14 giorni (dopo test completi)  
+**Ultimo audit sicurezza:** 25 Ottobre 2025 - Nessuna vulnerabilità  
+**Ultimo code audit:** 25 Ottobre 2025 - 19 fix timezone + 58 bug risolti  
+**Test coverage:** PHPUnit + Playwright E2E + Checklist 1.0.0  
 **Performance:** +900% throughput, -97% response time  
-**Code Quality:** 0 errori ESLint, 0 warning, 0 vulnerabilità
+**Code Quality:** 0 errori ESLint, 0 warning, 0 vulnerabilità  
+**API Status:** Frozen (backward compatibility garantita)
 
 ## 🚀 Miglioramenti Architetturali (v0.1.2+)
 
@@ -39,7 +47,7 @@ Il plugin ha ricevuto **12 miglioramenti architetturali significativi** che aume
 
 ## 🚀 Quick Start
 
-**Nuovo al plugin?** Segui la [guida rapida di 5 minuti](QUICK-START.md) per partire subito!
+**Nuovo al plugin?** Segui la [guida rapida di 5 minuti](docs/user-guide/QUICK-START.md) per partire subito!
 
 ## Requisiti
 

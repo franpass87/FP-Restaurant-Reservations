@@ -984,17 +984,17 @@ class rt {
   handleSubmitSuccess(t) {
     this.clearError();
     const e = t && t.message || this.copy.submitSuccess;
-    if (this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, typeof this.successAlert.focus == "function" && this.successAlert.focus()), this.form) {
-      this.form.setAttribute("data-state", "submitted");
-      const i = this.form.querySelectorAll("input, select, textarea, button");
-      Array.prototype.forEach.call(i, (s) => {
-        try {
-          s.setAttribute("disabled", "disabled");
-        } catch {
-        }
+    this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, setTimeout(() => {
+      this.successAlert.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      }), typeof this.successAlert.focus == "function" && this.successAlert.focus();
+    }, 100)), this.form && (this.form.setAttribute("data-state", "submitted"), this.form.style.transition = "opacity 0.3s ease-out", this.form.style.opacity = "0", setTimeout(() => {
+      this.form.style.display = "none", this.successAlert && this.successAlert.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
       });
-    }
-    t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
+    }, 300)), t && Array.isArray(t.tracking) && t.tracking.forEach((i) => {
       i && i.event && v(i.event, i);
     });
   }
@@ -1444,7 +1444,7 @@ function Rt(a, t) {
   const s = e.map((o) => lt(o && o.status)).filter((o) => o !== "");
   return s.some((o) => o === A.LIMITED) ? { state: A.LIMITED, slots: i } : s.some((o) => o === A.AVAILABLE) ? { state: A.AVAILABLE, slots: i } : t ? { state: A.AVAILABLE, slots: i } : s.length === 0 ? { state: A.AVAILABLE, slots: i } : { state: A.FULL, slots: i };
 }
-function Lt(a) {
+function It(a) {
   const { listElement: t, skeletonCount: e = 4 } = a;
   if (!t)
     return {
@@ -1488,7 +1488,7 @@ function Lt(a) {
     updateSelection: r
   };
 }
-function It(a) {
+function Lt(a) {
   if (!a)
     return {
       show: () => {
@@ -1534,10 +1534,10 @@ function Dt(a, t) {
 function Mt(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), r = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, o = t.querySelector("[data-fp-resv-slots-legend]"), l = /* @__PURE__ */ new Map();
   let d = null, u = null, p = null, E = 0;
-  const m = Lt({
+  const m = It({
     listElement: i,
     skeletonCount: a.skeletonCount || 4
-  }), w = It(o), S = Rt;
+  }), w = Lt(o), S = Rt;
   function P(c, h) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
@@ -1559,8 +1559,8 @@ function Mt(a) {
   }
   function R(c) {
     s && (s.hidden = !1);
-    const h = c && typeof c == "object", b = h && typeof c.meal == "string" ? c.meal.trim() : "", y = h && typeof c.date == "string" ? c.date.trim() : "", F = h && typeof c.party < "u" ? String(c.party).trim() : "", L = h && !!c.requiresMeal, N = b !== "", g = y !== "" && (F !== "" && F !== "0") && (!L || N), I = L && !N ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
-    k(I, "idle"), i && clearChildren(i), P(c, { state: g ? "unavailable" : "unknown", slots: 0 });
+    const h = c && typeof c == "object", b = h && typeof c.meal == "string" ? c.meal.trim() : "", y = h && typeof c.date == "string" ? c.date.trim() : "", F = h && typeof c.party < "u" ? String(c.party).trim() : "", I = h && !!c.requiresMeal, N = b !== "", g = y !== "" && (F !== "" && F !== "0") && (!I || N), L = I && !N ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    k(L, "idle"), i && clearChildren(i), P(c, { state: g ? "unavailable" : "unknown", slots: 0 });
   }
   function C() {
     s && (s.hidden = !0);
@@ -1591,8 +1591,8 @@ function Mt(a) {
       return;
     }
     m.renderSlots(y, p, ct), w.show(), k(a.strings && a.strings.slotsUpdated || "", !1);
-    const F = !!(c && (typeof c.has_availability < "u" && c.has_availability || c.meta && c.meta.has_availability)), L = S(y, F);
-    P(h, L), L && L.state && w.updateLegendState(L.state);
+    const F = !!(c && (typeof c.has_availability < "u" && c.has_availability || c.meta && c.meta.has_availability)), I = S(y, F);
+    P(h, I), I && I.state && w.updateLegendState(I.state);
   }
   function M(c, h) {
     if (u = c, !c || !c.date || !c.party) {
@@ -1605,14 +1605,14 @@ function Mt(a) {
       return;
     }
     O(), C(), H(), k(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), P(c, { state: "loading", slots: 0 });
-    const L = Dt(a.endpoint, c), N = performance.now();
-    fetch(L, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((f) => f.json().catch(() => ({})).then((x) => {
+    const I = Dt(a.endpoint, c), N = performance.now();
+    fetch(I, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((f) => f.json().catch(() => ({})).then((x) => {
       if (!f.ok) {
         const g = new Error("availability_error");
         g.status = f.status, g.payload = x;
-        const I = f.headers.get("Retry-After");
-        if (I) {
-          const q = Number.parseInt(I, 10);
+        const L = f.headers.get("Retry-After");
+        if (L) {
+          const q = Number.parseInt(L, 10);
           Number.isFinite(q) && (g.retryAfter = q);
         }
         throw g;
@@ -1628,7 +1628,7 @@ function Mt(a) {
         return;
       const x = performance.now() - N;
       typeof a.onLatency == "function" && a.onLatency(x);
-      const g = f && f.payload && typeof f.payload == "object" ? f.payload.data || {} : {}, I = typeof f.status == "number" ? f.status : g && typeof g.status == "number" ? g.status : 0;
+      const g = f && f.payload && typeof f.payload == "object" ? f.payload.data || {} : {}, L = typeof f.status == "number" ? f.status : g && typeof g.status == "number" ? g.status : 0;
       let q = 0;
       if (f && typeof f.retryAfter == "number" && Number.isFinite(f.retryAfter))
         q = f.retryAfter;
@@ -1636,7 +1636,7 @@ function Mt(a) {
         const T = Number.parseInt(g.retry_after, 10);
         Number.isFinite(T) && (q = T);
       }
-      if (h >= Vt - 1 ? !1 : I === 429 || I >= 500 && I < 600 ? !0 : I === 0) {
+      if (h >= Vt - 1 ? !1 : L === 429 || L >= 500 && L < 600 ? !0 : L === 0) {
         const T = h + 1;
         typeof a.onRetry == "function" && a.onRetry(T);
         const pt = q > 0 ? Math.max(q * 1e3, it) : it * Math.pow(2, h);
