@@ -1582,15 +1582,31 @@ document.addEventListener('DOMContentLoaded', function() {
             '.fp-resv-simple select',
             '.fp-resv-simple textarea',
             '.fp-resv-simple a',
-            // Header buttons
+            // Header buttons (tutti gli elementi)
             '#header-outer button',
             '#header-outer .buttons a',
             '#header-outer nav a',
             '#header-outer .slide-out-widget-area-toggle',
+            '#header-outer .slide-out-widget-area-toggle *',
+            '#header-outer .slide-out-widget-area-toggle a',
+            '#header-outer .slide-out-widget-area-toggle .lines-button',
+            '#header-outer .slide-out-widget-area-toggle .lines',
             '#header-outer .mobile-search',
+            '#header-outer .mobile-search *',
+            '#header-outer .mobile-search a',
+            '#header-outer .mobile-search span',
+            '#header-outer .mobile-search .nectar-icon',
             '#header-outer #mobile-cart-link',
             '#header-outer .lines-button',
-            '#header-outer i'
+            '#header-outer .lines-button *',
+            '#header-outer .lines',
+            '#header-outer i',
+            '#header-outer span',
+            // Selettori ultra-specifici
+            '#header-outer .col.span_9 .slide-out-widget-area-toggle',
+            '#header-outer .col.span_9 .slide-out-widget-area-toggle a',
+            '#header-outer .col.span_9 .mobile-search',
+            '#header-outer .col.span_9 .mobile-search a'
         ];
         
         selectors.forEach(function(selector) {

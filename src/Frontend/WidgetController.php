@@ -233,15 +233,40 @@ final class WidgetController
         html body #header-outer nav ul,
         html body #header-outer nav li,
         html body #header-outer .slide-out-widget-area-toggle,
+        html body #header-outer .slide-out-widget-area-toggle *,
+        html body #header-outer .slide-out-widget-area-toggle a,
+        html body #header-outer .slide-out-widget-area-toggle .lines-button,
+        html body #header-outer .slide-out-widget-area-toggle .lines,
         html body #header-outer .mobile-search,
+        html body #header-outer .mobile-search *,
+        html body #header-outer .mobile-search a,
+        html body #header-outer .mobile-search span,
+        html body #header-outer .mobile-search .nectar-icon,
+        html body #header-outer .mobile-search .icon-salient-search,
         html body #header-outer #mobile-cart-link,
         html body #header-outer .cart-menu a,
         html body #header-outer .lines-button,
+        html body #header-outer .lines-button *,
+        html body #header-outer .lines,
         html body #header-outer i,
-        html body #header-outer span {
+        html body #header-outer span,
+        html body #header-outer .nectar-icon {
             pointer-events: auto !important;
             cursor: pointer !important;
             touch-action: manipulation !important;
+        }
+        
+        /* FIX HAMBURGER MENU: Specificità ultra-alta */
+        body #header-outer .col.span_9 .slide-out-widget-area-toggle,
+        body #header-outer .col.span_9 .slide-out-widget-area-toggle a,
+        body #header-outer .col.span_9 .slide-out-widget-area-toggle .lines-button,
+        body #header-outer .col.span_9 .slide-out-widget-area-toggle .lines-button *,
+        body #header-outer .col.span_9 .slide-out-widget-area-toggle i,
+        body #header-outer .col.span_9 .mobile-search,
+        body #header-outer .col.span_9 .mobile-search a,
+        body #header-outer .col.span_9 .mobile-search * {
+            pointer-events: auto !important;
+            cursor: pointer !important;
         }
         </style>';
     }
