@@ -158,20 +158,69 @@ final class WidgetController
             display: inline !important;
         }
         
-        /* FIX OVERLAY: Disabilita pseudo-elementi che potrebbero bloccare i click */
+        /* FIX OVERLAY: Disabilita TUTTI gli overlay invisibili che bloccano i click */
+        body::before,
+        body::after,
+        #header-outer::before,
+        #header-outer::after,
+        .container::before,
+        .container::after,
+        .row::before,
+        .row::after,
+        .col::before,
+        .col::after,
         .wpb_wrapper::before,
         .wpb_wrapper::after,
         .wpb_text_column::before,
         .wpb_text_column::after,
+        .wpb_content_element::before,
+        .wpb_content_element::after,
         .vc_row::before,
         .vc_row::after,
+        .vc_column::before,
+        .vc_column::after,
         .row-bg-wrap::before,
-        .row-bg-wrap::after {
+        .row-bg-wrap::after,
+        .row-bg-layer::before,
+        .row-bg-layer::after,
+        #ajax-content-wrap::before,
+        #ajax-content-wrap::after,
+        .container-wrap::before,
+        .container-wrap::after,
+        .main-content::before,
+        .main-content::after {
             pointer-events: none !important;
             z-index: -1 !important;
+            display: none !important;
         }
         
-        /* Assicura che il form sia SOPRA tutto */
+        /* FIX BLOCCHI LOREM IPSUM: Forza visibilità */
+        html body .wpb_row,
+        html body .vc_row,
+        html body .wpb_column,
+        html body .vc_column,
+        html body .wpb_text_column,
+        html body .vc_column_text,
+        html body .wpb_content_element,
+        html body .wpb_wrapper {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        /* Assicura che header e form siano SOPRA tutto */
+        html body #header-outer {
+            position: relative !important;
+            z-index: 9999 !important;
+            pointer-events: auto !important;
+        }
+        
+        html body #header-outer * {
+            pointer-events: auto !important;
+        }
+        
         #fp-resv-default,
         .fp-resv-simple {
             position: relative !important;
