@@ -105,6 +105,23 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             visibility: visible;
         }
         
+        /* Fallback: se JavaScript non funziona, mostra almeno il primo step */
+        .fp-resv-simple .fp-step:first-child {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+            position: relative;
+            visibility: visible;
+        }
+        
+        /* Solo se JavaScript funziona, nascondi il primo step di default */
+        .fp-resv-simple .fp-step:first-child:not(.active) {
+            display: none;
+            opacity: 0;
+            transform: translateX(20px);
+            visibility: hidden;
+        }
+        
         .fp-step.prev {
             opacity: 0;
             transform: translateX(-20px);
@@ -464,7 +481,7 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             cursor: not-allowed;
         }
         
-        /* Assicuriamo che tutti gli elementi interattivi funzionino */
+        /* Assicuriamo che tutti gli elementi interattivi del form funzionino */
         .fp-resv-simple button,
         .fp-resv-simple input,
         .fp-resv-simple select,
@@ -472,6 +489,11 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-resv-simple a {
             cursor: pointer !important;
             pointer-events: auto !important;
+            /* Fallback per garantire che siano sempre cliccabili */
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
         }
         
         .fp-resv-simple button:disabled,
@@ -480,6 +502,26 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
         .fp-resv-simple textarea:disabled {
             cursor: not-allowed !important;
             pointer-events: auto !important;
+        }
+        
+        /* Fallback: assicuriamo che il form sia sempre visibile e funzionante */
+        .fp-resv-simple {
+            /* Forza la visibilità del form senza interferire con il resto della pagina */
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            /* Assicuriamo che il form non interferisca con il layout della pagina */
+            position: relative !important;
+            z-index: auto !important;
+        }
+        
+        /* Assicuriamo che il contenuto della pagina sia sempre visibile */
+        body > *:not(.fp-resv-simple),
+        .container-wrap > *:not(.fp-resv-simple),
+        .main-content > *:not(.fp-resv-simple) {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .fp-progress {
@@ -1489,6 +1531,46 @@ setTimeout(() => {
         console.error('Notice Manager non inizializzato');
     }
 }, 1000);
+
+// Fallback: assicuriamo che il form sia sempre visibile anche se JavaScript fallisce
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fallback: verifico che il form sia visibile');
+    
+    // Trova il form
+    const form = document.getElementById('fp-resv-default') || document.querySelector('.fp-resv-simple');
+    if (!form) {
+        console.error('Form non trovato nel fallback');
+        return;
+    }
+    
+    // Assicurati che il form sia visibile
+    form.style.display = 'block';
+    form.style.visibility = 'visible';
+    form.style.opacity = '1';
+    
+    // Assicurati che almeno il primo step sia visibile
+    const firstStep = form.querySelector('.fp-step:first-child');
+    if (firstStep) {
+        firstStep.style.display = 'block';
+        firstStep.style.visibility = 'visible';
+        firstStep.style.opacity = '1';
+        firstStep.style.position = 'relative';
+        firstStep.style.transform = 'translateX(0)';
+        firstStep.classList.add('active');
+        
+        console.log('Fallback: primo step reso visibile');
+    }
+    
+    // Assicurati che tutti i pulsanti siano cliccabili
+    const buttons = form.querySelectorAll('button, input[type="button"], input[type="submit"]');
+    buttons.forEach(btn => {
+        btn.style.pointerEvents = 'auto';
+        btn.style.cursor = 'pointer';
+        btn.style.userSelect = 'none';
+    });
+    
+    console.log('Fallback: form reso visibile e funzionante');
+});
 
 // Esempi di utilizzo (da rimuovere in produzione)
 // window.fpNoticeManager.success('Prenotazione completata con successo!');
