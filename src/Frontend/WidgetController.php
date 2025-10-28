@@ -194,20 +194,31 @@ final class WidgetController
             display: none !important;
         }
         
-        /* FIX BLOCCHI LOREM IPSUM: Forza visibilità */
-        html body .wpb_row,
-        html body .vc_row,
-        html body .wpb_column,
-        html body .vc_column,
-        html body .wpb_text_column,
-        html body .vc_column_text,
-        html body .wpb_content_element,
-        html body .wpb_wrapper {
+        /* FIX BLOCCHI LOREM IPSUM: Forza visibilità (ESCLUDI script/style) */
+        html body .wpb_row:not(script):not(style):not(noscript),
+        html body .vc_row:not(script):not(style):not(noscript),
+        html body .wpb_column:not(script):not(style):not(noscript),
+        html body .vc_column:not(script):not(style):not(noscript),
+        html body .wpb_text_column:not(script):not(style):not(noscript),
+        html body .vc_column_text:not(script):not(style):not(noscript),
+        html body .wpb_content_element:not(script):not(style):not(noscript),
+        html body .wpb_wrapper:not(script):not(style):not(noscript) {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             height: auto !important;
             overflow: visible !important;
+        }
+        
+        /* NASCONDI script, style, noscript */
+        script,
+        style,
+        noscript,
+        .wpb_wrapper script,
+        .wpb_wrapper style,
+        .wpb_wrapper noscript {
+            display: none !important;
+            visibility: hidden !important;
         }
         
         /* Assicura che header e form siano SOPRA tutto */
