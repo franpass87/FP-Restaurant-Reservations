@@ -1564,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function forcePointerEvents() {
         console.log('FP-Resv: Forzando pointer-events su tutti i bottoni...');
         
-        // Seleziona tutti i bottoni del form
+        // Seleziona tutti i bottoni del form E dell'header
         const selectors = [
             '#fp-resv-default button',
             '#fp-resv-default .fp-meal-btn',
@@ -1581,7 +1581,16 @@ document.addEventListener('DOMContentLoaded', function() {
             '.fp-resv-simple input',
             '.fp-resv-simple select',
             '.fp-resv-simple textarea',
-            '.fp-resv-simple a'
+            '.fp-resv-simple a',
+            // Header buttons
+            '#header-outer button',
+            '#header-outer .buttons a',
+            '#header-outer nav a',
+            '#header-outer .slide-out-widget-area-toggle',
+            '#header-outer .mobile-search',
+            '#header-outer #mobile-cart-link',
+            '#header-outer .lines-button',
+            '#header-outer i'
         ];
         
         selectors.forEach(function(selector) {
@@ -1608,6 +1617,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Ri-esegui dopo 1000ms (per sicurezza massima)
     setTimeout(forcePointerEvents, 1000);
+    
+    // Ri-esegui dopo 2000ms (per temi che caricano JS tardivamente)
+    setTimeout(forcePointerEvents, 2000);
 })();
 </script>
 

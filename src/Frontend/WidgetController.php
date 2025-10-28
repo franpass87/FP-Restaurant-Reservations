@@ -158,7 +158,48 @@ final class WidgetController
             display: inline !important;
         }
         
-        /* FIX POINTER-EVENTS: Specificità massima per sovrascrivere il tema Salient */
+        /* FIX OVERLAY: Disabilita pseudo-elementi che potrebbero bloccare i click */
+        .wpb_wrapper::before,
+        .wpb_wrapper::after,
+        .wpb_text_column::before,
+        .wpb_text_column::after,
+        .vc_row::before,
+        .vc_row::after,
+        .row-bg-wrap::before,
+        .row-bg-wrap::after {
+            pointer-events: none !important;
+            z-index: -1 !important;
+        }
+        
+        /* Assicura che il form sia SOPRA tutto */
+        #fp-resv-default,
+        .fp-resv-simple {
+            position: relative !important;
+            z-index: 100 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* FIX STEP VISIBILITÀ: Nascondi step non attivi */
+        html body #fp-resv-default .fp-step:not(.active),
+        html body .fp-resv-simple .fp-step:not(.active) {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            pointer-events: none !important;
+        }
+        
+        /* Mostra solo step attivo */
+        html body #fp-resv-default .fp-step.active,
+        html body .fp-resv-simple .fp-step.active {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+            pointer-events: auto !important;
+        }
+        
+        /* FIX POINTER-EVENTS + CURSOR: Specificità massima per sovrascrivere il tema Salient */
         html body #fp-resv-default button,
         html body #fp-resv-default .fp-meal-btn,
         html body #fp-resv-default .fp-btn,
@@ -181,6 +222,25 @@ final class WidgetController
             -webkit-user-select: none !important;
             -moz-user-select: none !important;
             -ms-user-select: none !important;
+            touch-action: manipulation !important;
+        }
+        
+        /* FIX HEADER BUTTONS: Forza pointer-events sui bottoni header */
+        html body #header-outer button,
+        html body #header-outer .buttons a,
+        html body #header-outer .buttons li,
+        html body #header-outer nav a,
+        html body #header-outer nav ul,
+        html body #header-outer nav li,
+        html body #header-outer .slide-out-widget-area-toggle,
+        html body #header-outer .mobile-search,
+        html body #header-outer #mobile-cart-link,
+        html body #header-outer .cart-menu a,
+        html body #header-outer .lines-button,
+        html body #header-outer i,
+        html body #header-outer span {
+            pointer-events: auto !important;
+            cursor: pointer !important;
             touch-action: manipulation !important;
         }
         </style>';
