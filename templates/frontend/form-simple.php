@@ -515,13 +515,36 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             z-index: auto !important;
         }
         
-        /* Assicuriamo che il contenuto della pagina sia sempre visibile */
-        body > *:not(.fp-resv-simple),
-        .container-wrap > *:not(.fp-resv-simple),
-        .main-content > *:not(.fp-resv-simple) {
+        /* Rimuoviamo qualsiasi overlay che potrebbe nascondere il contenuto */
+        body::before,
+        body::after,
+        .container-wrap::before,
+        .container-wrap::after,
+        .main-content::before,
+        .main-content::after {
+            display: none !important;
+        }
+        
+        /* Assicuriamo che tutti gli elementi della pagina siano visibili */
+        body,
+        .container-wrap,
+        .main-content,
+        .row,
+        .col,
+        .wpb_row,
+        .vc_row-fluid {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            background: transparent !important;
+        }
+        
+        /* Rimuoviamo qualsiasi overlay o backdrop */
+        .fp-resv-overlay,
+        .fp-resv-backdrop,
+        .overlay,
+        .backdrop {
+            display: none !important;
         }
         
         .fp-progress {
@@ -1536,6 +1559,13 @@ setTimeout(() => {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Fallback: verifico che il form sia visibile');
     
+    // Rimuovi qualsiasi overlay che potrebbe nascondere il contenuto
+    const overlays = document.querySelectorAll('.fp-resv-overlay, .fp-resv-backdrop, .overlay, .backdrop');
+    overlays.forEach(overlay => {
+        overlay.style.display = 'none';
+        overlay.remove();
+    });
+    
     // Trova il form
     const form = document.getElementById('fp-resv-default') || document.querySelector('.fp-resv-simple');
     if (!form) {
@@ -1547,6 +1577,8 @@ document.addEventListener('DOMContentLoaded', function() {
     form.style.display = 'block';
     form.style.visibility = 'visible';
     form.style.opacity = '1';
+    form.style.position = 'relative';
+    form.style.zIndex = 'auto';
     
     // Assicurati che almeno il primo step sia visibile
     const firstStep = form.querySelector('.fp-step:first-child');
@@ -1567,6 +1599,15 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.style.pointerEvents = 'auto';
         btn.style.cursor = 'pointer';
         btn.style.userSelect = 'none';
+    });
+    
+    // Assicurati che il contenuto della pagina sia visibile
+    const pageContent = document.querySelectorAll('.container-wrap, .main-content, .row, .col');
+    pageContent.forEach(element => {
+        element.style.display = 'block';
+        element.style.visibility = 'visible';
+        element.style.opacity = '1';
+        element.style.background = 'transparent';
     });
     
     console.log('Fallback: form reso visibile e funzionante');
