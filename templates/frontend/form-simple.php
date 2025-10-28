@@ -1612,6 +1612,13 @@ document.addEventListener('DOMContentLoaded', function() {
         selectors.forEach(function(selector) {
             const elements = document.querySelectorAll(selector);
             elements.forEach(function(element) {
+                // SKIP elementi nascosti (aria-hidden, screen-reader-text)
+                if (element.getAttribute('aria-hidden') === 'true' || 
+                    element.classList.contains('screen-reader-text')) {
+                    element.style.setProperty('pointer-events', 'none', 'important');
+                    return;
+                }
+                
                 element.style.setProperty('pointer-events', 'auto', 'important');
                 element.style.setProperty('cursor', 'pointer', 'important');
                 element.style.setProperty('touch-action', 'manipulation', 'important');

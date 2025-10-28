@@ -221,6 +221,14 @@ final class WidgetController
             pointer-events: auto !important;
         }
         
+        /* FIX SPAN NASCOSTI: Disabilita click su elementi aria-hidden */
+        html body #header-outer [aria-hidden="true"],
+        html body #header-outer .screen-reader-text,
+        html body [aria-hidden="true"] {
+            pointer-events: none !important;
+            z-index: -1 !important;
+        }
+        
         #fp-resv-default,
         .fp-resv-simple {
             position: relative !important;
