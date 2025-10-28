@@ -515,38 +515,6 @@ $formId = $config['formId'] ?? 'fp-resv-simple';
             z-index: auto !important;
         }
         
-        /* Rimuoviamo qualsiasi overlay che potrebbe nascondere il contenuto */
-        body::before,
-        body::after,
-        .container-wrap::before,
-        .container-wrap::after,
-        .main-content::before,
-        .main-content::after {
-            display: none !important;
-        }
-        
-        /* Assicuriamo che tutti gli elementi della pagina siano visibili */
-        body,
-        .container-wrap,
-        .main-content,
-        .row,
-        .col,
-        .wpb_row,
-        .vc_row-fluid {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background: transparent !important;
-        }
-        
-        /* Rimuoviamo qualsiasi overlay o backdrop */
-        .fp-resv-overlay,
-        .fp-resv-backdrop,
-        .overlay,
-        .backdrop {
-            display: none !important;
-        }
-        
         .fp-progress {
             display: flex;
             justify-content: center;
@@ -1555,30 +1523,21 @@ setTimeout(() => {
     }
 }, 1000);
 
-// Fallback: assicuriamo che il form sia sempre visibile anche se JavaScript fallisce
+// Fallback SICURO: assicuriamo che il form sia sempre visibile (SOLO il form, non tocchiamo niente altro)
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Fallback: verifico che il form sia visibile');
-    
-    // Rimuovi qualsiasi overlay che potrebbe nascondere il contenuto
-    const overlays = document.querySelectorAll('.fp-resv-overlay, .fp-resv-backdrop, .overlay, .backdrop');
-    overlays.forEach(overlay => {
-        overlay.style.display = 'none';
-        overlay.remove();
-    });
+    console.log('Form fallback: inizializzazione');
     
     // Trova il form
     const form = document.getElementById('fp-resv-default') || document.querySelector('.fp-resv-simple');
     if (!form) {
-        console.error('Form non trovato nel fallback');
+        console.error('Form non trovato');
         return;
     }
     
-    // Assicurati che il form sia visibile
+    // Assicurati che il form sia visibile (SOLO il form)
     form.style.display = 'block';
     form.style.visibility = 'visible';
     form.style.opacity = '1';
-    form.style.position = 'relative';
-    form.style.zIndex = 'auto';
     
     // Assicurati che almeno il primo step sia visibile
     const firstStep = form.querySelector('.fp-step:first-child');
@@ -1586,31 +1545,10 @@ document.addEventListener('DOMContentLoaded', function() {
         firstStep.style.display = 'block';
         firstStep.style.visibility = 'visible';
         firstStep.style.opacity = '1';
-        firstStep.style.position = 'relative';
-        firstStep.style.transform = 'translateX(0)';
         firstStep.classList.add('active');
-        
-        console.log('Fallback: primo step reso visibile');
     }
     
-    // Assicurati che tutti i pulsanti siano cliccabili
-    const buttons = form.querySelectorAll('button, input[type="button"], input[type="submit"]');
-    buttons.forEach(btn => {
-        btn.style.pointerEvents = 'auto';
-        btn.style.cursor = 'pointer';
-        btn.style.userSelect = 'none';
-    });
-    
-    // Assicurati che il contenuto della pagina sia visibile
-    const pageContent = document.querySelectorAll('.container-wrap, .main-content, .row, .col');
-    pageContent.forEach(element => {
-        element.style.display = 'block';
-        element.style.visibility = 'visible';
-        element.style.opacity = '1';
-        element.style.background = 'transparent';
-    });
-    
-    console.log('Fallback: form reso visibile e funzionante');
+    console.log('Form fallback: completato');
 });
 
 // Esempi di utilizzo (da rimuovere in produzione)
@@ -1618,6 +1556,59 @@ document.addEventListener('DOMContentLoaded', function() {
 // window.fpNoticeManager.error('Errore durante l\'invio della prenotazione');
 // window.fpNoticeManager.warning('Attenzione: alcuni campi sono obbligatori');
 // window.fpNoticeManager.info('Informazione: il ristorante è chiuso il lunedì');
+</script>
+
+<script>
+// JAVASCRIPT FALLBACK: Forza pointer-events su tutti i bottoni (per sicurezza)
+(function() {
+    function forcePointerEvents() {
+        console.log('FP-Resv: Forzando pointer-events su tutti i bottoni...');
+        
+        // Seleziona tutti i bottoni del form
+        const selectors = [
+            '#fp-resv-default button',
+            '#fp-resv-default .fp-meal-btn',
+            '#fp-resv-default .fp-btn',
+            '#fp-resv-default .fp-time-slot',
+            '#fp-resv-default .fp-btn-minus',
+            '#fp-resv-default .fp-btn-plus',
+            '.fp-resv-simple button',
+            '.fp-resv-simple .fp-meal-btn',
+            '.fp-resv-simple .fp-btn',
+            '.fp-resv-simple .fp-time-slot',
+            '.fp-resv-simple .fp-btn-minus',
+            '.fp-resv-simple .fp-btn-plus',
+            '.fp-resv-simple input',
+            '.fp-resv-simple select',
+            '.fp-resv-simple textarea',
+            '.fp-resv-simple a'
+        ];
+        
+        selectors.forEach(function(selector) {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(function(element) {
+                element.style.setProperty('pointer-events', 'auto', 'important');
+                element.style.setProperty('cursor', 'pointer', 'important');
+                element.style.setProperty('touch-action', 'manipulation', 'important');
+            });
+        });
+        
+        console.log('FP-Resv: pointer-events forzato su ' + document.querySelectorAll(selectors.join(', ')).length + ' elementi');
+    }
+    
+    // Esegui immediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', forcePointerEvents);
+    } else {
+        forcePointerEvents();
+    }
+    
+    // Ri-esegui dopo 500ms (per sicurezza, in caso il tema applichi pointer-events dopo)
+    setTimeout(forcePointerEvents, 500);
+    
+    // Ri-esegui dopo 1000ms (per sicurezza massima)
+    setTimeout(forcePointerEvents, 1000);
+})();
 </script>
 
 <script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>"></script>

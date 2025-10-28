@@ -157,6 +157,32 @@ final class WidgetController
             margin: 0 2px !important;
             display: inline !important;
         }
+        
+        /* FIX POINTER-EVENTS: Specificità massima per sovrascrivere il tema Salient */
+        html body #fp-resv-default button,
+        html body #fp-resv-default .fp-meal-btn,
+        html body #fp-resv-default .fp-btn,
+        html body #fp-resv-default .fp-time-slot,
+        html body #fp-resv-default .fp-btn-minus,
+        html body #fp-resv-default .fp-btn-plus,
+        html body .fp-resv-simple button,
+        html body .fp-resv-simple .fp-meal-btn,
+        html body .fp-resv-simple .fp-btn,
+        html body .fp-resv-simple .fp-time-slot,
+        html body .fp-resv-simple .fp-btn-minus,
+        html body .fp-resv-simple .fp-btn-plus,
+        html body .fp-resv-simple input,
+        html body .fp-resv-simple select,
+        html body .fp-resv-simple textarea,
+        html body .fp-resv-simple a {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            touch-action: manipulation !important;
+        }
         </style>';
     }
     
