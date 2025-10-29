@@ -180,7 +180,7 @@ function Ft() {
 function Pt(a) {
   return nt(a, "data-fp-resv-section");
 }
-function U(a) {
+function $(a) {
   if (!a || typeof a != "string" || /^\d{4}-\d{2}-\d{2}$/.test(a))
     return a;
   let t;
@@ -335,7 +335,7 @@ class rt {
     this.availableDaysLoading = !0, this.availableDaysCachedMeal = t;
     const e = /* @__PURE__ */ new Date(), i = /* @__PURE__ */ new Date();
     i.setDate(i.getDate() + 90);
-    const s = e.toISOString().split("T")[0], n = i.toISOString().split("T")[0], r = this.getRestRoot() + "/available-days", o = new URL(r, window.location.origin);
+    const s = this.formatLocalDate(e), n = this.formatLocalDate(i), r = this.getRestRoot() + "/available-days", o = new URL(r, window.location.origin);
     o.searchParams.set("from", s), o.searchParams.set("to", n), t && o.searchParams.set("meal", t), fetch(o.toString(), {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
@@ -402,6 +402,16 @@ class rt {
   }
   getRestRoot() {
     return this.dataset && this.dataset.restRoot ? this.dataset.restRoot : window.fpResvSettings && window.fpResvSettings.restRoot ? window.fpResvSettings.restRoot : "/wp-json/fp-resv/v1";
+  }
+  /**
+   * Formatta una data nel timezone locale (YYYY-MM-DD) senza convertire in UTC
+   * IMPORTANTE: toISOString() converte sempre in UTC, causando problemi con timezone
+   * @param {Date} date - Oggetto Date
+   * @returns {string} Data formattata in YYYY-MM-DD nel timezone locale
+   */
+  formatLocalDate(t) {
+    const e = t.getFullYear(), i = String(t.getMonth() + 1).padStart(2, "0"), s = String(t.getDate()).padStart(2, "0");
+    return `${e}-${i}-${s}`;
   }
   getSelectedMeal() {
     return this.hiddenMeal && this.hiddenMeal.value ? this.hiddenMeal.value : null;
@@ -576,7 +586,7 @@ class rt {
     if (!this.dateField || !t)
       return;
     this.availableDaysCachedMeal !== t && this.loadAvailableDays(t);
-    const e = this.dateField.value, i = U(e);
+    const e = this.dateField.value, i = $(e);
     if (i && this.availableDaysCache[i] !== void 0) {
       const s = this.availableDaysCache[i];
       let n = !1;
@@ -1016,7 +1026,7 @@ class rt {
     const t = new FormData(this.form), e = {};
     if (t.forEach((i, s) => {
       typeof i == "string" && (e[s] = i);
-    }), e.fp_resv_date && (e.fp_resv_date = U(e.fp_resv_date)), console.log("[FP-RESV] Nonce nel form:", e.fp_resv_nonce ? "PRESENTE" : "MANCANTE"), !e.fp_resv_nonce) {
+    }), e.fp_resv_date && (e.fp_resv_date = $(e.fp_resv_date)), console.log("[FP-RESV] Nonce nel form:", e.fp_resv_nonce ? "PRESENTE" : "MANCANTE"), !e.fp_resv_nonce) {
       console.warn("[FP-RESV] ATTENZIONE: Nonce mancante! Cercando nel DOM...");
       const i = this.form.querySelector('input[name="fp_resv_nonce"]');
       i ? (console.log("[FP-RESV] Nonce trovato nel DOM:", i.value.substring(0, 10) + "..."), e.fp_resv_nonce = i.value) : console.error("[FP-RESV] Campo nonce non trovato nel DOM!");
@@ -1098,7 +1108,7 @@ class rt {
     return t ? t.querySelector("[data-fp-resv-field]:invalid, [required]:invalid") : null;
   }
   collectAvailabilityParams() {
-    const t = this.hiddenMeal ? this.hiddenMeal.value : "", e = this.dateField && this.dateField.value ? this.dateField.value : "", i = U(e), s = this.partyField && this.partyField.value ? this.partyField.value : "";
+    const t = this.hiddenMeal ? this.hiddenMeal.value : "", e = this.dateField && this.dateField.value ? this.dateField.value : "", i = $(e), s = this.partyField && this.partyField.value ? this.partyField.value : "";
     return {
       date: i,
       party: s,
@@ -1331,8 +1341,8 @@ function Q() {
     }), (a >= t || !s) && (clearInterval(e), a >= t && console.log("[FP-RESV] Visibility auto-check completed after " + a + " checks"));
   }, 1e3);
 }
-const V = /* @__PURE__ */ new Set();
-function D() {
+const D = /* @__PURE__ */ new Set();
+function V() {
   const a = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]");
   if (a.length === 0) {
     const t = document.querySelector(".entry-content, .post-content, .page-content, main, article");
@@ -1344,19 +1354,19 @@ function D() {
       const e = t.parentElement;
       e.parentElement && (e.parentElement.insertBefore(t, e), e.remove(), console.log("[FP-RESV] Removed WPBakery <p> wrapper"));
     }
-    if (V.has(t)) {
+    if (D.has(t)) {
       console.log("[FP-RESV] Widget already initialized, skipping:", t.id || "unnamed");
       return;
     }
     try {
-      V.add(t), ot(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
+      D.add(t), ot(t), console.log("[FP-RESV] Initializing widget:", t.id || "unnamed"), console.log("[FP-RESV] Widget sections found:", t.querySelectorAll("[data-fp-resv-section]").length);
       const e = new rt(t);
       console.log("[FP-RESV] Widget initialized successfully:", t.id || "unnamed"), (e.sections || []).forEach(function(s, n) {
         const r = s.getAttribute("data-step"), o = s.getAttribute("data-state"), l = s.hasAttribute("hidden");
         console.log(`[FP-RESV] Step ${n + 1} (${r}): state=${o}, hidden=${l}`);
       });
     } catch (e) {
-      console.error("[FP-RESV] Error initializing widget:", e), V.delete(t);
+      console.error("[FP-RESV] Error initializing widget:", e), D.delete(t);
     }
   });
 }
@@ -1371,7 +1381,7 @@ function tt() {
       i.addedNodes && i.addedNodes.length > 0 && Array.prototype.forEach.call(i.addedNodes, function(s) {
         s.nodeType === 1 && (s.matches && (s.matches("[data-fp-resv]") || s.matches(".fp-resv-widget") || s.matches("[data-fp-resv-app]")) || s.querySelector && s.querySelector("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]")) && (e = !0);
       });
-    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), D());
+    }), e && (console.log("[FP-RESV] New widget(s) detected in DOM, initializing..."), V());
   }).observe(document.body, {
     childList: !0,
     subtree: !0
@@ -1381,22 +1391,22 @@ function et() {
   [500, 1e3, 2e3, 3e3].forEach(function(t) {
     setTimeout(function() {
       const e = document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length;
-      e > V.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + V.size + " initialized"), D());
+      e > D.size && (console.log("[FP-RESV] Retry: Found " + e + " widgets, " + D.size + " initialized"), V());
     }, t);
   });
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", function() {
-  D(), setTimeout(Q, 500), tt(), et();
-}) : (D(), setTimeout(Q, 500), tt(), et());
+  V(), setTimeout(Q, 500), tt(), et();
+}) : (V(), setTimeout(Q, 500), tt(), et());
 (typeof window.vc_js < "u" || document.querySelector("[data-vc-full-width]") || document.querySelector(".vc_row")) && (console.log("[FP-RESV] WPBakery detected - adding compatibility listeners"), document.addEventListener("vc-full-content-loaded", function() {
-  console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(D, 100);
+  console.log("[FP-RESV] WPBakery vc-full-content-loaded event - re-initializing..."), setTimeout(V, 100);
 }), window.addEventListener("load", function() {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > V.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), D());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > D.size && (console.log("[FP-RESV] WPBakery late load - found new widgets, initializing..."), V());
   }, 1e3);
 }), [1500, 3e3, 5e3, 1e4].forEach(function(a) {
   setTimeout(function() {
-    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > V.size && (console.log("[FP-RESV] WPBakery extended retry (" + a + "ms) - initializing..."), D());
+    document.querySelectorAll("[data-fp-resv], .fp-resv-widget, [data-fp-resv-app]").length > D.size && (console.log("[FP-RESV] WPBakery extended retry (" + a + "ms) - initializing..."), V());
   }, a);
 }));
 document.addEventListener("fp-resv:tracking:push", function(a) {
@@ -1423,7 +1433,7 @@ function lt(a) {
   const i = ((r) => typeof r.normalize == "function" ? r.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : r)(t), s = (r) => r.some((o) => i.startsWith(o)), n = (r) => r.some((o) => i.includes(o));
   return s(["available", "open", "disponibil", "disponible", "liber", "libre", "apert", "abiert"]) ? A.AVAILABLE : t === "waitlist" || t === "busy" || s(["limited", "limit", "limitat", "limite", "cupos limit", "attesa"]) || n(["pochi posti", "quasi pien", "lista attesa", "few spots", "casi llen"]) ? A.LIMITED : s(["full", "complet", "esaurit", "soldout", "sold out", "agotad", "chius", "plen"]) ? A.FULL : t;
 }
-function $(a) {
+function U(a) {
   for (; a.firstChild; )
     a.removeChild(a.firstChild);
 }
@@ -1444,7 +1454,7 @@ function Rt(a, t) {
   const s = e.map((o) => lt(o && o.status)).filter((o) => o !== "");
   return s.some((o) => o === A.LIMITED) ? { state: A.LIMITED, slots: i } : s.some((o) => o === A.AVAILABLE) ? { state: A.AVAILABLE, slots: i } : t ? { state: A.AVAILABLE, slots: i } : s.length === 0 ? { state: A.AVAILABLE, slots: i } : { state: A.FULL, slots: i };
 }
-function It(a) {
+function Lt(a) {
   const { listElement: t, skeletonCount: e = 4 } = a;
   if (!t)
     return {
@@ -1456,17 +1466,17 @@ function It(a) {
       }
     };
   function i() {
-    $(t);
+    U(t);
     for (let o = 0; o < e; o += 1) {
       const l = _t();
       t.appendChild(l);
     }
   }
   function s() {
-    $(t);
+    U(t);
   }
   function n(o, l, d) {
-    $(t), !(!Array.isArray(o) || o.length === 0) && o.forEach((u) => {
+    U(t), !(!Array.isArray(o) || o.length === 0) && o.forEach((u) => {
       const p = l && l.start === u.start, E = document.createElement("li"), m = kt(
         u,
         p,
@@ -1488,7 +1498,7 @@ function It(a) {
     updateSelection: r
   };
 }
-function Lt(a) {
+function It(a) {
   if (!a)
     return {
       show: () => {
@@ -1520,8 +1530,8 @@ function Lt(a) {
     updateLegendState: s
   };
 }
-const qt = 400, xt = 6e4, Vt = 3, it = 600;
-function Dt(a, t) {
+const qt = 400, xt = 6e4, Dt = 3, it = 600;
+function Vt(a, t) {
   let e;
   try {
     e = new URL(a, window.location.origin);
@@ -1534,10 +1544,10 @@ function Dt(a, t) {
 function Mt(a) {
   const t = a.root, e = t.querySelector("[data-fp-resv-slots-status]"), i = t.querySelector("[data-fp-resv-slots-list]"), s = t.querySelector("[data-fp-resv-slots-empty]"), n = t.querySelector("[data-fp-resv-slots-boundary]"), r = n ? n.querySelector("[data-fp-resv-slots-retry]") : null, o = t.querySelector("[data-fp-resv-slots-legend]"), l = /* @__PURE__ */ new Map();
   let d = null, u = null, p = null, E = 0;
-  const m = It({
+  const m = Lt({
     listElement: i,
     skeletonCount: a.skeletonCount || 4
-  }), w = Lt(o), S = Rt;
+  }), w = It(o), S = Rt;
   function P(c, h) {
     if (typeof a.onAvailabilitySummary == "function")
       try {
@@ -1559,8 +1569,8 @@ function Mt(a) {
   }
   function R(c) {
     s && (s.hidden = !1);
-    const h = c && typeof c == "object", b = h && typeof c.meal == "string" ? c.meal.trim() : "", y = h && typeof c.date == "string" ? c.date.trim() : "", F = h && typeof c.party < "u" ? String(c.party).trim() : "", I = h && !!c.requiresMeal, N = b !== "", g = y !== "" && (F !== "" && F !== "0") && (!I || N), L = I && !N ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
-    k(L, "idle"), i && clearChildren(i), P(c, { state: g ? "unavailable" : "unknown", slots: 0 });
+    const h = c && typeof c == "object", b = h && typeof c.meal == "string" ? c.meal.trim() : "", y = h && typeof c.date == "string" ? c.date.trim() : "", F = h && typeof c.party < "u" ? String(c.party).trim() : "", L = h && !!c.requiresMeal, N = b !== "", g = y !== "" && (F !== "" && F !== "0") && (!L || N), I = L && !N ? a.strings && a.strings.selectMeal || "" : g && a.strings && a.strings.slotsEmpty || "";
+    k(I, "idle"), i && clearChildren(i), P(c, { state: g ? "unavailable" : "unknown", slots: 0 });
   }
   function C() {
     s && (s.hidden = !0);
@@ -1591,8 +1601,8 @@ function Mt(a) {
       return;
     }
     m.renderSlots(y, p, ct), w.show(), k(a.strings && a.strings.slotsUpdated || "", !1);
-    const F = !!(c && (typeof c.has_availability < "u" && c.has_availability || c.meta && c.meta.has_availability)), I = S(y, F);
-    P(h, I), I && I.state && w.updateLegendState(I.state);
+    const F = !!(c && (typeof c.has_availability < "u" && c.has_availability || c.meta && c.meta.has_availability)), L = S(y, F);
+    P(h, L), L && L.state && w.updateLegendState(L.state);
   }
   function M(c, h) {
     if (u = c, !c || !c.date || !c.party) {
@@ -1605,14 +1615,14 @@ function Mt(a) {
       return;
     }
     O(), C(), H(), k(a.strings && a.strings.updatingSlots || "Aggiornamento disponibilità…", "loading"), P(c, { state: "loading", slots: 0 });
-    const I = Dt(a.endpoint, c), N = performance.now();
-    fetch(I, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((f) => f.json().catch(() => ({})).then((x) => {
+    const L = Vt(a.endpoint, c), N = performance.now();
+    fetch(L, { credentials: "same-origin", headers: { Accept: "application/json" } }).then((f) => f.json().catch(() => ({})).then((x) => {
       if (!f.ok) {
         const g = new Error("availability_error");
         g.status = f.status, g.payload = x;
-        const L = f.headers.get("Retry-After");
-        if (L) {
-          const q = Number.parseInt(L, 10);
+        const I = f.headers.get("Retry-After");
+        if (I) {
+          const q = Number.parseInt(I, 10);
           Number.isFinite(q) && (g.retryAfter = q);
         }
         throw g;
@@ -1628,7 +1638,7 @@ function Mt(a) {
         return;
       const x = performance.now() - N;
       typeof a.onLatency == "function" && a.onLatency(x);
-      const g = f && f.payload && typeof f.payload == "object" ? f.payload.data || {} : {}, L = typeof f.status == "number" ? f.status : g && typeof g.status == "number" ? g.status : 0;
+      const g = f && f.payload && typeof f.payload == "object" ? f.payload.data || {} : {}, I = typeof f.status == "number" ? f.status : g && typeof g.status == "number" ? g.status : 0;
       let q = 0;
       if (f && typeof f.retryAfter == "number" && Number.isFinite(f.retryAfter))
         q = f.retryAfter;
@@ -1636,7 +1646,7 @@ function Mt(a) {
         const T = Number.parseInt(g.retry_after, 10);
         Number.isFinite(T) && (q = T);
       }
-      if (h >= Vt - 1 ? !1 : L === 429 || L >= 500 && L < 600 ? !0 : L === 0) {
+      if (h >= Dt - 1 ? !1 : I === 429 || I >= 500 && I < 600 ? !0 : I === 0) {
         const T = h + 1;
         typeof a.onRetry == "function" && a.onRetry(T);
         const pt = q > 0 ? Math.max(q * 1e3, it) : it * Math.pow(2, h);

@@ -25,9 +25,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentStep = 1;
     const totalSteps = 4;
+    let isSubmitting = false; // Protezione contro doppio submit
+    let formNonce = null; // Nonce per la sicurezza
     
     const steps = form.querySelectorAll('.fp-step');
     const progressSteps = form.querySelectorAll('.fp-progress-step');
+    
+    // Ottieni il nonce all'avvio
+    async function fetchNonce() {
+        try {
+            const response = await fetch('/wp-json/fp-resv/v1/nonce');
+            if (response.ok) {
+                const data = await response.json();
+                formNonce = data.nonce;
+                console.log('✅ Nonce ottenuto con successo');
+            }
+        } catch (error) {
+            console.error('⚠️ Errore nel recupero del nonce:', error);
+        }
+    }
+    
+    // Ottieni il nonce subito
+    fetchNonce();
     const nextBtn = document.getElementById('next-btn');
     const prevBtn = document.getElementById('prev-btn');
     const submitBtn = document.getElementById('submit-btn');
@@ -302,47 +321,149 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(currentStep);
     });
     
-    submitBtn.addEventListener('click', function() {
-        if (validateStep(currentStep)) {
+    submitBtn.addEventListener('click', async function() {
+        // Protezione contro doppio submit
+        if (isSubmitting) {
+            console.log('⚠️ Submit già in corso, ignoro il click');
+            return;
+        }
+        
+        if (!validateStep(currentStep)) {
+            showNotice('warning', 'Per favore completa tutti i campi richiesti.');
+            return;
+        }
+        
+        // Segna come submitting
+        isSubmitting = true;
+        
+        // Disabilita il pulsante e mostra loading
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '⏳ Invio in corso...';
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+        
+        try {
             // Get phone data
             const phonePrefix = document.querySelector('select[name="fp_resv_phone_prefix"]').value;
             const phoneNumber = document.getElementById('customer-phone').value;
             const fullPhone = '+' + phonePrefix + ' ' + phoneNumber;
             
-            // Update hidden fields
-            document.querySelector('input[name="fp_resv_meal"]').value = selectedMeal;
-            document.querySelector('input[name="fp_resv_date"]').value = document.getElementById('reservation-date').value;
-            document.querySelector('input[name="fp_resv_party"]').value = document.getElementById('party-size').value;
-            document.querySelector('input[name="fp_resv_phone_cc"]').value = phonePrefix;
-            document.querySelector('input[name="fp_resv_phone_local"]').value = phoneNumber;
-            document.querySelector('input[name="fp_resv_phone_e164"]').value = fullPhone;
+            // Genera request_id univoco per idempotenza
+            const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
             
-            const formData = {
-                meal: selectedMeal,
-                date: document.getElementById('reservation-date').value,
-                time: selectedTime,
-                party: document.getElementById('party-size').value,
-                firstName: document.getElementById('customer-first-name').value,
-                lastName: document.getElementById('customer-last-name').value,
-                email: document.getElementById('customer-email').value,
-                phone: fullPhone,
-                phonePrefix: phonePrefix,
-                phoneNumber: phoneNumber,
-                occasion: document.getElementById('occasion').value,
-                notes: document.getElementById('notes').value,
-                allergies: document.getElementById('allergies').value,
-                wheelchairTable: document.querySelector('input[name="fp_resv_wheelchair_table"]').checked,
-                pets: document.querySelector('input[name="fp_resv_pets"]').checked,
-                highChairCount: document.getElementById('high-chair-count').value,
-                consent: document.querySelector('input[name="fp_resv_consent"]').checked,
-                marketingConsent: document.querySelector('input[name="fp_resv_marketing_consent"]').checked
+            // Prepara i dati per l'API (usa i nomi che il server si aspetta)
+            const payload = {
+                fp_resv_meal: selectedMeal,
+                fp_resv_date: document.getElementById('reservation-date').value,
+                fp_resv_time: selectedTime,
+                fp_resv_party: parseInt(document.getElementById('party-size').value, 10),
+                fp_resv_first_name: document.getElementById('customer-first-name').value,
+                fp_resv_last_name: document.getElementById('customer-last-name').value,
+                fp_resv_email: document.getElementById('customer-email').value,
+                fp_resv_phone: fullPhone,
+                fp_resv_phone_cc: phonePrefix,
+                fp_resv_phone_local: phoneNumber,
+                fp_resv_notes: document.getElementById('notes').value,
+                fp_resv_allergies: document.getElementById('allergies').value,
+                fp_resv_high_chair_count: document.getElementById('high-chair-count').value,
+                fp_resv_wheelchair_table: document.querySelector('input[name="fp_resv_wheelchair_table"]').checked ? '1' : '',
+                fp_resv_pets: document.querySelector('input[name="fp_resv_pets"]').checked ? '1' : '',
+                fp_resv_consent: document.querySelector('input[name="fp_resv_consent"]').checked,
+                fp_resv_marketing_consent: document.querySelector('input[name="fp_resv_marketing_consent"]').checked ? '1' : '',
+                fp_resv_location: document.querySelector('input[name="fp_resv_location"]').value || 'default',
+                fp_resv_locale: document.querySelector('input[name="fp_resv_locale"]').value || 'it_IT',
+                fp_resv_language: document.querySelector('input[name="fp_resv_language"]').value || 'it',
+                fp_resv_currency: document.querySelector('input[name="fp_resv_currency"]').value || 'EUR',
+                fp_resv_policy_version: document.querySelector('input[name="fp_resv_policy_version"]').value || '1.0',
+                fp_resv_hp: document.querySelector('input[name="fp_resv_hp"]').value || '', // Honeypot
+                fp_resv_nonce: formNonce,
+                request_id: requestId
             };
             
-            // Submit form
-            console.log('Form data completo:', formData);
-            showNotice('success', 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');
-        } else {
-            showNotice('warning', 'Per favore completa tutti i campi richiesti.');
+            // Aggiungi occasione solo se compilata
+            const occasion = document.getElementById('occasion').value;
+            if (occasion) {
+                payload.fp_resv_occasion = occasion;
+            }
+            
+            console.log('📤 Invio prenotazione al server...', payload);
+            
+            // Invia la richiesta al server
+            const response = await fetch('/wp-json/fp-resv/v1/reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Successo!
+                console.log('✅ Prenotazione creata con successo:', data);
+                showNotice('success', data.message || 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');
+                
+                // Nascondi il riepilogo dopo la conferma
+                const summaryStep = form.querySelector('.fp-step[data-step="4"]');
+                if (summaryStep) {
+                    summaryStep.style.display = 'none';
+                }
+                
+                // Nascondi i pulsanti
+                if (submitBtn) submitBtn.style.display = 'none';
+                if (prevBtn) prevBtn.style.display = 'none';
+                
+                // Nascondi la progress bar
+                const progressBar = form.querySelector('.fp-progress');
+                if (progressBar) {
+                    progressBar.style.display = 'none';
+                }
+                
+                // Scroll alla notifica dopo un breve delay
+                setTimeout(function() {
+                    const noticeContainer = document.getElementById('fp-notice-container');
+                    if (noticeContainer) {
+                        noticeContainer.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                        
+                        // Scroll della finestra principale al top del form
+                        const formTop = form.getBoundingClientRect().top + window.pageYOffset - 20;
+                        window.scrollTo({ 
+                            top: formTop, 
+                            behavior: 'smooth' 
+                        });
+                    }
+                }, 100);
+            } else {
+                // Errore dal server
+                console.error('❌ Errore dal server:', data);
+                const errorMessage = data.message || 'Si è verificato un errore durante l\'invio della prenotazione. Riprova.';
+                showNotice('error', errorMessage);
+                
+                // Riabilita il pulsante in caso di errore
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+                isSubmitting = false;
+            }
+        } catch (error) {
+            // Errore di rete o JavaScript
+            console.error('❌ Errore durante l\'invio:', error);
+            showNotice('error', 'Errore di connessione. Verifica la tua connessione internet e riprova.');
+            
+            // Riabilita il pulsante in caso di errore
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+            isSubmitting = false;
         }
     });
     
