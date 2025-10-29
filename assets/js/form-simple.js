@@ -1,4 +1,4 @@
-console.log('JavaScript del form caricato!');
+console.log('🚀 JavaScript del form caricato! [VERSIONE CON INVIO AL SERVER v2.0]');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM caricato, inizializzo form...');
