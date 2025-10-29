@@ -40,9 +40,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupMealButtons() {
         mealBtns = form.querySelectorAll('.fp-meal-btn');
         console.log('Trovati', mealBtns.length, 'pulsanti pasto');
+        
+        // Debug: mostra tutti i pasti con i loro messaggi
+        console.log('=== DEBUG PASTI ===');
+        mealBtns.forEach((btn, index) => {
+            console.log(`Pasto ${index + 1}:`, {
+                key: btn.dataset.meal,
+                notice: btn.dataset.mealNotice,
+                hint: btn.dataset.mealHint,
+                hasNotice: !!btn.dataset.mealNotice && btn.dataset.mealNotice.trim() !== ''
+            });
+        });
+        console.log('===================');
+        
         mealBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 console.log('Pulsante pasto cliccato:', this.dataset.meal);
+                console.log('Tutti dataset del bottone:', this.dataset);
+                
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
@@ -51,13 +66,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const mealNotice = this.dataset.mealNotice;
                 const mealNoticeDiv = document.getElementById('meal-notice');
                 
+                console.log('mealNotice value:', mealNotice);
+                console.log('mealNoticeDiv found:', mealNoticeDiv);
+                
                 if (mealNotice && mealNotice.trim() !== '' && mealNoticeDiv) {
                     mealNoticeDiv.innerHTML = mealNotice;
                     mealNoticeDiv.style.display = 'block';
-                    console.log('Messaggio pasto mostrato:', mealNotice);
-                } else if (mealNoticeDiv) {
-                    mealNoticeDiv.style.display = 'none';
-                    console.log('Nessun messaggio per questo pasto');
+                    console.log('✅ Messaggio pasto mostrato:', mealNotice);
+                } else {
+                    if (mealNoticeDiv) {
+                        mealNoticeDiv.style.display = 'none';
+                    }
+                    console.log('⚠️ Nessun messaggio per questo pasto o div non trovato');
+                    console.log('  - mealNotice presente?', !!mealNotice);
+                    console.log('  - mealNotice non vuoto?', mealNotice && mealNotice.trim() !== '');
+                    console.log('  - mealNoticeDiv trovato?', !!mealNoticeDiv);
                 }
                 
                 // Load available dates for selected meal

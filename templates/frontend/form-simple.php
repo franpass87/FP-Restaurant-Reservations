@@ -84,6 +84,15 @@ if (file_exists($cssPath)) {
         <!-- Step 1: Servizio -->
         <div class="fp-step active" data-step="1">
         <h3>1. Scegli il Servizio</h3>
+        
+        <?php if (defined('WP_DEBUG') && WP_DEBUG): ?>
+        <!-- DEBUG: Meals Data -->
+        <div style="background:#f0f0f0;padding:10px;margin:10px 0;border:2px solid #333;font-size:11px;font-family:monospace;">
+            <strong>🔍 DEBUG MEALS:</strong>
+            <pre style="margin:5px 0;white-space:pre-wrap;"><?php echo htmlspecialchars(print_r($meals, true)); ?></pre>
+        </div>
+        <?php endif; ?>
+        
         <div class="fp-field">
             <div class="fp-meals" id="meal-buttons">
                 <?php if (!empty($meals) && is_array($meals)): ?>
@@ -681,4 +690,4 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
-<script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>"></script>
+<script type="text/javascript" src="<?php echo esc_url(plugins_url('assets/js/form-simple.js', dirname(__FILE__, 2))); ?>?ver=<?php echo time(); ?>"></script>
