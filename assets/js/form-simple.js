@@ -1,4 +1,4 @@
-console.log('🚀 JavaScript del form caricato! [VERSIONE CON INVIO AL SERVER v2.0]');
+console.log('🚀 JavaScript del form caricato! [VERSIONE AUDIT COMPLETO v2.3]');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM caricato, inizializzo form...');
@@ -80,6 +80,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
+                
+                // Reset selectedTime quando cambi meal
+                selectedTime = null;
+                document.querySelectorAll('.fp-time-slot').forEach(s => s.classList.remove('selected'));
                 
                 // Mostra il messaggio del pasto se presente
                 const mealNotice = this.dataset.mealNotice;
@@ -519,22 +523,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${meal} (modalità offline)</p>`;
                 }
                 
-                // Force show step 2 if it's hidden
-                if (currentStep === 1) {
-                    currentStep = 2;
-                    console.log('Forzando visualizzazione step 2, currentStep:', currentStep);
-                    showStep(currentStep);
-                }
-                
-                // Also show the date input field
-                const dateField = form.querySelector('.fp-step[data-step="2"]');
-                if (dateField) {
-                    dateField.style.display = 'block';
-                    console.log('Date field mostrato:', dateField);
-                    showNotice('success', 'Date disponibili caricate con successo!');
-                } else {
-                    console.error('Date field non trovato');
-                }
+                // NON forzare lo step 2 - l'utente deve cliccare "Avanti"
+                // Questo mantiene il comportamento consistente con il caso di successo API
+                console.log('Date di fallback caricate, premi "Avanti" per continuare');
                 
                 // Show the date input
                 if (dateInput) {
@@ -871,17 +862,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedDate && availableDatesList) {
                 const availableDatesArray = availableDatesList.split(',');
                 if (!availableDatesArray.includes(selectedDate)) {
-                showNotice('error', 'Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
-                this.value = '';
-                return;
+                    showNotice('error', 'Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
+                    this.value = '';
+                    return;
                 }
             }
             
-            // If date is valid, proceed to next step
-            if (selectedDate && validateStep(2)) {
-                currentStep++;
-                showStep(currentStep);
-            }
+            // NON avanzare automaticamente - l'utente deve selezionare un orario prima
+            // Gli orari vengono caricati dal listener checkAndLoadTimeSlots() qui sotto
         });
     }
     
@@ -927,9 +915,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 document.querySelector('input[name="fp_resv_time"]').value = this.dataset.time;
                                 document.querySelector('input[name="fp_resv_slot_start"]').value = this.dataset.slotStart;
                                 
-                                // Auto-advance to next step
-                                if (validateStep(4)) {
-                                    currentStep++;
+                                // Auto-advance allo step 3 (dettagli cliente)
+                                if (validateStep(2)) {
+                                    currentStep = 3;
                                     showStep(currentStep);
                                 }
                             });
@@ -973,9 +961,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.querySelector('input[name="fp_resv_time"]').value = this.dataset.time;
                             document.querySelector('input[name="fp_resv_slot_start"]').value = this.dataset.slotStart;
                             
-                            // Auto-advance to next step
-                            if (validateStep(4)) {
-                                currentStep++;
+                            // Auto-advance allo step 3 (dettagli cliente)
+                            if (validateStep(2)) {
+                                currentStep = 3;
                                 showStep(currentStep);
                             }
                         });
@@ -994,6 +982,11 @@ document.addEventListener('DOMContentLoaded', function() {
         function checkAndLoadTimeSlots() {
             const date = document.getElementById('reservation-date').value;
             const party = document.getElementById('party-size').value;
+            
+            // Reset selectedTime quando cambiano data o party (gli orari cambiano)
+            selectedTime = null;
+            document.querySelectorAll('.fp-time-slot').forEach(s => s.classList.remove('selected'));
+            
             if (date && party && selectedMeal) {
                 loadAvailableTimeSlots(selectedMeal, date, party);
             }
