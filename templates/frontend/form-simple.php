@@ -44,7 +44,28 @@ if (file_exists($cssPath)) {
 <?php } ?>
 
 <div id="<?php echo esc_attr($formId); ?>" class="fp-resv-simple">
-    <h2>Prenota il Tuo Tavolo</h2>
+    <!-- Header con titolo e bottone PDF -->
+    <div class="fp-resv-header">
+        <div class="fp-resv-header__titles">
+            <h2>Prenota il Tuo Tavolo</h2>
+        </div>
+        <?php 
+        $pdfUrl = $context['pdf_url'] ?? '';
+        $pdfLabel = $strings['pdf_label'] ?? __('Scopri il Menu', 'fp-restaurant-reservations');
+        if ($pdfUrl !== '') : 
+        ?>
+            <a 
+                class="fp-btn-pdf" 
+                href="<?php echo esc_url($pdfUrl); ?>" 
+                target="_blank" 
+                rel="noopener"
+                aria-label="<?php echo esc_attr($pdfLabel); ?>"
+            >
+                <span class="fp-btn-pdf__icon">📄</span>
+                <span class="fp-btn-pdf__label"><?php echo esc_html($pdfLabel); ?></span>
+            </a>
+        <?php endif; ?>
+    </div>
     
     <!-- Notice Container inline -->
     <div id="fp-notice-container" class="fp-notice-container" style="position: relative; z-index: 10001;">
@@ -68,7 +89,13 @@ if (file_exists($cssPath)) {
                 <?php if (!empty($meals) && is_array($meals)): ?>
                     <?php foreach ($meals as $meal): ?>
                         <?php if (is_array($meal) && isset($meal['key']) && isset($meal['label'])): ?>
-                            <button type="button" class="fp-meal-btn" data-meal="<?php echo esc_attr($meal['key']); ?>">
+                            <button 
+                                type="button" 
+                                class="fp-meal-btn" 
+                                data-meal="<?php echo esc_attr($meal['key']); ?>"
+                                data-meal-notice="<?php echo esc_attr($meal['notice'] ?? ''); ?>"
+                                data-meal-hint="<?php echo esc_attr($meal['hint'] ?? ''); ?>"
+                            >
                                 <?php if (!empty($meal['icon'])): ?>
                                     <?php echo wp_strip_all_tags($meal['icon']); ?>
                                 <?php endif; ?>
@@ -85,6 +112,11 @@ if (file_exists($cssPath)) {
                         🌙 Cena
                     </button>
                 <?php endif; ?>
+            </div>
+            
+            <!-- Messaggio del pasto selezionato -->
+            <div id="meal-notice" class="fp-meal-notice" style="display: none;">
+                <!-- Il messaggio verrà inserito qui dinamicamente -->
             </div>
         </div>
     </div>

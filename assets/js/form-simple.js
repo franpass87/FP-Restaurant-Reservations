@@ -2,7 +2,7 @@ console.log('JavaScript del form caricato!');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM caricato, inizializzo form...');
-    const form = document.getElementById('fp-resv-default');
+    const form = document.getElementById('fp-resv-default') || document.getElementById('fp-resv-simple') || document.querySelector('.fp-resv-simple');
     console.log('Form trovato:', form);
     
     if (!form) {
@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
+                
+                // Mostra il messaggio del pasto se presente
+                const mealNotice = this.dataset.mealNotice;
+                const mealNoticeDiv = document.getElementById('meal-notice');
+                
+                if (mealNotice && mealNotice.trim() !== '' && mealNoticeDiv) {
+                    mealNoticeDiv.innerHTML = mealNotice;
+                    mealNoticeDiv.style.display = 'block';
+                    console.log('Messaggio pasto mostrato:', mealNotice);
+                } else if (mealNoticeDiv) {
+                    mealNoticeDiv.style.display = 'none';
+                    console.log('Nessun messaggio per questo pasto');
+                }
                 
                 // Load available dates for selected meal
                 loadAvailableDates(selectedMeal);
