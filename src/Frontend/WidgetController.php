@@ -90,6 +90,35 @@ final class WidgetController
         }
         
         echo '<style id="fp-resv-override-css" type="text/css">
+        /* NASCONDI paragrafi vuoti creati da wpautop che rompono lo spacing */
+        .fp-resv-simple p:empty,
+        .fp-resv-simple > p:empty,
+        .fp-steps-container > p:empty,
+        .fp-step > p:empty,
+        .wpb_wrapper .fp-resv-simple p:empty,
+        .wpb_text_column p:empty {
+            display: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            line-height: 0 !important;
+        }
+        
+        /* FORZA il tag <style> del form a essere NASCOSTO (funzionare come CSS, non mostrato come testo) */
+        /* Salient/WPBakery lo mostrano come testo visibile con display:block, noi vogliamo display:none */
+        html body .wpb_wrapper style,
+        html body .wpb_text_column style,
+        html body .wpb_content_element style,
+        html body .vc_column style,
+        .fp-resv-simple style {
+            display: none !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
         /* Override tema Salient - SPECIFICITÀ MASSIMA */
         html body .fp-resv-simple select[name="fp_resv_phone_prefix"] {
             width: 140px !important;
@@ -158,67 +187,13 @@ final class WidgetController
             display: inline !important;
         }
         
-        /* FIX OVERLAY: Disabilita TUTTI gli overlay invisibili che bloccano i click */
-        body::before,
-        body::after,
-        #header-outer::before,
-        #header-outer::after,
-        .container::before,
-        .container::after,
-        .row::before,
-        .row::after,
-        .col::before,
-        .col::after,
-        .wpb_wrapper::before,
-        .wpb_wrapper::after,
-        .wpb_text_column::before,
-        .wpb_text_column::after,
-        .wpb_content_element::before,
-        .wpb_content_element::after,
-        .vc_row::before,
-        .vc_row::after,
-        .vc_column::before,
-        .vc_column::after,
-        .row-bg-wrap::before,
-        .row-bg-wrap::after,
-        .row-bg-layer::before,
-        .row-bg-layer::after,
-        #ajax-content-wrap::before,
-        #ajax-content-wrap::after,
-        .container-wrap::before,
-        .container-wrap::after,
-        .main-content::before,
-        .main-content::after {
+        /* FIX OVERLAY: Disabilita overlay invisibili SOLO nelle row che contengono il form */
+        .wpb_wrapper:has(.fp-resv-simple)::before,
+        .wpb_wrapper:has(.fp-resv-simple)::after,
+        .wpb_text_column:has(.fp-resv-simple)::before,
+        .wpb_text_column:has(.fp-resv-simple)::after {
             pointer-events: none !important;
             z-index: -1 !important;
-            display: none !important;
-        }
-        
-        /* FIX BLOCCHI LOREM IPSUM: Forza visibilità (ESCLUDI script/style) */
-        html body .wpb_row:not(script):not(style):not(noscript),
-        html body .vc_row:not(script):not(style):not(noscript),
-        html body .wpb_column:not(script):not(style):not(noscript),
-        html body .vc_column:not(script):not(style):not(noscript),
-        html body .wpb_text_column:not(script):not(style):not(noscript),
-        html body .vc_column_text:not(script):not(style):not(noscript),
-        html body .wpb_content_element:not(script):not(style):not(noscript),
-        html body .wpb_wrapper:not(script):not(style):not(noscript) {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-        
-        /* NASCONDI script, style, noscript */
-        script,
-        style,
-        noscript,
-        .wpb_wrapper script,
-        .wpb_wrapper style,
-        .wpb_wrapper noscript {
-            display: none !important;
-            visibility: hidden !important;
         }
         
         /* Assicura che header e form siano SOPRA tutto */
@@ -232,13 +207,7 @@ final class WidgetController
             pointer-events: auto !important;
         }
         
-        /* FIX SPAN NASCOSTI: Disabilita click su elementi aria-hidden */
-        html body #header-outer [aria-hidden="true"],
-        html body #header-outer .screen-reader-text,
-        html body [aria-hidden="true"] {
-            pointer-events: none !important;
-            z-index: -1 !important;
-        }
+        /* RIMOSSO: Fix aria-hidden che bloccava i bottoni header */
         
         #fp-resv-default,
         .fp-resv-simple {
@@ -390,6 +359,18 @@ final class WidgetController
         );
 
         wp_enqueue_style('fp-resv-form');
+        
+        // CSS del form-simple.php (precedentemente inline) - ORA nel <head>
+        $cssPath = Plugin::$dir . 'assets/css/form-simple-inline.css';
+        error_log('[FP-RESV] Tentativo caricamento CSS da: ' . $cssPath);
+        
+        if (file_exists($cssPath)) {
+            $formSimpleCss = file_get_contents($cssPath);
+            wp_add_inline_style('fp-resv-form', $formSimpleCss);
+            error_log('[FP-RESV] CSS caricato! Lunghezza: ' . strlen($formSimpleCss) . ' caratteri');
+        } else {
+            error_log('[FP-RESV] ERRORE: File CSS NON trovato!');
+        }
         
         // CSS inline MINIMO per compatibilità WPBakery/Salient
         // Resto degli stili proviene da form-thefork.css (pulito e professionale)

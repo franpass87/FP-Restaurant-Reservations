@@ -139,6 +139,26 @@ final class Shortcodes
             error_log('[FP-RESV] Output contiene data-fp-resv-app: ' . (strpos($output, 'data-fp-resv-app') !== false ? 'SI' : 'NO'));
             error_log('[FP-RESV] ========================================');
             
+            // RIMUOVI TUTTI i <p> e <br> aggiunti da wpautop che rompono il layout
+            $output = preg_replace('/<p>\s*<!--/', '<!--', $output);  // <p> prima dei commenti
+            $output = preg_replace('/-->\s*<\/p>/', '-->', $output);  // </p> dopo i commenti
+            $output = preg_replace('/-->\s*<br\s*\/?>/', '-->', $output);  // <br> dopo commenti
+            $output = preg_replace('/<p>\s*<\/p>/', '', $output);  // <p> vuoti
+            $output = preg_replace('/<p>\s*<br\s*\/?>\s*<\/p>/', '', $output);  // <p> con solo <br>
+            
+            // RIMUOVI TUTTI i <br /> ovunque
+            $output = str_replace('<br />', '', $output);
+            $output = str_replace('<br/>', '', $output);
+            $output = str_replace('<br>', '', $output);
+            $output = str_replace('<p></p>', '', $output);  // <p></p> vuoti
+            
+            // Rimuovi <p> che wrappano i div del form
+            $output = preg_replace('/<p>(\s*<div[^>]*class="[^"]*fp-resv[^"]*"[^>]*>)/', '$1', $output);
+            $output = preg_replace('/(<\/div>\s*)<\/p>/', '$1', $output);
+            
+            // Rimuovi spazi multipli tra tag
+            $output = preg_replace('/>\s+</', '><', $output);
+            
             // Re-add filters that were removed
             foreach ($removedFilters as $filter) {
                 if ($filter === 'wpautop') {

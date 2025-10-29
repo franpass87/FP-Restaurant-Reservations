@@ -16,7 +16,7 @@ if (!isset($context) || !is_array($context)) {
 // USA IL FORM SEMPLICE
 echo "<!-- FORM SEMPLICE CARICATO: " . date('H:i:s') . " -->";
 include __DIR__ . '/form-simple.php';
-exit; // FORZA L'USCITA
+return; // Termina template senza bloccare resto pagina
 
 $config = $context['config'] ?? [];
 $strings = $context['strings'] ?? [];
