@@ -32,34 +32,43 @@ final class REST
     {
         add_action('rest_api_init', [$this, 'registerRoutes']);
         
-        // Hook per catturare e pulire output spurio prima della risposta
-        add_filter('rest_pre_serve_request', [$this, 'cleanOutputBuffer'], 10, 4);
+        // Hook AGGRESSIVO per pulire output spurio e forzare JSON corretto
+        add_filter('rest_post_dispatch', [$this, 'forceCleanJsonResponse'], 999, 3);
     }
     
     /**
-     * Cattura e rimuove eventuali output spurii prima di servire la risposta REST
+     * Forza una risposta JSON pulita rimuovendo output spurio
+     * Questo filter viene eseguito DOPO che la risposta è stata preparata
      */
-    public function cleanOutputBuffer($served, $result, $request, $server): bool
+    public function forceCleanJsonResponse($response, $server, $request)
     {
-        // Solo per i nostri endpoint
-        if (strpos($request->get_route(), '/fp-resv/v1/closures') === false) {
-            return $served;
+        // Solo per i nostri endpoint closures
+        $route = $request->get_route();
+        if (!is_string($route) || strpos($route, '/fp-resv/v1/closures') === false) {
+            return $response;
         }
         
-        // Cattura qualsiasi output pendente
-        $spurious = '';
+        error_log('[FP Closures REST] forceCleanJsonResponse attivato per route: ' . $route);
+        
+        // Pulisci TUTTI gli output buffer aperti
         while (ob_get_level() > 0) {
             $captured = ob_get_clean();
             if ($captured && $captured !== '') {
-                $spurious .= $captured;
+                error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO CATTURATO E RIMOSSO: "' . $captured . '"');
             }
         }
         
-        if ($spurious !== '') {
-            error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO RIMOSSO: "' . $spurious . '"');
+        // Verifica che la risposta sia valida
+        if (!$response instanceof \WP_REST_Response) {
+            error_log('[FP Closures REST] Response non è WP_REST_Response: ' . gettype($response));
+            return $response;
         }
         
-        return $served;
+        $data = $response->get_data();
+        error_log('[FP Closures REST] Response data type: ' . gettype($data));
+        error_log('[FP Closures REST] Response data: ' . json_encode($data));
+        
+        return $response;
     }
 
     public function registerRoutes(): void
@@ -182,10 +191,15 @@ final class REST
         $captured = ob_get_clean();
         if ($captured !== '' && $captured !== false) {
             error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO CATTURATO: "' . $captured . '"');
-            error_log('[FP Closures REST] Questo output interferisce con la risposta REST!');
         }
         
-        return rest_ensure_response($response);
+        // Crea risposta esplicita con header forzati
+        $rest_response = new WP_REST_Response($response, 200);
+        $rest_response->set_headers([
+            'Content-Type' => 'application/json; charset=UTF-8',
+        ]);
+        
+        return $rest_response;
     }
 
     public function handleCreate(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -222,7 +236,13 @@ final class REST
             error_log('[FP Closures REST CREATE] ⚠️ OUTPUT SPURIO CATTURATO: "' . $captured . '"');
         }
 
-        return rest_ensure_response($response);
+        // Crea risposta esplicita con header forzati
+        $rest_response = new WP_REST_Response($response, 201);
+        $rest_response->set_headers([
+            'Content-Type' => 'application/json; charset=UTF-8',
+        ]);
+        
+        return $rest_response;
     }
 
     public function handleUpdate(WP_REST_Request $request): WP_REST_Response|WP_Error
