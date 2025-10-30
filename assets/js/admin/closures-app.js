@@ -251,14 +251,19 @@
     };
 
     const renderList = () => {
+        console.log('[FP Closures] renderList() - items count:', state.items.length);
         list.innerHTML = '';
         if (state.items.length === 0) {
+            console.log('[FP Closures] Nessun item da visualizzare - mostro empty state');
             emptyState.hidden = false;
             return;
         }
+        console.log('[FP Closures] Rendering', state.items.length, 'items');
         emptyState.hidden = true;
-        state.items.forEach((item) => {
+        state.items.forEach((item, index) => {
+            console.log('[FP Closures] Rendering item', index, ':', item);
             if (!item || !item.id) {
+                console.warn('[FP Closures] Item', index, 'non valido (manca id)');
                 return;
             }
             const card = document.createElement('article');
@@ -331,19 +336,24 @@
     };
 
     const loadClosures = () => {
+        console.log('[FP Closures] loadClosures() chiamato');
         setLoading(true);
         request('/closures?include_inactive=1')
             .then((payload) => {
+                console.log('[FP Closures] loadClosures payload ricevuto:', payload);
                 const items = Array.isArray(payload && payload.items)
                     ? payload.items
                     : Array.isArray(payload)
                         ? payload
                         : [];
+                console.log('[FP Closures] Items estratti:', items);
+                console.log('[FP Closures] Numero items:', items.length);
                 state.items = items;
                 state.error = '';
                 render();
             })
             .catch((error) => {
+                console.error('[FP Closures] loadClosures error:', error);
                 state.error = error && error.message ? error.message : 'Impossibile caricare le chiusure.';
                 renderError();
             })

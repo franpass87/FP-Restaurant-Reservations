@@ -82,6 +82,8 @@ final class REST
 
     public function handleList(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        error_log('[FP Closures REST] handleList() chiamato');
+        
         $range = $this->resolveRange($request);
 
         $filters = [
@@ -89,6 +91,8 @@ final class REST
             'range_end'        => $range['end'],
             'include_inactive' => (bool) $request->get_param('include_inactive'),
         ];
+        
+        error_log('[FP Closures REST] Filters: ' . wp_json_encode($filters));
 
         $scope = $request->get_param('scope');
         if (is_string($scope) && sanitize_key($scope) !== '') {
@@ -105,7 +109,9 @@ final class REST
             $filters['table_id'] = (int) $tableId;
         }
 
+        error_log('[FP Closures REST] Chiamata service->list()');
         $items = $this->service->list($filters);
+        error_log('[FP Closures REST] Items ricevuti: ' . count($items));
 
         $expand = $request->get_param('expand');
         if ($expand === 'occurrences') {
@@ -125,13 +131,18 @@ final class REST
             unset($item);
         }
 
-        return rest_ensure_response([
+        $response = [
             'range' => [
                 'start' => $range['start']->format(DateTimeInterface::ATOM),
                 'end'   => $range['end']->format(DateTimeInterface::ATOM),
             ],
             'items' => $items,
-        ]);
+        ];
+        
+        error_log('[FP Closures REST] Response preparata con ' . count($items) . ' items');
+        error_log('[FP Closures REST] Response JSON: ' . wp_json_encode($response));
+        
+        return rest_ensure_response($response);
     }
 
     public function handleCreate(WP_REST_Request $request): WP_REST_Response|WP_Error
