@@ -436,13 +436,20 @@ final class Service
         }
 
         $value = trim($value);
+        
+        error_log('[FP Closures Service] parseDateTime input: "' . $value . '"');
+        error_log('[FP Closures Service] Timezone: ' . $timezone->getName());
+        
         $date  = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value, $timezone);
         if ($date instanceof DateTimeImmutable) {
+            error_log('[FP Closures Service] Parsed as ATOM: ' . $date->format('Y-m-d H:i:s T'));
             return $date;
         }
 
         try {
-            return new DateTimeImmutable($value, $timezone);
+            $result = new DateTimeImmutable($value, $timezone);
+            error_log('[FP Closures Service] Parsed as string: ' . $result->format('Y-m-d H:i:s T'));
+            return $result;
         } catch (\Exception $exception) {
             throw new InvalidArgumentException('Formato data/ora non valido: ' . $exception->getMessage());
         }

@@ -15,6 +15,7 @@ use function sanitize_text_field;
 use function wp_json_encode;
 use function wp_send_json_error;
 use function wp_send_json_success;
+use function wp_timezone_string;
 
 /**
  * Handler AJAX per Closures - Più robusto di REST API
@@ -78,6 +79,8 @@ final class AjaxHandler
         }
 
         try {
+            error_log('[FP Closures AJAX] $_POST ricevuto: ' . wp_json_encode($_POST));
+            
             $payload = [
                 'scope'            => sanitize_text_field($_POST['scope'] ?? 'restaurant'),
                 'type'             => sanitize_text_field($_POST['type'] ?? 'full'),
@@ -88,7 +91,8 @@ final class AjaxHandler
                 'capacity_percent' => isset($_POST['capacity_percent']) ? (int) $_POST['capacity_percent'] : null,
             ];
 
-            error_log('[FP Closures AJAX] Payload: ' . wp_json_encode($payload));
+            error_log('[FP Closures AJAX] Payload sanitizzato: ' . wp_json_encode($payload));
+            error_log('[FP Closures AJAX] Timezone WordPress: ' . wp_timezone_string());
 
             $model = $this->service->create($payload);
             
