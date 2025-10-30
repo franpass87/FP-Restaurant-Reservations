@@ -109,8 +109,9 @@ final class AdminController
         }
 
         wp_localize_script($scriptHandle, 'fpResvClosuresSettings', [
+            'ajaxUrl'  => esc_url_raw(admin_url('admin-ajax.php')),
             'restRoot' => esc_url_raw(rest_url('fp-resv/v1')),
-            'nonce'    => wp_create_nonce('wp_rest'),
+            'nonce'    => wp_create_nonce('fp_resv_admin'),
             'preview'  => $preview,
             'strings'  => [
                 'headline'    => __('Chiusure & periodi speciali', 'fp-restaurant-reservations'),

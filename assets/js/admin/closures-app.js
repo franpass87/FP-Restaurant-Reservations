@@ -5,7 +5,8 @@
     }
 
     const settings = window.fpResvClosuresSettings || {};
-    const restRoot = (settings.restRoot || '/wp-json/fp-resv/v1').replace(/\/$/, '');
+    const ajaxUrl = settings.ajaxUrl || '/wp-admin/admin-ajax.php';
+    const nonce = settings.nonce || '';
     const statsNodes = {
         active: document.querySelector('[data-role="closures-active"]'),
         capacity: document.querySelector('[data-role="closures-capacity"]'),
@@ -43,75 +44,37 @@
         formOpen: false,
     };
 
-    const request = (path, options = {}) => {
-        const url = typeof path === 'string' && path.startsWith('http') ? path : `${restRoot}${path}`;
-        const config = {
-            method: options.method || 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-WP-Nonce': settings.nonce || '',
-            },
-            credentials: 'same-origin',
-        };
-        if (options.data) {
-            config.body = JSON.stringify(options.data);
+    const ajaxRequest = (action, data = {}) => {
+        console.log('[FP Closures AJAX]', action, data);
+        
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('nonce', nonce);
+        
+        for (const [key, value] of Object.entries(data)) {
+            if (value !== null && value !== undefined) {
+                formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+            }
         }
-        console.log('[FP Closures Request]', config.method, url, config);
-        return fetch(url, config).then((response) => {
-            console.log('[FP Closures Response]', response.status, response.statusText);
-            if (!response.ok) {
-                return response
-                    .json()
-                    .catch(() => ({}))
-                    .then((payload) => {
-                        const message = payload && payload.message ? payload.message : 'Richiesta non riuscita';
-                        const error = new Error(message);
-                        error.status = response.status;
-                        throw error;
-                    });
+        
+        return fetch(ajaxUrl, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+        }).then((response) => {
+            console.log('[FP Closures AJAX Response]', response.status);
+            return response.json();
+        }).then((result) => {
+            console.log('[FP Closures AJAX Result]', result);
+            
+            // WordPress AJAX ritorna {success: true/false, data: {...}}
+            if (result && result.success === false) {
+                const message = result.data && result.data.message ? result.data.message : 'Errore AJAX';
+                throw new Error(message);
             }
-            if (response.status === 204) {
-                return null;
-            }
-            const contentLength = response.headers.get('content-length');
-            if (contentLength === '0') {
-                return null;
-            }
-            return response
-                .text()
-                .then((text) => {
-                    console.log('[FP Closures] Raw response text:', text);
-                    
-                    if (!text) {
-                        return null;
-                    }
-                    
-                    // WORKAROUND: Se il server ritorna solo "1", è un bug - ritorna struttura vuota
-                    if (text === '1' || text.trim() === '1') {
-                        console.error('[FP Closures] ⚠️ Server ritornò "1" invece di JSON - bug backend!');
-                        // Se è una GET, ritorna struttura vuota valida
-                        if (config.method === 'GET') {
-                            return { range: {}, items: [] };
-                        }
-                        // Se è POST/PUT, lancia errore
-                        throw new Error('Il server ha ritornato una risposta non valida ("1"). Verifica il debug.log del server.');
-                    }
-                    
-                    const contentType = response.headers.get('content-type') || '';
-                    if (!contentType.includes('json')) {
-                        const error = new Error(text.trim() || 'Risposta non valida.');
-                        error.status = response.status;
-                        throw error;
-                    }
-                    try {
-                        return JSON.parse(text);
-                    } catch (error) {
-                        console.error('[FP Closures] JSON parse error:', error, 'Text:', text);
-                        const parseError = error instanceof Error ? error : new Error('Risposta non valida.');
-                        parseError.status = response.status;
-                        throw parseError;
-                    }
-                });
+            
+            // Ritorna i dati (result.data contiene il payload)
+            return result && result.data ? result.data : result;
         });
     };
 
@@ -353,7 +316,7 @@
     const loadClosures = () => {
         console.log('[FP Closures] loadClosures() chiamato');
         setLoading(true);
-        request('/closures?include_inactive=1')
+        ajaxRequest('fp_resv_closures_list', { include_inactive: 1 })
             .then((payload) => {
                 console.log('[FP Closures] loadClosures payload ricevuto:', payload);
                 const items = Array.isArray(payload && payload.items)
@@ -430,7 +393,6 @@
             start_at: startDate.toISOString(),
             end_at: endDate.toISOString(),
             note: noteField ? noteField.value.trim() : '',
-            active: true,
         };
         if (payload.type === 'capacity_reduction' && percentField) {
             const percent = Number.parseInt(percentField.value, 10);
@@ -444,7 +406,7 @@
         
         console.log('[FP Closures] Sending payload:', payload);
         setLoading(true);
-        request('/closures', { method: 'POST', data: payload })
+        ajaxRequest('fp_resv_closures_create', payload)
             .then((response) => {
                 console.log('[FP Closures] Success response:', response);
                 state.error = '';
@@ -492,7 +454,7 @@
                 return;
             }
             setLoading(true);
-            request(`/closures/${id}`, { method: 'DELETE' })
+            ajaxRequest('fp_resv_closures_delete', { id: id })
                 .then(() => {
                     state.items = state.items.filter((item) => item.id !== id);
                     render();

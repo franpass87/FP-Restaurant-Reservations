@@ -16,6 +16,7 @@ use FP\Resv\Domain\Brevo\Client as BrevoClient;
 use FP\Resv\Domain\Brevo\Mapper as BrevoMapper;
 use FP\Resv\Domain\Brevo\Repository as BrevoRepository;
 use FP\Resv\Domain\Closures\AdminController as ClosuresAdminController;
+use FP\Resv\Domain\Closures\AjaxHandler as ClosuresAjaxHandler;
 use FP\Resv\Domain\Closures\REST as ClosuresREST;
 use FP\Resv\Domain\Closures\Service as ClosuresService;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
@@ -587,6 +588,11 @@ final class Plugin
         $closuresRest->register();
         $container->register(ClosuresREST::class, $closuresRest);
         $container->register('closures.rest', $closuresRest);
+        
+        // AJAX handler per Closures (più robusto di REST)
+        $closuresAjax = new ClosuresAjaxHandler($closuresService);
+        $closuresAjax->register();
+        $container->register(ClosuresAjaxHandler::class, $closuresAjax);
 
         $surveysRest = new SurveysREST($options, $languageSettings, $reservationsRepository, $wpdb);
         $surveysRest->register();
