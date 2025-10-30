@@ -74,7 +74,8 @@ final class AdminController
 
         $scriptUrl = Plugin::$url . 'assets/js/admin/closures-app.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-closures.css';
-        $version   = Plugin::assetVersion();
+        // Forza reload con timestamp fisso dopo refactor AJAX + timezone fix
+        $version   = '0.9.0-rc2.' . time();
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-api-fetch'], $version, true);
 
