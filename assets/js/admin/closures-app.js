@@ -387,11 +387,23 @@
             endField.setCustomValidity('');
             return;
         }
+        
+        // Formatta le date mantenendo il timezone locale (non convertire in UTC)
+        const formatLocalDateTime = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        };
+        
         const payload = {
             scope: 'restaurant',
             type: typeField.value,
-            start_at: startDate.toISOString(),
-            end_at: endDate.toISOString(),
+            start_at: formatLocalDateTime(startDate),
+            end_at: formatLocalDateTime(endDate),
             note: noteField ? noteField.value.trim() : '',
         };
         if (payload.type === 'capacity_reduction' && percentField) {
