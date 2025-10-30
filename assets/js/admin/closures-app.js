@@ -406,7 +406,7 @@
                 percentField.focus();
                 return;
             }
-            payload.capacity_override = { percent };
+            payload.capacity_percent = percent;
         }
         setLoading(true);
         request('/closures', { method: 'POST', data: payload })
