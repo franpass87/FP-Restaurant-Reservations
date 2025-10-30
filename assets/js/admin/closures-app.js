@@ -316,7 +316,7 @@
     const loadClosures = () => {
         console.log('[FP Closures] loadClosures() chiamato');
         setLoading(true);
-        ajaxRequest('fp_resv_closures_list', { include_inactive: 1 })
+        ajaxRequest('fp_resv_closures_list', { include_inactive: 0 })
             .then((payload) => {
                 console.log('[FP Closures] loadClosures payload ricevuto:', payload);
                 const items = Array.isArray(payload && payload.items)
