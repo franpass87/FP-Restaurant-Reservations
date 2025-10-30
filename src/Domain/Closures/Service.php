@@ -440,15 +440,23 @@ final class Service
         error_log('[FP Closures Service] parseDateTime input: "' . $value . '"');
         error_log('[FP Closures Service] Timezone: ' . $timezone->getName());
         
-        $date  = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value, $timezone);
+        // Se la stringa ha già un timezone/offset, NON passare $timezone come secondo parametro
+        // perché PHP ignorerebbe l'offset nella stringa e applicherebbe il secondo parametro
+        $hasOffset = preg_match('/[+-]\d{2}:\d{2}$/', $value) || preg_match('/[+-]\d{4}$/', $value);
+        
+        $date = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value);
         if ($date instanceof DateTimeImmutable) {
-            error_log('[FP Closures Service] Parsed as ATOM: ' . $date->format('Y-m-d H:i:s T'));
+            error_log('[FP Closures Service] Parsed as ATOM: ' . $date->format('Y-m-d H:i:s T P'));
             return $date;
         }
 
         try {
-            $result = new DateTimeImmutable($value, $timezone);
-            error_log('[FP Closures Service] Parsed as string: ' . $result->format('Y-m-d H:i:s T'));
+            // Se ha offset, parsea SENZA secondo parametro per rispettare l'offset nella stringa
+            // Altrimenti usa il timezone di WordPress
+            $result = $hasOffset 
+                ? new DateTimeImmutable($value)
+                : new DateTimeImmutable($value, $timezone);
+            error_log('[FP Closures Service] Parsed as string (hasOffset=' . ($hasOffset ? 'true' : 'false') . '): ' . $result->format('Y-m-d H:i:s T P'));
             return $result;
         } catch (\Exception $exception) {
             throw new InvalidArgumentException('Formato data/ora non valido: ' . $exception->getMessage());
