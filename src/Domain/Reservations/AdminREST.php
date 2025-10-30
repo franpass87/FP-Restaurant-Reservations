@@ -1124,20 +1124,14 @@ final class AdminREST
             $payload['status'] = 'visited';
         }
         
-        error_log('[FP Resv Admin] Validazione email...');
-        // Validazione campi obbligatori per prenotazioni manuali dal manager
-        if (empty($payload['email']) || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
-            error_log('[FP Resv Admin] ERRORE: Email non valida: ' . ($payload['email'] ?? 'EMPTY'));
-            throw new InvalidArgumentException(__('Email non valida o mancante', 'fp-restaurant-reservations'));
+        // Validazione opzionale email (solo se fornita)
+        if (!empty($payload['email']) && !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
+            error_log('[FP Resv Admin] ERRORE: Email non valida: ' . $payload['email']);
+            throw new InvalidArgumentException(__('Email non valida', 'fp-restaurant-reservations'));
         }
         
-        error_log('[FP Resv Admin] Validazione nome/cognome...');
-        if (empty($payload['first_name']) && empty($payload['last_name'])) {
-            error_log('[FP Resv Admin] ERRORE: Nome e cognome mancanti');
-            throw new InvalidArgumentException(__('Specificare almeno nome o cognome', 'fp-restaurant-reservations'));
-        }
-
-        error_log('[FP Resv Admin] extractReservationPayload() OK - payload valido');
+        // NOTA: Nome, cognome, email e telefono sono opzionali per prenotazioni da backend
+        error_log('[FP Resv Admin] extractReservationPayload() OK - payload valido (campi cliente opzionali)');
         return $payload;
     }
 

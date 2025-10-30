@@ -56,7 +56,9 @@
         if (options.data) {
             config.body = JSON.stringify(options.data);
         }
+        console.log('[FP Closures Request]', config.method, url, config);
         return fetch(url, config).then((response) => {
+            console.log('[FP Closures Response]', response.status, response.statusText);
             if (!response.ok) {
                 return response
                     .json()
@@ -375,18 +377,23 @@
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
+        console.log('[FP Closures] Form submit triggered');
+        
         if (!startField || !endField || !typeField) {
+            console.error('[FP Closures] Missing required fields');
             return;
         }
         const startValue = startField.value;
         const endValue = endField.value;
         if (!startValue || !endValue) {
+            console.error('[FP Closures] Missing start or end values');
             form.reportValidity();
             return;
         }
         const startDate = new Date(startValue);
         const endDate = new Date(endValue);
         if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+            console.error('[FP Closures] Invalid dates');
             endField.setCustomValidity("La fine deve essere successiva all'inizio.");
             form.reportValidity();
             endField.setCustomValidity('');
@@ -403,19 +410,24 @@
         if (payload.type === 'capacity_reduction' && percentField) {
             const percent = Number.parseInt(percentField.value, 10);
             if (Number.isNaN(percent)) {
+                console.error('[FP Closures] Invalid percent value');
                 percentField.focus();
                 return;
             }
             payload.capacity_percent = percent;
         }
+        
+        console.log('[FP Closures] Sending payload:', payload);
         setLoading(true);
         request('/closures', { method: 'POST', data: payload })
-            .then(() => {
+            .then((response) => {
+                console.log('[FP Closures] Success response:', response);
                 state.error = '';
                 toggleForm(false);
                 loadClosures();
             })
             .catch((error) => {
+                console.error('[FP Closures] Error:', error);
                 state.error = error && error.message ? error.message : 'Impossibile creare la chiusura.';
                 renderError();
             })

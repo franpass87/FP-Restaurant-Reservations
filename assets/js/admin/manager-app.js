@@ -1958,23 +1958,23 @@ class ReservationManager {
                 <form id="fp-new-reservation-form-step3">
                     <div class="fp-form-row">
                         <div class="fp-form-group">
-                            <label for="new-first-name">Nome *</label>
-                            <input type="text" id="new-first-name" class="fp-form-control" required />
+                            <label for="new-first-name">Nome</label>
+                            <input type="text" id="new-first-name" class="fp-form-control" />
                         </div>
                         <div class="fp-form-group">
-                            <label for="new-last-name">Cognome *</label>
-                            <input type="text" id="new-last-name" class="fp-form-control" required />
+                            <label for="new-last-name">Cognome</label>
+                            <input type="text" id="new-last-name" class="fp-form-control" />
                         </div>
                     </div>
 
                     <div class="fp-form-group">
-                        <label for="new-email">Email *</label>
-                        <input type="email" id="new-email" class="fp-form-control" required />
+                        <label for="new-email">Email</label>
+                        <input type="email" id="new-email" class="fp-form-control" />
                     </div>
 
                     <div class="fp-form-group">
-                        <label for="new-phone">Telefono *</label>
-                        <input type="tel" id="new-phone" class="fp-form-control" placeholder="+39 ..." required />
+                        <label for="new-phone">Telefono</label>
+                        <input type="tel" id="new-phone" class="fp-form-control" placeholder="+39 ..." />
                     </div>
 
                     <div class="fp-form-group">
