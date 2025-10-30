@@ -31,6 +31,35 @@ final class REST
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'registerRoutes']);
+        
+        // Hook per catturare e pulire output spurio prima della risposta
+        add_filter('rest_pre_serve_request', [$this, 'cleanOutputBuffer'], 10, 4);
+    }
+    
+    /**
+     * Cattura e rimuove eventuali output spurii prima di servire la risposta REST
+     */
+    public function cleanOutputBuffer($served, $result, $request, $server): bool
+    {
+        // Solo per i nostri endpoint
+        if (strpos($request->get_route(), '/fp-resv/v1/closures') === false) {
+            return $served;
+        }
+        
+        // Cattura qualsiasi output pendente
+        $spurious = '';
+        while (ob_get_level() > 0) {
+            $captured = ob_get_clean();
+            if ($captured && $captured !== '') {
+                $spurious .= $captured;
+            }
+        }
+        
+        if ($spurious !== '') {
+            error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO RIMOSSO: "' . $spurious . '"');
+        }
+        
+        return $served;
     }
 
     public function registerRoutes(): void
