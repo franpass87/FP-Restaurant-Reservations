@@ -16,10 +16,17 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use function add_action;
+use function add_filter;
+use function current_user_can;
+use function get_current_user_id;
 use function is_array;
+use function is_string;
+use function is_user_logged_in;
 use function rest_ensure_response;
 use function sanitize_key;
 use function sanitize_text_field;
+use function strpos;
+use function wp_json_encode;
 use function wp_timezone;
 
 final class REST
@@ -315,6 +322,15 @@ final class REST
         error_log('[FP Closures REST] permissionCallback() chiamato');
         $can = Security::currentUserCanManage();
         error_log('[FP Closures REST] permissionCallback result: ' . ($can ? 'TRUE' : 'FALSE'));
+        error_log('[FP Closures REST] User ID: ' . get_current_user_id());
+        error_log('[FP Closures REST] Is user logged in: ' . (is_user_logged_in() ? 'YES' : 'NO'));
+        
+        // TEMPORANEO: Permetti accesso anche a admin WordPress standard
+        if (current_user_can('manage_options')) {
+            error_log('[FP Closures REST] Permesso via manage_options (admin)');
+            return true;
+        }
+        
         return $can;
     }
 
