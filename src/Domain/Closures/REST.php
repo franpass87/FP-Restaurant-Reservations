@@ -35,7 +35,9 @@ final class REST
 
     public function registerRoutes(): void
     {
-        register_rest_route(
+        error_log('[FP Closures REST] registerRoutes() chiamato!');
+        
+        $result = register_rest_route(
             'fp-resv/v1',
             '/closures',
             [
@@ -51,6 +53,8 @@ final class REST
                 ],
             ]
         );
+        
+        error_log('[FP Closures REST] Endpoint /closures registrato: ' . ($result ? 'SUCCESS' : 'FAILED'));
 
         register_rest_route(
             'fp-resv/v1',
@@ -83,6 +87,9 @@ final class REST
     public function handleList(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         error_log('[FP Closures REST] handleList() chiamato');
+        
+        // Cattura eventuali output indesiderati da hook o snippet
+        ob_start();
         
         $range = $this->resolveRange($request);
 
@@ -142,27 +149,51 @@ final class REST
         error_log('[FP Closures REST] Response preparata con ' . count($items) . ' items');
         error_log('[FP Closures REST] Response JSON: ' . wp_json_encode($response));
         
+        // Cattura e scarta eventuali output indesiderati
+        $captured = ob_get_clean();
+        if ($captured !== '' && $captured !== false) {
+            error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO CATTURATO: "' . $captured . '"');
+            error_log('[FP Closures REST] Questo output interferisce con la risposta REST!');
+        }
+        
         return rest_ensure_response($response);
     }
 
     public function handleCreate(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
+        error_log('[FP Closures REST] handleCreate() chiamato');
+        
+        // Cattura eventuali output indesiderati
+        ob_start();
+        
         $payload = $this->collectPayload($request);
+        error_log('[FP Closures REST] Payload: ' . wp_json_encode($payload));
 
         try {
             $model = $this->service->create($payload);
+            error_log('[FP Closures REST] Chiusura creata con ID: ' . $model->id);
         } catch (InvalidArgumentException $exception) {
+            ob_end_clean();
+            error_log('[FP Closures REST] InvalidArgumentException: ' . $exception->getMessage());
             return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 400]);
         } catch (RuntimeException $exception) {
+            ob_end_clean();
+            error_log('[FP Closures REST] RuntimeException: ' . $exception->getMessage());
             return new WP_Error('fp_resv_closure_error', $exception->getMessage(), ['status' => 500]);
         }
 
-        $result = $this->service->list([
-            'id'                => $model->id,
-            'include_inactive'  => true,
-        ]);
+        // Usa direttamente il model creato invece di richiamarlo
+        $response = $this->exportModelToArray($model);
+        
+        error_log('[FP Closures REST] Response finale: ' . wp_json_encode($response));
+        
+        // Cattura e scarta eventuali output indesiderati
+        $captured = ob_get_clean();
+        if ($captured !== '' && $captured !== false) {
+            error_log('[FP Closures REST CREATE] ⚠️ OUTPUT SPURIO CATTURATO: "' . $captured . '"');
+        }
 
-        return rest_ensure_response($result[0] ?? []);
+        return rest_ensure_response($response);
     }
 
     public function handleUpdate(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -232,7 +263,10 @@ final class REST
 
     private function permissionCallback(): bool
     {
-        return Security::currentUserCanManage();
+        error_log('[FP Closures REST] permissionCallback() chiamato');
+        $can = Security::currentUserCanManage();
+        error_log('[FP Closures REST] permissionCallback result: ' . ($can ? 'TRUE' : 'FALSE'));
+        return $can;
     }
 
     /**
@@ -290,6 +324,29 @@ final class REST
         } catch (\Exception) {
             return null;
         }
+    }
+
+    /**
+     * Converte un Model in array per la risposta REST
+     * 
+     * @return array<string, mixed>
+     */
+    private function exportModelToArray(Model $model): array
+    {
+        return [
+            'id'                => $model->id,
+            'scope'             => $model->scope,
+            'type'              => $model->type,
+            'start_at'          => $model->startAt->format(DateTimeInterface::ATOM),
+            'end_at'            => $model->endAt->format(DateTimeInterface::ATOM),
+            'room_id'           => $model->roomId,
+            'table_id'          => $model->tableId,
+            'note'              => $model->note,
+            'priority'          => $model->priority,
+            'capacity_override' => $model->capacityOverride,
+            'active'            => $model->active,
+            'recurrence'        => $model->recurrence,
+        ];
     }
 
     /**
