@@ -80,9 +80,23 @@
             return response
                 .text()
                 .then((text) => {
+                    console.log('[FP Closures] Raw response text:', text);
+                    
                     if (!text) {
                         return null;
                     }
+                    
+                    // WORKAROUND: Se il server ritorna solo "1", è un bug - ritorna struttura vuota
+                    if (text === '1' || text.trim() === '1') {
+                        console.error('[FP Closures] ⚠️ Server ritornò "1" invece di JSON - bug backend!');
+                        // Se è una GET, ritorna struttura vuota valida
+                        if (config.method === 'GET') {
+                            return { range: {}, items: [] };
+                        }
+                        // Se è POST/PUT, lancia errore
+                        throw new Error('Il server ha ritornato una risposta non valida ("1"). Verifica il debug.log del server.');
+                    }
+                    
                     const contentType = response.headers.get('content-type') || '';
                     if (!contentType.includes('json')) {
                         const error = new Error(text.trim() || 'Risposta non valida.');
@@ -92,6 +106,7 @@
                     try {
                         return JSON.parse(text);
                     } catch (error) {
+                        console.error('[FP Closures] JSON parse error:', error, 'Text:', text);
                         const parseError = error instanceof Error ? error : new Error('Risposta non valida.');
                         parseError.status = response.status;
                         throw parseError;
