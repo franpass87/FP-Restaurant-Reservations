@@ -1,8 +1,28 @@
+## 0.9.0-rc4 - Fix Conflitti CSS Header Tema (2025-10-31)
+
+### Fixed - Conflitti CSS con Tema Salient 🎯
+- **[CRITICO]** Rimosso CSS per `#header-outer` che causava ricalcolo altezza `#header-space` 
+- **[CRITICO]** Spazio aggiuntivo sopra header su tutte le pagine con plugin attivo
+- Rimossi CSS non necessari per bottoni header (hamburger menu, mobile search, ecc.)
+
+### Changed - CSS Cleanup
+- Rimosso `position: relative !important` su `#header-outer` 
+- Rimosso `z-index: 9999 !important` su `#header-outer`
+- Rimossi selettori CSS per elementi header non correlati al plugin
+- Mantenuti solo CSS essenziali per il form di prenotazione
+
+### Impact
+- ✅ Eliminato spazio aggiuntivo causato dal plugin
+- ✅ Nessun conflitto con layout header tema
+- ✅ JavaScript Salient non ricald più altezza header
+- ✅ Form continua a funzionare correttamente
+
+---
+
 ## 0.9.0-rc3 - Ottimizzazione Caricamento Asset (2025-10-31)
 
 ### Fixed - Performance & Caricamento Asset 🚀
 - **[CRITICO]** CSS e JS del plugin caricati su TUTTE le pagine del sito
-- **[CRITICO]** CSS per `#header-outer` iniettato globalmente causando conflitti tema
 - Migliorate condizioni di caricamento asset frontend
 
 ### Changed - Asset Loading Strategy
@@ -13,7 +33,6 @@
 
 ### Impact
 - ✅ Ridotto peso pagine senza form (~150KB CSS/JS risparmiati)
-- ✅ Eliminati conflitti CSS con header tema
 - ✅ Migliorata velocità caricamento sito
 - ✅ Compatibilità mantenuta con page builders (WPBakery, Elementor, Gutenberg)
 

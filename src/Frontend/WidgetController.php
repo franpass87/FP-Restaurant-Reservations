@@ -197,19 +197,7 @@ final class WidgetController
             z-index: -1 !important;
         }
         
-        /* Assicura che header e form siano SOPRA tutto */
-        html body #header-outer {
-            position: relative !important;
-            z-index: 9999 !important;
-            pointer-events: auto !important;
-        }
-        
-        html body #header-outer * {
-            pointer-events: auto !important;
-        }
-        
-        /* RIMOSSO: Fix aria-hidden che bloccava i bottoni header */
-        
+        /* Assicura che il form sia sempre accessibile */
         #fp-resv-default,
         .fp-resv-simple {
             position: relative !important;
@@ -261,50 +249,6 @@ final class WidgetController
             -moz-user-select: none !important;
             -ms-user-select: none !important;
             touch-action: manipulation !important;
-        }
-        
-        /* FIX HEADER BUTTONS: Forza pointer-events sui bottoni header */
-        html body #header-outer button,
-        html body #header-outer .buttons a,
-        html body #header-outer .buttons li,
-        html body #header-outer nav a,
-        html body #header-outer nav ul,
-        html body #header-outer nav li,
-        html body #header-outer .slide-out-widget-area-toggle,
-        html body #header-outer .slide-out-widget-area-toggle *,
-        html body #header-outer .slide-out-widget-area-toggle a,
-        html body #header-outer .slide-out-widget-area-toggle .lines-button,
-        html body #header-outer .slide-out-widget-area-toggle .lines,
-        html body #header-outer .mobile-search,
-        html body #header-outer .mobile-search *,
-        html body #header-outer .mobile-search a,
-        html body #header-outer .mobile-search span,
-        html body #header-outer .mobile-search .nectar-icon,
-        html body #header-outer .mobile-search .icon-salient-search,
-        html body #header-outer #mobile-cart-link,
-        html body #header-outer .cart-menu a,
-        html body #header-outer .lines-button,
-        html body #header-outer .lines-button *,
-        html body #header-outer .lines,
-        html body #header-outer i,
-        html body #header-outer span,
-        html body #header-outer .nectar-icon {
-            pointer-events: auto !important;
-            cursor: pointer !important;
-            touch-action: manipulation !important;
-        }
-        
-        /* FIX HAMBURGER MENU: Specificità ultra-alta */
-        body #header-outer .col.span_9 .slide-out-widget-area-toggle,
-        body #header-outer .col.span_9 .slide-out-widget-area-toggle a,
-        body #header-outer .col.span_9 .slide-out-widget-area-toggle .lines-button,
-        body #header-outer .col.span_9 .slide-out-widget-area-toggle .lines-button *,
-        body #header-outer .col.span_9 .slide-out-widget-area-toggle i,
-        body #header-outer .col.span_9 .mobile-search,
-        body #header-outer .col.span_9 .mobile-search a,
-        body #header-outer .col.span_9 .mobile-search * {
-            pointer-events: auto !important;
-            cursor: pointer !important;
         }
         </style>';
     }
