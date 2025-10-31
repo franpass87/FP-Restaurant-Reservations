@@ -1,3 +1,24 @@
+## 0.9.0-rc3 - Ottimizzazione Caricamento Asset (2025-10-31)
+
+### Fixed - Performance & Caricamento Asset 🚀
+- **[CRITICO]** CSS e JS del plugin caricati su TUTTE le pagine del sito
+- **[CRITICO]** CSS per `#header-outer` iniettato globalmente causando conflitti tema
+- Migliorate condizioni di caricamento asset frontend
+
+### Changed - Asset Loading Strategy
+- `shouldEnqueueAssets()`: Ora carica asset SOLO dove necessario (shortcode/block presente)
+- Controllo intelligente per: post content, Gutenberg blocks, WPBakery, Elementor meta
+- Rimosso caricamento globale degli asset frontend
+- Aggiunto filtro `fp_resv_frontend_should_enqueue` per override manuale
+
+### Impact
+- ✅ Ridotto peso pagine senza form (~150KB CSS/JS risparmiati)
+- ✅ Eliminati conflitti CSS con header tema
+- ✅ Migliorata velocità caricamento sito
+- ✅ Compatibilità mantenuta con page builders (WPBakery, Elementor, Gutenberg)
+
+---
+
 ## 0.9.0-rc1 - Release Candidate 1 (2025-10-25)
 
 ### 🚀 **RELEASE CANDIDATE - PRONTO PER 1.0.0**

@@ -16,6 +16,7 @@ use function error_log;
 use function file_exists;
 use function function_exists;
 use function get_post;
+use function get_post_meta;
 use function has_block;
 use function has_shortcode;
 use function in_the_loop;
@@ -527,15 +528,43 @@ final class WidgetController
             return false;
         }
 
-        // Always load assets in frontend by default
-        // The JavaScript will check if there are widgets to initialize
-        // This prevents white screen issues and ensures the shortcode always works
-        $shouldEnqueue = true;
+        // Check if current page/post contains the shortcode or block
+        $shouldEnqueue = false;
+        
+        if (is_singular()) {
+            $post = get_post();
+            if ($post) {
+                // Check for shortcode in post content
+                if (has_shortcode($post->post_content, 'fp_reservations')) {
+                    $shouldEnqueue = true;
+                }
+                
+                // Check for Gutenberg block
+                if (!$shouldEnqueue && function_exists('has_block') && has_block('fp-resv/reservations', $post)) {
+                    $shouldEnqueue = true;
+                }
+                
+                // Check for WPBakery/Elementor meta (they store content in post meta)
+                if (!$shouldEnqueue) {
+                    $postMeta = get_post_meta($post->ID);
+                    if ($postMeta) {
+                        foreach ($postMeta as $key => $values) {
+                            foreach ($values as $value) {
+                                if (is_string($value) && strpos($value, '[fp_reservations') !== false) {
+                                    $shouldEnqueue = true;
+                                    break 2;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         /**
          * Allow third parties to control whether the frontend assets should load.
          *
-         * @param bool          $shouldEnqueue Current decision (default: true in frontend).
+         * @param bool          $shouldEnqueue Current decision based on shortcode/block detection.
          * @param WP_Post|null  $post          The current post object, when available.
          */
         $post = is_singular() ? get_post() : null;
