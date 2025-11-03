@@ -141,13 +141,7 @@ final class REST
                         'required'          => false,
                         'type'              => 'string',
                         'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
-                        'validate_callback' => static function ($value): bool {
-                            if (!$value) {
-                                return true; // Optional
-                            }
-                            // Valida che sia un meal valido (lunch, dinner, brunch, ecc.)
-                            return in_array(strtolower($value), ['lunch', 'dinner', 'brunch', 'breakfast'], true);
-                        },
+                        // Nessuna validazione - accetta qualsiasi valore
                     ],
                 ],
             ]
