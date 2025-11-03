@@ -12,6 +12,8 @@ use FP\Resv\Core\RateLimiter;
 use FP\Resv\Domain\Reservations\Service;
 use FP\Resv\Domain\Reservations\MealPlanService;
 use FP\Resv\Domain\Reservations\AvailabilityService;
+use DateTimeImmutable;
+use DateTimeZone;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -48,6 +50,7 @@ use function wp_cache_set;
 use function wp_json_encode;
 use function wp_rand;
 use function wp_salt;
+use function wp_timezone;
 use function wp_verify_nonce;
 
 final class REST
@@ -312,51 +315,63 @@ final class REST
                 );
             }
 
-            // TEMPORANEO: Dati mock per test
-            $slots = [
-                [
-                    'time' => '12:00',
-                    'slot_start' => '12:00:00',
-                    'available' => true,
-                    'capacity' => 50,
-                    'status' => 'available',
-                ],
-                [
-                    'time' => '12:30',
-                    'slot_start' => '12:30:00',
-                    'available' => true,
-                    'capacity' => 50,
-                    'status' => 'available',
-                ],
-                [
-                    'time' => '13:00',
-                    'slot_start' => '13:00:00',
-                    'available' => true,
-                    'capacity' => 50,
-                    'status' => 'available',
-                ],
-                [
-                    'time' => '13:30',
-                    'slot_start' => '13:30:00',
-                    'available' => false,
-                    'capacity' => 0,
-                    'status' => 'unavailable',
-                ],
-                [
-                    'time' => '14:00',
-                    'slot_start' => '14:00:00',
-                    'available' => true,
-                    'capacity' => 30,
-                    'status' => 'available',
-                ],
+            // Usa Availability per calcolare slot reali
+            $timezone = wp_timezone();
+            $dayStart = new DateTimeImmutable($date . ' 00:00:00', $timezone);
+            $dayEnd = new DateTimeImmutable($date . ' 23:59:59', $timezone);
+            
+            $criteria = [
+                'date' => $date,
+                'meal' => $meal,
+                'party' => $party,
             ];
             
-            // Logging::log('availability', 'Usando dati mock per slot', [
-            //     'date' => $date,
-            //     'meal' => $meal,
-            //     'party' => $party,
-            //     'slots_count' => count($slots),
-            // ]);
+            // Calcola slot per questa data
+            $result = $this->availability->findSlotsForDateRange(
+                $criteria,
+                $dayStart,
+                $dayEnd
+            );
+            
+            // Estrai slot dal risultato (findSlotsForDateRange restituisce array[date => slots_array])
+            if (!isset($result[$date]) || !is_array($result[$date])) {
+                // Data non presente nel risultato o formato errato
+                $slotsRaw = [];
+            } else {
+                $slotsRaw = $result[$date]['slots'] ?? [];
+            }
+            
+            // Trasforma in formato compatibile frontend
+            $slots = [];
+            foreach ($slotsRaw as $slot) {
+                if (!isset($slot['start'])) {
+                    continue; // Skip slot senza start
+                }
+                
+                // Parse start (backend restituisce ISO 8601 ATOM string)
+                try {
+                    $slotStart = new DateTimeImmutable($slot['start'], $timezone);
+                } catch (\Exception $e) {
+                    // Skip slot con formato datetime non valido
+                    continue;
+                }
+                
+                $slotTime = $slotStart->format('H:i');
+                $slotStartFormatted = $slotStart->format('H:i:s');
+                
+                $status = $slot['status'] ?? 'unknown';
+                $isAvailable = in_array($status, ['available', 'limited'], true);
+                // Il backend usa 'available_capacity', non 'capacity'
+                $capacity = isset($slot['available_capacity']) ? (int) $slot['available_capacity'] : 0;
+                
+                $slots[] = [
+                    'time' => $slotTime,
+                    'slot_start' => $slotStartFormatted,
+                    'available' => $isAvailable,
+                    'capacity' => $capacity,
+                    'status' => $isAvailable ? 'available' : 'unavailable',
+                ];
+            }
 
             $response = new WP_REST_Response([
                 'slots' => $slots,

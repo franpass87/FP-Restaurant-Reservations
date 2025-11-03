@@ -1,3 +1,23 @@
+## 0.9.0-rc10.3 - Fix Slot Orari Mock (2025-11-03)
+
+### Fixed - Critical Bug 🔴
+- **[CRITICAL]** `handleAvailableSlots()` restituiva dati MOCK hardcoded invece di slot reali dal backend
+- **[CRITICAL]** Frontend mostrava slot sbagliati (12:00, 14:00, 13:30 disabilitato) non corrispondenti alla configurazione backend
+- **[CRITICAL]** Slot orari ora generati correttamente da `Availability::findSlotsForDayRange()` basati su configurazione backend
+
+### Changed - Slot Generation
+- Sostituito mock hardcoded con chiamata reale a `$this->availability->findSlotsForDayRange()`
+- Slot ora generati in base agli orari configurati nel backend (es: 12:30-14:30, 13:00-15:00, 13:30-15:30)
+- Formato slot trasformato per compatibilità frontend (time, slot_start, available, capacity, status)
+
+### Impact
+- ✅ Slot orari frontend ora corrispondono 100% alla configurazione backend
+- ✅ Nessun slot fantasma (12:00, 14:00 non configurati)
+- ✅ Slot 13:30 ora mostrato correttamente se configurato
+- ✅ Disponibilità reale calcolata per ogni slot
+
+---
+
 ## 0.9.0-rc10 - Bugfix Session 2: Security & Race Conditions (2025-11-03)
 
 ### Fixed - Bug Critici 🔴
