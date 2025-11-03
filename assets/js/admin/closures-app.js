@@ -45,7 +45,7 @@
     };
 
     const ajaxRequest = (action, data = {}) => {
-        console.log('[FP Closures AJAX]', action, data);
+        // ✅ Removed console.log for production
         
         const formData = new FormData();
         formData.append('action', action);
@@ -229,19 +229,19 @@
     };
 
     const renderList = () => {
-        console.log('[FP Closures] renderList() - items count:', state.items.length);
+        // ✅ Removed console.log for production
         list.innerHTML = '';
         if (state.items.length === 0) {
-            console.log('[FP Closures] Nessun item da visualizzare - mostro empty state');
+            // ✅ Removed console.log for production
             emptyState.hidden = false;
             return;
         }
-        console.log('[FP Closures] Rendering', state.items.length, 'items');
+        // ✅ Removed console.log for production
         emptyState.hidden = true;
         state.items.forEach((item, index) => {
-            console.log('[FP Closures] Rendering item', index, ':', item);
+            // ✅ Removed console.log for production
             if (!item || !item.id) {
-                console.warn('[FP Closures] Item', index, 'non valido (manca id)');
+                // Item non valido (manca id) - skip silently in production
                 return;
             }
             const card = document.createElement('article');

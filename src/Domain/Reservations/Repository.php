@@ -97,7 +97,7 @@ final class Repository
         }
 
         if (!empty($row['calendar_synced_at'])) {
-            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at']);
+            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at'], wp_timezone());
         }
 
     return $reservation;
@@ -145,7 +145,7 @@ final class Repository
         }
 
         if (!empty($row['calendar_synced_at'])) {
-            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at']);
+            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at'], wp_timezone());
         }
 
         return $reservation;
@@ -156,9 +156,11 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        // TEST DIAGNOSTICO: Conta tutte le prenotazioni nella tabella
-        $totalInDb = $this->wpdb->get_var('SELECT COUNT(*) FROM ' . $this->tableName());
-        error_log('[FP Repository findAgendaRange] 🔢 Totale prenotazioni nel database: ' . $totalInDb);
+        // Diagnostico solo in WP_DEBUG
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $totalInDb = $this->wpdb->get_var('SELECT COUNT(*) FROM ' . $this->tableName());
+            error_log('[FP Repository findAgendaRange] 🔢 Totale prenotazioni nel database: ' . $totalInDb);
+        }
         
         // STEP 1: Query semplificata - prima prendiamo solo le prenotazioni
         // Questo elimina il rischio che il JOIN con customers fallisca
@@ -509,7 +511,7 @@ final class Repository
         }
         
         // Calcola il timestamp minimo (ora - N secondi)
-        $minTimestamp = gmdate('Y-m-d H:i:s', time() - $withinSeconds);
+        $minTimestamp = wp_date('Y-m-d H:i:s', time() - $withinSeconds);
         
         $sql = "SELECT r.* 
                 FROM {$reservationsTable} r

@@ -243,7 +243,7 @@ final class Shortcodes
     {
         error_log('[FP-RESV-TEST] Test shortcode called!');
         
-        $timestamp = date('Y-m-d H:i:s');
+        $timestamp = wp_date('Y-m-d H:i:s');
         $user = wp_get_current_user();
         $isAdmin = current_user_can('manage_options') ? 'SÌ' : 'NO';
         
@@ -367,7 +367,7 @@ final class Shortcodes
             <h3>2️⃣ Statistiche Prenotazioni</h3>
             <?php
             $totalCount = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table");
-            $today = date('Y-m-d');
+            $today = current_time('Y-m-d');
             $todayCount = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE date = %s", $today));
             $futureCount = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE date >= %s", $today));
             ?>
@@ -497,7 +497,7 @@ final class Shortcodes
             ?>
             <h3>4️⃣ Test Endpoint REST /agenda</h3>
             <?php
-            $testDate = date('Y-m-d');
+            $testDate = current_time('Y-m-d');
             $restUrl = rest_url('fp-resv/v1/agenda');
             $fullUrl = add_query_arg(['date' => $testDate, 'range' => 'month'], $restUrl);
             ?>

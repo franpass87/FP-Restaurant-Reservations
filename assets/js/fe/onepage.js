@@ -323,6 +323,13 @@ class FormApp {
         this.availableDaysCache = {};
         this.availableDaysLoading = false;
         this.availableDaysCachedMeal = null;
+        
+        // Timeout references per cleanup
+        this.calendarErrorTimeout = null;
+        
+        // Request tracking per evitare race conditions
+        this.availableDaysRequestId = 0;
+        this.availableDaysAbortController = null;
 
         // Inizializza Flatpickr
         this.flatpickrInstance = window.flatpickr(this.dateField, {
@@ -338,6 +345,32 @@ class FormApp {
                 // Trigger evento change per mantenere la compatibilità con il resto del codice
                 const event = new Event('change', { bubbles: true });
                 this.dateField.dispatchEvent(event);
+            },
+            onDayCreate: (dObj, dStr, fp, dayElem) => {
+                // Aggiungi tooltip informativi alle date
+                if (!dayElem || !dayElem.dateObj) {
+                    return;
+                }
+                
+                const dateStr = this.formatLocalDate(dayElem.dateObj);
+                const dayInfo = this.availableDaysCache[dateStr];
+                
+                if (!dayInfo || !dayInfo.available) {
+                    // Data non disponibile
+                    dayElem.title = 'Data non disponibile';
+                    dayElem.setAttribute('aria-label', 'Data non disponibile');
+                } else if (dayInfo.meals && typeof dayInfo.meals === 'object') {
+                    // Data disponibile - mostra quali servizi
+                    const availableMeals = Object.keys(dayInfo.meals).filter(m => dayInfo.meals[m]);
+                    if (availableMeals.length > 0) {
+                        const mealsText = 'Disponibile: ' + availableMeals.join(', ');
+                        dayElem.title = mealsText;
+                        dayElem.setAttribute('aria-label', mealsText);
+                    } else {
+                        dayElem.title = 'Seleziona per vedere disponibilità';
+                        dayElem.setAttribute('aria-label', 'Data selezionabile');
+                    }
+                }
             }
         });
 
@@ -372,8 +405,23 @@ class FormApp {
             return;
         }
 
+        // Cancella richiesta precedente se esiste (previene race condition)
+        if (this.availableDaysAbortController) {
+            this.availableDaysAbortController.abort();
+        }
+
+        // Nuovo AbortController per questa richiesta
+        this.availableDaysAbortController = new AbortController();
+        
+        // Incrementa request ID per tracking
+        this.availableDaysRequestId++;
+        const currentRequestId = this.availableDaysRequestId;
+
         this.availableDaysLoading = true;
         this.availableDaysCachedMeal = meal;
+
+        // Mostra loading indicator
+        this.showCalendarLoading();
 
         const today = new Date();
         const future = new Date();
@@ -394,10 +442,23 @@ class FormApp {
 
         fetch(url.toString(), {
             credentials: 'same-origin',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            signal: this.availableDaysAbortController.signal  // Supporto abort
         })
-        .then(response => response.json())
+        .then(response => {
+            // Verifica response OK prima di parsare JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            // Verifica che questa è ancora la richiesta più recente
+            if (currentRequestId !== this.availableDaysRequestId) {
+                // Richiesta obsoleta, ignora i risultati
+                return;
+            }
+            
             if (data && data.days) {
                 this.availableDaysCache = data.days;
                 this.applyDateRestrictions();
@@ -405,11 +466,110 @@ class FormApp {
             }
         })
         .catch(error => {
+            // Ignora errori di abort (sono intenzionali)
+            if (error.name === 'AbortError') {
+                return;
+            }
+            
+            // Verifica che questa è ancora la richiesta più recente
+            if (currentRequestId !== this.availableDaysRequestId) {
+                return;
+            }
+            
             console.warn('[FP-RESV] Errore nel caricamento dei giorni disponibili:', error);
+            this.showCalendarError();
         })
         .finally(() => {
-            this.availableDaysLoading = false;
+            // Solo se questa è ancora la richiesta più recente
+            if (currentRequestId === this.availableDaysRequestId) {
+                this.availableDaysLoading = false;
+                this.hideCalendarLoading();
+                this.availableDaysAbortController = null;
+            }
         });
+    }
+
+    showCalendarLoading() {
+        // Rimuovi eventuali loading precedenti
+        this.hideCalendarLoading();
+        
+        if (!this.dateField || !this.dateField.parentElement) {
+            return;
+        }
+        
+        const loader = document.createElement('div');
+        loader.className = 'fp-calendar-loading';
+        loader.setAttribute('data-fp-loading', 'true');
+        loader.setAttribute('role', 'status');
+        loader.setAttribute('aria-live', 'polite');
+        loader.textContent = 'Caricamento date disponibili...';
+        
+        // Inserisci dopo il campo data
+        this.dateField.parentElement.appendChild(loader);
+    }
+
+    hideCalendarLoading() {
+        // Cerca in dateField.parentElement (dove viene effettivamente inserito)
+        if (!this.dateField || !this.dateField.parentElement) {
+            return;
+        }
+        
+        const loader = this.dateField.parentElement.querySelector('[data-fp-loading="true"]');
+        if (loader && loader.parentNode) {
+            loader.remove();
+        }
+    }
+
+    showCalendarError() {
+        this.hideCalendarLoading();
+        
+        // Cancella timeout precedente se esiste
+        if (this.calendarErrorTimeout) {
+            clearTimeout(this.calendarErrorTimeout);
+            this.calendarErrorTimeout = null;
+        }
+        
+        // Rimuovi eventuali errori precedenti
+        this.hideCalendarError();
+        
+        if (!this.dateField || !this.dateField.parentElement) {
+            return;
+        }
+        
+        const error = document.createElement('div');
+        error.className = 'fp-calendar-error';
+        error.setAttribute('data-fp-error', 'true');
+        error.setAttribute('role', 'alert');
+        error.setAttribute('aria-live', 'assertive');
+        error.style.cssText = 'margin-top:8px;padding:8px 12px;background:#fee2e2;border-left:3px solid #ef4444;border-radius:4px;font-size:13px;color:#991b1b;';
+        error.textContent = '⚠️ Impossibile caricare le date disponibili. Riprova.';
+        
+        this.dateField.parentElement.appendChild(error);
+        
+        // Rimuovi dopo 5 secondi (con check sicurezza)
+        this.calendarErrorTimeout = setTimeout(() => {
+            if (error && error.parentNode) {
+                error.remove();
+            }
+            this.calendarErrorTimeout = null;
+        }, 5000);
+    }
+
+    hideCalendarError() {
+        if (!this.dateField || !this.dateField.parentElement) {
+            return;
+        }
+        
+        const error = this.dateField.parentElement.querySelector('[data-fp-error="true"]');
+        if (error && error.parentNode) {
+            error.remove();
+        }
+        
+        // Cancella timeout se esiste
+        if (this.calendarErrorTimeout) {
+            clearTimeout(this.calendarErrorTimeout);
+            this.calendarErrorTimeout = null;
+        }
     }
 
     applyDateRestrictions() {
@@ -460,17 +620,31 @@ class FormApp {
             return;
         }
 
-        // Crea elemento per il messaggio
+        // Crea elemento per il messaggio dinamico
         const hint = document.createElement('div');
         hint.className = 'fp-resv-available-days-hint';
         hint.style.cssText = 'margin-top: 8px; padding: 10px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 14px; color: #0369a1; display: none;';
         hint.setAttribute('aria-live', 'polite');
         hint.setAttribute('data-fp-resv-days-hint', '');
 
+        // Crea legenda colori calendario (sempre visibile)
+        const legend = document.createElement('div');
+        legend.className = 'fp-calendar-hint';
+        legend.innerHTML = `
+            <span class="fp-hint-icon">📅</span>
+            <span class="fp-hint-text">
+                <strong>Legenda calendario:</strong><br>
+                <span style="color:#10b981">●</span> Verde = Disponibile &nbsp;|&nbsp;
+                <span style="color:#9ca3af">●</span> Grigio barrato = Non disponibile &nbsp;|&nbsp;
+                <span style="color:#3b82f6">●</span> Blu = Oggi
+            </span>
+        `;
+
         // Inserisci dopo il campo data
         const dateContainer = this.dateField.closest('[data-fp-resv-field-container]') || this.dateField.parentElement;
         if (dateContainer) {
             dateContainer.appendChild(hint);
+            dateContainer.appendChild(legend);
         }
 
         this.availableDaysHintElement = hint;
@@ -541,11 +715,24 @@ class FormApp {
         const sortedDays = Array.from(availableDaysOfWeek).sort((a, b) => a - b);
         const daysList = sortedDays.map(day => dayNames[day]).join(', ');
 
-        // Aggiorna il messaggio
-        this.availableDaysHintElement.innerHTML = `
-            <strong>📅 Giorni disponibili:</strong> ${daysList}<br>
-            <span style="font-size: 12px; opacity: 0.8;">Seleziona una di queste giornate dal calendario</span>
-        `;
+        // Aggiorna il messaggio (sicuro contro XSS)
+        this.availableDaysHintElement.innerHTML = '';  // Reset
+        
+        const strong = document.createElement('strong');
+        strong.textContent = '📅 Giorni disponibili: ';
+        
+        const daysText = document.createTextNode(daysList);  // ✅ Safe textNode
+        
+        const br = document.createElement('br');
+        
+        const hint = document.createElement('span');
+        hint.style.cssText = 'font-size: 12px; opacity: 0.8;';
+        hint.textContent = 'Seleziona una di queste giornate dal calendario';
+        
+        this.availableDaysHintElement.appendChild(strong);
+        this.availableDaysHintElement.appendChild(daysText);
+        this.availableDaysHintElement.appendChild(br);
+        this.availableDaysHintElement.appendChild(hint);
         this.availableDaysHintElement.style.display = 'block';
     }
 

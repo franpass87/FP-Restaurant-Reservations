@@ -172,7 +172,7 @@ class Service
         $sanitized['policy_version'] = (string) $policyVersion;
 
         if (($consentMeta['updated_at'] ?? 0) > 0) {
-            $sanitized['consent_timestamp'] = gmdate('Y-m-d H:i:s', (int) $consentMeta['updated_at']);
+            $sanitized['consent_timestamp'] = wp_date('Y-m-d H:i:s', (int) $consentMeta['updated_at']);
         }
 
         if ($sanitized['consent_timestamp'] === '') {
@@ -587,7 +587,7 @@ class Service
     private function sanitizePayload(array $payload): array
     {
         $defaults = [
-            'date'        => gmdate('Y-m-d'),
+            'date'        => current_time('Y-m-d'),
             'time'        => '19:00',
             'party'       => 2,
             'first_name'  => '',

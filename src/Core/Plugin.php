@@ -73,7 +73,7 @@ final class Plugin
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '0.9.0-rc1';
+    const VERSION = '0.9.0-rc10';
 
     /**
      * @var string|null
@@ -91,6 +91,11 @@ final class Plugin
     public static $url = null;
 
     /**
+     * @var string|null Cache for asset version in current request
+     */
+    private static $assetVersionCache = null;
+
+    /**
      * Get the asset version string with cache busting timestamp.
      * This ensures browser caches are invalidated when the plugin is updated.
      * 
@@ -101,6 +106,11 @@ final class Plugin
      */
     public static function assetVersion(): string
     {
+        // Return cached version if already calculated in this request
+        if (self::$assetVersionCache !== null) {
+            return self::$assetVersionCache;
+        }
+        
         // In debug mode, use file modification time to auto-detect changes
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // Use the latest modification time of key frontend files
@@ -122,7 +132,8 @@ final class Plugin
                 }
             }
             
-            return self::VERSION . '.' . $latestTime;
+            self::$assetVersionCache = self::VERSION . '.' . $latestTime;
+            return self::$assetVersionCache;
         }
         
         // In production, use upgrade timestamp for stable caching
@@ -140,7 +151,8 @@ final class Plugin
             }
         }
         
-        return self::VERSION . '.' . (int) $upgradeTime;
+        self::$assetVersionCache = self::VERSION . '.' . (int) $upgradeTime;
+        return self::$assetVersionCache;
     }
 
     /**
@@ -265,7 +277,7 @@ final class Plugin
 
         // Clear transients that might be caching old data
         global $wpdb;
-        if (isset($wpdb) && isset($wpdb->options)) {
+        if ($wpdb instanceof \wpdb && isset($wpdb->options)) {
             $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
@@ -523,8 +535,12 @@ final class Plugin
             $diagnosticsAdmin->register();
             $container->register(DiagnosticsAdminController::class, $diagnosticsAdmin);
             $container->register('diagnostics.admin_controller', $diagnosticsAdmin);
+            
+            // Store for later use (avoid recalculation)
+            $container->register('feature.tables_enabled', $tablesEnabled);
         }
 
+        // Migrations run only once at plugin load (idempotent check inside)
         Migrations::run();
 
         I18n::init();
@@ -567,16 +583,17 @@ final class Plugin
         $container->register(PaymentsREST::class, $paymentsRest);
         $container->register('payments.rest', $paymentsRest);
 
-        error_log('[FP Resv Plugin] Inizializzazione AdminREST...');
         $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar, $tablesLayout);
-        error_log('[FP Resv Plugin] Chiamata register() su AdminREST...');
         $adminRest->register();
-        error_log('[FP Resv Plugin] AdminREST registrato con successo');
         $container->register(ReservationsAdminREST::class, $adminRest);
         $container->register('reservations.admin_rest', $adminRest);
 
         // Registra le API Sale & Tavoli solo se abilitate
-        $tablesEnabled = (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+        // Riutilizza il valore calcolato prima (se disponibile) per evitare duplicazione
+        $tablesEnabled = $container->has('feature.tables_enabled')
+            ? $container->get('feature.tables_enabled')
+            : (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+            
         if ($tablesEnabled) {
             $tablesRest = new TablesREST($tablesLayout);
             $tablesRest->register();
@@ -624,16 +641,14 @@ final class Plugin
 
         // Register shortcodes on init hook (WordPress best practice)
         add_action('init', static function(): void {
-            error_log('[FP-RESV-INIT] Registering shortcode fp_reservations...');
             \FP\Resv\Frontend\Shortcodes::register();
-            error_log('[FP-RESV-INIT] Shortcode registered successfully');
             
-            // Verifica che sia registrato
-            global $shortcode_tags;
-            if (isset($shortcode_tags['fp_reservations'])) {
-                error_log('[FP-RESV-INIT] Shortcode fp_reservations CONFIRMED in global $shortcode_tags');
-            } else {
-                error_log('[FP-RESV-INIT] ERROR: Shortcode fp_reservations NOT found in $shortcode_tags!');
+            // Debug log solo in WP_DEBUG
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                global $shortcode_tags;
+                if (!isset($shortcode_tags['fp_reservations'])) {
+                    error_log('[FP-RESV-INIT] WARNING: Shortcode fp_reservations NOT registered!');
+                }
             }
         }, 5); // Priorità 5 per eseguire prima di altri shortcode
 

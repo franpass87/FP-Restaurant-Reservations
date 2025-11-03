@@ -61,14 +61,11 @@ final class REST
 
     public function register(): void
     {
-        error_log('[FP Resv REST] ✅ register() chiamato - Aggiunta action rest_api_init');
         add_action('rest_api_init', [$this, 'registerRoutes']);
-        error_log('[FP Resv REST] ✅ Action rest_api_init aggiunta con successo');
     }
 
     public function registerRoutes(): void
     {
-        error_log('[FP Resv REST] 🚀 registerRoutes() chiamato - Registrazione endpoint REST...');
         
         register_rest_route(
             'fp-resv/v1',
@@ -110,15 +107,51 @@ final class REST
             ]
         );
 
-            register_rest_route(
-                'fp-resv/v1',
-                '/available-days',
-                [
-                    'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => [$this, 'handleAvailableDays'],
-                    'permission_callback' => '__return_true',
-                ]
-            );
+        register_rest_route(
+            'fp-resv/v1',
+            '/available-days',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [$this, 'handleAvailableDays'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'from' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'validate_callback' => static function ($value): bool {
+                            if (!$value) {
+                                return true; // Optional
+                            }
+                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+                        },
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                    ],
+                    'to' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'validate_callback' => static function ($value): bool {
+                            if (!$value) {
+                                return true; // Optional
+                            }
+                            return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+                        },
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                    ],
+                    'meal' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                        'validate_callback' => static function ($value): bool {
+                            if (!$value) {
+                                return true; // Optional
+                            }
+                            // Valida che sia un meal valido (lunch, dinner, brunch, ecc.)
+                            return in_array(strtolower($value), ['lunch', 'dinner', 'brunch', 'breakfast'], true);
+                        },
+                    ],
+                ],
+            ]
+        );
         error_log('[FP Resv REST] ✅ Endpoint /available-days registrato');
 
         register_rest_route(
@@ -130,7 +163,6 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
-        error_log('[FP Resv REST] ✅ Endpoint /meal-config registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -161,7 +193,6 @@ final class REST
                 ],
             ]
         );
-        error_log('[FP Resv REST] ✅ Endpoint /available-slots registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -172,7 +203,6 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
-        error_log('[FP Resv REST] ✅ Endpoint /reservations registrato');
 
         register_rest_route(
             'fp-resv/v1',
@@ -183,7 +213,6 @@ final class REST
                 'permission_callback' => '__return_true',
             ]
         );
-        error_log('[FP Resv REST] ✅ Endpoint /nonce registrato');
         
         // DEBUG ENDPOINTS - Solo in modalità debug per sviluppo
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -262,10 +291,7 @@ final class REST
                     'permission_callback' => '__return_true',
                 ]
             );
-            error_log('[FP Resv REST] ✅ Debug endpoints registrati');
         }
-        
-        error_log('[FP Resv REST] 🎉 Tutti gli endpoint REST registrati con successo');
     }
 
     public function handleAvailableSlots(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -629,8 +655,8 @@ final class REST
     {
         try {
             // Parametri
-            $from = $request->get_param('from') ?: date('Y-m-d');
-            $to = $request->get_param('to') ?: date('Y-m-d', strtotime('+3 months'));
+            $from = $request->get_param('from') ?: current_time('Y-m-d');
+            $to = $request->get_param('to') ?: wp_date('Y-m-d', strtotime('+3 months'));
             $meal = $request->get_param('meal');
 
             // Usa la configurazione REALE dal meal plan invece di dati hardcoded
@@ -696,8 +722,8 @@ final class REST
         
         // Genera date
         for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
-            $dateKey = date('Y-m-d', $timestamp);
-            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
+            $dateKey = wp_date('Y-m-d', $timestamp);
+            $dayName = strtolower(wp_date('D', $timestamp)); // mon, tue, wed, etc.
             
             if ($meal && isset($mealsByKey[$meal])) {
                 // Pasto specifico
@@ -767,8 +793,8 @@ final class REST
         
         // Genera date
         for ($timestamp = $startDate; $timestamp <= $endDate; $timestamp += 86400) {
-            $dateKey = date('Y-m-d', $timestamp);
-            $dayName = strtolower(date('D', $timestamp)); // mon, tue, wed, etc.
+            $dateKey = wp_date('Y-m-d', $timestamp);
+            $dayName = strtolower(wp_date('D', $timestamp)); // mon, tue, wed, etc.
             
             if ($meal && isset($defaultSchedule[$meal])) {
                 // Pasto specifico

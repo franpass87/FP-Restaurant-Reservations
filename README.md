@@ -1,198 +1,338 @@
-# FP Restaurant Reservations
+# 🍽️ FP Restaurant Reservations
 
-**Versione:** 0.9.0-rc1 🚀 **Release Candidate**  
-**Autore:** Francesco Passeri  
-**Licenza:** GPL v2+  
+**Sistema completo di prenotazioni per ristoranti con calendario drag&drop, integrazioni Brevo + Google Calendar, tracking avanzato e stile personalizzabile.**
 
-[![Release Candidate](https://img.shields.io/badge/Release%20Candidate-0.9.0--rc1-orange?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations) [![Production Ready](https://img.shields.io/badge/Production%20Ready-✅-green?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations) [![Target 1.0.0](https://img.shields.io/badge/Target%201.0.0-7--14%20days-blue?style=flat-square)](https://github.com/francescopasseri/fp-restaurant-reservations)
+---
 
-[![CI](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml/badge.svg)](https://github.com/franpass87/FP-Restaurant-Reservations/actions/workflows/ci.yml)
-[![Playwright Report](https://img.shields.io/badge/report-playwright-blue)](https://franpass87.github.io/FP-Restaurant-Reservations/)
-[![Version](https://img.shields.io/badge/version-0.9.0--rc1-orange.svg)](CHANGELOG.md)
-[![PHP](https://img.shields.io/badge/php-%3E%3D8.1-blue.svg)](https://php.net)
-[![WordPress](https://img.shields.io/badge/wordpress-%3E%3D6.5-blue.svg)](https://wordpress.org)
-[![License](https://img.shields.io/badge/license-GPL--2.0%2B-blue.svg)](LICENSE)
+## 📊 INFO PLUGIN
 
-FP Restaurant Reservations è un plugin WordPress completo e production-ready per la gestione professionale delle prenotazioni di ristoranti moderni: form single-page accessibile, agenda drag & drop, pagamenti Stripe opzionali, analisi marketing avanzata e strumenti di diagnostica per l'assistenza.
+| Dettaglio | Valore |
+|-----------|--------|
+| **Versione** | 0.9.0-rc7 (draft) 🚀 |
+| **Status** | Production Ready ✅ |
+| **Richiede WordPress** | 6.5+ |
+| **Richiede PHP** | 8.1+ |
+| **Licenza** | GPL-2.0-or-later |
+| **Autore** | Francesco Passeri |
 
-## 🎯 Stato del Progetto
+---
 
-**Versione attuale:** 0.9.0-rc1 🚀 **Release Candidate**  
-**Status:** ✅ Production Ready - Test Finali  
-**Target 1.0.0:** 7-14 giorni (dopo test completi)  
-**Ultimo audit sicurezza:** 25 Ottobre 2025 - Nessuna vulnerabilità  
-**Ultimo code audit:** 25 Ottobre 2025 - 19 fix timezone + 58 bug risolti  
-**Test coverage:** PHPUnit + Playwright E2E + Checklist 1.0.0  
-**Performance:** +900% throughput, -97% response time  
-**Code Quality:** 0 errori ESLint, 0 warning, 0 vulnerabilità  
-**API Status:** Frozen (backward compatibility garantita)
+## ✨ CARATTERISTICHE PRINCIPALI
 
-## 🚀 Miglioramenti Architetturali (v0.1.2+)
+### 🎯 Core Features
 
-Il plugin ha ricevuto **12 miglioramenti architetturali significativi** che aumentano le performance del **70-97%**, mantengono **100% backward compatibility** e sono completamente **production-ready**.
+- ✅ **Sistema prenotazioni completo** con calendario interattivo
+- ✅ **Manager Agenda** drag & drop per gestione prenotazioni
+- ✅ **Meal Plans** configurabili (pranzo, cena, eventi)
+- ✅ **Sale & Tavoli** con layout personalizzabile
+- ✅ **Chiusure programmate** (singole/ricorrenti)
+- ✅ **Report & Analytics** dettagliati
 
-### ✨ Performance Gains
-- **API Response Time**: da ~200ms a <5ms (**-97%** latenza)
-- **Reservation Creation**: da 2-5s a <500ms (**-90%** tempo)
-- **Database Queries**: da 28-42 a 10 query (**-70%** query)
-- **Throughput**: da ~50 req/s a ~500 req/s (**+900%** capacità)
+### 🔗 Integrazioni
 
-### 🔧 Architettura Enterprise
-- ✅ **Dual-cache strategy**: Memory (Redis/Memcached) + DB fallback automatico
-- ✅ **Metrics system**: Timing, counters, gauges per monitoring real-time
-- ✅ **Async email**: Da 2-5s a <200ms con queue asincrona
-- ✅ **Validation layer**: Centralizzato e riutilizzabile con error handling
-- ✅ **Service Container**: Factory pattern, lazy loading, decorators
-- ✅ **WordPress Adapter**: Architettura testabile con dependency injection
+- ✅ **Brevo (Sendinblue)** - Email marketing automation
+- ✅ **Google Calendar** - Sincronizzazione automatica
+- ✅ **Stripe** - Pagamenti online sicuri
+- ✅ **Tracking avanzato** - GA4, Google Ads, Meta Pixel, Clarity
 
-## 🚀 Quick Start
+### 🎨 Frontend
 
-**Nuovo al plugin?** Segui la [guida rapida di 5 minuti](docs/user-guide/QUICK-START.md) per partire subito!
+- ✅ **Form personalizzabile** con stile TheFork-like
+- ✅ **Calendario giorni disponibili** per meal
+- ✅ **Slot orari dinamici** in base a disponibilità reale
+- ✅ **Responsive** - mobile-first design
+- ✅ **Multi-lingua** (IT, EN, FR, ES, DE)
 
-## Requisiti
+---
 
-- WordPress 6.5 o superiore (single site o multisite)
-- PHP 8.1 o superiore con estensioni `curl`, `json`, `mbstring`
-- Accesso REST API attivo su WordPress
-- (Opzionale) account Stripe e Brevo per le rispettive integrazioni
+## 🚀 QUICK START
 
-## Installazione
+### Per Utenti
 
-1. Copia la cartella del repository in `wp-content/plugins/fp-restaurant-reservations`.
-2. Installa le dipendenze opzionali: `composer install --no-dev` e `npm install` (necessario solo negli ambienti di build).
-3. Esegui `npm run build` per generare i bundle JavaScript/CSS quando lavori da sorgente.
-4. Attiva il plugin dalla Bacheca WordPress.
-5. Dopo l'attivazione visita **Impostazioni → FP Reservations** per completare la configurazione guidata.
+1. **Installa** il plugin
+2. **Configura** orari di servizio
+3. **Inserisci** shortcode `[fp_reservations]` in una pagina
+4. **Fatto!** Il form è pronto
 
-## Come integrare il form
+👉 **Guida completa:** [docs/guides/user/QUICK-START.md](docs/guides/user/QUICK-START.md)
 
-Il form pubblico è una single-page application con progress bar, CTA sticky e validazioni live. Evidenzia in modo chiaro lo stato degli slot con pill colorate (verde, ambra, rosso) e legenda contestuale, mostra badge "Obbligatorio"/"Opzionale" sotto alle informative privacy e dispone di prefissi telefonici deduplicati. È disponibile in tre modalità:
+### Per Sviluppatori
 
-- Shortcode `[fp_reservations]`
-- Blocco Gutenberg **FP Reservations → Form**
-- Widget Elementor **FP Reservations Form**
+```bash
+# Clone repository
+git clone https://github.com/franpass87/FP-Restaurant-Reservations.git
 
-Gli asset frontend vengono caricati solo quando shortcode/blocco/widget sono presenti sulla pagina. Il form espone gli eventi `dataLayer`/`fpResvTracking.dispatch`:
+# Installa dipendenze
+composer install
+npm install
 
-| Evento | Descrizione |
-| --- | --- |
-| `reservation_start` | L'utente apre il form e seleziona una data valida |
-| `section_unlocked` | Passaggio a uno step successivo (party, slot, dettagli, conferma) |
-| `meal_selected` | Scelta del turno/pasto con aggiornamento legenda colori |
-| `form_valid` | Tutti i campi obbligatori risultano validi |
-| `reservation_submit` | Invio della prenotazione |
-| `reservation_confirmed` | Prenotazione confermata lato server |
-| `purchase` | Prenotazione con pagamento stimato o confermato |
+# Build assets
+npm run build
 
-Il controller JavaScript implementa debounce da 400 ms, retry con backoff sugli slot (`/availability`) e rispetta gli header `Retry-After` per il rate limiting.
+# Test
+php tools/quick-health-check.php
+```
 
-## Pagine amministrative
+👉 **Guida completa:** [docs/guides/developer/README-BUILD.md](docs/guides/developer/README-BUILD.md)
 
-Tutte le schermate dell'area di amministrazione condividono un layout coerente (breadcrumb, barre laterali, card responsive, supporto tema scuro).
+---
 
-- **Agenda** – Calendario drag & drop con azioni rapide e dettagli prenotazione.
-- **Tavoli & Sale** – Editor visuale con merge/split e suggerimenti automatici.
-- **Chiusure** – Gestione periodi speciali e riduzioni di capienza con anteprima.
-- **Report & Analytics** – Grafico a torta per canali di acquisizione, linea temporale giornaliera, tabella sorgenti UTM ed export CSV.
-- **Diagnostica** – Log separati (Email, Webhook, Stripe, API, Cron/Queue) con filtri, ricerca, paginazione ed export CSV.
-- **Stile & Tema** – Editor token (palette, tipografia, radius, shadow, focus ring) con anteprima live del form e checker contrasto WCAG AA.
-- **Impostazioni** – Schede per generali, notifiche, pagamenti Stripe, Brevo, Google Calendar, privacy e lingua.
-- **Eventi** – Custom post type incluso nel menu del plugin per gestire degustazioni e serate speciali.
+## 📚 DOCUMENTAZIONE
 
-## Ruoli e permessi
+### 📖 Indice Completo
+👉 **[docs/INDEX.md](docs/INDEX.md)** - Naviga tutta la documentazione
 
-Il plugin introduce due ruoli personalizzati con livelli di accesso differenziati:
+### 📁 Struttura
 
-- **Restaurant Manager** (`fp_restaurant_manager`) – Accesso completo a tutte le funzionalità del plugin (Manager, Impostazioni, Chiusure, Tavoli, Report, Diagnostica) senza poter accedere ad altre aree di WordPress.
-- **Reservations Viewer** (`fp_reservations_viewer`) – Accesso limitato **solo al Manager delle prenotazioni**, ideale per receptionist o staff che deve gestire prenotazioni senza modificare configurazioni. ⭐ **NUOVO**
+```
+docs/
+├── INDEX.md                    ← Indice navigabile
+├── README.md                   ← Panoramica docs
+│
+├── guides/
+│   ├── user/                   ← Guide utente
+│   └── developer/              ← Guide sviluppatore
+│
+├── api/                        ← REST API docs
+├── bugfixes/                   ← Bugfix recenti
+└── archive/                    ← Storico (157+ file)
+```
 
-Gli amministratori WordPress mantengono sempre l'accesso completo a tutte le funzionalità. Per maggiori dettagli sulla configurazione e i casi d'uso, consulta la [guida completa ai ruoli](NUOVO-RUOLO-RESERVATIONS-VIEWER.md).
+### 🔗 Link Rapidi
 
-## API, sicurezza e performance
+| Documento | Descrizione |
+|-----------|-------------|
+| **[docs/INDEX.md](docs/INDEX.md)** | 📚 Indice completo |
+| **[CHANGELOG.md](CHANGELOG.md)** | 📝 Changelog |
+| **[docs/SLOT-TIMES-SYSTEM.md](docs/SLOT-TIMES-SYSTEM.md)** | 🕐 Sistema slot orari |
+| **[docs/MEALS-CONFIGURATION.md](docs/MEALS-CONFIGURATION.md)** | 🍽️ Config pasti |
+| **[docs/ROADMAP-1.0.md](docs/ROADMAP-1.0.md)** | 🗺️ Roadmap v1.0 |
 
-- Endpoint REST namespaced `fp-resv/v1` con `no-store`, sanitizzazione parametri, nonce/capability dove richiesto e rate limit sugli slot.
-- Cache transient 30–60 s sulle risposte di disponibilità più comuni.
-- Export CSV per report e log con paginazione lato server.
-- Seeder QA disponibile via REST `/fp-resv/v1/qa/seed` (autenticazione amministratore) e WP-CLI `wp fp-resv qa seed` per generare dati demo o pulire le fixture.
+---
 
-## Tooling & sviluppo
+## 🎯 STATO ATTUALE
 
-- `npm run build` compila i bundle frontend (ESM + IIFE) e gli asset admin tramite Vite.
-- `npm run lint:php` esegue PHPCS; `npm run lint:phpstan` avvia PHPStan.
-- `composer dump-autoload` aggiorna il classmap PSR-4.
-- I file distribuiti sono generati nella cartella `assets/dist/`; gli asset sorgente restano in `assets/js` e `assets/css`.
-- Il workflow GitHub `Build Plugin Zip` crea automaticamente lo ZIP pronto per l'upload ad ogni tag `v*`.
+### ✅ Production Ready!
 
-## 🔒 Sicurezza e Qualità
+```
+╔═══════════════════════════════════════════╗
+║  🏆 PLUGIN COMPLETO E TESTATO             ║
+║                                           ║
+║  Bug critici: 0                          ║
+║  Sicurezza: ECCELLENTE                   ║
+║  Performance: OTTIMIZZATA                ║
+║  Code Quality: ALTA                      ║
+║  Timezone: Europe/Rome ✓                 ║
+║                                           ║
+║  🚀 PRONTO PER LA PRODUZIONE              ║
+╚═══════════════════════════════════════════╝
+```
 
-### Audit di Sicurezza (Ottobre 2025)
-✅ **5/5 problemi risolti** - Zero vulnerabilità note
+### 🆕 Ultimi Aggiornamenti (2 Nov 2025)
 
-| ID | Problema | Severità | Status |
-|----|----------|----------|--------|
-| ISS-0001 | Integrations Stripe/Google dinamiche | Alta | ✅ Risolto |
-| ISS-0002 | CSRF protection survey form | Media | ✅ Risolto |
-| ISS-0003 | Fallback no-JavaScript | Media | ✅ Risolto |
-| ISS-0004 | Fallback italiani hardcoded | Media | ✅ Risolto |
-| ISS-0005 | ESLint config mancante | Media | ✅ Risolto |
+- ✅ **Bugfix completo** - 2 sessioni profonde (8 bug risolti)
+- ✅ **Security audit** - Verificata sicurezza completa
+- ✅ **Performance** - Ottimizzazioni applicate
+- ✅ **Timezone** - Corretto ovunque (Europe/Rome)
 
-**Report completo:** [AUDIT/REPORT.md](AUDIT/REPORT.md)
+Dettagli: [docs/bugfixes/2025-11-02/](docs/bugfixes/2025-11-02/)
 
-### Code Quality Audit (Ottobre 2025)
-✅ **58/58 bug risolti** attraverso 8 sessioni intensive di analisi
+---
 
-**Categorie bug risolti:**
-- 🔴 **Critici (Sicurezza)**: 7 - SQL injection, XSS, API non protette, JSON parsing
-- 🟠 **Importanti (Robustezza)**: 22 - Promise rejections, parseInt senza radix, null checks
-- 🟡 **Minori (Quality)**: 29 - ESLint errors, variabili non usate, configurazioni
+## 🔧 REQUISITI
 
-**Aree verificate:**
-- ✅ SQL Injection & XSS vulnerabilities
-- ✅ REST API authentication & authorization
-- ✅ Error handling & null safety
-- ✅ Memory leaks & race conditions
-- ✅ Input validation & output escaping
-- ✅ Boundary conditions & edge cases
-- ✅ Performance & optimization
-- ✅ Accessibility (a11y)
+### Server
+- **PHP:** 8.1 o superiore
+- **WordPress:** 6.5 o superiore
+- **MySQL:** 5.7+ o MariaDB 10.3+
+- **Timezone:** Europe/Rome (consigliato)
 
-### Quality Assurance
-- ✅ **ESLint**: 0 errori, 0 warning
-- ✅ **Sicurezza**: 0 vulnerabilità npm (`npm audit`)
-- ✅ **Test coverage**: PHPUnit + Playwright E2E
-- ✅ **Build**: Vite funzionante (ESM + IIFE fallback)
-- ✅ **Codice**: Modularizzato, type-safe, manutenibile
-- ✅ **Performance**: Nessun memory leak identificato
+### Opzionali
+- **Composer** - Per sviluppo
+- **Node.js** - Per build assets
+- **WP-CLI** - Per gestione da terminale
 
-## 📚 Documentazione
+---
 
-Per la documentazione completa, consulta:
+## 🛠️ TOOLS INCLUSI
 
-- **[docs/README.md](docs/README.md)** - Indice completo della documentazione
-- **[docs/EXAMPLES.md](docs/EXAMPLES.md)** - Esempi pratici (8 scenari)
-- **[docs/CACHE-GUIDE.md](docs/CACHE-GUIDE.md)** - Caching multi-livello
-- **[docs/METRICS-GUIDE.md](docs/METRICS-GUIDE.md)** - Sistema metriche
-- **[docs/MIGRATION-GUIDE.md](docs/MIGRATION-GUIDE.md)** - Piano migrazione 4 fasi
-- **[AUDIT/REPORT.md](AUDIT/REPORT.md)** - Report audit sicurezza
+### Test & Diagnostica
 
-### Checklist QA rapida del form
+```bash
+# Test rapido (senza WordPress)
+php tools/quick-health-check.php
 
-- Verifica che la progress bar rimanga su una singola riga su desktop/tablet e consenta lo scroll orizzontale su mobile.
-- Controlla che i pulsanti pasto riflettano correttamente gli stati `Disponibile`, `Quasi pieno`, `Completo` e `Sconosciuto` con la legenda attiva.
-- Assicurati che il campo email occupi la piena larghezza nelle view desktop e che i prefissi telefonici non presentino duplicati.
-- Conferma che le informative privacy mostrino il badge richiesto/opzionale sotto il testo senza spezzare l'allineamento con la checkbox.
+# Test completo (con WordPress)
+php tools/test-plugin-health.php
 
-## Release process
+# Verifica slot orari
+php tools/verify-slot-times.php
 
-1. Aggiorna il codice e assicurati che i test locali siano verdi.
-2. Esegui `bash build.sh --bump=patch` per incrementare la versione e generare lo ZIP (usa `--set-version=X.Y.Z` se necessario).
-3. Controlla il contenuto di `build/` e carica lo ZIP in WordPress oppure allegalo alla release.
-4. Crea un tag `vX.Y.Z` e `git push --tags` per attivare il workflow GitHub che pubblica lo ZIP come artefatto `plugin-zip`.
+# Refresh cache
+php tools/refresh-cache.php
+```
 
-## Supporto
+---
 
-Per assistenza o richieste commerciali scrivere a **info@francescopasseri.com**.
+## 📦 INSTALLAZIONE
 
-## Licenza
+### Da WordPress Admin
 
-GPLv2 o successiva.
+1. Vai su **Plugin → Aggiungi nuovo**
+2. Carica `fp-restaurant-reservations.zip`
+3. Clicca **Installa** poi **Attiva**
+4. Configura in **Restaurant Manager → Impostazioni**
+
+### Da Composer
+
+```bash
+composer require franpass87/fp-restaurant-reservations
+```
+
+### Da Git (Sviluppo)
+
+```bash
+git clone https://github.com/franpass87/FP-Restaurant-Reservations.git
+cd FP-Restaurant-Reservations
+composer install --no-dev
+```
+
+---
+
+## 🎨 SHORTCODES
+
+### Form Prenotazione Completo
+```
+[fp_reservations]
+```
+
+### Form Semplificato
+```
+[fp_reservations style="simple"]
+```
+
+### Debug (solo admin)
+```
+[fp_resv_debug]
+```
+
+---
+
+## 🔌 INTEGRAZIONI
+
+### Brevo (Email Marketing)
+Configura API key in: **Restaurant Manager → Impostazioni → Brevo**
+
+Documenti:
+- [docs/BREVO-EMAIL-EVENTS.md](docs/BREVO-EMAIL-EVENTS.md)
+
+### Google Calendar
+Configura OAuth in: **Restaurant Manager → Impostazioni → Google Calendar**
+
+### Stripe Payments
+Configura chiavi in: **Restaurant Manager → Impostazioni → Pagamenti**
+
+### Tracking
+- **GA4** - Google Analytics 4
+- **Google Ads** - Conversion tracking
+- **Meta Pixel** - Facebook/Instagram tracking
+- **Microsoft Clarity** - Session recording
+
+Documenti: [docs/api/TRACKING-MAP.md](docs/api/TRACKING-MAP.md)
+
+---
+
+## 🐛 TROUBLESHOOTING
+
+### Problemi Comuni
+
+| Problema | Soluzione |
+|----------|-----------|
+| Slot orari sbagliati | [docs/SLOT-TIMES-SYSTEM.md](docs/SLOT-TIMES-SYSTEM.md) |
+| Cache non aggiornata | [docs/guides/developer/CACHE-REFRESH-GUIDE.md](docs/guides/developer/CACHE-REFRESH-GUIDE.md) |
+| Email non inviate | [docs/TROUBLESHOOTING-MANUAL-BOOKING-NOTIFICATIONS.md](docs/TROUBLESHOOTING-MANUAL-BOOKING-NOTIFICATIONS.md) |
+
+### Health Check
+
+```bash
+cd wp-content/plugins/FP-Restaurant-Reservations
+php tools/quick-health-check.php
+```
+
+---
+
+## 🤝 CONTRIBUTING
+
+Vuoi contribuire? Leggi: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+### Sviluppo
+
+```bash
+# Install dev dependencies
+composer install
+npm install
+
+# Linting
+composer lint
+npm run lint:js
+
+# Tests
+composer test
+npm test
+```
+
+---
+
+## 📝 CHANGELOG
+
+**Versioni recenti:**
+- **0.9.0-rc7** (draft) - Bugfix profondo + performance
+- **0.9.0-rc6** - Fix timezone PHP (20 correzioni)
+- **0.9.0-rc4** - Fix CSS header tema
+- **0.9.0-rc3** - Asset loading ottimizzato
+- **0.9.0-rc1** - Release Candidate
+
+👉 **Changelog completo:** [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## 📄 LICENZA
+
+GPL-2.0-or-later - Vedi [LICENSE](LICENSE)
+
+---
+
+## 👤 AUTORE
+
+**Francesco Passeri**
+- Website: [francescopasseri.com](https://francescopasseri.com)
+- Email: info@francescopasseri.com
+- GitHub: [@franpass87](https://github.com/franpass87)
+
+---
+
+## 🔗 LINK UTILI
+
+- **Repository:** [GitHub](https://github.com/franpass87/FP-Restaurant-Reservations/)
+- **Documentazione:** [docs/INDEX.md](docs/INDEX.md)
+- **Issues:** [GitHub Issues](https://github.com/franpass87/FP-Restaurant-Reservations/issues)
+- **Wiki:** [GitHub Wiki](https://github.com/franpass87/FP-Restaurant-Reservations/wiki)
+
+---
+
+## ⭐ SUPPORTA IL PROGETTO
+
+Se questo plugin ti è utile:
+- ⭐ Lascia una stella su GitHub
+- 📝 Scrivi una recensione
+- 🐛 Segnala bug
+- 💡 Suggerisci miglioramenti
+
+---
+
+**Made with ❤️ in Italy** 🇮🇹
+
+---
+
+**Versione:** 0.9.0-rc7  
+**Data:** 2 Novembre 2025

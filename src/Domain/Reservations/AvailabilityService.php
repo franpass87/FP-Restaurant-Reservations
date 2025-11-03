@@ -6,6 +6,8 @@ namespace FP\Resv\Domain\Reservations;
 
 use DateInterval;
 use DateTimeImmutable;
+use DateTimeZone;
+use function wp_timezone;
 
 final class AvailabilityService
 {
@@ -19,8 +21,9 @@ final class AvailabilityService
      */
     public function findAvailableDaysForAllMeals(string $from, string $to): array
     {
-        $startDate = new DateTimeImmutable($from . ' 00:00:00');
-        $endDate = new DateTimeImmutable($to . ' 23:59:59');
+        $timezone = wp_timezone();
+        $startDate = new DateTimeImmutable($from . ' 00:00:00', $timezone);
+        $endDate = new DateTimeImmutable($to . ' 23:59:59', $timezone);
         
         $meals = $this->mealPlanService->getMeals();
         
