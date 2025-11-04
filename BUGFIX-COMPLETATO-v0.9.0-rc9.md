@@ -352,3 +352,4 @@ loader.setAttribute('aria-live', 'polite');
 **Versione:** 0.9.0-rc9  
 **Status:** ✅ **TUTTO OK - PRONTO PER DEPLOY**
 
+

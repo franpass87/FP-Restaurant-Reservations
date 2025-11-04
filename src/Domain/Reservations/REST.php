@@ -144,7 +144,13 @@ final class REST
                         'required'          => false,
                         'type'              => 'string',
                         'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
-                        // Nessuna validazione - accetta qualsiasi valore
+                        'validate_callback' => static function ($value): bool {
+                            if (!$value) {
+                                return true; // Optional
+                            }
+                            // Whitelist meal validi (alfanumerici + underscore/hyphen, max 50 caratteri)
+                            return is_string($value) && preg_match('/^[a-z0-9_-]{1,50}$/i', $value) === 1;
+                        },
                     ],
                 ],
             ]
@@ -180,6 +186,10 @@ final class REST
                         'required'          => true,
                         'type'              => 'string',
                         'sanitize_callback' => static fn ($value): string => sanitize_text_field((string) $value),
+                        'validate_callback' => static function ($value): bool {
+                            // Whitelist meal validi (alfanumerici + underscore/hyphen, max 50 caratteri)
+                            return is_string($value) && preg_match('/^[a-z0-9_-]{1,50}$/i', $value) === 1;
+                        },
                     ],
                     'party' => [
                         'required'          => true,

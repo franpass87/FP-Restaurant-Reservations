@@ -1,5 +1,5 @@
 .fp-resv-simple {
-    max-width: 600px;
+    max-width: 660px;
     margin: 0 auto;
     padding: 20px 24px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -29,8 +29,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    gap: 16px;
+    margin-bottom: 20px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
@@ -68,12 +68,13 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 13px 20px;
     background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
     color: #ffffff !important;
     text-decoration: none !important;
     font-size: 14px;
     font-weight: 600;
+    min-height: 44px;
     border-radius: 10px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(55, 65, 81, 0.2);
@@ -106,9 +107,12 @@
 
 .fp-step {
     display: none;
-    padding: 16px;
+    padding: 12px;
     opacity: 0;
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
     transform: translateX(20px);
+    -webkit-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: absolute;
     top: 0;
@@ -119,7 +123,7 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     border: 1px solid rgba(209, 213, 219, 0.3);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .fp-step::before {
@@ -136,6 +140,8 @@
 .fp-step.active {
     display: block;
     opacity: 1;
+    -webkit-transform: translateX(0);
+    -ms-transform: translateX(0);
     transform: translateX(0);
     position: relative;
     visibility: visible;
@@ -168,18 +174,18 @@
     min-height: 80px;
     background: #f9fafb;
     border-radius: 16px;
-    padding: 16px;
+    padding: 12px;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .fp-step h3 {
     color: #111827;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-size: 18px;
     font-weight: 700;
     letter-spacing: -0.2px;
     position: relative;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
 }
 
 .fp-step h3::after {
@@ -195,7 +201,7 @@
 
 .fp-field {
     margin-bottom: 10px;
-    padding: 10px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.7);
     border-radius: 12px;
     border: 1px solid rgba(209, 213, 219, 0.2);
@@ -209,12 +215,31 @@
 }
 
 .fp-field label {
-    display: block;
+    display: block !important;
     margin-bottom: 8px;
     font-weight: 600;
     color: #374151;
     font-size: 14px;
     letter-spacing: 0.2px;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Previeni wrapping asterisco su nuova riga - MASSIMA SPECIFICITÀ */
+.fp-resv-simple .fp-field label abbr,
+.fp-field label abbr,
+label abbr {
+    display: inline !important;
+    white-space: nowrap !important;
+    float: none !important;
+    clear: none !important;
+    position: relative !important;
+    vertical-align: baseline !important;
+    margin: 0 0 0 2px !important;
+    padding: 0 !important;
 }
 
 /* Separatori tra sezioni */
@@ -265,15 +290,15 @@ p:empty {
 }
 
 .fp-notice {
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 10px;
     border: 1px solid;
     font-size: 14px;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     animation: slideInDown 0.3s ease-out;
     position: relative;
     overflow: hidden;
@@ -379,14 +404,15 @@ p:empty {
     animation: slideOutUp 0.3s ease-in forwards;
 }
 
-.fp-field input,
+.fp-field input:not([type="checkbox"]):not([type="radio"]),
 .fp-field select,
 .fp-field textarea {
     width: 100%;
-    padding: 12px 14px;
+    padding: 13px 14px;
     border: 1.5px solid #d1d5db;
     border-radius: 8px;
     font-size: 14px;
+    min-height: 44px;
     box-sizing: border-box;
     background: #ffffff;
     color: #374151;
@@ -395,35 +421,43 @@ p:empty {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.fp-field input:focus,
-.fp-field select:focus,
-.fp-field textarea:focus {
-    outline: none;
+.fp-field input:focus-visible,
+.fp-field select:focus-visible,
+.fp-field textarea:focus-visible {
+    outline: 2px solid #374151;
+    outline-offset: 2px;
     border-color: #374151;
     box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.1), 0 4px 12px 0 rgba(55, 65, 81, 0.15);
     transform: translateY(-1px);
 }
 
+.fp-field input:focus:not(:focus-visible),
+.fp-field select:focus:not(:focus-visible),
+.fp-field textarea:focus:not(:focus-visible) {
+    outline: none;
+}
+
 .fp-field input::placeholder,
 .fp-field textarea::placeholder {
-    color: #9ca3af;
+    color: #6b7280;
 }
 
 .fp-meals {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 8px;
+    gap: 10px;
     margin-top: 6px;
 }
 
 .fp-meal-btn {
-    padding: 12px 16px;
+    padding: 14px 16px;
     border: 1.5px solid #d1d5db;
     background: #ffffff;
     border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
+    min-height: 44px;
     transition: all 0.2s ease;
     text-align: center;
     color: #374151;
@@ -464,10 +498,10 @@ p:empty {
 
 .fp-buttons {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: space-between;
-    margin-top: 12px;
-    padding: 12px;
+    margin-top: 10px;
+    padding: 10px;
     background: #ffffff;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
@@ -475,11 +509,12 @@ p:empty {
 }
 
 .fp-btn {
-    padding: 12px 20px;
+    padding: 13px 20px;
     border: 1.5px solid;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
+    min-height: 44px;
     cursor: pointer;
     transition: all 0.2s ease;
     letter-spacing: 0.3px;
@@ -534,8 +569,11 @@ p:empty {
 }
 
 .fp-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.65;
     cursor: not-allowed;
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-color: #e5e7eb;
 }
 
 /* Assicuriamo che tutti gli elementi interattivi del form funzionino */
@@ -546,11 +584,24 @@ p:empty {
 .fp-resv-simple a {
     cursor: pointer !important;
     pointer-events: auto !important;
-    /* Fallback per garantire che siano sempre cliccabili */
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
+}
+
+/* BUTTON: NO user-select per evitare problemi click */
+.fp-resv-simple button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+/* INPUT/TEXTAREA: user-select: text per permettere copia/incolla */
+.fp-resv-simple input[type="text"],
+.fp-resv-simple input[type="email"],
+.fp-resv-simple input[type="tel"],
+.fp-resv-simple input[type="number"],
+.fp-resv-simple textarea {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    user-select: text !important;
 }
 
 .fp-resv-simple button:disabled,
@@ -594,8 +645,8 @@ p:empty {
 }
 
 .fp-progress-step {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #ffffff;
     display: flex;
@@ -615,6 +666,8 @@ p:empty {
     background: #000000;
     color: #ffffff;
     border-color: #000000;
+    -webkit-transform: scale(1.1);
+    -ms-transform: scale(1.1);
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
@@ -625,98 +678,33 @@ p:empty {
     border-color: #333333;
 }
 
-/* Checkbox styling - massima specificità per evitare conflitti */
-#fp-resv-default .fp-field input[type="checkbox"],
-.fp-resv-simple .fp-field input[type="checkbox"] {
-    width: 16px !important;
-    height: 16px !important;
-    margin: 0 !important;
-    margin-right: 10px !important;
-    transform: none !important;
-    cursor: pointer !important;
-    accent-color: #374151 !important;
-    flex-shrink: 0 !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    border: 2px solid #d1d5db !important;
-    border-radius: 6px !important;
-    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important;
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08) !important;
-}
-
-#fp-resv-default .fp-field input[type="checkbox"]:checked,
-.fp-resv-simple .fp-field input[type="checkbox"]:checked {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
-    border-color: #374151 !important;
-}
-
-.fp-field label {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 0 !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
-    line-height: 1.4 !important;
-    margin-bottom: 0 !important;
-    color: #1f2937 !important;
-}
-
-/* Testo checkbox e label in nero */
-.fp-field label span,
-.fp-field label > span {
-    color: #1f2937 !important;
-}
-
-/* Link privacy in blu ma testo normale nero */
-.fp-field label span a,
-.fp-field label a {
+/* Link privacy in blu */
+.fp-field a,
+.fp-checkbox-wrapper label a {
     color: #2563eb !important;
     text-decoration: underline !important;
+    text-decoration-skip-ink: auto !important;
+    text-decoration-thickness: 1px !important;
+    text-underline-offset: 2px !important;
+    display: inline !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: none !important;
 }
-.fp-field label span a:hover,
-.fp-field label a:hover {
+
+.fp-field a:hover,
+.fp-checkbox-wrapper label a:hover {
     color: #1d4ed8 !important;
 }
 
-/* Stile specifico per i checkbox dei servizi aggiuntivi */
-.fp-field div label {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 0 !important;
-    margin-bottom: 8px !important;
-}
-
-.fp-field div label input[type="checkbox"] {
-    margin-right: 10px !important;
-    margin-top: 2px !important;
-}
-
-/* Allineamento specifico per checkbox */
-#fp-resv-default .fp-field input[type="checkbox"],
-.fp-resv-simple .fp-field input[type="checkbox"] {
-    margin-top: 2px !important;
-    align-self: flex-start !important;
-}
-
-/* Allineamento sezione Servizi Aggiuntivi */
-.fp-resv-simple .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
-    align-items: flex-start !important;
-}
-
-#fp-resv-default .fp-field div[style*="display: flex"][style*="flex-direction: column"] {
-    align-items: flex-start !important;
-}
-
-/* Spaziatura link Privacy Policy */
-.fp-resv-simple .fp-field a {
-    margin: 0 4px !important;
-    display: inline !important;
-}
-
-#fp-resv-default .fp-field a {
-    margin: 0 2px !important;
-    display: inline !important;
+/* Reset pseudo-elementi sui link che potrebbero causare artefatti */
+.fp-checkbox-wrapper label a::before,
+.fp-checkbox-wrapper label a::after {
+    content: none !important;
+    display: none !important;
 }
 
 /* Input date - permette click su tutta l'area */
@@ -739,78 +727,40 @@ p:empty {
     cursor: pointer;
 }
 
-.fp-field label[style*="display: flex"] {
-    align-items: flex-start;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: normal;
-    line-height: 1.5;
+/* Phone input group styling */
+.fp-phone-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
-/* Phone prefix styling - ALTA SPECIFICITÀ per sovrascrivere tema */
-.fp-resv-simple .fp-field div[style*="display: flex"] {
-    align-items: flex-start !important;
+.fp-input--phone-prefix {
+    width: 140px;
+    flex-shrink: 0;
 }
 
-.fp-resv-simple .fp-field div[style*="display: flex"] select {
-    width: 140px !important;
-    margin-right: 8px !important;
-    flex-shrink: 0 !important;
-    max-width: 140px !important;
-}
-
-.fp-resv-simple .fp-field div[style*="display: flex"] input {
-    flex: 1 !important;
-    min-width: 0 !important;
-}
-
-/* Override specifico per il campo telefono */
-.fp-resv-simple select[name="fp_resv_phone_prefix"] {
-    width: 140px !important;
-    flex-shrink: 0 !important;
-    max-width: 140px !important;
-}
-
-/* Override con specificità MASSIMA per il tema Salient */
-body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
-    width: 140px !important;
-    flex-shrink: 0 !important;
-    max-width: 140px !important;
-    min-width: 140px !important;
-}
-
-/* Override ancora più specifico per il tema Salient */
-html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
-    width: 140px !important;
-    flex-shrink: 0 !important;
-    max-width: 140px !important;
-    min-width: 140px !important;
-}
-
-/* Override con ID per massima specificità */
-#fp-resv-default .fp-field div[style*="display: flex"] select[name="fp_resv_phone_prefix"] {
-    width: 140px !important;
-    flex-shrink: 0 !important;
-    max-width: 140px !important;
-    min-width: 140px !important;
+.fp-input--phone-number {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Time slots styling */
 .fp-time-slots {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 8px;
-    margin-top: 8px;
+    gap: 10px;
+    margin-top: 6px;
 }
 
 .fp-time-slot {
-    padding: 12px 14px;
+    padding: 14px 14px;
     border: 1.5px solid #e8e8e8;
     background: #ffffff;
     border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
+    min-height: 44px;
     transition: all 0.2s ease;
     text-align: center;
     color: #2c2c2c;
@@ -849,10 +799,11 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
 }
 
 .fp-time-slot.disabled {
-    opacity: 0.4;
+    opacity: 1;
     cursor: not-allowed;
-    background: #f8f8f8;
-    border-color: #e0e0e0;
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-color: #e5e7eb;
 }
 
 /* Party Selector */
@@ -860,9 +811,9 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     margin: 10px 0;
-    padding: 12px;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 12px;
     border: 1.5px solid #e5e7eb;
@@ -926,13 +877,13 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
 .fp-summary {
     background: #f8f8f8;
     border-radius: 12px;
-    padding: 16px;
-    margin: 12px 0;
+    padding: 12px;
+    margin: 10px 0;
     border: 2px solid #e8e8e8;
 }
 
 .fp-summary-section {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .fp-summary-section:last-child {
@@ -1009,11 +960,36 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
     border-left: 3px solid #000000;
 }
 
-/* Responsive */
+/* Responsive - Tablet Landscape */
+@media (max-width: 1024px) {
+    .fp-resv-simple {
+        max-width: 85%;
+        padding: 20px;
+    }
+}
+
+/* Responsive - Tablet Portrait */
+@media (max-width: 768px) {
+    .fp-resv-simple {
+        max-width: 90%;
+        padding: 18px;
+    }
+    
+    .fp-resv-simple h2 {
+        font-size: 22px;
+    }
+    
+    .fp-meals {
+        grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    }
+}
+
+/* Responsive - Mobile */
 @media (max-width: 640px) {
     .fp-resv-simple {
         margin: 16px 12px;
         padding: 20px 16px;
+        max-width: calc(100% - 24px);
     }
     
     .fp-resv-simple h2 {
@@ -1034,26 +1010,35 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
         margin-bottom: 12px;
     }
     
+    /* iOS no zoom - CRITICAL */
+    .fp-field input,
+    .fp-field select,
+    .fp-field textarea {
+        font-size: 16px !important;
+    }
+    
     .fp-meals {
         grid-template-columns: 1fr;
-        gap: 6px;
+        gap: 12px;
     }
     
     .fp-meal-btn {
-        padding: 10px 14px;
-        font-size: 12px;
+        padding: 14px 16px;
+        font-size: 13px;
+        min-height: 44px;
     }
     
     .fp-buttons {
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
         margin-top: 16px;
         padding-top: 12px;
     }
     
     .fp-btn {
-        padding: 10px 16px;
-        font-size: 12px;
+        padding: 13px 20px;
+        font-size: 13px;
+        min-height: 44px;
     }
     
     .fp-progress {
@@ -1062,10 +1047,10 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
     }
     
     .fp-progress-step {
-        width: 28px;
-        height: 28px;
-        margin: 0 3px;
-        font-size: 11px;
+        width: 36px;
+        height: 36px;
+        margin: 0 4px;
+        font-size: 12px;
     }
     
     .fp-progress::before {
@@ -1074,25 +1059,25 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
     
     .fp-time-slots {
         grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
-        gap: 6px;
+        gap: 10px;
     }
     
     .fp-time-slot {
-        padding: 12px 14px;
-        font-size: 12px;
+        padding: 14px 14px;
+        font-size: 13px;
         min-height: 44px;
     }
     
     /* Phone prefix responsive */
-    .fp-field div[style*="display: flex"] select {
+    .fp-input--phone-prefix {
         width: 120px;
-        font-size: 12px;
-        padding: 10px 6px;
+        font-size: 13px;
+        padding: 12px 8px;
     }
     
-    .fp-field div[style*="display: flex"] input {
-        font-size: 12px;
-        padding: 10px 12px;
+    .fp-input--phone-number {
+        font-size: 13px;
+        padding: 12px;
     }
 }
 
@@ -1141,7 +1126,14 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
 }
 
 /* Responsive per il messaggio */
+/* Responsive - Mobile Piccolo (iPhone SE, etc) */
 @media (max-width: 480px) {
+    .fp-resv-simple {
+        margin: 12px 8px;
+        padding: 16px 12px;
+        border-radius: 12px;
+    }
+    
     .fp-meal-notice {
         padding: 12px 14px;
         font-size: 13px;
@@ -1171,5 +1163,442 @@ html body .fp-resv-simple .fp-field div[style*="display: flex"] select[name="fp_
     .fp-btn-pdf__icon {
         font-size: 16px;
     }
+    
+    /* Phone input più compatto */
+    .fp-input--phone-prefix {
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+        padding: 11px 6px;
+        font-size: 12px;
+    }
+    
+    /* Party selector più compatto */
+    .fp-btn-minus, .fp-btn-plus {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+    
+    .fp-party-display {
+        min-width: 100px;
+    }
+    
+    .fp-party-display #party-count {
+        font-size: 24px;
+    }
+}
+
+/* Responsive - Mobile Molto Piccolo (320px) */
+@media (max-width: 360px) {
+    .fp-resv-simple {
+        margin: 8px 4px;
+        padding: 12px 8px;
+    }
+    
+    .fp-resv-simple h2 {
+        font-size: 18px;
+    }
+    
+    .fp-step h3 {
+        font-size: 14px;
+    }
+    
+    .fp-field {
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .fp-field label {
+        font-size: 13px;
+    }
+    
+    .fp-field input,
+    .fp-field select,
+    .fp-field textarea {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .fp-meals,
+    .fp-time-slots {
+        gap: 6px;
+    }
+    
+    .fp-meal-btn,
+    .fp-time-slot {
+        padding: 10px 12px;
+        font-size: 12px;
+        min-height: 44px !important;
+    }
+    
+    .fp-field input,
+    .fp-field select,
+    .fp-field textarea {
+        min-height: 44px !important;
+    }
+    
+    /* Phone input super compatto - stack verticale */
+    .fp-phone-input-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .fp-input--phone-prefix,
+    .fp-input--phone-number {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+}
+
+/* ==================== ACCESSIBILITY MEDIA QUERIES ==================== */
+
+/* Reduced Motion - WCAG 2.3.3 AAA */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .fp-step {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* High Contrast Mode - Windows Accessibility */
+@media (forced-colors: active) {
+    .fp-btn,
+    .fp-meal-btn,
+    .fp-time-slot,
+    .fp-field input,
+    .fp-field select,
+    .fp-field textarea {
+        border: 2px solid ButtonBorder;
+    }
+    
+    .fp-btn:focus,
+    .fp-meal-btn:focus,
+    .fp-time-slot:focus,
+    .fp-field input:focus,
+    .fp-field select:focus,
+    .fp-field textarea:focus {
+        outline: 3px solid Highlight;
+        outline-offset: 2px;
+    }
+    
+    .fp-btn.selected,
+    .fp-meal-btn.selected,
+    .fp-time-slot.selected {
+        background: Highlight;
+        color: HighlightText;
+        border-color: Highlight;
+    }
+}
+
+/* Print Styles - Non stampare form interattivo */
+@media print {
+    .fp-resv-simple {
+        display: none;
+    }
+}
+
+/* Landscape Mobile - Form più compatto verticalmente */
+@media (max-width: 640px) and (orientation: landscape) {
+    .fp-step {
+        padding: 8px;
+    }
+    
+    .fp-field {
+        margin-bottom: 8px;
+        padding: 10px;
+    }
+    
+    .fp-resv-simple h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .fp-step h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Focus-Visible per tutti gli elementi interattivi - WCAG 2.4.7 */
+.fp-meal-btn:focus-visible,
+.fp-time-slot:focus-visible,
+.fp-btn:focus-visible,
+.fp-btn-minus:focus-visible,
+.fp-btn-plus:focus-visible,
+.fp-btn-pdf:focus-visible,
+.fp-checkbox:focus-visible {
+    outline: 2px solid #374151;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(55, 65, 81, 0.15);
+}
+
+/* Rimuovi outline solo per mouse users */
+.fp-meal-btn:focus:not(:focus-visible),
+.fp-time-slot:focus:not(:focus-visible),
+.fp-btn:focus:not(:focus-visible),
+.fp-btn-minus:focus:not(:focus-visible),
+.fp-btn-plus:focus:not(:focus-visible),
+.fp-checkbox:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ==================== FIELDSET & SEMANTIC FORM ELEMENTS ==================== */
+
+/* Fieldset styling */
+.fp-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.fp-fieldset legend {
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+/* Extras group (checkbox + number) */
+.fp-extras-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Checkbox wrapper - FORZA flex-direction: row */
+.fp-checkbox-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 8px;
+}
+
+.fp-checkbox-wrapper label {
+    cursor: pointer !important;
+    font-weight: 400 !important;
+    margin-bottom: 0 !important;
+    display: block !important;
+    flex: 1 !important;
+    line-height: 1.5 !important;
+    color: #374151 !important;
+    padding-top: 1px !important;
+    overflow: visible !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+}
+
+/* Checkbox styling - SPECIFICITÀ MASSIMA per sovrascrivere tema Salient */
+.fp-resv-simple .fp-field input[type="checkbox"].fp-checkbox,
+.fp-resv-simple input[type="checkbox"].fp-checkbox,
+.fp-field input[type="checkbox"].fp-checkbox,
+input[type="checkbox"].fp-checkbox {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    margin-right: 0 !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    z-index: 1 !important;
+}
+
+.fp-resv-simple .fp-field input[type="checkbox"].fp-checkbox:checked,
+.fp-field input[type="checkbox"].fp-checkbox:checked,
+input[type="checkbox"].fp-checkbox:checked {
+    background: #374151 !important;
+    border-color: #374151 !important;
+}
+
+.fp-resv-simple .fp-field input[type="checkbox"].fp-checkbox:checked::after,
+.fp-field input[type="checkbox"].fp-checkbox:checked::after,
+input[type="checkbox"].fp-checkbox:checked::after {
+    content: '✓' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    display: block !important;
+}
+
+.fp-resv-simple .fp-field input[type="checkbox"].fp-checkbox:hover,
+.fp-field input[type="checkbox"].fp-checkbox:hover,
+input[type="checkbox"].fp-checkbox:hover {
+    border-color: #374151 !important;
+    box-shadow: 0 2px 4px rgba(55, 65, 81, 0.15) !important;
+}
+
+/* Number input wrapper */
+.fp-number-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fp-number-wrapper label {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+/* Number input styling */
+.fp-input-number {
+    width: 70px;
+    padding: 12px 10px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #374151;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    min-height: 44px;
+}
+
+.fp-input-number:focus-visible {
+    outline: 2px solid #374151;
+    outline-offset: 2px;
+    border-color: #374151;
+    box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.1);
+}
+
+/* Hint text styling */
+.fp-hint {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Loading message styling */
+.fp-loading-message {
+    text-align: center;
+    padding: 12px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.fp-loading-message__text {
+    display: inline-block;
+}
+
+/* Required asterisk styling - SPECIFICITÀ NUCLEARE */
+.fp-resv-simple .fp-checkbox-wrapper label abbr.fp-required,
+.fp-checkbox-wrapper label abbr.fp-required,
+.fp-resv-simple .fp-field label abbr.fp-required,
+.fp-field label abbr.fp-required,
+label abbr.fp-required,
+abbr.fp-required,
+.fp-required {
+    display: inline !important;
+    color: #dc2626 !important;
+    text-decoration: none !important;
+    font-weight: bold !important;
+    cursor: help !important;
+    margin-left: 2px !important;
+    margin-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    float: none !important;
+    position: relative !important;
+    vertical-align: baseline !important;
+    line-height: inherit !important;
+    overflow: visible !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+/* Reset pseudo-elementi che potrebbero causare artefatti visivi */
+.fp-checkbox-wrapper label abbr.fp-required::before,
+.fp-checkbox-wrapper label abbr.fp-required::after,
+.fp-field label abbr.fp-required::before,
+.fp-field label abbr.fp-required::after,
+abbr.fp-required::before,
+abbr.fp-required::after,
+.fp-required::before,
+.fp-required::after {
+    content: none !important;
+    display: none !important;
+}
+
+.fp-resv-simple .fp-field label abbr.fp-required:hover,
+.fp-checkbox-wrapper label abbr.fp-required:hover,
+abbr.fp-required:hover,
+.fp-required:hover {
+    color: #b91c1c !important;
+}
+
+/* Screen reader only text - WCAG Accessibility */
+.screen-reader-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Debug block styling (solo se WP_DEBUG) */
+.fp-debug-block {
+    background: #f0f0f0;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #333;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+.fp-debug-pre {
+    margin: 8px 0;
+    white-space: pre-wrap;
+    font-size: 11px;
+    overflow-x: auto;
 }
 

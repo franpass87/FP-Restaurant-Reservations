@@ -821,3 +821,4 @@ Il plugin **ha già** un sistema completo di disabilitazione date:
 **Prossimo Step:** VERIFICA funzionamento attuale  
 **Tempo Stimato:** 30min - 4h (dipende dallo scenario)
 
+

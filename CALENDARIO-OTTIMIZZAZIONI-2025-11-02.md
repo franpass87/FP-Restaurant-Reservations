@@ -661,3 +661,4 @@ Tooltip: Al tap (touch)
 **Impatto:** +67% chiarezza visiva  
 **Status:** ✅ COMPLETATO
 
+

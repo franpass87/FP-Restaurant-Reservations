@@ -51,8 +51,8 @@ final class WidgetController
         add_filter('vc_raw_html_content', [$this, 'forceWPBakeryShortcodeProcessing'], 1);
         add_filter('wpb_js_composer_shortcode_content', [$this, 'preventWPBakeryEscape'], 10, 2);
         
-        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
-        add_action('wp_head', [$this, 'addOverrideCss'], 999); // Carica dopo il CSS del tema
+        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets'], 999); // PRIORITÀ MASSIMA - carica dopo tema
+        add_action('wp_head', [$this, 'addOverrideCss'], 9999); // PRIORITÀ ULTRA-MASSIMA - ultimo CSS
         add_filter('script_loader_tag', [$this, 'filterScriptTag'], 10, 3);
         
         // Force shortcode execution if content contains it but theme doesn't process it
@@ -90,14 +90,21 @@ final class WidgetController
             return;
         }
         
-        echo '<style id="fp-resv-override-css" type="text/css">
-        /* NASCONDI paragrafi vuoti creati da wpautop che rompono lo spacing */
+        // DEBUG: Log per verificare che questo metodo viene chiamato
+        error_log('[FP-RESV] addOverrideCss() ESEGUITO - Caricando CSS critico inline');
+        
+        echo '<style id="fp-resv-critical-css" type="text/css">
+        /* NASCONDI paragrafi vuoti e BR creati da wpautop/WPBakery */
         .fp-resv-simple p:empty,
         .fp-resv-simple > p:empty,
         .fp-steps-container > p:empty,
         .fp-step > p:empty,
         .wpb_wrapper .fp-resv-simple p:empty,
-        .wpb_text_column p:empty {
+        .wpb_text_column p:empty,
+        .fp-resv-simple label br,
+        #fp-resv-default label br,
+        .fp-field label br,
+        label br {
             display: none !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -249,6 +256,113 @@ final class WidgetController
             -moz-user-select: none !important;
             -ms-user-select: none !important;
             touch-action: manipulation !important;
+        }
+        
+        /* ============================================ */
+        /* ASTERISCHI INLINE - SPECIFICITÀ NUCLEARE     */
+        /* ============================================ */
+        html body #fp-resv-default .fp-field label abbr.fp-required,
+        html body .fp-resv-simple .fp-checkbox-wrapper label abbr.fp-required,
+        html body .fp-resv-simple .fp-field label abbr.fp-required,
+        html body .fp-checkbox-wrapper label abbr.fp-required,
+        html body .fp-field label abbr.fp-required,
+        html body label abbr.fp-required,
+        html body abbr.fp-required,
+        html body .fp-required,
+        #fp-resv-default abbr.fp-required,
+        .fp-resv-simple abbr.fp-required {
+            display: inline !important;
+            color: #dc2626 !important;
+            text-decoration: none !important;
+            font-weight: bold !important;
+            cursor: help !important;
+            margin-left: 2px !important;
+            margin-right: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+            white-space: nowrap !important;
+            float: none !important;
+            position: relative !important;
+            vertical-align: baseline !important;
+            line-height: inherit !important;
+            overflow: visible !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
+        
+        /* Reset pseudo-elementi asterischi */
+        html body abbr.fp-required::before,
+        html body abbr.fp-required::after,
+        html body .fp-required::before,
+        html body .fp-required::after {
+            content: none !important;
+            display: none !important;
+        }
+        
+        /* ============================================ */
+        /* CHECKBOX WRAPPER - ALLINEAMENTO PERFETTO    */
+        /* ============================================ */
+        html body #fp-resv-default .fp-checkbox-wrapper,
+        html body .fp-resv-simple .fp-checkbox-wrapper,
+        html body .fp-checkbox-wrapper {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        html body #fp-resv-default .fp-checkbox-wrapper label,
+        html body .fp-resv-simple .fp-checkbox-wrapper label,
+        html body .fp-checkbox-wrapper label {
+            cursor: pointer !important;
+            font-weight: 400 !important;
+            margin-bottom: 0 !important;
+            display: block !important;
+            flex: 1 !important;
+            line-height: 1.5 !important;
+            color: #374151 !important;
+            padding-top: 1px !important;
+            overflow: visible !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: none !important;
+        }
+        
+        /* ============================================ */
+        /* CHECKBOX - VISIBILITÀ E DIMENSIONI          */
+        /* ============================================ */
+        html body #fp-resv-default input[type="checkbox"].fp-checkbox,
+        html body .fp-resv-simple input[type="checkbox"].fp-checkbox,
+        html body .fp-field input[type="checkbox"].fp-checkbox,
+        html body input[type="checkbox"].fp-checkbox {
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px !important;
+            min-height: 20px !important;
+            max-width: 20px !important;
+            max-height: 20px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            cursor: pointer !important;
+            flex-shrink: 0 !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            border: 2px solid #d1d5db !important;
+            border-radius: 4px !important;
+            background: #ffffff !important;
+            position: relative !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            z-index: 1 !important;
         }
         </style>';
     }

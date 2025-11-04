@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let mealBtns = form.querySelectorAll('.fp-meal-btn');
     let selectedMeal = null;
     let selectedTime = null;
+    let areDatesLoading = false; // PRELOAD: Stato caricamento date
+    let areDatesReady = false;   // PRELOAD: Date pronte per step 2
 
     function setupMealButtons() {
         mealBtns = form.querySelectorAll('.fp-meal-btn');
@@ -93,12 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('mealNoticeDiv found:', mealNoticeDiv);
                 
                 if (mealNotice && mealNotice.trim() !== '' && mealNoticeDiv) {
-                    mealNoticeDiv.innerHTML = mealNotice;
-                    mealNoticeDiv.style.display = 'block';
+                    // Usa textContent per sicurezza (previene XSS)
+                    mealNoticeDiv.textContent = mealNotice;
+                    mealNoticeDiv.hidden = false;
                     console.log('✅ Messaggio pasto mostrato:', mealNotice);
                 } else {
                     if (mealNoticeDiv) {
-                        mealNoticeDiv.style.display = 'none';
+                        mealNoticeDiv.hidden = true;
                     }
                     console.log('⚠️ Nessun messaggio per questo pasto o div non trovato');
                     console.log('  - mealNotice presente?', !!mealNotice);
@@ -106,7 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('  - mealNoticeDiv trovato?', !!mealNoticeDiv);
                 }
                 
-                // Load available dates for selected meal
+                // PRELOAD: Carica date SUBITO (step 1), così sono pronte per step 2
+                areDatesReady = false;
+                areDatesLoading = true;
+                updateNextButtonState(); // Disabilita "Avanti" durante loading
                 loadAvailableDates(selectedMeal);
             });
         });
@@ -182,30 +188,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Occasione (se specificata)
         const occasion = document.getElementById('occasion').value;
+        const occasionRow = document.getElementById('summary-occasion-row');
         if (occasion) {
             const occasionText = document.getElementById('occasion').selectedOptions[0].text;
             document.getElementById('summary-occasion').textContent = occasionText;
-            document.getElementById('summary-occasion-row').style.display = 'flex';
+            occasionRow.hidden = false;
         } else {
-            document.getElementById('summary-occasion-row').style.display = 'none';
+            occasionRow.hidden = true;
         }
         
         // Note (se specificate)
         const notes = document.getElementById('notes').value;
+        const notesRow = document.getElementById('summary-notes-row');
         if (notes) {
             document.getElementById('summary-notes').textContent = notes;
-            document.getElementById('summary-notes-row').style.display = 'flex';
+            notesRow.hidden = false;
         } else {
-            document.getElementById('summary-notes-row').style.display = 'none';
+            notesRow.hidden = true;
         }
         
         // Allergie (se specificate)
         const allergies = document.getElementById('allergies').value;
+        const allergiesRow = document.getElementById('summary-allergies-row');
         if (allergies) {
             document.getElementById('summary-allergies').textContent = allergies;
-            document.getElementById('summary-allergies-row').style.display = 'flex';
+            allergiesRow.hidden = false;
         } else {
-            document.getElementById('summary-allergies-row').style.display = 'none';
+            allergiesRow.hidden = true;
         }
         
         // Servizi aggiuntivi
@@ -215,30 +224,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let hasExtras = false;
         
+        const wheelchairRow = document.getElementById('summary-wheelchair-row');
         if (wheelchairTable) {
-            document.getElementById('summary-wheelchair-row').style.display = 'flex';
+            wheelchairRow.hidden = false;
             hasExtras = true;
         } else {
-            document.getElementById('summary-wheelchair-row').style.display = 'none';
+            wheelchairRow.hidden = true;
         }
         
+        const petsRow = document.getElementById('summary-pets-row');
         if (pets) {
-            document.getElementById('summary-pets-row').style.display = 'flex';
+            petsRow.hidden = false;
             hasExtras = true;
         } else {
-            document.getElementById('summary-pets-row').style.display = 'none';
+            petsRow.hidden = true;
         }
         
+        const highchairRow = document.getElementById('summary-highchair-row');
         if (highChairCount && parseInt(highChairCount) > 0) {
             document.getElementById('summary-highchair').textContent = highChairCount;
-            document.getElementById('summary-highchair-row').style.display = 'flex';
+            highchairRow.hidden = false;
             hasExtras = true;
         } else {
-            document.getElementById('summary-highchair-row').style.display = 'none';
+            highchairRow.hidden = true;
         }
         
         // Mostra/nascondi sezione servizi aggiuntivi
-        document.getElementById('summary-extras-row').style.display = hasExtras ? 'block' : 'none';
+        document.getElementById('summary-extras-row').hidden = !hasExtras;
         
         console.log('Riepilogo popolato');
     }
@@ -271,9 +283,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Update buttons
-        prevBtn.style.display = step > 1 ? 'block' : 'none';
-        nextBtn.style.display = step < totalSteps ? 'block' : 'none';
-        submitBtn.style.display = step === totalSteps ? 'block' : 'none';
+        prevBtn.hidden = step <= 1;
+        nextBtn.hidden = step >= totalSteps;
+        submitBtn.hidden = step < totalSteps;
         
         // Update button text for step 6
         if (step === totalSteps) {
@@ -283,10 +295,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Aggiorna stato bottone "Avanti"
+    function updateNextButtonState() {
+        if (currentStep === 1 && selectedMeal) {
+            if (areDatesLoading) {
+                // Date in caricamento
+                nextBtn.disabled = true;
+                nextBtn.textContent = '⏳ Caricamento date...';
+                nextBtn.style.opacity = '0.6';
+            } else if (areDatesReady) {
+                // Date pronte
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Avanti →';
+                nextBtn.style.opacity = '1';
+            }
+        } else {
+            // Altri step o meal non selezionato
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Avanti →';
+            nextBtn.style.opacity = '1';
+        }
+    }
+    
     function validateStep(step) {
         switch(step) {
             case 1:
-                return selectedMeal !== null;
+                // PRELOAD: Step 1 valido solo se meal selezionato E date pronte
+                return selectedMeal !== null && areDatesReady;
             case 2:
                 const date = document.getElementById('reservation-date').value;
                 const party = document.getElementById('party-size').value;
@@ -414,36 +449,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Nascondi il riepilogo dopo la conferma
                 const summaryStep = form.querySelector('.fp-step[data-step="4"]');
                 if (summaryStep) {
-                    summaryStep.style.display = 'none';
+                    summaryStep.hidden = true;
                 }
                 
                 // Nascondi i pulsanti
-                if (submitBtn) submitBtn.style.display = 'none';
-                if (prevBtn) prevBtn.style.display = 'none';
+                if (submitBtn) submitBtn.hidden = true;
+                if (prevBtn) prevBtn.hidden = true;
                 
                 // Nascondi la progress bar
                 const progressBar = form.querySelector('.fp-progress');
                 if (progressBar) {
-                    progressBar.style.display = 'none';
+                    progressBar.hidden = true;
                 }
                 
-                // Scroll alla notifica dopo un breve delay
-                setTimeout(function() {
-                    const noticeContainer = document.getElementById('fp-notice-container');
-                    if (noticeContainer) {
-                        noticeContainer.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
-                        });
-                        
-                        // Scroll della finestra principale al top del form
-                        const formTop = form.getBoundingClientRect().top + window.pageYOffset - 20;
-                        window.scrollTo({ 
-                            top: formTop, 
-                            behavior: 'smooth' 
-                        });
-                    }
-                }, 100);
+                // Lo scroll è gestito automaticamente dal NoticeManager
             } else {
                 // Errore dal server
                 console.error('❌ Errore dal server:', data);
@@ -486,16 +505,68 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Store available dates globally
     let availableDates = [];
+    let availableDatesSet = new Set(); // Performance: O(1) lookup invece di O(n)
+    
+    // AbortController per cancellare richieste precedenti (previene race condition)
+    let availableDatesAbortController = null;
+    let availableSlotsAbortController = null;
+    
+    // Inizializza Flatpickr per un calendario visivo migliore
+    let flatpickrInstance = null;
+    if (typeof flatpickr !== 'undefined' && dateInput) {
+        flatpickrInstance = flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            locale: window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.it ? window.flatpickr.l10ns.it : 'it',
+            enable: [], // Inizialmente nessuna data abilitata
+            allowInput: false,
+            disableMobile: false,
+            onChange: function(selectedDates, dateStr, instance) {
+                // Trigger evento change per compatibilità con il codice esistente
+                const event = new Event('change', { bubbles: true });
+                dateInput.dispatchEvent(event);
+            },
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                // OTTIMIZZATO: usa Set per O(1) lookup invece di Array O(n)
+                if (!dayElem || !dayElem.dateObj) return;
+                
+                const dateStr = formatLocalDate(dayElem.dateObj);
+                if (availableDatesSet.has(dateStr)) {
+                    dayElem.title = 'Data disponibile';
+                    dayElem.setAttribute('aria-label', 'Data disponibile');
+                } else {
+                    dayElem.title = 'Data non disponibile';
+                    dayElem.setAttribute('aria-label', 'Data non disponibile');
+                }
+            }
+        });
+        console.log('✅ Flatpickr inizializzato sul campo data');
+    } else {
+        console.log('⚠️ Flatpickr non disponibile, uso calendario nativo');
+    }
     
     // Load available dates when meal is selected
     function loadAvailableDates(meal) {
         if (!meal) return;
         
+        // PERFORMANCE TIMING START
+        const perfStart = performance.now();
+        console.log(`⏱️ [PERF] Inizio caricamento date per ${meal}`);
+        
+        // Cancella richiesta precedente se esiste (previene race condition)
+        if (availableDatesAbortController) {
+            availableDatesAbortController.abort();
+            console.log('🚫 Richiesta precedente cancellata');
+        }
+        
+        // Crea nuovo AbortController per questa richiesta
+        availableDatesAbortController = new AbortController();
+        
         // Show loading indicator
         const loadingEl = document.getElementById('date-loading');
         const infoEl = document.getElementById('date-info');
-        loadingEl.style.display = 'block';
-        infoEl.style.display = 'none';
+        loadingEl.hidden = false;
+        infoEl.hidden = true;
         
         const from = today;
         const to = new Date();
@@ -515,21 +586,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Tutti gli endpoint hanno fallito, usa fallback locale
                 console.log('Tutti gli endpoint hanno fallito, usando fallback locale');
                 availableDates = generateFallbackDates(from, toDate, meal);
-                loadingEl.style.display = 'none';
+                availableDatesSet = new Set(availableDates); // Update Set per performance
+                loadingEl.hidden = true;
+                
+                // PRELOAD: Date pronte, abilita "Avanti"
+                areDatesLoading = false;
+                areDatesReady = true;
+                updateNextButtonState();
                 
                 // Show info about fallback dates
                 if (infoEl) {
-                    infoEl.style.display = 'block';
-                    infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${meal} (modalità offline)</p>`;
+                    infoEl.hidden = false;
+                    // Sanitizza meal per sicurezza (previene XSS)
+                    const safeMeal = String(meal).replace(/[<>]/g, '');
+                    infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${safeMeal} (modalità offline)</p>`;
                 }
                 
                 // NON forzare lo step 2 - l'utente deve cliccare "Avanti"
                 // Questo mantiene il comportamento consistente con il caso di successo API
-                console.log('Date di fallback caricate, premi "Avanti" per continuare');
+                console.log('✅ Date di fallback caricate e PRONTE, puoi cliccare "Avanti"');
                 
                 // Show the date input
                 if (dateInput) {
-                    dateInput.style.display = 'block';
+                    dateInput.hidden = false;
                     dateInput.disabled = false;
                 }
                 
@@ -539,9 +618,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const endpoint = endpoints[currentEndpointIndex];
-            console.log(`Tentativo endpoint ${currentEndpointIndex + 1}:`, endpoint);
+            const fetchStart = performance.now();
+            console.log(`⏱️ [PERF] Tentativo endpoint ${currentEndpointIndex + 1}:`, endpoint);
             
-            fetch(endpoint)
+            fetch(endpoint, { signal: availableDatesAbortController.signal })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -549,30 +629,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 })
             .then(data => {
+                const fetchTime = performance.now() - fetchStart;
+                console.log(`⏱️ [PERF] Fetch completato in ${fetchTime.toFixed(2)}ms`);
+                
                 // Hide loading indicator
-                loadingEl.style.display = 'none';
+                loadingEl.hidden = true;
                 
                 if (data && data.days) {
+                    const parseStart = performance.now();
+                    
                     // Store available dates
                     availableDates = Object.keys(data.days).filter(date => {
                         return data.days[date] && data.days[date].available;
                     });
+                    availableDatesSet = new Set(availableDates); // Update Set per performance
+                    
+                    const parseTime = performance.now() - parseStart;
+                    console.log(`⏱️ [PERF] Parsing dati in ${parseTime.toFixed(2)}ms`);
                     
                     // Show info if dates are available
                     if (availableDates.length > 0) {
-                        infoEl.style.display = 'block';
+                        infoEl.hidden = false;
                     }
                     
+                    const updateStart = performance.now();
                     // Update date input with available dates info
                     updateDateInput();
+                    const updateTime = performance.now() - updateStart;
+                    console.log(`⏱️ [PERF] Update Flatpickr in ${updateTime.toFixed(2)}ms`);
+                    
+                    const totalTime = performance.now() - perfStart;
+                    console.log(`⏱️ [PERF] TOTALE caricamento date: ${totalTime.toFixed(2)}ms`);
                     console.log('Date disponibili per', meal, ':', availableDates);
+                    
+                    // PRELOAD: Date pronte, abilita "Avanti"
+                    areDatesLoading = false;
+                    areDatesReady = true;
+                    updateNextButtonState();
                 } else {
                     // No data available, allow all dates
                     availableDates = [];
-                    infoEl.style.display = 'none';
+                    infoEl.hidden = true;
                 }
             })
             .catch(error => {
+                    // Se la richiesta è stata cancellata (AbortError), ignora silenziosamente
+                    if (error.name === 'AbortError') {
+                        console.log('🚫 Richiesta cancellata (cambio meal rapido)');
+                        return;
+                    }
+                    
                     console.error(`Errore endpoint ${currentEndpointIndex + 1}:`, error);
                     if (currentEndpointIndex === 0) {
                         showNotice('warning', 'Problemi di connessione. Riprovo con un server alternativo...');
@@ -587,31 +693,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Genera date disponibili localmente come fallback
     function generateFallbackDates(from, to, meal) {
-        const startDate = new Date(from);
-        const endDate = new Date(to);
-        const fallbackDates = [];
+        // FIXED: Rimosso fetch asincrono che causava ritardi
+        // Il fallback deve essere SINCRONO e IMMEDIATO per non bloccare l'UI
+        // Se serve configurazione backend, usare endpoint /available-days che ha caching
         
-        // Prova a recuperare i dati dal backend tramite endpoint alternativo
-        try {
-            // Endpoint alternativo per recuperare configurazione meal
-            fetch('/wp-json/fp-resv/v1/meal-config')
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.meals) {
-                        console.log('Configurazione meal recuperata dal backend:', data.meals);
-                        // Usa i dati reali dal backend
-                        return generateDatesFromBackendConfig(data.meals, from, to, meal);
-                    }
-                })
-                .catch(error => {
-                    console.log('Impossibile recuperare configurazione backend, usando schedule di default');
-                    return generateDatesFromDefaultSchedule(from, to, meal);
-                });
-        } catch (error) {
-            console.log('Errore nel recupero configurazione backend, usando schedule di default');
-        }
+        console.log('[FALLBACK] Generando date di default per', meal);
         
-        // Fallback: usa schedule di default se non riesce a recuperare dal backend
+        // Fallback immediato: usa schedule di default
         return generateDatesFromDefaultSchedule(from, to, meal);
     }
     
@@ -667,68 +755,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return fallbackDates;
     }
     
-    // Genera date usando configurazione dal backend
-    function generateDatesFromBackendConfig(meals, from, to, meal) {
-        const startDate = new Date(from);
-        const endDate = new Date(to);
-        const fallbackDates = [];
-        
-        // Trova la configurazione del meal specifico
-        const mealConfig = meals.find(m => m.key === meal);
-        if (!mealConfig) {
-            console.log('Configurazione meal non trovata, usando schedule di default');
-            return generateDatesFromDefaultSchedule(from, to, meal);
-        }
-        
-        // Usa la configurazione dal backend
-        const current = new Date(startDate);
-        while (current <= endDate) {
-            const dateKey = formatLocalDate(current); // Timezone locale!
-            const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
-            
-            // Controlla se il meal è disponibile in questo giorno
-            let isAvailable = false;
-            
-            if (mealConfig.days_of_week) {
-                // Usa days_of_week se disponibile
-                isAvailable = mealConfig.days_of_week[dayKey] || false;
-            } else if (mealConfig.hours_definition) {
-                // Usa hours_definition se disponibile
-                isAvailable = mealConfig.hours_definition[dayKey] && mealConfig.hours_definition[dayKey].enabled;
-            }
-            
-            if (isAvailable) {
-                fallbackDates.push(dateKey);
-            }
-            
-            current.setDate(current.getDate() + 1);
-        }
-        
-        return fallbackDates;
-    }
-    
     // Genera orari disponibili localmente come fallback
     function generateFallbackTimeSlots(meal) {
-        const slots = [];
+        // FIXED: Rimosso fetch asincrono che causava ritardi
+        // Il fallback deve essere SINCRONO e IMMEDIATO per non bloccare l'UI
+        // Se serve configurazione backend, usare endpoint /available-slots che ha caching
         
-        // Prova a recuperare la configurazione dal backend
-        fetch('/wp-json/fp-resv/v1/meal-config')
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.meals) {
-                    const mealConfig = data.meals.find(m => m.key === meal);
-                    if (mealConfig && mealConfig.hours_definition) {
-                        console.log('Usando orari dal backend per', meal);
-                        return generateTimeSlotsFromBackendConfig(mealConfig);
-                    }
-                }
-                console.log('Usando orari di default per', meal);
-                return generateTimeSlotsFromDefault(meal);
-            })
-            .catch(error => {
-                console.log('Errore nel recupero configurazione orari, usando default');
-                return generateTimeSlotsFromDefault(meal);
-            });
+        console.log('[FALLBACK] Generando orari di default per', meal);
         
         // Fallback immediato: usa orari di default
         return generateTimeSlotsFromDefault(meal);
@@ -787,49 +820,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return slots;
     }
     
-    // Genera orari usando configurazione dal backend
-    function generateTimeSlotsFromBackendConfig(mealConfig) {
-        const slots = [];
-        
-        if (!mealConfig.hours_definition) {
-            return generateTimeSlotsFromDefault(mealConfig.key);
-        }
-        
-        // Usa la configurazione dal backend per generare gli orari
-        // Per ora, usa la configurazione del primo giorno disponibile
-        const firstAvailableDay = Object.keys(mealConfig.hours_definition).find(day => 
-            mealConfig.hours_definition[day] && mealConfig.hours_definition[day].enabled
-        );
-        
-        if (firstAvailableDay && mealConfig.hours_definition[firstAvailableDay]) {
-            const dayConfig = mealConfig.hours_definition[firstAvailableDay];
-            const startTime = dayConfig.start || '12:00';
-            const endTime = dayConfig.end || '14:30';
-            
-            // Parsa gli orari e genera slot ogni 30 minuti
-            const [startHour, startMinute] = startTime.split(':').map(Number);
-            const [endHour, endMinute] = endTime.split(':').map(Number);
-            
-            for (let hour = startHour; hour <= endHour; hour++) {
-                const maxMinute = (hour === endHour) ? endMinute : 30;
-                for (let minute = startMinute; minute <= maxMinute; minute += 30) {
-                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    const slotStart = `${timeStr}:00`;
-                    
-                    slots.push({
-                        time: timeStr,
-                        slotStart: slotStart,
-                        available: true,
-                        capacity: 50,
-                        status: 'available'
-                    });
-                }
-            }
-        }
-        
-        return slots;
-    }
-    
     // Update date input with availability info
     function updateDateInput() {
         // Set available dates as data attribute for validation
@@ -837,55 +827,83 @@ document.addEventListener('DOMContentLoaded', function() {
             dateInput.setAttribute('data-available-dates', availableDates.join(','));
             dateInput.setAttribute('data-available-count', availableDates.length);
             
+            // Aggiorna Flatpickr con le date disponibili
+            if (flatpickrInstance) {
+                flatpickrInstance.set('enable', availableDates);
+                console.log('✅ Flatpickr aggiornato con', availableDates.length, 'date disponibili');
+            }
+            
             // Show info about available dates
             const infoEl = document.getElementById('date-info');
             if (infoEl) {
-                infoEl.style.display = 'block';
-                infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${selectedMeal}</p>`;
+                infoEl.hidden = false;
+                // Sanitizza selectedMeal per sicurezza (previene XSS)
+                const safeMeal = String(selectedMeal).replace(/[<>]/g, '');
+                infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${safeMeal}</p>`;
             }
         } else {
             // No restrictions, allow all dates
             dateInput.removeAttribute('data-available-dates');
             dateInput.removeAttribute('data-available-count');
             
+            // Resetta Flatpickr
+            if (flatpickrInstance) {
+                flatpickrInstance.set('enable', []);
+                console.log('⚠️ Flatpickr: nessuna data disponibile');
+            }
+            
             const infoEl = document.getElementById('date-info');
             if (infoEl) {
-                infoEl.style.display = 'none';
+                infoEl.hidden = true;
+            }
+        }
+    }
+    
+    // Validazione data - listener aggiunto UNA SOLA VOLTA (fuori dalla funzione)
+    dateInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        const availableDatesList = this.getAttribute('data-available-dates');
+        
+        if (selectedDate && availableDatesList) {
+            const availableDatesArray = availableDatesList.split(',');
+            if (!availableDatesArray.includes(selectedDate)) {
+                showNotice('error', 'Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
+                this.value = '';
+                return;
             }
         }
         
-        // Add validation on change
-        dateInput.addEventListener('change', function() {
-            const selectedDate = this.value;
-            const availableDatesList = this.getAttribute('data-available-dates');
-            
-            if (selectedDate && availableDatesList) {
-                const availableDatesArray = availableDatesList.split(',');
-                if (!availableDatesArray.includes(selectedDate)) {
-                    showNotice('error', 'Questa data non è disponibile per il servizio selezionato. Scegli un\'altra data.');
-                    this.value = '';
-                    return;
-                }
-            }
-            
-            // NON avanzare automaticamente - l'utente deve selezionare un orario prima
-            // Gli orari vengono caricati dal listener checkAndLoadTimeSlots() qui sotto
-        });
-    }
+        // NON avanzare automaticamente - l'utente deve selezionare un orario prima
+        // Gli orari vengono caricati dal listener checkAndLoadTimeSlots() qui sotto
+    });
     
     // Load available time slots when date is selected
     function loadAvailableTimeSlots(meal, date, party) {
         if (!meal || !date || !party) return;
         
+        // PERFORMANCE TIMING START
+        const perfStart = performance.now();
+        console.log(`⏱️ [PERF] Inizio caricamento slot per ${meal} ${date} ${party} persone`);
+        
+        // Cancella richiesta precedente se esiste (previene race condition)
+        if (availableSlotsAbortController) {
+            availableSlotsAbortController.abort();
+            console.log('🚫 Richiesta slot precedente cancellata');
+        }
+        
+        // Crea nuovo AbortController per questa richiesta
+        availableSlotsAbortController = new AbortController();
+        
         const loadingEl = document.getElementById('time-loading');
         const slotsEl = document.getElementById('time-slots');
         const infoEl = document.getElementById('time-info');
         
-        loadingEl.style.display = 'block';
+        loadingEl.hidden = false;
         slotsEl.innerHTML = '';
-        infoEl.style.display = 'none';
+        infoEl.hidden = true;
         
-        fetch(`/wp-json/fp-resv/v1/available-slots?meal=${meal}&date=${date}&party=${party}`)
+        const fetchStart = performance.now();
+        fetch(`/wp-json/fp-resv/v1/available-slots?meal=${meal}&date=${date}&party=${party}`, { signal: availableSlotsAbortController.signal })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -893,10 +911,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                loadingEl.style.display = 'none';
+                const fetchTime = performance.now() - fetchStart;
+                console.log(`⏱️ [PERF] Fetch slot completato in ${fetchTime.toFixed(2)}ms`);
+                
+                loadingEl.hidden = true;
                 
                 if (data && data.slots && data.slots.length > 0) {
-                    slotsEl.innerHTML = '';
+                    const renderStart = performance.now();
+                    // OTTIMIZZATO: usa DocumentFragment per batch append (previene reflow multipli)
+                    const fragment = document.createDocumentFragment();
+                    
                     data.slots.forEach(slot => {
                         const slotBtn = document.createElement('button');
                         slotBtn.type = 'button';
@@ -926,24 +950,42 @@ document.addEventListener('DOMContentLoaded', function() {
                             slotBtn.disabled = true;
                         }
                         
-                        slotsEl.appendChild(slotBtn);
+                        fragment.appendChild(slotBtn);
                     });
-                    infoEl.style.display = 'block';
+                    
+                    // Append tutto in una sola volta (1 reflow invece di N)
+                    slotsEl.innerHTML = '';
+                    slotsEl.appendChild(fragment);
+                    
+                    const renderTime = performance.now() - renderStart;
+                    const totalTime = performance.now() - perfStart;
+                    console.log(`⏱️ [PERF] Rendering ${data.slots.length} slot in ${renderTime.toFixed(2)}ms`);
+                    console.log(`⏱️ [PERF] TOTALE caricamento slot: ${totalTime.toFixed(2)}ms`);
+                    
+                    infoEl.hidden = false;
                 } else {
                     slotsEl.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nessun orario disponibile per questa data</p>';
                 }
             })
             .catch(error => {
+                // Se la richiesta è stata cancellata (AbortError), ignora silenziosamente
+                if (error.name === 'AbortError') {
+                    console.log('🚫 Richiesta slot cancellata (cambio rapido data/party)');
+                    return;
+                }
+                
                 console.error('Errore nel caricamento orari:', error);
                 console.log('Usando orari di fallback per', meal, 'alle', date);
                 showNotice('info', 'Caricamento orari in corso...');
                 
                 // Fallback: genera orari localmente
                 const fallbackSlots = generateFallbackTimeSlots(meal);
-                loadingEl.style.display = 'none';
+                loadingEl.hidden = true;
                 
                 if (fallbackSlots.length > 0) {
-                    slotsEl.innerHTML = '';
+                    // OTTIMIZZATO: usa DocumentFragment per batch append
+                    const fragment = document.createDocumentFragment();
+                    
                     fallbackSlots.forEach(slot => {
                         const slotBtn = document.createElement('button');
                         slotBtn.type = 'button';
@@ -968,10 +1010,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         });
                         
-                        slotsEl.appendChild(slotBtn);
+                        fragment.appendChild(slotBtn);
                     });
-                    infoEl.style.display = 'block';
-                    infoEl.innerHTML = `<p>🕐 ${fallbackSlots.length} orari disponibili per ${meal} (modalità offline)</p>`;
+                    
+                    // Append tutto in una sola volta
+                    slotsEl.innerHTML = '';
+                    slotsEl.appendChild(fragment);
+                    infoEl.hidden = false;
+                    // Sanitizza meal per sicurezza (previene XSS)
+                    const safeMeal = String(meal).replace(/[<>]/g, '');
+                    infoEl.innerHTML = `<p>🕐 ${fallbackSlots.length} orari disponibili per ${safeMeal} (modalità offline)</p>`;
                 } else {
                     slotsEl.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nessun orario disponibile per questa data</p>';
                 }
@@ -979,6 +1027,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
         // Load time slots when date or party changes
+        let checkSlotsTimeout = null;
+        
         function checkAndLoadTimeSlots() {
             const date = document.getElementById('reservation-date').value;
             const party = document.getElementById('party-size').value;
@@ -991,12 +1041,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadAvailableTimeSlots(selectedMeal, date, party);
             }
         }
+        
+        // Debounced version per party size (previene troppe chiamate)
+        function checkAndLoadTimeSlotsDebounced() {
+            clearTimeout(checkSlotsTimeout);
+            checkSlotsTimeout = setTimeout(checkAndLoadTimeSlots, 300); // 300ms debounce
+        }
 
         document.getElementById('reservation-date').addEventListener('change', checkAndLoadTimeSlots);
         
-        // Aggiorna anche quando cambia il numero di persone
+        // Aggiorna anche quando cambia il numero di persone (con debounce)
         const partyInput = document.getElementById('party-size');
         if (partyInput) {
-            partyInput.addEventListener('change', checkAndLoadTimeSlots);
+            partyInput.addEventListener('change', checkAndLoadTimeSlotsDebounced);
         }
 });

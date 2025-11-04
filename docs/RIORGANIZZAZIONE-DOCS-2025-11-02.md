@@ -374,3 +374,4 @@ grep -r "parola chiave" docs/
 **Data:** 2 Novembre 2025  
 **Autore:** Francesco Passeri
 
+

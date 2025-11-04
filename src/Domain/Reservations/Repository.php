@@ -227,14 +227,14 @@ final class Repository
         if (!empty($customerIds)) {
             // Sanitizza manualmente gli ID (sono già int da sopra, ma doppia sicurezza)
             $safeIds = array_map('intval', $customerIds);
-            $idsString = implode(',', $safeIds);
+            $placeholders = implode(',', array_fill(0, count($safeIds), '%d'));
             
-            // Query diretta con ID già sanitizzati (int cast) - sicuro contro SQL injection
+            // Query parametrizzata con placeholders
             $customersSql = 'SELECT id, first_name, last_name, email, phone, lang '
                 . 'FROM ' . $this->customersTableName() . ' '
-                . 'WHERE id IN (' . $idsString . ')';
+                . 'WHERE id IN (' . $placeholders . ')';
             
-            $customersRows = $this->wpdb->get_results($customersSql, ARRAY_A);
+            $customersRows = $this->wpdb->get_results($this->wpdb->prepare($customersSql, ...$safeIds), ARRAY_A);
             
             if (is_array($customersRows)) {
                 // Indicizza per customer_id per lookup veloce
@@ -472,10 +472,12 @@ final class Repository
     public function countActiveReservationsForSlot(string $date, string $time, array $statuses, ?int $roomId = null): int
     {
         $table = $this->tableName();
-        $statusList = "'" . implode("','", array_map('esc_sql', $statuses)) . "'";
         
-        $sql = "SELECT COUNT(*) as count FROM {$table} WHERE date = %s AND time = %s AND status IN ({$statusList})";
-        $params = [$date, $time];
+        // Usa placeholders invece di concatenare stringhe
+        $statusPlaceholders = implode(',', array_fill(0, count($statuses), '%s'));
+        
+        $sql = "SELECT COUNT(*) as count FROM {$table} WHERE date = %s AND time = %s AND status IN ({$statusPlaceholders})";
+        $params = array_merge([$date, $time], $statuses);
         
         if ($roomId !== null) {
             $sql .= ' AND room_id = %d';

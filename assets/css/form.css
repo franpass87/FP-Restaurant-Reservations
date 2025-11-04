@@ -7,6 +7,62 @@
  * @date 2025-01-13
  */
 
+/* ==================== CSS VARIABLES (FRONTEND FORM ONLY) ==================== */
+
+/* 
+ * NOTA: Queste variabili sono scoped al frontend form
+ * NON sovrascrivono le variabili admin (--fp-primary in admin-manager.css)
+ * perché i CSS admin non vengono caricati nel frontend
+ */
+.fp-resv-simple {
+    /* Spacing system - Scala coerente multipli di 4px */
+    --fp-form-space-xs: 0.25rem;    /* 4px - micro spacing */
+    --fp-form-space-sm: 0.5rem;     /* 8px - tight spacing */
+    --fp-form-space-base: 0.75rem;  /* 12px - BASE STANDARD ⭐ */
+    --fp-form-space-md: 1rem;       /* 16px - comfortable spacing */
+    --fp-form-space-lg: 1.25rem;    /* 20px - large spacing */
+    --fp-form-space-xl: 1.5rem;     /* 24px - extra large */
+    --fp-form-space-2xl: 2rem;      /* 32px - section spacing */
+    
+    /* Color palette */
+    --fp-form-primary: #3b82f6;
+    --fp-form-primary-dark: #2563eb;
+    --fp-form-success: #10b981;
+    --fp-form-success-dark: #059669;
+    --fp-form-error: #dc2626;
+    --fp-form-error-light: #fef2f2;
+    --fp-form-warning: #f59e0b;
+    --fp-form-neutral: #6b7280;
+    --fp-form-neutral-light: #f3f4f6;
+    --fp-form-text: #374151;
+    --fp-form-text-light: #6b7280;
+    
+    /* Border & radius */
+    --fp-form-border-color: #d1d5db;
+    --fp-form-border-radius: 12px;
+    --fp-form-border-radius-sm: 8px;
+    
+    /* Typography */
+    --fp-form-font-base: 16px;
+    --fp-form-font-sm: 14px;
+    --fp-form-font-xs: 12px;
+    --fp-form-font-lg: 18px;
+    
+    /* Z-index scale */
+    --fp-form-z-base: 1;
+    --fp-form-z-dropdown: 10;
+    --fp-form-z-modal: 100;
+    --fp-form-z-notice: 1000;
+    --fp-form-z-overlay: 10000;
+    
+    /* Shadows */
+    --fp-form-shadow-sm: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    --fp-form-shadow-md: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+    --fp-form-shadow-focus: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* ==================== END CSS VARIABLES ==================== */
+
 /* ==================== ISOLAMENTO FORM SEMPLICE ==================== */
 
 /* ISOLAMENTO FORM SEMPLICE - Previene interferenze da altri CSS */
@@ -24,7 +80,7 @@
 }
 
 /* Assicuriamo che gli elementi interattivi funzionino correttamente */
-.fp-resv-simple button,
+.fp-resv-simple button:not(.flatpickr-day),
 .fp-resv-simple input,
 .fp-resv-simple select,
 .fp-resv-simple textarea,
@@ -33,7 +89,7 @@
     pointer-events: auto !important;
 }
 
-.fp-resv-simple button:disabled,
+.fp-resv-simple button:disabled:not(.flatpickr-day),
 .fp-resv-simple input:disabled,
 .fp-resv-simple select:disabled,
 .fp-resv-simple textarea:disabled {
@@ -45,22 +101,14 @@
 
 /* ==================== CALENDARIO FLATPICKR - DATE DISABILITATE ==================== */
 
-/* Date NON disponibili - Stile molto evidente */
+/* Date NON disponibili - Stile minimale e discreto */
 .flatpickr-day.flatpickr-disabled {
-    /* Fallback per browser senza gradient support */
     background: #f3f4f6 !important;
-    background: repeating-linear-gradient(
-        135deg,
-        #f9fafb,
-        #f9fafb 8px,
-        #f3f4f6 8px,
-        #f3f4f6 16px
-    ) !important;
     color: #9ca3af !important;
     cursor: not-allowed !important;
-    text-decoration: line-through;
-    opacity: 0.5;
-    position: relative;
+    opacity: 0.6;
+    /* Previeni completamente il click */
+    pointer-events: none !important;
     /* Previeni selezione testo */
     user-select: none;
     -webkit-user-select: none;
@@ -68,31 +116,24 @@
     -ms-user-select: none;
 }
 
-.flatpickr-day.flatpickr-disabled::after {
-    content: '✕';
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 10px;
-    color: #ef4444;
-    font-weight: bold;
-}
-
 .flatpickr-day.flatpickr-disabled:hover {
-    background: repeating-linear-gradient(
-        135deg,
-        #fee2e2,
-        #fee2e2 8px,
-        #fecaca 8px,
-        #fecaca 16px
-    ) !important;
-    color: #dc2626 !important;
+    background: #e5e7eb !important;
+    color: #6b7280 !important;
 }
 
-/* Date DISPONIBILI - Evidenziate */
+/* Date DISPONIBILI - Subtle highlight */
 .flatpickr-day:not(.flatpickr-disabled):not(.today):not(.selected) {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    font-weight: 400;
+    transition: all 0.15s ease;
+}
+
+/* Date DISPONIBILI - Hover state */
+.flatpickr-day:not(.flatpickr-disabled):not(.today):not(.selected):hover {
     background: #f0fdf4 !important;
-    border: 1px solid #d1fae5 !important;
+    border-color: #10b981 !important;
     color: #065f46 !important;
     font-weight: 500;
 }

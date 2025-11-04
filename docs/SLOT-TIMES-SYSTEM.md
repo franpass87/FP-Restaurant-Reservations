@@ -483,3 +483,4 @@ Per dubbi o problemi, verifica sempre:
 **Data:** 2 Novembre 2025  
 **Versione Doc:** 1.0
 
+

@@ -159,3 +159,4 @@ docs/
 **Creato:** 2 Novembre 2025  
 **Il tuo punto di partenza per FP Restaurant Reservations!** 🍽️
 
+

@@ -607,3 +607,4 @@ php tools/quick-health-check.php
 **Qualità Finale:** ⭐⭐⭐⭐⭐  
 **Autore:** Francesco Passeri
 
+

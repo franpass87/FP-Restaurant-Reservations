@@ -470,14 +470,15 @@ class ReservationManager {
     
     updateTodayButtonText() {
         const todayButtons = document.querySelectorAll('[data-action="today"]');
+        const __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__) ? wp.i18n.__ : (text) => text;
         const labels = {
-            month: 'Questo Mese',
-            week: 'Questa Settimana',
-            day: 'Oggi',
-            list: 'Oggi'
+            month: __('This Month', 'fp-restaurant-reservations'),
+            week: __('This Week', 'fp-restaurant-reservations'),
+            day: __('Today', 'fp-restaurant-reservations'),
+            list: __('Today', 'fp-restaurant-reservations')
         };
         
-        const label = labels[this.state.currentView] || 'Oggi';
+        const label = labels[this.state.currentView] || __('Today', 'fp-restaurant-reservations');
         todayButtons.forEach(btn => {
             btn.textContent = label;
         });
@@ -1102,7 +1103,7 @@ class ReservationManager {
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
                     </button>
                     <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week" style="padding: 8px 16px; border: 1px solid #0073aa; background: white; color: #0073aa; border-radius: 4px; cursor: pointer; font-weight: 500;">
-                        Questa Settimana
+                        ${__('This Week', 'fp-restaurant-reservations')}
                     </button>
                     <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-right-alt2"></span>

@@ -295,3 +295,4 @@ gmdate('Ymd\THis\Z')         // ✅ iCalendar DTSTAMP (RFC richiede UTC)
 **Data Fix:** 2 Novembre 2025  
 **Commit:** [da assegnare]
 
+

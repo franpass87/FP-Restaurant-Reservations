@@ -1041,13 +1041,15 @@ class Availability
         DateTimeZone $timezone
     ): array {
         $table    = $this->wpdb->prefix . 'fp_reservations';
-        $statuses = "'" . implode("','", self::ACTIVE_STATUSES) . "'";
-        $sql      = $this->wpdb->prepare(
-            "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statuses})",
-            $dayStart->format('Y-m-d')
-        );
+        
+        // Usa placeholders per gli status invece di concatenazione
+        $statusPlaceholders = implode(',', array_fill(0, count(self::ACTIVE_STATUSES), '%s'));
+        $sql = "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders})";
+        
+        $params = array_merge([$dayStart->format('Y-m-d')], self::ACTIVE_STATUSES);
+        $preparedSql = $this->wpdb->prepare($sql, ...$params);
 
-        $rows = $this->wpdb->get_results($sql, ARRAY_A);
+        $rows = $this->wpdb->get_results($preparedSql, ARRAY_A);
         if (!is_array($rows)) {
             return [];
         }

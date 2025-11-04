@@ -216,3 +216,4 @@ private function resolveMealSettings(string $mealKey): array {
 **Versione:** 0.9.0-rc10.3  
 **Status:** ✅ **SCRUPOLO SUPERATO - TUTTO OK**
 
+

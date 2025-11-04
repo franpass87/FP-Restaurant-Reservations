@@ -348,3 +348,4 @@ Slot disponibili:
 **Versione:** 0.9.0-rc10.3  
 **Status:** ✅ HOTFIX APPLICATO
 
+

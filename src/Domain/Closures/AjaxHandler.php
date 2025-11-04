@@ -46,7 +46,7 @@ final class AjaxHandler
         }
 
         try {
-            $includeInactive = isset($_REQUEST['include_inactive']) && $_REQUEST['include_inactive'];
+            $includeInactive = isset($_REQUEST['include_inactive']) && rest_sanitize_boolean($_REQUEST['include_inactive']);
             
             error_log('[FP Closures AJAX] Chiamata service->list()');
             

@@ -86,3 +86,4 @@ assets/
 **Ultimo aggiornamento:** 2 Novembre 2025  
 **Versione:** 0.9.0-rc8
 
+

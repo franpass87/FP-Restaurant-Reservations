@@ -5,16 +5,11 @@
  * @var array<string, mixed> $context
  */
 
-// COMMENTO DIAGNOSTICO: VERIFICA CARICAMENTO
-echo "<!-- FORM.PHP CARICATO: " . date('H:i:s') . " -->";
-
 if (!isset($context) || !is_array($context)) {
-    echo "<!-- CONTEXT NON VALIDO -->";
     return;
 }
 
 // USA IL FORM SEMPLICE
-echo "<!-- FORM SEMPLICE CARICATO: " . date('H:i:s') . " -->";
 include __DIR__ . '/form-simple.php';
 return; // Termina template senza bloccare resto pagina
 

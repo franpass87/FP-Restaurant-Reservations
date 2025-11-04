@@ -24,38 +24,78 @@ $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Opzionale',
 ?>
 
 <!-- Nome e Cognome su 2 colonne -->
-<div class="fp-resv-fields fp-resv-fields--grid fp-resv-fields--2col">
+<fieldset class="fp-resv-fields fp-resv-fields--grid fp-resv-fields--2col fp-fieldset">
+    <legend class="screen-reader-text"><?php echo esc_html__('Informazioni personali', 'fp-restaurant-reservations'); ?></legend>
     <label class="fp-resv-field fp-field">
-        <span><?php echo esc_html($strings['fields']['first_name'] ?? ''); ?></span>
-        <input class="fp-input" type="text" name="fp_resv_first_name" data-fp-resv-field="first_name" required autocomplete="given-name">
-        <small class="fp-error" data-fp-resv-error="first_name" aria-live="polite" hidden></small>
-        <?php if (!empty($hints['first_name'] ?? '')) : ?>
-            <small class="fp-hint"><?php echo esc_html($hints['first_name']); ?></small>
-        <?php endif; ?>
+        <span>
+            <?php echo esc_html($strings['fields']['first_name'] ?? ''); ?>
+            <abbr class="fp-required" title="<?php echo esc_attr__('Obbligatorio', 'fp-restaurant-reservations'); ?>" aria-label="<?php echo esc_attr__('Campo obbligatorio', 'fp-restaurant-reservations'); ?>">*</abbr>
+        </span>
+        <input 
+            class="fp-input" 
+            type="text" 
+            name="fp_resv_first_name" 
+            data-fp-resv-field="first_name" 
+            required 
+            autocomplete="given-name"
+            aria-describedby="first-name-hint first-name-error"
+            aria-invalid="false"
+        >
+        <small class="fp-error" id="first-name-error" data-fp-resv-error="first_name" role="alert" aria-live="polite" hidden></small>
+        <small class="fp-hint" id="first-name-hint" <?php echo empty($hints['first_name'] ?? '') ? 'hidden' : ''; ?>>
+            <?php echo esc_html($hints['first_name'] ?? ''); ?>
+        </small>
     </label>
     <label class="fp-resv-field fp-field">
-        <span><?php echo esc_html($strings['fields']['last_name'] ?? ''); ?></span>
-        <input class="fp-input" type="text" name="fp_resv_last_name" data-fp-resv-field="last_name" required autocomplete="family-name">
-        <small class="fp-error" data-fp-resv-error="last_name" aria-live="polite" hidden></small>
-        <?php if (!empty($hints['last_name'] ?? '')) : ?>
-            <small class="fp-hint"><?php echo esc_html($hints['last_name']); ?></small>
-        <?php endif; ?>
+        <span>
+            <?php echo esc_html($strings['fields']['last_name'] ?? ''); ?>
+            <abbr class="fp-required" title="<?php echo esc_attr__('Obbligatorio', 'fp-restaurant-reservations'); ?>" aria-label="<?php echo esc_attr__('Campo obbligatorio', 'fp-restaurant-reservations'); ?>">*</abbr>
+        </span>
+        <input 
+            class="fp-input" 
+            type="text" 
+            name="fp_resv_last_name" 
+            data-fp-resv-field="last_name" 
+            required 
+            autocomplete="family-name"
+            aria-describedby="last-name-hint last-name-error"
+            aria-invalid="false"
+        >
+        <small class="fp-error" id="last-name-error" data-fp-resv-error="last_name" role="alert" aria-live="polite" hidden></small>
+        <small class="fp-hint" id="last-name-hint" <?php echo empty($hints['last_name'] ?? '') ? 'hidden' : ''; ?>>
+            <?php echo esc_html($hints['last_name'] ?? ''); ?>
+        </small>
     </label>
-</div>
+</fieldset>
 
 <!-- Email -->
 <label class="fp-resv-field fp-field fp-resv-field--email">
-    <span><?php echo esc_html($strings['fields']['email'] ?? ''); ?></span>
-    <input class="fp-input" type="email" name="fp_resv_email" data-fp-resv-field="email" required autocomplete="email">
-    <small class="fp-error" data-fp-resv-error="email" aria-live="polite" hidden></small>
-    <?php if (!empty($hints['email'] ?? '')) : ?>
-        <small class="fp-hint"><?php echo esc_html($hints['email']); ?></small>
-    <?php endif; ?>
+    <span>
+        <?php echo esc_html($strings['fields']['email'] ?? ''); ?>
+        <abbr class="fp-required" title="<?php echo esc_attr__('Obbligatorio', 'fp-restaurant-reservations'); ?>" aria-label="<?php echo esc_attr__('Campo obbligatorio', 'fp-restaurant-reservations'); ?>">*</abbr>
+    </span>
+    <input 
+        class="fp-input" 
+        type="email" 
+        name="fp_resv_email" 
+        data-fp-resv-field="email" 
+        required 
+        autocomplete="email"
+        aria-describedby="email-hint email-error"
+        aria-invalid="false"
+    >
+    <small class="fp-error" id="email-error" data-fp-resv-error="email" role="alert" aria-live="polite" hidden></small>
+    <small class="fp-hint" id="email-hint" <?php echo empty($hints['email'] ?? '') ? 'hidden' : ''; ?>>
+        <?php echo esc_html($hints['email'] ?? ''); ?>
+    </small>
 </label>
 
 <!-- Telefono con prefisso -->
 <label class="fp-resv-field fp-field fp-resv-field--phone">
-    <span><?php echo esc_html($strings['fields']['phone'] ?? ''); ?></span>
+    <span>
+        <?php echo esc_html($strings['fields']['phone'] ?? ''); ?>
+        <abbr class="fp-required" title="<?php echo esc_attr__('Obbligatorio', 'fp-restaurant-reservations'); ?>" aria-label="<?php echo esc_attr__('Campo obbligatorio', 'fp-restaurant-reservations'); ?>">*</abbr>
+    </span>
     <div class="fp-resv-phone-input" data-fp-resv-phone>
         <input
             class="fp-input"
@@ -66,6 +106,8 @@ $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Opzionale',
             inputmode="tel"
             autocomplete="tel"
             required
+            aria-describedby="phone-hint phone-error"
+            aria-invalid="false"
         >
         <?php if ($phonePrefixes !== []) : ?>
             <select
@@ -88,10 +130,10 @@ $optionalConsentLabel = $strings['consents_meta']['optional'] ?? __('Opzionale',
             <span class="fp-resv-phone-input__static" aria-hidden="true">+<?php echo esc_html($defaultPhoneCode); ?></span>
         <?php endif; ?>
     </div>
-    <small class="fp-error" data-fp-resv-error="phone" aria-live="polite" hidden></small>
-    <?php if (!empty($hints['phone'] ?? '')) : ?>
-        <small class="fp-hint"><?php echo esc_html($hints['phone']); ?></small>
-    <?php endif; ?>
+    <small class="fp-error" id="phone-error" data-fp-resv-error="phone" role="alert" aria-live="polite" hidden></small>
+    <small class="fp-hint" id="phone-hint" <?php echo empty($hints['phone'] ?? '') ? 'hidden' : ''; ?>>
+        <?php echo esc_html($hints['phone'] ?? ''); ?>
+    </small>
 </label>
 
 <!-- Occasione speciale -->

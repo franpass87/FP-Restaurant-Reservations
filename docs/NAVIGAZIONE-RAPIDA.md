@@ -155,3 +155,4 @@ TEST-SCENARIOS.md → bugfixes/2025-11-02/
 **Creato:** 2 Novembre 2025  
 **Versione:** 1.0
 
+

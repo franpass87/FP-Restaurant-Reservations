@@ -166,3 +166,4 @@ echo "   agli orari configurati nel backend, sempre nel timezone Europe/Rome.\n"
 echo "\n";
 echo "✅ Sistema verificato e corretto!\n";
 
+

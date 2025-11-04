@@ -277,3 +277,4 @@ Calendario mostra:
 **Creato:** 2 Novembre 2025  
 **Status:** ✅ Sistema già presente e funzionante
 
+

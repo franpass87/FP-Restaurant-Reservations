@@ -871,8 +871,17 @@ class ReservationManager {
             reservationsByDate[date].push(resv);
         });
         
-        // Nome giorni
-        const dayNames = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+        // Nome giorni - Usa wp.i18n se disponibile, altrimenti fallback inglese
+        const __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__) ? wp.i18n.__ : (text) => text;
+        const dayNames = [
+            __('Mon', 'fp-restaurant-reservations'),
+            __('Tue', 'fp-restaurant-reservations'),
+            __('Wed', 'fp-restaurant-reservations'),
+            __('Thu', 'fp-restaurant-reservations'),
+            __('Fri', 'fp-restaurant-reservations'),
+            __('Sat', 'fp-restaurant-reservations'),
+            __('Sun', 'fp-restaurant-reservations')
+        ];
         
         // Header con navigazione settimana
         const mondayStr = this.formatItalianDate(monday);
@@ -880,15 +889,15 @@ class ReservationManager {
         
         let html = `
             <div class="fp-week-header">
-                <h2>Settimana ${mondayStr} - ${sundayStr}</h2>
+                <h2>${__('Week', 'fp-restaurant-reservations')} ${mondayStr} - ${sundayStr}</h2>
                 <div class="fp-week-nav">
-                    <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente">
+                    <button type="button" class="fp-btn-icon" data-action="prev-week" title="${__('Previous week', 'fp-restaurant-reservations')}">
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
                     </button>
                     <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week">
-                        Questa Settimana
+                        ${__('This Week', 'fp-restaurant-reservations')}
                     </button>
-                    <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva">
+                    <button type="button" class="fp-btn-icon" data-action="next-week" title="${__('Next week', 'fp-restaurant-reservations')}">
                         <span class="dashicons dashicons-arrow-right-alt2"></span>
                     </button>
                 </div>

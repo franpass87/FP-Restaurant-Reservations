@@ -191,6 +191,225 @@
     display: none;
 }
 
+/* ==================== ACCESSIBILITY IMPROVEMENTS ==================== */
+
+/* Asterisco obbligatorio */
+.fp-required {
+    color: #dc2626;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+/* Screen reader only text */
+.screen-reader-text {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Focus visible esplicito per accessibilità keyboard */
+.fp-input:focus-visible,
+.fp-btn:focus-visible,
+.fp-checkbox:focus-visible,
+.fp-meal-btn:focus-visible {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Remove default outline ma solo se focus-visible è supportato */
+.fp-input:focus:not(:focus-visible),
+.fp-btn:focus:not(:focus-visible),
+.fp-checkbox:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Fieldset styling */
+.fp-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.fp-fieldset legend {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+/* ARIA invalid state */
+.fp-input[aria-invalid="true"] {
+    border-color: #dc2626 !important;
+    background-color: #fef2f2;
+}
+
+.fp-input[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+/* Hint text styling */
+.fp-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.fp-hint[hidden] {
+    display: none;
+}
+
+/* Error text styling */
+.fp-error {
+    font-size: 12px;
+    color: #dc2626;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.fp-error[hidden] {
+    display: none;
+}
+
+/* ==================== PHONE INPUT STYLES ==================== */
+
+/* Phone input group container */
+.fp-phone-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+/* Phone prefix select */
+.fp-input--phone-prefix {
+    width: 140px;
+    flex-shrink: 0;
+    padding: 12px 8px;
+    border: 1.5px solid var(--fp-form-border-color, #d1d5db);
+    border-radius: var(--fp-form-border-radius, 12px);
+    font-size: var(--fp-form-font-sm, 13px);
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    color: var(--fp-form-text, #374151);
+    transition: all 0.2s ease;
+    box-shadow: var(--fp-form-shadow-sm, 0 2px 8px 0 rgba(0, 0, 0, 0.08));
+}
+
+.fp-input--phone-prefix:focus-visible {
+    border-color: var(--fp-form-primary, #3b82f6);
+    box-shadow: var(--fp-form-shadow-focus, 0 0 0 4px rgba(59, 130, 246, 0.1));
+}
+
+/* Phone number input */
+.fp-input--phone-number {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1.5px solid var(--fp-form-border-color, #d1d5db);
+    border-radius: var(--fp-form-border-radius, 12px);
+    font-size: var(--fp-form-font-base, 14px);
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    color: var(--fp-form-text, #374151);
+    transition: all 0.2s ease;
+    box-shadow: var(--fp-form-shadow-sm, 0 2px 8px 0 rgba(0, 0, 0, 0.08));
+}
+
+.fp-input--phone-number:focus-visible {
+    border-color: var(--fp-form-primary, #3b82f6);
+    box-shadow: var(--fp-form-shadow-focus, 0 0 0 4px rgba(59, 130, 246, 0.1));
+}
+
+/* ==================== END PHONE INPUT ==================== */
+
+/* ==================== NOTICE CONTAINER ==================== */
+
+.fp-notice-container {
+    position: relative;
+    z-index: var(--fp-form-z-notice, 1000);
+    margin-bottom: var(--fp-form-space-md, 1rem);
+}
+
+/* ==================== END NOTICE CONTAINER ==================== */
+
+/* ==================== LOADING & INFO MESSAGES ==================== */
+
+.fp-loading-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: var(--fp-form-font-xs, 13px);
+    color: var(--fp-form-text-light, #666);
+}
+
+.fp-loading-message__spinner {
+    display: inline-flex;
+    animation: fp-spin 1s linear infinite;
+}
+
+@keyframes fp-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.fp-info-message {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: var(--fp-form-font-xs, 13px);
+    color: var(--fp-form-text, #333);
+}
+
+.fp-info-message__icon {
+    flex-shrink: 0;
+}
+
+/* ==================== END LOADING & INFO ==================== */
+
+/* ==================== MEAL BUTTON ICONS ==================== */
+
+.fp-meal-btn__icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 6px;
+}
+
+.fp-meal-btn__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.fp-meal-btn__label {
+    display: inline-block;
+}
+
+/* ==================== END MEAL BUTTON ICONS ==================== */
+
+/* ==================== PDF BUTTON ICON ==================== */
+
+.fp-btn-pdf__icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 6px;
+}
+
+.fp-btn-pdf__icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==================== END PDF BUTTON ICON ==================== */
+
+/* ==================== END ACCESSIBILITY ==================== */
+
 /* Responsive form */
 @media (max-width: 640px) {
     .fp-resv-form__row,
