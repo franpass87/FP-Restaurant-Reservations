@@ -3,6 +3,9 @@
  * Gestione moderna delle prenotazioni ristorante
  */
 
+// Funzione di traduzione globale con fallback
+const { __ } = wp.i18n || { __: (text) => text };
+
 class ReservationManager {
     constructor() {
         // Configurazione
@@ -470,7 +473,6 @@ class ReservationManager {
     
     updateTodayButtonText() {
         const todayButtons = document.querySelectorAll('[data-action="today"]');
-        const __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__) ? wp.i18n.__ : (text) => text;
         const labels = {
             month: __('This Month', 'fp-restaurant-reservations'),
             week: __('This Week', 'fp-restaurant-reservations'),

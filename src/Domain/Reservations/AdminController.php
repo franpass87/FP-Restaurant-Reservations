@@ -169,7 +169,7 @@ final class AdminController
         $styleUrl  = Plugin::$url . 'assets/css/admin-manager.css';
         $version   = Plugin::assetVersion();
 
-        wp_enqueue_script($scriptHandle, $scriptUrl, [], $version, true);
+        wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-i18n'], $version, true);
         wp_enqueue_style($styleHandle, $styleUrl, [], $version);
 
         // Carica meal plans configurati
