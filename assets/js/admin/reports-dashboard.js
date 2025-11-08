@@ -110,50 +110,96 @@
       console.log('[Analytics] Nonce aggiunto:', settings.nonce);
     }
 
-    if (window.wp && window.wp.apiFetch) {
-      console.log('[Analytics] Usando wp.apiFetch');
-      return window.wp.apiFetch({
-        path: path,
-        method: 'GET',
-        data: data,
-        headers: headers,
-      });
-    }
+    var isAbsolute = typeof path === 'string' && path.indexOf('http') === 0;
+    var normalizedPath = typeof path === 'string' ? path.trim() : '';
+    var relativePath = normalizedPath;
 
-    var base = (settings.restRoot || '').replace(/\/$/, '');
-    console.log('[Analytics] REST Root:', base);
-    
-    var url = path.indexOf('http') === 0 ? path : base + '/' + path.replace(/^\//, '');
-    if (data) {
-      var query = new URLSearchParams();
-      Object.keys(data).forEach(function (key) {
-        var value = data[key];
-        if (value !== undefined && value !== null && value !== '') {
-          query.append(key, value);
-        }
-      });
-      if (query.toString()) {
-        url += (url.indexOf('?') === -1 ? '?' : '&') + query.toString();
+    if (!isAbsolute) {
+      relativePath = normalizedPath.replace(/^\/+/, '');
+      if (relativePath.indexOf('fp-resv/v1/') === 0) {
+        relativePath = relativePath.replace(/^fp-resv\/v1\//, '');
       }
     }
-    
-    console.log('[Analytics] URL finale:', url);
-    console.log('[Analytics] Headers:', headers);
 
-    return fetch(url, {
-      method: 'GET',
-      headers: headers,
-      credentials: 'same-origin',
-    }).then(function (response) {
+
+    var performFetch = function () {
+      if (isAbsolute) {
+        console.log('[Analytics] URL assoluto utilizzato:', normalizedPath);
+        return fetch(normalizedPath, {
+          method: 'GET',
+          headers: headers,
+          credentials: 'same-origin',
+        }).then(handleResponse).catch(handleFetchError);
+      }
+
+      var base = (settings.restRoot || '').replace(/\/$/, '');
+      console.log('[Analytics] REST Root:', base);
+      
+      var url = base + '/' + relativePath;
+      if (data) {
+        var query = new URLSearchParams();
+        Object.keys(data).forEach(function (key) {
+          var value = data[key];
+          if (value !== undefined && value !== null && value !== '') {
+            query.append(key, value);
+          }
+        });
+        if (query.toString()) {
+          url += (url.indexOf('?') === -1 ? '?' : '&') + query.toString();
+        }
+      }
+      
+      console.log('[Analytics] URL finale:', url);
+      console.log('[Analytics] Headers:', headers);
+  
+      return fetch(url, {
+        method: 'GET',
+        headers: headers,
+        credentials: 'same-origin',
+      }).then(handleResponse).catch(handleFetchError);
+    };
+
+    function handleResponse(response) {
       console.log('[Analytics] Response status:', response.status, 'OK:', response.ok);
       if (!response.ok) {
         throw new Error('Request failed: ' + response.status);
       }
       return response.json();
-    }).catch(function (error) {
-      console.error('[Analytics] Errore nella richiesta:', error);
+    }
+
+    function handleFetchError(error) {
+      console.error('[Analytics] Errore nella richiesta fetch:', error);
       throw error;
-    });
+    }
+
+    if (window.wp && window.wp.apiFetch && !isAbsolute) {
+      var apiPath = 'fp-resv/v1/' + relativePath.replace(/^\/+/, '');
+      console.log('[Analytics] Usando wp.apiFetch con path:', apiPath);
+      try {
+        return window.wp.apiFetch({
+          path: apiPath,
+          method: 'GET',
+          data: data,
+          headers: headers,
+        }).catch(function (error) {
+          console.error('[Analytics] wp.apiFetch errore:', error);
+          if (error && error.code === 'fetch_error') {
+            console.warn('[Analytics] Fallback su fetch nativo dopo fetch_error');
+            return performFetch();
+          }
+          throw error;
+        });
+      } catch (error) {
+        console.error('[Analytics] wp.apiFetch eccezione sincrona:', error);
+        if (error && error.code === 'fetch_error') {
+          console.warn('[Analytics] Fallback su fetch nativo dopo eccezione sincrona');
+          return performFetch();
+        }
+        throw error;
+      }
+    }
+
+    return performFetch();
   }
 
   function setLoading(loading) {
@@ -185,7 +231,7 @@
     setLoading(true);
     toggleEmpty(false);
 
-    request('/fp-resv/v1/reports/analytics', {
+    request('reports/analytics', {
       start: state.start,
       end: state.end,
       location: state.location,
@@ -484,7 +530,7 @@
 
     setLoading(true);
 
-    request('/fp-resv/v1/reports/analytics/export', {
+    request('reports/analytics/export', {
       start: state.start,
       end: state.end,
       location: state.location,

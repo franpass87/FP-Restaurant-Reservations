@@ -78,8 +78,18 @@ if (!FP\Resv\Core\Requirements::validate()) {
 
 require_once __DIR__ . '/src/Core/BootstrapGuard.php';
 
-FP\Resv\Core\BootstrapGuard::run(__FILE__, static function (): void {
+$pluginFile = __FILE__;
+
+FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
     require_once __DIR__ . '/src/Core/Plugin.php';
 
-    FP\Resv\Core\Plugin::boot(__FILE__);
+    $boot = static function () use ($pluginFile): void {
+        FP\Resv\Core\Plugin::boot($pluginFile);
+    };
+
+    if (\did_action('wp_loaded')) {
+        $boot();
+    } else {
+        \add_action('wp_loaded', $boot, 0);
+    }
 });

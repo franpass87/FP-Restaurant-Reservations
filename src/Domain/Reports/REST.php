@@ -198,14 +198,21 @@ final class REST
 
     public function checkPermissions(): bool|WP_Error
     {
-        if (!current_user_can(Roles::MANAGE_RESERVATIONS)) {
-            return new WP_Error(
-                'fp_resv_forbidden',
-                __('Non hai i permessi per visualizzare questi report.', 'fp-restaurant-reservations'),
-                ['status' => 403]
-            );
+        // Garantisce che gli amministratori mantengano le capability aggiornate anche se
+        // l'endpoint REST viene chiamato prima che il menu di amministrazione sia caricato.
+        Roles::ensureAdminCapabilities();
+
+        if (
+            current_user_can(Roles::MANAGE_RESERVATIONS)
+            || current_user_can('manage_options')
+        ) {
+            return true;
         }
 
-        return true;
+        return new WP_Error(
+            'fp_resv_forbidden',
+            __('Non hai i permessi per visualizzare questi report.', 'fp-restaurant-reservations'),
+            ['status' => 403]
+        );
     }
 }

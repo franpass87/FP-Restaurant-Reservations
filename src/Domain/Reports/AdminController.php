@@ -14,6 +14,7 @@ use function current_user_can;
 use function esc_html__;
 use function esc_url_raw;
 use function file_exists;
+use function filemtime;
 use function rest_url;
 use function strtotime;
 use function wp_create_nonce;
@@ -73,6 +74,14 @@ final class AdminController
         $scriptUrl = Plugin::$url . 'assets/js/admin/reports-dashboard.js';
         $styleUrl  = Plugin::$url . 'assets/css/admin-reports.css';
         $version   = Plugin::assetVersion();
+
+        $scriptPath = Plugin::$dir . 'assets/js/admin/reports-dashboard.js';
+        if (file_exists($scriptPath)) {
+            $mtime = filemtime($scriptPath);
+            if ($mtime !== false) {
+                $version .= '.' . $mtime;
+            }
+        }
 
         wp_enqueue_style($baseHandle, Plugin::$url . 'assets/css/admin-shell.css', [], $version);
 

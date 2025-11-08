@@ -5,7 +5,29 @@
     }
 
     const settings = window.fpResvClosuresSettings || {};
-    const ajaxUrl = settings.ajaxUrl || '/wp-admin/admin-ajax.php';
+
+    const normalizeAjaxUrl = (rawUrl) => {
+        const fallback = '/wp-admin/admin-ajax.php';
+
+        if (!rawUrl || typeof rawUrl !== 'string') {
+            return window.location.origin + fallback;
+        }
+
+        try {
+            const parsed = new URL(rawUrl, window.location.origin);
+            parsed.protocol = window.location.protocol;
+            parsed.host = window.location.host;
+            return parsed.toString();
+        } catch (error) {
+            if (rawUrl.startsWith('/')) {
+                return window.location.origin + rawUrl;
+            }
+
+            return window.location.origin + fallback;
+        }
+    };
+
+    const ajaxUrl = normalizeAjaxUrl(window.ajaxurl || settings.ajaxUrl || '/wp-admin/admin-ajax.php');
     const nonce = settings.nonce || '';
     const statsNodes = {
         active: document.querySelector('[data-role="closures-active"]'),

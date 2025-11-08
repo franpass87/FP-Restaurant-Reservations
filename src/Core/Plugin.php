@@ -64,6 +64,7 @@ use FP\Resv\Frontend\ManageController;
 use Throwable;
 use function sprintf;
 use function is_admin;
+use function did_action;
 
 final class Plugin
 {
@@ -120,6 +121,7 @@ final class Plugin
                 self::$dir . 'assets/css/form.css',
                 self::$dir . 'assets/dist/fe/onepage.esm.js',
                 self::$dir . 'assets/dist/fe/onepage.iife.js',
+                self::$dir . 'assets/js/admin/reports-dashboard.js',
             ];
             
             $latestTime = time();
@@ -152,6 +154,15 @@ final class Plugin
         }
         
         self::$assetVersionCache = self::VERSION . '.' . (int) $upgradeTime;
+
+        $adminAnalyticsScript = self::$dir . 'assets/js/admin/reports-dashboard.js';
+        if (file_exists($adminAnalyticsScript)) {
+            $mtime = filemtime($adminAnalyticsScript);
+            if ($mtime !== false) {
+                self::$assetVersionCache .= '.' . $mtime;
+            }
+        }
+
         return self::$assetVersionCache;
     }
 
@@ -216,11 +227,17 @@ final class Plugin
             }
         }, 10, 2);
 
-        add_action('plugins_loaded', static function (): void {
+        if (did_action('plugins_loaded')) {
             self::runBootstrapStage('bootstrap', static function (): void {
                 self::onPluginsLoaded();
             });
-        });
+        } else {
+            add_action('plugins_loaded', static function (): void {
+                self::runBootstrapStage('bootstrap', static function (): void {
+                    self::onPluginsLoaded();
+                });
+            });
+        }
     }
 
     public static function onActivate(): void

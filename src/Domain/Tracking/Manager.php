@@ -21,6 +21,7 @@ use function round;
 use function sanitize_text_field;
 use function strtolower;
 use function substr;
+use function trim;
 use function wp_json_encode;
 use function wp_unslash;
 use function rawurlencode;
@@ -465,7 +466,7 @@ JS;
     {
         $eventId = $this->generateEventId();
         $clientId = $this->extractClientId();
-        $userData = $this->buildUserData($reservation);
+        $userData = $this->buildUserData($reservation, $payload);
         $eventSourceUrl = home_url($_SERVER['REQUEST_URI'] ?? '/');
 
         // Invia a GA4 se configurato
@@ -522,18 +523,41 @@ JS;
      * @param ReservationModel $reservation
      * @return array<string, mixed>
      */
-    private function buildUserData(ReservationModel $reservation): array
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function buildUserData(ReservationModel $reservation, array $payload): array
     {
         $userData = [];
 
         // Email
-        if ($reservation->customer_email !== '') {
-            $userData['email'] = $reservation->customer_email;
+        $email = '';
+        if (property_exists($reservation, 'customer_email') && is_string($reservation->customer_email) && $reservation->customer_email !== '') {
+            $email = $reservation->customer_email;
+        } elseif (property_exists($reservation, 'email') && is_string($reservation->email) && $reservation->email !== '') {
+            $email = $reservation->email;
+        } elseif (isset($payload['email']) && is_string($payload['email']) && $payload['email'] !== '') {
+            $email = $payload['email'];
+        }
+
+        if ($email !== '') {
+            $userData['email'] = trim($email);
         }
 
         // Phone
-        if ($reservation->customer_phone !== '') {
-            $userData['phone'] = $reservation->customer_phone;
+        $phone = '';
+        if (property_exists($reservation, 'customer_phone') && is_string($reservation->customer_phone) && $reservation->customer_phone !== '') {
+            $phone = $reservation->customer_phone;
+        } elseif (property_exists($reservation, 'phone') && is_string($reservation->phone) && $reservation->phone !== '') {
+            $phone = $reservation->phone;
+        } elseif (isset($payload['phone']) && is_string($payload['phone']) && $payload['phone'] !== '') {
+            $phone = $payload['phone'];
+        }
+
+        if ($phone !== '') {
+            $userData['phone'] = trim($phone);
         }
 
         // IP address

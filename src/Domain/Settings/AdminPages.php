@@ -30,6 +30,7 @@ use function esc_url_raw;
 use function explode;
 use function filter_input;
 use function filter_var;
+use function file_exists;
 use function get_option;
 use function implode;
 use function in_array;
@@ -68,6 +69,7 @@ use function wp_localize_script;
 use function wp_nonce_field;
 use function wp_safe_redirect;
 use function wp_strip_all_tags;
+use function wp_die;
 use const FILTER_FLAG_ALLOW_FRACTION;
 use const FILTER_SANITIZE_SPECIAL_CHARS;
 use const FILTER_VALIDATE_URL;
@@ -91,6 +93,7 @@ final class AdminPages
 
     public function register(): void
     {
+        error_log('[FP Resv] AdminPages register called');
         // Priorità 5: crea il menu principale per primo
         add_action('admin_menu', [$this, 'registerMainMenu'], 5);
         // Priorità 20: aggiunge i submenu delle impostazioni dopo i menu operativi (Agenda, Tables, ecc.)
@@ -131,8 +134,17 @@ final class AdminPages
         if ($page === 'fp-resv-form-colors') {
             wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], $version);
             wp_enqueue_script('fp-resv-form-colors', Plugin::$url . 'assets/js/admin/form-colors.js', [], $version, true);
+
+            $formTheForkPath = Plugin::$dir . 'assets/css/form-thefork.css';
+            $formCssPath      = Plugin::$dir . 'assets/css/form.css';
+            $cssUrl           = Plugin::$url . 'assets/css/form-thefork.css?v=' . $version;
+
+            if (!file_exists($formTheForkPath) && file_exists($formCssPath)) {
+                $cssUrl = Plugin::$url . 'assets/css/form.css?v=' . $version;
+            }
+
             wp_localize_script('fp-resv-form-colors', 'fpResvFormColors', [
-                'cssUrl' => Plugin::$url . 'assets/css/form-thefork.css?v=' . $version,
+                'cssUrl' => $cssUrl,
             ]);
             return;
         }
@@ -264,7 +276,13 @@ final class AdminPages
             $container->register(FormColors::class, $formColors);
         }
 
-        require __DIR__ . '/../Admin/Views/form-colors.php';
+        $view = Plugin::$dir . 'src/Admin/Views/form-colors.php';
+        if (!file_exists($view)) {
+            wp_die(__('Il template dei colori del form è mancante. Verifica l’installazione del plugin.', 'fp-restaurant-reservations'));
+        }
+
+        /** @psalm-suppress UnresolvableInclude */
+        require $view;
     }
 
     /**
@@ -339,6 +357,7 @@ final class AdminPages
     {
         // Assicura che gli amministratori abbiano sempre la capability necessaria
         Roles::ensureAdminCapabilities();
+        error_log('[FP Resv] registerMainMenu invoked');
         
         if ($this->pages === []) {
             return;
@@ -1584,7 +1603,7 @@ final class AdminPages
                 continue;
             }
 
-            $entries = $this->splitServiceHoursEntries($line);
+            $entries = $this->splitServiceHoursEntries((string) $line);
 
             foreach ($entries as $entry) {
                 $entry = trim($entry);

@@ -8,9 +8,7 @@ final class I18n
 {
     public static function init(): void
     {
-        // Carica il textdomain su plugins_loaded invece di init per evitare
-        // caricamenti just-in-time che WordPress 6.7+ segnala come errori
-        add_action('plugins_loaded', [self::class, 'loadTextDomain'], 0);
+        add_action('init', [self::class, 'loadTextDomain']);
     }
 
     public static function loadTextDomain(): void

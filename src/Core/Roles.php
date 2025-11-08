@@ -153,9 +153,11 @@ final class Roles
         if ($adminRole !== null) {
             if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
                 $adminRole->add_cap(self::MANAGE_RESERVATIONS);
+                error_log('[FP Resv] added manage_fp_reservations to administrator role');
             }
             if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
                 $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
+                error_log('[FP Resv] added view_fp_reservations_manager to administrator role');
             }
         }
     }

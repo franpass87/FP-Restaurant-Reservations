@@ -499,6 +499,7 @@ class ReservationManager {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
+                credentials: 'same-origin',
                 signal: controller.signal,
             });
             
@@ -583,6 +584,7 @@ class ReservationManager {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
+                credentials: 'same-origin',
                 signal: controller.signal,
             });
             
@@ -1563,6 +1565,7 @@ class ReservationManager {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': this.config.nonce,
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(updates),
             });
 
@@ -1591,6 +1594,7 @@ class ReservationManager {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': this.config.nonce,
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ status: 'cancelled' }),
             });
 
@@ -1623,6 +1627,7 @@ class ReservationManager {
                 headers: {
                     'X-WP-Nonce': this.config.nonce,
                 },
+                credentials: 'same-origin',
             });
 
             console.log('[Manager] DELETE Response Status:', response.status);
@@ -1793,7 +1798,9 @@ class ReservationManager {
             });
 
             const url = this.buildRestUrl(`availability?${availabilityParams.toString()}`);
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                credentials: 'same-origin',
+            });
 
             if (!response.ok) {
                 throw new Error('Errore nel caricamento degli slot');
@@ -2060,6 +2067,7 @@ class ReservationManager {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': this.config.nonce, // Nonce REST admin
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(formData),
             });
 
@@ -2425,12 +2433,31 @@ class ReservationManager {
             return '';
         }
 
-        const normalized = String(restRoot).trim();
-        if (normalized === '') {
+        const rawValue = String(restRoot).trim();
+        if (rawValue === '') {
             return '';
         }
 
-        return normalized.replace(/\/+$/, '');
+        const { location } = window;
+
+        if (typeof URL === 'function' && location) {
+            try {
+                const parsed = new URL(rawValue, location.origin);
+
+                parsed.protocol = location.protocol;
+                parsed.host = location.host;
+
+                return parsed.toString().replace(/\/+$/, '');
+            } catch (error) {
+                // continua sotto per fallback
+            }
+        }
+
+        if (location && rawValue.startsWith('/')) {
+            return `${location.origin}${rawValue}`.replace(/\/+$/, '');
+        }
+
+        return rawValue.replace(/\/+$/, '');
     }
 
     buildRestUrl(path = '') {
