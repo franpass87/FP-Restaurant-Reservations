@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use FP\Resv\Core\Roles;
 use FP\Resv\Core\ErrorLogger;
+use FP\Resv\Core\Exceptions\ValidationException;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Tables\LayoutService;
 use InvalidArgumentException;
@@ -701,6 +702,20 @@ final class AdminREST
                 'fp_resv_admin_reservation_invalid',
                 $exception->getMessage(),
                 ['status' => 400]
+            );
+        } catch (ValidationException $exception) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv Admin] ValidationException: ' . $exception->getMessage());
+                error_log('[FP Resv Admin] Context: ' . wp_json_encode($exception->getContext()));
+            }
+
+            return new WP_Error(
+                'fp_resv_admin_reservation_validation_error',
+                $exception->getMessage(),
+                [
+                    'status' => 422,
+                    'errors' => $exception->getContext(),
+                ]
             );
         } catch (Throwable $exception) {
             if (defined('WP_DEBUG') && WP_DEBUG) {

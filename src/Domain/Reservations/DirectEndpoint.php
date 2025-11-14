@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reservations;
 
 use WP_REST_Request;
+use WP_REST_Response;
 
 // Importa le funzioni globali necessarie
 use function add_action;
@@ -19,6 +20,10 @@ use function ob_end_clean;
 use function remove_all_actions;
 use function remove_all_filters;
 use function strpos;
+use function is_wp_error;
+use function rest_convert_error_to_response;
+use function rest_ensure_response;
+use function wp_json_encode;
 
 /**
  * Endpoint diretto che bypassa completamente il sistema REST di WordPress
@@ -81,12 +86,13 @@ final class DirectEndpoint
                 $request->set_param($key, $value);
             }
 
-            // Chiama il metodo del controller REST esistente
-            // Nota: handleCreateReservation ora usa output diretto, quindi NON ritorna qui
-            $this->restController->handleCreateReservation($request);
-
-            // Se arriviamo qui, significa che non c'è stato output diretto
-            $this->sendJsonError(500, 'fp_resv_no_output', 'No output generated');
+            // Chiama il controller REST e serializza la risposta
+            $result = $this->restController->handleCreateReservation($request);
+            $response = rest_ensure_response($result);
+            if (is_wp_error($response)) {
+                $response = rest_convert_error_to_response($response);
+            }
+            $this->sendRestResponse($response);
 
         } catch (\Throwable $e) {
             $this->sendJsonError(500, 'fp_resv_server_error', $e->getMessage());
@@ -106,11 +112,51 @@ final class DirectEndpoint
 
         header('Content-Type: application/json; charset=UTF-8');
         http_response_code($status);
-        echo json_encode([
+        echo wp_json_encode([
             'code' => $code,
             'message' => $message,
             'data' => ['status' => $status],
         ]);
+        die();
+    }
+
+    private function sendRestResponse(WP_REST_Response $response): void
+    {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        remove_all_actions('shutdown');
+        remove_all_filters('rest_post_dispatch');
+
+        $status = $response->get_status();
+        $headers = $response->get_headers();
+        $data = $response->get_data();
+
+        if (!headers_sent()) {
+            http_response_code($status);
+
+            $contentTypeSent = false;
+            foreach ($headers as $name => $value) {
+                if (strcasecmp($name, 'Content-Type') === 0) {
+                    $contentTypeSent = true;
+                }
+
+                if (is_array($value)) {
+                    foreach ($value as $headerValue) {
+                        header($name . ': ' . $headerValue, false);
+                    }
+                } else {
+                    header($name . ': ' . $value, false);
+                }
+            }
+
+            if (!$contentTypeSent) {
+                header('Content-Type: application/json; charset=UTF-8');
+            }
+        }
+
+        echo wp_json_encode($data);
         die();
     }
 }

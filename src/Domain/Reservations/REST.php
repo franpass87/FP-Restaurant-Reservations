@@ -155,8 +155,6 @@ final class REST
                 ],
             ]
         );
-        error_log('[FP Resv REST] ✅ Endpoint /available-days registrato');
-
         register_rest_route(
             'fp-resv/v1',
             '/meal-config',
@@ -956,30 +954,23 @@ final class REST
             }
         }
 
-        // DEBUG: Log COMPLETO della richiesta
-        $jsonParams = $request->get_json_params();
-        $bodyParams = $request->get_body_params();
-        
-        Logging::log('api', 'Creazione prenotazione - DEBUG COMPLETO', [
-            'json_params' => $jsonParams,
-            'body_params' => $bodyParams,
-            'method' => $request->get_method(),
-            'content_type' => $request->get_content_type(),
-        ]);
-        
-        // DEBUG: Log dei campi time ricevuti
+        // DEBUG: log minimale del payload, senza PII
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $jsonParams = $request->get_json_params();
+            $bodyParams = $request->get_body_params();
+
+            Logging::log('api', 'Creazione prenotazione - metadata richiesta', [
+                'method' => $request->get_method(),
+                'content_type' => $request->get_content_type(),
+                'has_json' => is_array($jsonParams),
+                'json_keys' => is_array($jsonParams) ? array_keys($jsonParams) : [],
+                'has_body' => is_array($bodyParams),
+                'body_keys' => is_array($bodyParams) ? array_keys($bodyParams) : [],
+            ]);
+        }
+
         $timeValue = $this->param($request, ['time', 'fp_resv_time']) ?? '';
         $slotStartValue = $this->param($request, ['fp_resv_slot_start', 'slot_start']) ?? '';
-        
-        Logging::log('api', 'Creazione prenotazione - campi estratti', [
-            'fp_resv_time' => $timeValue,
-            'fp_resv_slot_start' => $slotStartValue,
-            'date' => $this->param($request, ['date', 'fp_resv_date']) ?? '',
-            'party' => $this->param($request, ['party', 'fp_resv_party']) ?? 0,
-            'meal' => $this->param($request, ['meal', 'fp_resv_meal']) ?? '',
-            'first_name' => $this->param($request, ['first_name', 'fp_resv_first_name']) ?? '',
-            'email' => $this->param($request, ['email', 'fp_resv_email']) ?? '',
-        ]);
         
         $payload = [
             'date'        => $this->param($request, ['date', 'fp_resv_date']) ?? '',
