@@ -1154,6 +1154,7 @@ final class AdminREST
             'room_id'    => $request->get_param('room_id') ?? null,
             'table_id'   => $request->get_param('table_id') ?? null,
             'value'      => $request->get_param('value') ?? null,
+            'allow_partial_contact' => true,
         ];
 
         if (defined('WP_DEBUG') && WP_DEBUG) {

@@ -622,6 +622,7 @@ class Service
             'high_chair_count' => 0,
             'wheelchair_table' => false,
             'pets'             => false,
+            'allow_partial_contact' => false,
         ];
 
         $payload = array_merge($defaults, $payload);
@@ -682,6 +683,7 @@ class Service
         $payload['request_id'] = isset($payload['request_id']) && is_string($payload['request_id'])
             ? sanitize_text_field($payload['request_id'])
             : null;
+        $payload['allow_partial_contact'] = $this->toBool($payload['allow_partial_contact']);
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;

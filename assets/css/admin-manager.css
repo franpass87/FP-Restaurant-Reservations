@@ -1035,6 +1035,41 @@
     line-height: 1.6;
 }
 
+.fp-manager-tip {
+    display: flex;
+    gap: 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--fp-radius-sm);
+    padding: 16px;
+    margin-bottom: 25px;
+    color: #1d4ed8;
+    box-shadow: var(--fp-shadow-sm);
+}
+
+.fp-manager-tip__icon {
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #dbeafe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fp-manager-tip__content {
+    font-size: 14px;
+    color: var(--fp-gray-800);
+    line-height: 1.5;
+}
+
+.fp-manager-tip__content strong {
+    display: block;
+    color: var(--fp-gray-900);
+    margin-bottom: 4px;
+}
+
 .fp-form-group {
     margin-bottom: 20px;
 }

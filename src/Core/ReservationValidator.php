@@ -186,13 +186,20 @@ class ReservationValidator
         $firstName = trim((string) ($payload['first_name'] ?? ''));
         $lastName  = trim((string) ($payload['last_name'] ?? ''));
         $email     = trim((string) ($payload['email'] ?? ''));
+        $allowPartialContact = !empty($payload['allow_partial_contact']);
 
-        if ($firstName === '') {
-            $errors['first_name'] = __('Il nome è obbligatorio.', 'fp-restaurant-reservations');
-        }
+        if ($allowPartialContact) {
+            if ($firstName === '' && $lastName === '') {
+                $errors['first_name'] = __('Inserisci almeno nome o cognome.', 'fp-restaurant-reservations');
+            }
+        } else {
+            if ($firstName === '') {
+                $errors['first_name'] = __('Il nome è obbligatorio.', 'fp-restaurant-reservations');
+            }
 
-        if ($lastName === '') {
-            $errors['last_name'] = __('Il cognome è obbligatorio.', 'fp-restaurant-reservations');
+            if ($lastName === '') {
+                $errors['last_name'] = __('Il cognome è obbligatorio.', 'fp-restaurant-reservations');
+            }
         }
 
         if ($email === '') {

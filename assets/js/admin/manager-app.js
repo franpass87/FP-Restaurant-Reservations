@@ -1965,6 +1965,14 @@ class ReservationManager {
                     <strong>Coperti:</strong> ${party}
                 </div>
 
+                <div class="fp-manager-tip" role="note">
+                    <span class="fp-manager-tip__icon dashicons dashicons-megaphone" aria-hidden="true"></span>
+                    <div class="fp-manager-tip__content">
+                        <strong>Consiglio per la fidelizzazione</strong>
+                        <p>Compila sempre i dati del cliente: <em>nome o cognome</em> (almeno uno), <em>email</em> e <em>telefono</em>. Queste informazioni permettono di tracciare le visite, inviare follow-up e migliorare le campagne di loyalty.</p>
+                    </div>
+                </div>
+
                 <form id="fp-new-reservation-form-step3">
                     <div class="fp-form-row">
                         <div class="fp-form-group">
