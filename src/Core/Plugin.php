@@ -656,18 +656,39 @@ final class Plugin
             $container->register(\FP\Resv\Frontend\DashboardWidget::class, $dashboardWidget);
         }
 
-        // Register shortcodes on init hook (WordPress best practice)
-        add_action('init', static function(): void {
+        // Register shortcodes - gestisce sia init già eseguito che non ancora
+        if (did_action('init')) {
+            // init già eseguito, registra direttamente
+            error_log('[FP-RESV] init già eseguito, registrazione diretta shortcode');
             \FP\Resv\Frontend\Shortcodes::register();
-            
-            // Debug log solo in WP_DEBUG
-            if (defined('WP_DEBUG') && WP_DEBUG) {
+        } else {
+            // init non ancora eseguito, usa hook
+            add_action('init', static function(): void {
+                \FP\Resv\Frontend\Shortcodes::register();
+                
+                // Debug log solo in WP_DEBUG
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    global $shortcode_tags;
+                    if (!isset($shortcode_tags['fp_reservations'])) {
+                        error_log('[FP-RESV-INIT] WARNING: Shortcode fp_reservations NOT registered!');
+                    } else {
+                        error_log('[FP-RESV-INIT] ✅ Shortcode fp_reservations registrato correttamente');
+                    }
+                }
+            }, 0); // Priorità 0 per registrare il prima possibile
+        }
+        
+        // Fallback aggiuntivo: registra anche su plugins_loaded se init non è ancora stato eseguito
+        if (!did_action('init')) {
+            add_action('plugins_loaded', static function(): void {
+                // Verifica se lo shortcode è già registrato
                 global $shortcode_tags;
                 if (!isset($shortcode_tags['fp_reservations'])) {
-                    error_log('[FP-RESV-INIT] WARNING: Shortcode fp_reservations NOT registered!');
+                    error_log('[FP-RESV-PLUGINS-LOADED] Shortcode non trovato, registrazione fallback...');
+                    \FP\Resv\Frontend\Shortcodes::register();
                 }
-            }
-        }, 5); // Priorità 5 per eseguire prima di altri shortcode
+            }, 20); // Priorità 20 per eseguire dopo l'inizializzazione principale
+        }
 
         $manage = new ManageController();
         $manage->boot();

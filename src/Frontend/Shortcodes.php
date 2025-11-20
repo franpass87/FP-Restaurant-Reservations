@@ -26,6 +26,14 @@ final class Shortcodes
         error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_reservations") executed');
         error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_resv_debug") executed');
         error_log('[FP-RESV-SHORTCODE] add_shortcode("fp_resv_test") executed');
+        
+        // Verifica che lo shortcode sia effettivamente registrato
+        global $shortcode_tags;
+        if (isset($shortcode_tags['fp_reservations'])) {
+            error_log('[FP-RESV-SHORTCODE] ✅ Shortcode fp_reservations VERIFICATO registrato');
+        } else {
+            error_log('[FP-RESV-SHORTCODE] ❌ ERRORE: Shortcode fp_reservations NON registrato!');
+        }
     }
 
     /**
@@ -38,6 +46,15 @@ final class Shortcodes
         error_log('[FP-RESV] Attributes: ' . print_r($atts, true));
         error_log('[FP-RESV] Current URL: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
         error_log('[FP-RESV] Is main query: ' . (function_exists('is_main_query') ? (is_main_query() ? 'YES' : 'NO') : 'N/A'));
+        error_log('[FP-RESV] Did action plugins_loaded: ' . (did_action('plugins_loaded') ? 'YES' : 'NO'));
+        error_log('[FP-RESV] Did action init: ' . (did_action('init') ? 'YES' : 'NO'));
+        
+        // Se WP_DEBUG è attivo, aggiungi un marker HTML visibile all'inizio
+        $debugMarker = '';
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $debugMarker = '<!-- FP-RESV Shortcode render() START -->';
+            error_log('[FP-RESV] Debug marker aggiunto');
+        }
         
         // Temporarily disable wpautop and other filters that might break HTML
         $removedFilters = [];
@@ -59,6 +76,16 @@ final class Shortcodes
                 $atts,
                 'fp_reservations'
             );
+
+            // Verifica che il plugin sia completamente inizializzato
+            if (!did_action('plugins_loaded')) {
+                error_log('[FP-RESV] WARNING: plugins_loaded not fired yet, waiting...');
+                // Forza l'inizializzazione se possibile
+                if (function_exists('do_action') && !did_action('plugins_loaded')) {
+                    // Non possiamo forzare plugins_loaded, ma possiamo provare a inizializzare manualmente
+                    error_log('[FP-RESV] Attempting manual initialization...');
+                }
+            }
 
             $container = ServiceContainer::getInstance();
             if (!$container) {
@@ -131,13 +158,31 @@ final class Shortcodes
             if (empty(trim($output))) {
                 error_log('[FP-RESV] CRITICAL: Form rendering produced empty output');
                 error_log('[FP-RESV] Context had ' . count($context) . ' keys');
+                error_log('[FP-RESV] Context keys: ' . implode(', ', array_keys($context)));
+                
+                // Se WP_DEBUG è attivo, mostra un messaggio visibile
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    $debugMsg = '<div style="background:#fff3cd;border:2px solid #ffc107;padding:15px;margin:20px 0;border-radius:8px;font-family:sans-serif;">';
+                    $debugMsg .= '<strong>⚠️ FP Restaurant Reservations - Debug</strong><br>';
+                    $debugMsg .= 'Il template non ha prodotto output. Controlla i log PHP per maggiori dettagli.<br>';
+                    $debugMsg .= '<small>Context keys: ' . esc_html(implode(', ', array_keys($context))) . '</small>';
+                    $debugMsg .= '</div>';
+                    return $debugMsg;
+                }
+                
                 return self::renderError('Il form non ha prodotto output');
             }
 
             error_log('[FP-RESV] Form renderizzato correttamente, lunghezza output: ' . strlen($output));
             error_log('[FP-RESV] Output contiene fp-resv-widget: ' . (strpos($output, 'fp-resv-widget') !== false ? 'SI' : 'NO'));
             error_log('[FP-RESV] Output contiene data-fp-resv-app: ' . (strpos($output, 'data-fp-resv-app') !== false ? 'SI' : 'NO'));
+            error_log('[FP-RESV] Output contiene fp-resv-simple: ' . (strpos($output, 'fp-resv-simple') !== false ? 'SI' : 'NO'));
             error_log('[FP-RESV] ========================================');
+            
+            // Aggiungi il marker di debug all'inizio dell'output
+            if ($debugMarker !== '') {
+                $output = $debugMarker . "\n" . $output;
+            }
             
             // RIMUOVI TUTTI i <p> e <br> aggiunti da wpautop che rompono il layout
             $output = preg_replace('/<p>\s*<!--/', '<!--', $output);  // <p> prima dei commenti
