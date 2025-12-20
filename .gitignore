@@ -1,4 +1,15 @@
-/vendor/
+# /vendor/ - Commentato per includere vendor/ nel repository per installazione automatica
+# Le dipendenze devono essere incluse per funzionare con Git Updater
+/vendor/*.md
+/vendor/*.txt
+/vendor/*.json
+/vendor/*.xml
+/vendor/*.yml
+/vendor/*.yaml
+/vendor/.htaccess
+/vendor/.git
+/vendor/.gitignore
+/vendor/.gitattributes
 /node_modules/
 /dist/
 /build/

@@ -65,15 +65,22 @@
 git clone https://github.com/franpass87/FP-Restaurant-Reservations.git
 
 # Installa dipendenze
-composer install
+composer install --no-dev --prefer-dist
 npm install
 
 # Build assets
 npm run build
 
+# IMPORTANTE: Prima di fare commit/push, assicurati che vendor/ sia incluso
+# Il plugin funziona con Git Updater solo se vendor/ è nel repository
+git add vendor/
+git commit -m "Include vendor dependencies"
+
 # Test
 php tools/quick-health-check.php
 ```
+
+> **⚠️ IMPORTANTE per Git Updater:** Per funzionare con Git Updater, `vendor/` deve essere incluso nel repository Git. Dopo `composer install`, esegui `git add vendor/` e fai commit.
 
 👉 **Guida completa:** [docs/guides/developer/README-BUILD.md](docs/guides/developer/README-BUILD.md)
 

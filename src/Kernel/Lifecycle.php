@@ -34,6 +34,22 @@ final class Lifecycle
             );
         }
         
+        // Install Composer dependencies if missing (during activation, context is cleaner)
+        $autoload = dirname($pluginFile) . '/vendor/autoload.php';
+        if (!is_readable($autoload)) {
+            // Load the install function
+            if (function_exists('fp_resv_install_composer_dependencies')) {
+                $installSuccess = fp_resv_install_composer_dependencies(dirname($pluginFile));
+                if (!$installSuccess) {
+                    // If installation fails, try to continue anyway - user can install manually
+                    // Don't block activation, just log it
+                    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                        error_log('[FP Restaurant Reservations] Installazione dipendenze Composer fallita durante attivazione');
+                    }
+                }
+            }
+        }
+        
         // Run database migrations
         self::runMigrations();
         
