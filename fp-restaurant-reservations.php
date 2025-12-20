@@ -277,8 +277,8 @@ if (!is_readable($autoload)) {
         if (function_exists('add_action')) {
             add_action('admin_notices', function () use ($message, $autoload, $installAttempted) {
                 $errorDetails = get_option('fp_resv_composer_install_error', []);
-                // Ottieni la directory del plugin (due livelli sopra vendor/autoload.php)
-                $pluginDir = dirname(dirname($autoload));
+                // Ottieni la directory del plugin (__DIR__ è più sicuro)
+                $pluginDir = __DIR__;
                 
                 $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
                 $notice .= '<p>' . esc_html($message) . '</p>';
