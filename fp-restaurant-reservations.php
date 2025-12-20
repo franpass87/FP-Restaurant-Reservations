@@ -54,6 +54,39 @@ if (version_compare(PHP_VERSION, $minPhp, '<')) {
 }
 
 /**
+ * Funzione per mostrare notice di attivazione
+ * Deve essere definita PRIMA degli hook di attivazione
+ */
+function fp_resv_show_activation_notice(): void {
+    if (!function_exists('get_option')) {
+        return;
+    }
+    
+    $activationErrors = get_option('fp_resv_activation_errors', []);
+    if (empty($activationErrors) || !is_array($activationErrors)) {
+        return;
+    }
+    
+    // Mostra direttamente il notice (questa funzione viene chiamata dentro add_action('admin_notices'))
+    $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
+    $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
+    foreach ($activationErrors as $error) {
+        $notice .= '<li>' . (function_exists('esc_html') ? esc_html($error) : htmlspecialchars($error, ENT_QUOTES, 'UTF-8')) . '</li>';
+    }
+    $notice .= '</ul>';
+    $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
+    $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
+    $notice .= '</div>';
+    echo $notice;
+}
+
+// Registra il notice PRIMA di qualsiasi altra cosa, così viene sempre mostrato
+// anche se il plugin esce prima a causa di errori
+if (function_exists('add_action')) {
+    add_action('admin_notices', 'fp_resv_show_activation_notice', 1);
+}
+
+/**
  * Scarica composer.phar automaticamente
  * 
  * @param string $targetPath Path dove salvare composer.phar
@@ -358,26 +391,6 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     return $success;
 }
 
-// Funzione per mostrare notice di attivazione
-function fp_resv_show_activation_notice(): void {
-    $activationErrors = get_option('fp_resv_activation_errors', []);
-    if (empty($activationErrors) || !is_array($activationErrors)) {
-        return;
-    }
-    
-    // Mostra direttamente il notice (questa funzione viene chiamata dentro add_action('admin_notices'))
-    $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
-    $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
-    foreach ($activationErrors as $error) {
-        $notice .= '<li>' . esc_html($error) . '</li>';
-    }
-    $notice .= '</ul>';
-    $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
-    $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
-    $notice .= '</div>';
-    echo $notice;
-}
-
 // Registra gli hook di attivazione/deattivazione PRIMA di caricare l'autoloader
 // Questo assicura che siano sempre disponibili, anche se l'autoloader non è ancora caricato
 register_activation_hook(__FILE__, static function (): void {
@@ -485,12 +498,7 @@ register_deactivation_hook(__FILE__, static function (): void {
     }
 });
 
-// Mostra notice degli errori di attivazione se presenti (registrato PRIMA del controllo autoloader)
-// così viene sempre mostrato anche se il plugin esce prima
-if (function_exists('add_action')) {
-    add_action('admin_notices', 'fp_resv_show_activation_notice');
-}
-
+// Il notice degli errori di attivazione è già stato registrato all'inizio del file (riga 86)
 // Load autoloader - REQUIRED for plugin to work
 $autoload = __DIR__ . '/vendor/autoload.php';
 if (!is_readable($autoload)) {
