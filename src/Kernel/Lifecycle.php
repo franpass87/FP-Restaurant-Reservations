@@ -21,43 +21,74 @@ final class Lifecycle
      */
     public static function activate(string $pluginFile): void
     {
-        // Load requirements
-        require_once dirname($pluginFile) . '/src/Core/Requirements.php';
-        
-        // Validate requirements
-        if (!\FP\Resv\Core\Requirements::validate()) {
-            deactivate_plugins(plugin_basename($pluginFile));
-            wp_die(
-                __('FP Restaurant Reservations non può essere attivato perché l\'ambiente non soddisfa i requisiti minimi.', 'fp-restaurant-reservations'),
-                __('Errore di attivazione', 'fp-restaurant-reservations'),
-                ['back_link' => true]
-            );
-        }
-        
-        // Install Composer dependencies if missing (during activation, context is cleaner)
-        $autoload = dirname($pluginFile) . '/vendor/autoload.php';
-        if (!is_readable($autoload)) {
-            // Load the install function
-            if (function_exists('fp_resv_install_composer_dependencies')) {
-                $installSuccess = fp_resv_install_composer_dependencies(dirname($pluginFile));
-                if (!$installSuccess) {
-                    // If installation fails, try to continue anyway - user can install manually
-                    // Don't block activation, just log it
-                    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-                        error_log('[FP Restaurant Reservations] Installazione dipendenze Composer fallita durante attivazione');
+        try {
+            // Load requirements
+            $requirementsPath = dirname($pluginFile) . '/src/Core/Requirements.php';
+            if (!file_exists($requirementsPath) || !is_readable($requirementsPath)) {
+                if (function_exists('wp_die')) {
+                    wp_die('FP Restaurant Reservations: File Requirements.php non trovato.');
+                }
+                return;
+            }
+            
+            require_once $requirementsPath;
+            
+            // Validate requirements only if class exists
+            if (!class_exists('FP\Resv\Core\Requirements')) {
+                if (function_exists('wp_die')) {
+                    wp_die('FP Restaurant Reservations: Classe Requirements non trovata.');
+                }
+                return;
+            }
+            
+            // Validate requirements
+            if (!\FP\Resv\Core\Requirements::validate()) {
+                if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+                    deactivate_plugins(plugin_basename($pluginFile));
+                }
+                if (function_exists('wp_die')) {
+                    wp_die(
+                        __('FP Restaurant Reservations non può essere attivato perché l\'ambiente non soddisfa i requisiti minimi.', 'fp-restaurant-reservations'),
+                        __('Errore di attivazione', 'fp-restaurant-reservations'),
+                        ['back_link' => true]
+                    );
+                }
+                return;
+            }
+            
+            // Install Composer dependencies if missing (during activation, context is cleaner)
+            $autoload = dirname($pluginFile) . '/vendor/autoload.php';
+            if (!is_readable($autoload)) {
+                // Load the install function
+                if (function_exists('fp_resv_install_composer_dependencies')) {
+                    $installSuccess = fp_resv_install_composer_dependencies(dirname($pluginFile));
+                    if (!$installSuccess) {
+                        // If installation fails, try to continue anyway - user can install manually
+                        // Don't block activation, just log it
+                        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                            error_log('[FP Restaurant Reservations] Installazione dipendenze Composer fallita durante attivazione');
+                        }
                     }
                 }
             }
+            
+            // Run database migrations
+            self::runMigrations();
+            
+            // Set activation flag
+            if (function_exists('update_option')) {
+                update_option('fp_resv_activated', time());
+            }
+            
+            // Clear any caches
+            if (function_exists('wp_cache_flush')) {
+                wp_cache_flush();
+            }
+        } catch (Throwable $e) {
+            if (function_exists('wp_die')) {
+                wp_die('FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage());
+            }
         }
-        
-        // Run database migrations
-        self::runMigrations();
-        
-        // Set activation flag
-        update_option('fp_resv_activated', time());
-        
-        // Clear any caches
-        wp_cache_flush();
     }
     
     /**
@@ -103,10 +134,19 @@ final class Lifecycle
         // Note: We can't use Bootstrap::pluginFile() here as Bootstrap may not be initialized
         // during activation, so we'll load migrations through the existing Core\Migrations class
         $migrationsFile = __DIR__ . '/../Core/Migrations.php';
-        if (file_exists($migrationsFile)) {
-            require_once $migrationsFile;
-            // Run migrations
-            \FP\Resv\Core\Migrations::run();
+        if (file_exists($migrationsFile) && is_readable($migrationsFile)) {
+            try {
+                require_once $migrationsFile;
+                // Run migrations only if class exists
+                if (class_exists('FP\Resv\Core\Migrations')) {
+                    \FP\Resv\Core\Migrations::run();
+                }
+            } catch (Throwable $e) {
+                // Ignora errori durante le migrazioni durante l'attivazione
+                if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                    error_log('[FP Restaurant Reservations] Errore durante le migrazioni: ' . $e->getMessage());
+                }
+            }
         }
     }
 }
