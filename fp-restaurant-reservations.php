@@ -365,22 +365,17 @@ function fp_resv_show_activation_notice(): void {
         return;
     }
     
-    if (!function_exists('add_action')) {
-        return;
+    // Mostra direttamente il notice (questa funzione viene chiamata dentro add_action('admin_notices'))
+    $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
+    $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
+    foreach ($activationErrors as $error) {
+        $notice .= '<li>' . esc_html($error) . '</li>';
     }
-    
-    add_action('admin_notices', static function () use ($activationErrors) {
-        $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
-        $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
-        foreach ($activationErrors as $error) {
-            $notice .= '<li>' . esc_html($error) . '</li>';
-        }
-        $notice .= '</ul>';
-        $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
-        $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
-        $notice .= '</div>';
-        echo $notice;
-    });
+    $notice .= '</ul>';
+    $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
+    $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
+    $notice .= '</div>';
+    echo $notice;
 }
 
 // Registra gli hook di attivazione/deattivazione PRIMA di caricare l'autoloader
@@ -490,6 +485,12 @@ register_deactivation_hook(__FILE__, static function (): void {
     }
 });
 
+// Mostra notice degli errori di attivazione se presenti (registrato PRIMA del controllo autoloader)
+// così viene sempre mostrato anche se il plugin esce prima
+if (function_exists('add_action')) {
+    add_action('admin_notices', 'fp_resv_show_activation_notice');
+}
+
 // Load autoloader - REQUIRED for plugin to work
 $autoload = __DIR__ . '/vendor/autoload.php';
 if (!is_readable($autoload)) {
@@ -553,18 +554,18 @@ if (!is_readable($autoload)) {
             });
         }
 
-        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-        }
-
+        // Non disattivare il plugin, solo mostrare notice e uscire silenziosamente
+        // Il plugin rimane attivo ma non funzionerà finché le dipendenze non sono installate
+        
         if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
-            \WP_CLI::error($message);
+            \WP_CLI::warning($message);
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP Restaurant Reservations] ' . $message);
         }
 
+        // Esci silenziosamente senza caricare il resto del plugin
         return;
     }
     
@@ -608,11 +609,7 @@ if (!$autoloadLoaded) {
 
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
 // Gli hook di attivazione/deattivazione sono già stati registrati sopra (riga 257), prima del caricamento dell'autoloader
-
-// Mostra notice degli errori di attivazione se presenti
-if (function_exists('add_action')) {
-    add_action('admin_notices', 'fp_resv_show_activation_notice');
-}
+// Il notice degli errori di attivazione è già stato registrato sopra, prima del controllo autoloader
 
 // Inizializza sistema di auto-aggiornamento da GitHub
 // Solo se l'autoloader è stato caricato correttamente
