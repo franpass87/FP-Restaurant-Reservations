@@ -185,49 +185,131 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     }
     
     if ($composer === null) {
+        $errorDetails[] = 'Composer non trovato sul server';
+        $errorDetails[] = 'Cercato in: ' . $localComposer;
+        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
+        $errorDetails[] = 'Comando globale "composer" non disponibile';
+        update_option('fp_resv_composer_install_error', $errorDetails);
         @unlink($lockFile);
         return false;
     }
     
     $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-    $command = $isWindows
-        ? sprintf('%s install --no-dev --prefer-dist --no-interaction --optimize-autoloader 2>&1', $composer)
-        : sprintf('cd %s && %s install --no-dev --prefer-dist --no-interaction --optimize-autoloader 2>&1', escapeshellarg($pluginDir), $composer);
+    
+    // Risolvi il percorso reale (per gestire junction/symlink su Windows)
+    $pluginDirReal = $pluginDir;
+    if ($isWindows && function_exists('realpath')) {
+        $realPath = realpath($pluginDir);
+        if ($realPath !== false) {
+            $pluginDirReal = $realPath;
+        }
+    }
+    
+    // Normalizza il percorso per il sistema operativo
+    $pluginDirNormalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $pluginDirReal);
+    
+    // Costruisci il comando Composer
+    $composerCommand = sprintf('%s install --no-dev --prefer-dist --no-interaction --optimize-autoloader', $composer);
     
     $returnVar = -1;
     $output = '';
     $executed = false;
     
+    // Prova prima con proc_open cambiando directory nel working directory
     if (function_exists('proc_open') && !in_array('proc_open', explode(',', ini_get('disable_functions')), true)) {
         $descriptorspec = [[0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']]];
-        $process = @proc_open($command, $descriptorspec, $pipes, $pluginDir);
+        
+        // Su Windows, usa cmd.exe
+        if ($isWindows) {
+            // Usa cmd.exe con /c e cambia directory nel working directory di proc_open
+            $command = sprintf('cmd /c "%s 2>&1"', $composerCommand);
+        } else {
+            // Su Linux, usa sh -c
+            $command = sprintf('sh -c "%s 2>&1"', $composerCommand);
+        }
+        
+        // Imposta la working directory nel processo
+        $process = @proc_open($command, $descriptorspec, $pipes, $pluginDirNormalized);
         
         if (is_resource($process)) {
             $executed = true;
             if (isset($pipes[1])) stream_set_timeout($pipes[1], 300);
             if (isset($pipes[2])) stream_set_timeout($pipes[2], 300);
             
-            $stdout = isset($pipes[1]) ? stream_get_contents($pipes[1]) : '';
-            $stderr = isset($pipes[2]) ? stream_get_contents($pipes[2]) : '';
-            foreach ($pipes as $pipe) if (isset($pipe)) fclose($pipe);
+            // Leggi l'output in modo non bloccante
+            $stdout = '';
+            $stderr = '';
+            
+            // Chiudi stdin
+            if (isset($pipes[0])) {
+                fclose($pipes[0]);
+            }
+            
+            // Leggi stdout e stderr
+            while (is_resource($process)) {
+                $read = [$pipes[1], $pipes[2]];
+                $write = null;
+                $except = null;
+                
+                if (stream_select($read, $write, $except, 1) > 0) {
+                    foreach ($read as $stream) {
+                        if ($stream === $pipes[1]) {
+                            $data = stream_get_contents($pipes[1]);
+                            if ($data !== false) {
+                                $stdout .= $data;
+                            }
+                        } elseif ($stream === $pipes[2]) {
+                            $data = stream_get_contents($pipes[2]);
+                            if ($data !== false) {
+                                $stderr .= $data;
+                            }
+                        }
+                    }
+                }
+                
+                // Controlla se il processo è ancora in esecuzione
+                $status = proc_get_status($process);
+                if (!$status['running']) {
+                    break;
+                }
+            }
+            
+            // Leggi eventuali dati rimanenti
+            if (isset($pipes[1])) {
+                $remaining = stream_get_contents($pipes[1]);
+                if ($remaining !== false) {
+                    $stdout .= $remaining;
+                }
+                fclose($pipes[1]);
+            }
+            if (isset($pipes[2])) {
+                $remaining = stream_get_contents($pipes[2]);
+                if ($remaining !== false) {
+                    $stderr .= $remaining;
+                }
+                fclose($pipes[2]);
+            }
             
             $output = $stdout . ($stderr ? "\n" . $stderr : '');
             $returnVar = proc_close($process);
         }
     }
     
+    // Fallback: usa exec o shell_exec cambiando directory prima
     if (!$executed) {
         $oldCwd = getcwd();
-        @chdir($pluginDir);
+        $changedDir = @chdir($pluginDirNormalized);
         
-        if (function_exists('exec') && !in_array('exec', explode(',', ini_get('disable_functions')), true)) {
-            $executed = true;
-            @exec($command, $outputLines, $returnVar);
-            $output = implode("\n", $outputLines);
-        } elseif (function_exists('shell_exec') && !in_array('shell_exec', explode(',', ini_get('disable_functions')), true)) {
-            $executed = true;
-            $output = @shell_exec($command);
-            $returnVar = ($output !== null && $output !== '') ? 0 : 1;
+        if ($changedDir) {
+            if (function_exists('exec') && !in_array('exec', explode(',', ini_get('disable_functions')), true)) {
+                $executed = true;
+                @exec($composerCommand . ' 2>&1', $outputLines, $returnVar);
+                $output = implode("\n", $outputLines);
+            } elseif (function_exists('shell_exec') && !in_array('shell_exec', explode(',', ini_get('disable_functions')), true)) {
+                $executed = true;
+                $output = @shell_exec($composerCommand . ' 2>&1');
+                $returnVar = ($output !== null && $output !== '') ? 0 : 1;
+            }
         }
         
         @chdir($oldCwd);
@@ -237,20 +319,190 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         @unlink($lockFile);
     }
     
-    $autoloadPath = $pluginDir . '/vendor/autoload.php';
+    $autoloadPath = $pluginDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
     $autoloadExists = is_readable($autoloadPath);
     $success = ($autoloadExists && filesize($autoloadPath) > 1000);
     
     if (!$success) {
-        $errorDetails[] = 'Return code: ' . $returnVar;
-        if ($output && (stripos($output, '<html') !== false || stripos($output, '<script') !== false)) {
-            $errorDetails[] = 'Output contiene HTML';
+        $errorDetails = [];
+        $errorDetails[] = 'Comando eseguito con return code: ' . $returnVar;
+        if ($output) {
+            // Limita l'output a 2000 caratteri per vedere più dettagli
+            $outputPreview = strlen($output) > 2000 ? substr($output, 0, 2000) . "\n... (output troncato, totale: " . strlen($output) . " caratteri)" : $output;
+            if (stripos($output, '<html') !== false || stripos($output, '<script') !== false) {
+                $errorDetails[] = 'Output contiene HTML (possibile errore del server)';
+                $errorDetails[] = 'Output (primi 2000 caratteri): ' . $outputPreview;
+            } else {
+                $errorDetails[] = 'Output Composer: ' . $outputPreview;
+            }
+        } else {
+            $errorDetails[] = 'Nessun output dal comando Composer';
+            if (!$executed) {
+                $errorDetails[] = 'Comando non eseguito - funzioni disponibili: proc_open=' . (function_exists('proc_open') ? 'Sì' : 'No') . ', exec=' . (function_exists('exec') ? 'Sì' : 'No') . ', shell_exec=' . (function_exists('shell_exec') ? 'Sì' : 'No');
+            }
+        }
+        $errorDetails[] = 'Comando eseguito: ' . $command;
+        $errorDetails[] = 'Composer trovato: ' . $composer;
+        $errorDetails[] = 'Directory plugin: ' . $pluginDir;
+        $errorDetails[] = 'Autoload path: ' . $autoloadPath;
+        $errorDetails[] = 'Autoload esiste: ' . ($autoloadExists ? 'Sì' : 'No');
+        if ($autoloadExists) {
+            $errorDetails[] = 'Dimensione autoload: ' . filesize($autoloadPath) . ' bytes';
         }
         update_option('fp_resv_composer_install_error', $errorDetails);
+    } else {
+        // Pulisci gli errori precedenti se l'installazione è riuscita
+        delete_option('fp_resv_composer_install_error');
     }
     
     return $success;
 }
+
+// Registra gli hook di attivazione/deattivazione PRIMA di caricare l'autoloader
+// Questo assicura che siano sempre disponibili, anche se l'autoloader non è ancora caricato
+register_activation_hook(__FILE__, static function (): void {
+    $pluginDir = dirname(__FILE__);
+    $autoload = $pluginDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    
+    // Se autoload non esiste, prova a installarlo
+    if (!is_readable($autoload) && function_exists('fp_resv_install_composer_dependencies')) {
+        $installSuccess = fp_resv_install_composer_dependencies($pluginDir);
+        
+        // Ricontrolla dopo l'installazione
+        if (!$installSuccess || !is_readable($autoload)) {
+            // L'installazione è fallita, blocca l'attivazione
+            $errorDetails = get_option('fp_resv_composer_install_error', []);
+            $errorMessage = 'FP Restaurant Reservations: Impossibile installare le dipendenze Composer durante l\'attivazione.';
+            
+            if (!empty($errorDetails) && is_array($errorDetails)) {
+                $errorMessage .= "\n\nDettagli:\n";
+                foreach ($errorDetails as $detail) {
+                    $errorMessage .= "- " . $detail . "\n";
+                }
+            }
+            
+            // Disattiva il plugin
+            if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+                deactivate_plugins(plugin_basename(__FILE__));
+            }
+            
+            // Mostra errore e blocca l'attivazione
+            if (function_exists('wp_die')) {
+                wp_die(
+                    esc_html($errorMessage),
+                    'Errore di attivazione - FP Restaurant Reservations',
+                    ['back_link' => true]
+                );
+            }
+            return;
+        }
+    }
+    
+    // Verifica che autoload esista prima di procedere
+    if (!is_readable($autoload)) {
+        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+            deactivate_plugins(plugin_basename(__FILE__));
+        }
+        if (function_exists('wp_die')) {
+            wp_die(
+                'FP Restaurant Reservations: File vendor/autoload.php non trovato. Verifica che le dipendenze Composer siano installate.',
+                'Errore di attivazione',
+                ['back_link' => true]
+            );
+        }
+        return;
+    }
+    
+    // Carica l'autoloader
+    try {
+        @include $autoload;
+    } catch (Throwable $e) {
+        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+            deactivate_plugins(plugin_basename(__FILE__));
+        }
+        if (function_exists('wp_die')) {
+            wp_die(
+                'FP Restaurant Reservations: Errore durante il caricamento dell\'autoloader: ' . $e->getMessage(),
+                'Errore di attivazione',
+                ['back_link' => true]
+            );
+        }
+        return;
+    }
+    
+    // Verifica che l'autoloader sia stato caricato correttamente
+    if (!class_exists('Composer\Autoload\ClassLoader')) {
+        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+            deactivate_plugins(plugin_basename(__FILE__));
+        }
+        if (function_exists('wp_die')) {
+            wp_die(
+                'FP Restaurant Reservations: Autoloader Composer non caricato correttamente.',
+                'Errore di attivazione',
+                ['back_link' => true]
+            );
+        }
+        return;
+    }
+    
+    // Ora carica Lifecycle se possibile
+    $lifecyclePath = $pluginDir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Kernel' . DIRECTORY_SEPARATOR . 'Lifecycle.php';
+    if (file_exists($lifecyclePath) && is_readable($lifecyclePath)) {
+        try {
+            require_once $lifecyclePath;
+            if (class_exists('FP\Resv\Kernel\Lifecycle')) {
+                FP\Resv\Kernel\Lifecycle::activate(__FILE__);
+            } else {
+                if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+                    deactivate_plugins(plugin_basename(__FILE__));
+                }
+                if (function_exists('wp_die')) {
+                    wp_die(
+                        'FP Restaurant Reservations: Classe Lifecycle non trovata dopo il caricamento.',
+                        'Errore di attivazione',
+                        ['back_link' => true]
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+                deactivate_plugins(plugin_basename(__FILE__));
+            }
+            if (function_exists('wp_die')) {
+                wp_die(
+                    'FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage(),
+                    'Errore di attivazione',
+                    ['back_link' => true]
+                );
+            }
+        }
+    } else {
+        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+            deactivate_plugins(plugin_basename(__FILE__));
+        }
+        if (function_exists('wp_die')) {
+            wp_die(
+                'FP Restaurant Reservations: File Lifecycle.php non trovato.',
+                'Errore di attivazione',
+                ['back_link' => true]
+            );
+        }
+    }
+});
+
+register_deactivation_hook(__FILE__, static function (): void {
+    $lifecyclePath = dirname(__FILE__) . '/src/Kernel/Lifecycle.php';
+    if (file_exists($lifecyclePath) && is_readable($lifecyclePath)) {
+        try {
+            require_once $lifecyclePath;
+            if (class_exists('FP\Resv\Kernel\Lifecycle')) {
+                FP\Resv\Kernel\Lifecycle::deactivate();
+            }
+        } catch (Throwable $e) {
+            // Ignora errori durante la disattivazione
+        }
+    }
+});
 
 // Load autoloader - REQUIRED for plugin to work
 $autoload = __DIR__ . '/vendor/autoload.php';
@@ -369,6 +621,7 @@ if (!$autoloadLoaded) {
 }
 
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
+// Gli hook di attivazione/deattivazione sono già stati registrati sopra (riga 257), prima del caricamento dell'autoloader
 
 // Inizializza sistema di auto-aggiornamento da GitHub
 // Solo se l'autoloader è stato caricato correttamente
@@ -440,62 +693,4 @@ try {
     }
 }
 
-// Register activation/deactivation hooks
-// Solo se l'autoloader è stato caricato correttamente
-register_activation_hook(__FILE__, static function () use ($pluginFile): void {
-    try {
-        $lifecyclePath = __DIR__ . '/src/Kernel/Lifecycle.php';
-        if (!file_exists($lifecyclePath) || !is_readable($lifecyclePath)) {
-            if (function_exists('wp_die')) {
-                wp_die('FP Restaurant Reservations: File Lifecycle.php non trovato. Verifica che le dipendenze Composer siano installate.');
-            }
-            return;
-        }
-        
-        require_once $lifecyclePath;
-        
-        if (!class_exists('FP\Resv\Kernel\Lifecycle')) {
-            if (function_exists('wp_die')) {
-                wp_die('FP Restaurant Reservations: Classe Lifecycle non trovata. Verifica che le dipendenze Composer siano installate.');
-            }
-            return;
-        }
-        
-        // Verifica che Requirements.php esista prima di attivare
-        $requirementsPath = __DIR__ . '/src/Core/Requirements.php';
-        if (!file_exists($requirementsPath) || !is_readable($requirementsPath)) {
-            if (function_exists('wp_die')) {
-                wp_die('FP Restaurant Reservations: File Requirements.php non trovato. Verifica che tutte le dipendenze siano installate.');
-            }
-            return;
-        }
-        
-        FP\Resv\Kernel\Lifecycle::activate($pluginFile);
-    } catch (Throwable $e) {
-        if (function_exists('wp_die')) {
-            wp_die('FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage());
-        }
-    }
-});
-
-register_deactivation_hook(__FILE__, static function (): void {
-    try {
-        $lifecyclePath = __DIR__ . '/src/Kernel/Lifecycle.php';
-        if (!file_exists($lifecyclePath) || !is_readable($lifecyclePath)) {
-            return;
-        }
-        
-        require_once $lifecyclePath;
-        
-        if (!class_exists('FP\Resv\Kernel\Lifecycle')) {
-            return;
-        }
-        
-        FP\Resv\Kernel\Lifecycle::deactivate();
-    } catch (Throwable $e) {
-        // Ignora errori durante la disattivazione
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP Restaurant Reservations] Errore durante la disattivazione: ' . $e->getMessage());
-        }
-    }
-});
+// Gli hook di attivazione/deattivazione sono già stati registrati sopra, prima del caricamento dell'autoloader
