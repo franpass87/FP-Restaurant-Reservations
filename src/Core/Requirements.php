@@ -46,6 +46,16 @@ final class Requirements
             );
         }
 
+        // Check if Composer autoloader exists
+        $autoloadPath = dirname(__DIR__, 2) . '/vendor/autoload.php';
+        if (!is_readable($autoloadPath)) {
+            $issues[] = sprintf(
+                /* translators: %s: Path to autoload.php file. */
+                __('Autoloader Composer mancante: %s. Esegui "composer install" nella directory del plugin.', 'fp-restaurant-reservations'),
+                $autoloadPath
+            );
+        }
+
         foreach (self::requiredExtensions() as $extension => $label) {
             if (!extension_loaded($extension)) {
                 $issues[] = sprintf(

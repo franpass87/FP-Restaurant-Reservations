@@ -49,7 +49,9 @@
 
 ### Per Utenti
 
-1. **Installa** il plugin
+> ⚠️ **IMPORTANTE:** Se installi il plugin da GitHub o da sorgente, devi prima eseguire `composer install` nella directory del plugin per installare le dipendenze necessarie. Se vedi un errore "Autoloader Composer mancante", segui le istruzioni mostrate nell'errore.
+
+1. **Installa** il plugin (o esegui `composer install` se installi da sorgente)
 2. **Configura** orari di servizio
 3. **Inserisci** shortcode `[fp_reservations]` in una pagina
 4. **Fatto!** Il form è pronto
