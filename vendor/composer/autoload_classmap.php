@@ -291,4 +291,7 @@ return array(
     'FP\\Resv\\Providers\\IntegrationServiceProvider' => $baseDir . '/src/Providers/IntegrationServiceProvider.php',
     'FP\\Resv\\Providers\\RESTServiceProvider' => $baseDir . '/src/Providers/RESTServiceProvider.php',
     'FP\\Resv\\Providers\\ServiceProvider' => $baseDir . '/src/Providers/ServiceProvider.php',
+    'Psr\\Container\\ContainerExceptionInterface' => $vendorDir . '/psr/container/src/ContainerExceptionInterface.php',
+    'Psr\\Container\\ContainerInterface' => $vendorDir . '/psr/container/src/ContainerInterface.php',
+    'Psr\\Container\\NotFoundExceptionInterface' => $vendorDir . '/psr/container/src/NotFoundExceptionInterface.php',
 );

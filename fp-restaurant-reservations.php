@@ -513,13 +513,36 @@ $pluginFile = __FILE__;
 try {
     // Verifica che le dipendenze PSR siano disponibili prima di procedere
     if (!interface_exists('Psr\Container\ContainerInterface')) {
-        $errors = get_option('fp_resv_activation_errors', []);
-        if (!is_array($errors)) {
-            $errors = [];
+        // Prova a installare le dipendenze automaticamente se possibile
+        $pluginDir = dirname(__FILE__);
+        if (function_exists('fp_resv_install_composer_dependencies')) {
+            $installSuccess = false;
+            try {
+                $installSuccess = fp_resv_install_composer_dependencies($pluginDir);
+            } catch (Throwable $e) {
+                // Ignora errori durante l'installazione automatica
+            }
+            
+            // Ricontrolla dopo l'installazione
+            if (!$installSuccess || !interface_exists('Psr\Container\ContainerInterface')) {
+                $errors = get_option('fp_resv_activation_errors', []);
+                if (!is_array($errors)) {
+                    $errors = [];
+                }
+                $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin: ' . $pluginDir;
+                update_option('fp_resv_activation_errors', $errors);
+                return;
+            }
+        } else {
+            // Se la funzione non esiste, mostra solo il notice
+            $errors = get_option('fp_resv_activation_errors', []);
+            if (!is_array($errors)) {
+                $errors = [];
+            }
+            $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin: ' . dirname(__FILE__);
+            update_option('fp_resv_activation_errors', $errors);
+            return;
         }
-        $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin.';
-        update_option('fp_resv_activation_errors', $errors);
-        return;
     }
     
     FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {

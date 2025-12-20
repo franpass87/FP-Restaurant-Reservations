@@ -11,6 +11,10 @@ class ComposerStaticInitf3c4ca4e72b2274ed7be5afa947d700c
     );
 
     public static $prefixLengthsPsr4 = array (
+        'P' => 
+        array (
+            'Psr\\Container\\' => 14,
+        ),
         'F' => 
         array (
             'FP\\Resv\\' => 8,
@@ -18,6 +22,10 @@ class ComposerStaticInitf3c4ca4e72b2274ed7be5afa947d700c
     );
 
     public static $prefixDirsPsr4 = array (
+        'Psr\\Container\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/container/src',
+        ),
         'FP\\Resv\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
@@ -310,6 +318,9 @@ class ComposerStaticInitf3c4ca4e72b2274ed7be5afa947d700c
         'FP\\Resv\\Providers\\IntegrationServiceProvider' => __DIR__ . '/../..' . '/src/Providers/IntegrationServiceProvider.php',
         'FP\\Resv\\Providers\\RESTServiceProvider' => __DIR__ . '/../..' . '/src/Providers/RESTServiceProvider.php',
         'FP\\Resv\\Providers\\ServiceProvider' => __DIR__ . '/../..' . '/src/Providers/ServiceProvider.php',
+        'Psr\\Container\\ContainerExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerExceptionInterface.php',
+        'Psr\\Container\\ContainerInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerInterface.php',
+        'Psr\\Container\\NotFoundExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/NotFoundExceptionInterface.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
