@@ -441,12 +441,61 @@ try {
 }
 
 // Register activation/deactivation hooks
+// Solo se l'autoloader è stato caricato correttamente
 register_activation_hook(__FILE__, static function () use ($pluginFile): void {
-    require_once __DIR__ . '/src/Kernel/Lifecycle.php';
-    FP\Resv\Kernel\Lifecycle::activate($pluginFile);
+    try {
+        $lifecyclePath = __DIR__ . '/src/Kernel/Lifecycle.php';
+        if (!file_exists($lifecyclePath) || !is_readable($lifecyclePath)) {
+            if (function_exists('wp_die')) {
+                wp_die('FP Restaurant Reservations: File Lifecycle.php non trovato. Verifica che le dipendenze Composer siano installate.');
+            }
+            return;
+        }
+        
+        require_once $lifecyclePath;
+        
+        if (!class_exists('FP\Resv\Kernel\Lifecycle')) {
+            if (function_exists('wp_die')) {
+                wp_die('FP Restaurant Reservations: Classe Lifecycle non trovata. Verifica che le dipendenze Composer siano installate.');
+            }
+            return;
+        }
+        
+        // Verifica che Requirements.php esista prima di attivare
+        $requirementsPath = __DIR__ . '/src/Core/Requirements.php';
+        if (!file_exists($requirementsPath) || !is_readable($requirementsPath)) {
+            if (function_exists('wp_die')) {
+                wp_die('FP Restaurant Reservations: File Requirements.php non trovato. Verifica che tutte le dipendenze siano installate.');
+            }
+            return;
+        }
+        
+        FP\Resv\Kernel\Lifecycle::activate($pluginFile);
+    } catch (Throwable $e) {
+        if (function_exists('wp_die')) {
+            wp_die('FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage());
+        }
+    }
 });
 
 register_deactivation_hook(__FILE__, static function (): void {
-    require_once __DIR__ . '/src/Kernel/Lifecycle.php';
-    FP\Resv\Kernel\Lifecycle::deactivate();
+    try {
+        $lifecyclePath = __DIR__ . '/src/Kernel/Lifecycle.php';
+        if (!file_exists($lifecyclePath) || !is_readable($lifecyclePath)) {
+            return;
+        }
+        
+        require_once $lifecyclePath;
+        
+        if (!class_exists('FP\Resv\Kernel\Lifecycle')) {
+            return;
+        }
+        
+        FP\Resv\Kernel\Lifecycle::deactivate();
+    } catch (Throwable $e) {
+        // Ignora errori durante la disattivazione
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP Restaurant Reservations] Errore durante la disattivazione: ' . $e->getMessage());
+        }
+    }
 });
