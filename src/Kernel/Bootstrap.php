@@ -38,7 +38,12 @@ final class Bootstrap
             return;
         }
         
-        // 2. Create container
+        // 2. Verify PSR Container interface exists before creating container
+        if (!interface_exists('Psr\Container\ContainerInterface')) {
+            throw new \RuntimeException('PSR Container interface not found. Run "composer install" to install dependencies.');
+        }
+        
+        // 3. Create container
         self::$container = new Container();
         
         // 3. Register core services first

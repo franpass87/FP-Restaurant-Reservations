@@ -511,6 +511,17 @@ if (!class_exists('FP\Resv\Core\BootstrapGuard')) {
 $pluginFile = __FILE__;
 
 try {
+    // Verifica che le dipendenze PSR siano disponibili prima di procedere
+    if (!interface_exists('Psr\Container\ContainerInterface')) {
+        $errors = get_option('fp_resv_activation_errors', []);
+        if (!is_array($errors)) {
+            $errors = [];
+        }
+        $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin.';
+        update_option('fp_resv_activation_errors', $errors);
+        return;
+    }
+    
     FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
         $bootstrapPath = __DIR__ . '/src/Kernel/Bootstrap.php';
         if (!file_exists($bootstrapPath) || !is_readable($bootstrapPath)) {
@@ -523,7 +534,17 @@ try {
         }
         
         $boot = static function () use ($pluginFile): void {
-            FP\Resv\Kernel\Bootstrap::boot($pluginFile);
+            try {
+                FP\Resv\Kernel\Bootstrap::boot($pluginFile);
+            } catch (Throwable $e) {
+                // Cattura errori durante il boot e salvali
+                $errors = get_option('fp_resv_activation_errors', []);
+                if (!is_array($errors)) {
+                    $errors = [];
+                }
+                $errors[] = 'Errore durante il bootstrap: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+                update_option('fp_resv_activation_errors', $errors);
+            }
         };
 
         if (\did_action('plugins_loaded')) {
@@ -533,7 +554,13 @@ try {
         }
     });
 } catch (Throwable $e) {
-    // Ignora errori durante il bootstrap
+    // Cattura errori durante il bootstrap e salvali
+    $errors = get_option('fp_resv_activation_errors', []);
+    if (!is_array($errors)) {
+        $errors = [];
+    }
+    $errors[] = 'Errore durante il bootstrap guard: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+    update_option('fp_resv_activation_errors', $errors);
 }
 
 // Gli hook di attivazione/deattivazione sono già stati registrati sopra, prima del caricamento dell'autoloader
