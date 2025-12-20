@@ -77,16 +77,32 @@ if (!is_readable($autoload)) {
 
         if (function_exists('add_action')) {
             add_action('admin_notices', function () use ($message, $autoload, $installAttempted) {
+                $errorDetails = get_option('fp_resv_composer_install_error', []);
+                
                 $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
                 $notice .= '<p>' . esc_html($message) . '</p>';
                 $notice .= '<p><code>' . esc_html($autoload) . '</code></p>';
                 
                 if ($installAttempted) {
                     $notice .= '<p><strong>⚠️ Installazione automatica fallita.</strong></p>';
+                    
+                    if (!empty($errorDetails) && is_array($errorDetails)) {
+                        $notice .= '<details style="margin-top: 10px;"><summary style="cursor: pointer; font-weight: bold;">Dettagli errore (clicca per espandere)</summary>';
+                        $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
+                        foreach ($errorDetails as $detail) {
+                            $notice .= '<li>' . esc_html($detail) . '</li>';
+                        }
+                        $notice .= '</ul></details>';
+                    }
                 }
                 
-                $notice .= '<p><strong>Soluzione:</strong> Apri un terminale nella directory del plugin e esegui: <code>composer install</code></p>';
-                $notice .= '<p>Assicurati che Composer sia installato sul server e che la directory del plugin abbia permessi di scrittura.</p>';
+                $notice .= '<p><strong>Soluzione:</strong></p>';
+                $notice .= '<ol style="margin-left: 20px;">';
+                $notice .= '<li>Apri un terminale (SSH) nella directory del plugin: <code>' . esc_html(dirname($autoload)) . '</code></li>';
+                $notice .= '<li>Esegui: <code>composer install --no-dev --prefer-dist</code></li>';
+                $notice .= '<li>Se Composer non è installato, installalo seguendo le istruzioni su <a href="https://getcomposer.org/download/" target="_blank">getcomposer.org</a></li>';
+                $notice .= '<li>Assicurati che la directory del plugin abbia permessi di scrittura (chmod 755 o 775)</li>';
+                $notice .= '</ol>';
                 $notice .= '</div>';
                 echo $notice;
             });
@@ -131,6 +147,9 @@ require $autoload;
  */
 function fp_resv_install_composer_dependencies(string $pluginDir): bool
 {
+    // Salva dettagli errore per mostrare all'utente
+    $errorDetails = [];
+    
     // Evita esecuzioni multiple simultanee usando un lock file
     $lockFile = $pluginDir . '/.composer-install.lock';
     if (file_exists($lockFile)) {
@@ -140,15 +159,21 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
             @unlink($lockFile);
         } else {
             // Installazione già in corso
+            $errorDetails[] = 'Installazione già in corso (lock file presente)';
             if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
                 error_log('[FP Restaurant Reservations] Installazione Composer già in corso');
             }
+            update_option('fp_resv_composer_install_error', $errorDetails);
             return false;
         }
     }
     
     // Crea lock file
-    @file_put_contents($lockFile, time());
+    if (@file_put_contents($lockFile, time()) === false) {
+        $errorDetails[] = 'Impossibile creare lock file (permessi mancanti?)';
+        update_option('fp_resv_composer_install_error', $errorDetails);
+        return false;
+    }
     register_shutdown_function(function () use ($lockFile) {
         if (file_exists($lockFile)) {
             @unlink($lockFile);
@@ -158,9 +183,11 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     // Verifica permessi di scrittura
     if (!is_writable($pluginDir)) {
         @unlink($lockFile);
+        $errorDetails[] = 'Directory plugin non scrivibile: ' . $pluginDir;
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP Restaurant Reservations] Directory plugin non scrivibile: ' . $pluginDir);
         }
+        update_option('fp_resv_composer_install_error', $errorDetails);
         return false;
     }
     
@@ -204,9 +231,15 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     }
     
     if ($composer === null) {
+        $errorDetails[] = 'Composer non trovato sul server';
+        $errorDetails[] = 'Cercato in: ' . $pluginDir . '/composer.phar';
+        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
+        $errorDetails[] = 'Comando globale "composer" non disponibile';
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP Restaurant Reservations] Composer non trovato. Installa Composer o aggiungi composer.phar nella directory del plugin.');
         }
+        @unlink($lockFile);
+        update_option('fp_resv_composer_install_error', $errorDetails);
         return false;
     }
     
@@ -294,6 +327,11 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         } else {
             // Ripristina directory prima di uscire
             @chdir($oldCwd);
+            $errorDetails[] = 'Nessuna funzione di esecuzione disponibile';
+            $disabledFunctions = ini_get('disable_functions');
+            if ($disabledFunctions) {
+                $errorDetails[] = 'Funzioni disabilitate: ' . $disabledFunctions;
+            }
             if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
                 error_log('[FP Restaurant Reservations] Nessuna funzione di esecuzione disponibile (proc_open, exec, shell_exec sono disabilitate)');
             }
@@ -301,6 +339,7 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
             if (file_exists($lockFile)) {
                 @unlink($lockFile);
             }
+            update_option('fp_resv_composer_install_error', $errorDetails);
             return false;
         }
         
@@ -314,9 +353,11 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     
     // Se non è stato eseguito nessun comando, fallisci
     if (!$executed) {
+        $errorDetails[] = 'Impossibile eseguire comando Composer';
         if (file_exists($lockFile)) {
             @unlink($lockFile);
         }
+        update_option('fp_resv_composer_install_error', $errorDetails);
         return false;
     }
     
@@ -330,6 +371,8 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     $success = ($returnVar === 0 && is_readable($autoloadPath));
     
     if ($success) {
+        // Rimuovi eventuali errori precedenti
+        delete_option('fp_resv_composer_install_error');
         if (function_exists('add_action')) {
             add_action('admin_notices', function () {
                 echo '<div class="notice notice-success is-dismissible"><p>';
@@ -339,9 +382,24 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
             });
         }
     } else {
+        // Salva dettagli dell'errore
+        $errorDetails[] = 'Comando eseguito con return code: ' . $returnVar;
+        if ($output) {
+            // Prendi solo le ultime 10 righe dell'output per non sovraccaricare
+            $outputLines = explode("\n", $output);
+            $lastLines = array_slice($outputLines, -10);
+            $errorDetails[] = 'Output Composer: ' . implode("\n", $lastLines);
+        } else {
+            $errorDetails[] = 'Nessun output da Composer';
+        }
+        $errorDetails[] = 'Comando eseguito: ' . $command;
+        $errorDetails[] = 'Composer trovato: ' . $composer;
+        
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP Restaurant Reservations] Composer install fallito. Return code: ' . $returnVar);
+            error_log('[FP Restaurant Reservations] Output: ' . $output);
         }
+        update_option('fp_resv_composer_install_error', $errorDetails);
     }
     
     return $success;
