@@ -134,18 +134,30 @@ function fp_resv_download_composer_phar(string $targetPath): bool
 function fp_resv_install_composer_dependencies(string $pluginDir): bool
 {
     $errorDetails = [];
-    $lockFile = $pluginDir . '/.composer-install.lock';
+    $lockFile = $pluginDir . DIRECTORY_SEPARATOR . '.composer-install.lock';
+    
+    // Verifica permessi di scrittura PRIMA di creare il lock file
+    if (!is_writable($pluginDir)) {
+        $errorDetails[] = 'Directory plugin non scrivibile: ' . $pluginDir;
+        $errorDetails[] = 'Permessi directory: ' . substr(sprintf('%o', fileperms($pluginDir)), -4);
+        update_option('fp_resv_composer_install_error', $errorDetails);
+        return false;
+    }
     
     if (file_exists($lockFile)) {
         $lockTime = filemtime($lockFile);
         if (time() - $lockTime > 600) {
             @unlink($lockFile);
         } else {
+            // Lock file ancora valido, probabilmente un'altra installazione è in corso
             return false;
         }
     }
     
     if (@file_put_contents($lockFile, time()) === false) {
+        $errorDetails[] = 'Impossibile creare file lock: ' . $lockFile;
+        $errorDetails[] = 'Verifica permessi di scrittura sulla directory';
+        update_option('fp_resv_composer_install_error', $errorDetails);
         return false;
     }
     register_shutdown_function(function () use ($lockFile) {
@@ -153,11 +165,6 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
             @unlink($lockFile);
         }
     });
-    
-    if (!is_writable($pluginDir)) {
-        @unlink($lockFile);
-        return false;
-    }
     
     $composer = null;
     $localComposer = $pluginDir . '/composer.phar';
@@ -187,8 +194,22 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     if ($composer === null) {
         $errorDetails[] = 'Composer non trovato sul server';
         $errorDetails[] = 'Cercato in: ' . $localComposer;
-        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
+        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . DIRECTORY_SEPARATOR . 'composer.phar';
         $errorDetails[] = 'Comando globale "composer" non disponibile';
+        
+        // Verifica se le funzioni necessarie per il download sono disponibili
+        $canDownload = (function_exists('curl_init') || (function_exists('file_get_contents') && ini_get('allow_url_fopen')));
+        if (!$canDownload) {
+            $errorDetails[] = 'Impossibile scaricare composer.phar: cURL e file_get_contents non disponibili';
+        }
+        
+        // Verifica funzioni PHP disponibili
+        $disabledFunctions = ini_get('disable_functions');
+        $errorDetails[] = 'Funzioni PHP disabilitate: ' . ($disabledFunctions ?: 'Nessuna');
+        $errorDetails[] = 'proc_open disponibile: ' . (function_exists('proc_open') && !in_array('proc_open', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
+        $errorDetails[] = 'exec disponibile: ' . (function_exists('exec') && !in_array('exec', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
+        $errorDetails[] = 'shell_exec disponibile: ' . (function_exists('shell_exec') && !in_array('shell_exec', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
+        
         update_option('fp_resv_composer_install_error', $errorDetails);
         @unlink($lockFile);
         return false;
@@ -233,8 +254,9 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         
         if (is_resource($process)) {
             $executed = true;
-            if (isset($pipes[1])) stream_set_timeout($pipes[1], 300);
-            if (isset($pipes[2])) stream_set_timeout($pipes[2], 300);
+            // Timeout più lungo per produzione (10 minuti)
+            if (isset($pipes[1])) stream_set_timeout($pipes[1], 600);
+            if (isset($pipes[2])) stream_set_timeout($pipes[2], 600);
             
             // Leggi l'output in modo non bloccante
             $stdout = '';
@@ -341,14 +363,26 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
                 $errorDetails[] = 'Comando non eseguito - funzioni disponibili: proc_open=' . (function_exists('proc_open') ? 'Sì' : 'No') . ', exec=' . (function_exists('exec') ? 'Sì' : 'No') . ', shell_exec=' . (function_exists('shell_exec') ? 'Sì' : 'No');
             }
         }
-        $errorDetails[] = 'Comando eseguito: ' . $command;
+        $errorDetails[] = 'Comando eseguito: ' . (isset($command) ? $command : 'N/A');
         $errorDetails[] = 'Composer trovato: ' . $composer;
         $errorDetails[] = 'Directory plugin: ' . $pluginDir;
+        $errorDetails[] = 'Directory plugin (reale): ' . (isset($pluginDirReal) ? $pluginDirReal : 'N/A');
+        $errorDetails[] = 'Directory plugin (normalizzata): ' . (isset($pluginDirNormalized) ? $pluginDirNormalized : 'N/A');
         $errorDetails[] = 'Autoload path: ' . $autoloadPath;
         $errorDetails[] = 'Autoload esiste: ' . ($autoloadExists ? 'Sì' : 'No');
         if ($autoloadExists) {
             $errorDetails[] = 'Dimensione autoload: ' . filesize($autoloadPath) . ' bytes';
+        } else {
+            // Verifica se la directory vendor esiste
+            $vendorDir = dirname($autoloadPath);
+            $errorDetails[] = 'Directory vendor esiste: ' . (is_dir($vendorDir) ? 'Sì' : 'No');
+            if (is_dir($vendorDir)) {
+                $errorDetails[] = 'Permessi directory vendor: ' . substr(sprintf('%o', fileperms($vendorDir)), -4);
+            }
         }
+        $errorDetails[] = 'Comando eseguito con successo: ' . ($executed ? 'Sì' : 'No');
+        $errorDetails[] = 'PHP versione: ' . PHP_VERSION;
+        $errorDetails[] = 'Sistema operativo: ' . PHP_OS;
         update_option('fp_resv_composer_install_error', $errorDetails);
     } else {
         // Pulisci gli errori precedenti se l'installazione è riuscita
