@@ -345,55 +345,51 @@ if (!is_readable($autoload)) {
 }
 
 // Verifica finale che autoload.php esista prima di caricarlo
-if (!is_readable($autoload) || !file_exists($autoload)) {
-    if (function_exists('add_action')) {
-        add_action('admin_notices', function () use ($autoload) {
-            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
-            $notice .= '<p>Il file autoload.php non è disponibile. Il plugin non può funzionare senza le dipendenze Composer.</p>';
-            $notice .= '<p><code>' . esc_html($autoload) . '</code></p>';
-            $notice .= '<p>Esegui <code>composer install</code> nella directory del plugin.</p>';
-            $notice .= '</div>';
-            echo $notice;
-        });
-    }
-    if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-        deactivate_plugins(plugin_basename(__FILE__));
+if (!file_exists($autoload) || !is_readable($autoload)) {
+    // Non fare nulla qui, il controllo è già stato fatto sopra
+    // Questo evita errori fatali durante il caricamento
+    return;
+}
+
+// Carica l'autoloader in modo sicuro
+$autoloadLoaded = false;
+try {
+    $autoloadLoaded = @include $autoload;
+} catch (Throwable $e) {
+    // Se c'è un errore durante il caricamento, loggalo e esci
+    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+        error_log('[FP Restaurant Reservations] Errore nel caricamento autoloader: ' . $e->getMessage());
     }
     return;
 }
 
-// Usa @ per evitare errori fatali se il file non può essere caricato
-@require $autoload;
-
-// Verifica che l'autoloader sia stato caricato correttamente
-if (!class_exists('Composer\Autoload\ClassLoader') && !function_exists('spl_autoload_register')) {
-    if (function_exists('add_action')) {
-        add_action('admin_notices', function () use ($autoload) {
-            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
-            $notice .= '<p>Impossibile caricare l\'autoloader Composer. Verifica che il file esista e sia valido.</p>';
-            $notice .= '<p><code>' . esc_html($autoload) . '</code></p>';
-            $notice .= '</div>';
-            echo $notice;
-        });
-    }
-    if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-        deactivate_plugins(plugin_basename(__FILE__));
-    }
+// Se l'autoloader non è stato caricato, esci silenziosamente
+if (!$autoloadLoaded) {
     return;
 }
 
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
 
 // Inizializza sistema di auto-aggiornamento da GitHub
-if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
-    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-        'https://github.com/franpass87/FP-Restaurant-Reservations/',
-        __FILE__,
-        'fp-restaurant-reservations'
-    );
-    
-    // Usa le GitHub Releases per gli aggiornamenti
-    $updateChecker->getVcsApi()->enableReleaseAssets();
+// Solo se l'autoloader è stato caricato correttamente
+try {
+    if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+        $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+            'https://github.com/franpass87/FP-Restaurant-Reservations/',
+            __FILE__,
+            'fp-restaurant-reservations'
+        );
+        
+        // Usa le GitHub Releases per gli aggiornamenti
+        if (method_exists($updateChecker, 'getVcsApi')) {
+            $updateChecker->getVcsApi()->enableReleaseAssets();
+        }
+    }
+} catch (Throwable $e) {
+    // Ignora errori nel sistema di aggiornamento
+    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+        error_log('[FP Restaurant Reservations] Errore nel sistema di aggiornamento: ' . $e->getMessage());
+    }
 }
 
 // Bootstrap plugin using new architecture
@@ -416,33 +412,33 @@ require_once $bootstrapGuardPath;
 $pluginFile = __FILE__;
 
 if (!class_exists('FP\Resv\Core\BootstrapGuard')) {
-    if (function_exists('add_action')) {
-        add_action('admin_notices', function () {
-            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
-            $notice .= '<p>La classe BootstrapGuard non è disponibile. Verifica che le dipendenze Composer siano installate correttamente.</p>';
-            $notice .= '</div>';
-            echo $notice;
-        });
-    }
+    // Se la classe non esiste, esci silenziosamente per evitare errori fatali
     return;
 }
 
-FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
-    // Use new Bootstrap architecture
-    require_once __DIR__ . '/src/Kernel/Bootstrap.php';
-    
-    $boot = static function () use ($pluginFile): void {
-        FP\Resv\Kernel\Bootstrap::boot($pluginFile);
-    };
+try {
+    FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
+        // Use new Bootstrap architecture
+        require_once __DIR__ . '/src/Kernel/Bootstrap.php';
+        
+        $boot = static function () use ($pluginFile): void {
+            FP\Resv\Kernel\Bootstrap::boot($pluginFile);
+        };
 
-    // Call on plugins_loaded instead of wp_loaded to ensure compatibility with legacy system
-    // This ensures ServiceRegistry and AdminPages are registered at the right time
-    if (\did_action('plugins_loaded')) {
-        $boot();
-    } else {
-        \add_action('plugins_loaded', $boot, 20); // Priority 20 to run after most plugins
+        // Call on plugins_loaded instead of wp_loaded to ensure compatibility with legacy system
+        // This ensures ServiceRegistry and AdminPages are registered at the right time
+        if (\did_action('plugins_loaded')) {
+            $boot();
+        } else {
+            \add_action('plugins_loaded', $boot, 20); // Priority 20 to run after most plugins
+        }
+    });
+} catch (Throwable $e) {
+    // Se c'è un errore durante il bootstrap, loggalo ma non bloccare il caricamento
+    if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+        error_log('[FP Restaurant Reservations] Errore durante il bootstrap: ' . $e->getMessage());
     }
-});
+}
 
 // Register activation/deactivation hooks
 register_activation_hook(__FILE__, static function () use ($pluginFile): void {
