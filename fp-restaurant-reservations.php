@@ -345,7 +345,7 @@ if (!is_readable($autoload)) {
 }
 
 // Verifica finale che autoload.php esista prima di caricarlo
-if (!is_readable($autoload)) {
+if (!is_readable($autoload) || !file_exists($autoload)) {
     if (function_exists('add_action')) {
         add_action('admin_notices', function () use ($autoload) {
             $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
@@ -356,10 +356,31 @@ if (!is_readable($autoload)) {
             echo $notice;
         });
     }
+    if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+        deactivate_plugins(plugin_basename(__FILE__));
+    }
     return;
 }
 
-require $autoload;
+// Usa @ per evitare errori fatali se il file non può essere caricato
+@require $autoload;
+
+// Verifica che l'autoloader sia stato caricato correttamente
+if (!class_exists('Composer\Autoload\ClassLoader') && !function_exists('spl_autoload_register')) {
+    if (function_exists('add_action')) {
+        add_action('admin_notices', function () use ($autoload) {
+            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
+            $notice .= '<p>Impossibile caricare l\'autoloader Composer. Verifica che il file esista e sia valido.</p>';
+            $notice .= '<p><code>' . esc_html($autoload) . '</code></p>';
+            $notice .= '</div>';
+            echo $notice;
+        });
+    }
+    if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
+        deactivate_plugins(plugin_basename(__FILE__));
+    }
+    return;
+}
 
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
 
