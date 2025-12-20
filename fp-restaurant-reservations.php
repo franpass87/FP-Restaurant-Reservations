@@ -53,6 +53,7 @@ if (version_compare(PHP_VERSION, $minPhp, '<')) {
     return;
 }
 
+// Load autoloader
 $autoload = __DIR__ . '/vendor/autoload.php';
 if (is_readable($autoload)) {
     require $autoload;
@@ -70,26 +71,36 @@ if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
     $updateChecker->getVcsApi()->enableReleaseAssets();
 }
 
-require_once __DIR__ . '/src/Core/Requirements.php';
-
-if (!FP\Resv\Core\Requirements::validate()) {
-    return;
-}
-
+// Bootstrap plugin using new architecture
+// Keep BootstrapGuard for error handling during transition
 require_once __DIR__ . '/src/Core/BootstrapGuard.php';
 
 $pluginFile = __FILE__;
 
 FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
-    require_once __DIR__ . '/src/Core/Plugin.php';
-
+    // Use new Bootstrap architecture
+    require_once __DIR__ . '/src/Kernel/Bootstrap.php';
+    
     $boot = static function () use ($pluginFile): void {
-        FP\Resv\Core\Plugin::boot($pluginFile);
+        FP\Resv\Kernel\Bootstrap::boot($pluginFile);
     };
 
-    if (\did_action('wp_loaded')) {
+    // Call on plugins_loaded instead of wp_loaded to ensure compatibility with legacy system
+    // This ensures ServiceRegistry and AdminPages are registered at the right time
+    if (\did_action('plugins_loaded')) {
         $boot();
     } else {
-        \add_action('wp_loaded', $boot, 0);
+        \add_action('plugins_loaded', $boot, 20); // Priority 20 to run after most plugins
     }
+});
+
+// Register activation/deactivation hooks
+register_activation_hook(__FILE__, static function () use ($pluginFile): void {
+    require_once __DIR__ . '/src/Kernel/Lifecycle.php';
+    FP\Resv\Kernel\Lifecycle::activate($pluginFile);
+});
+
+register_deactivation_hook(__FILE__, static function (): void {
+    require_once __DIR__ . '/src/Kernel/Lifecycle.php';
+    FP\Resv\Kernel\Lifecycle::deactivate();
 });

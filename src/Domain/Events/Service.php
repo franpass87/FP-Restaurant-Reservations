@@ -13,26 +13,10 @@ use FP\Resv\Domain\Reservations\Service as ReservationsService;
 use InvalidArgumentException;
 use RuntimeException;
 use wpdb;
-use function __;
-use function absint;
 use function apply_filters;
-use function array_fill;
 use function array_map;
-use function current_time;
 use function do_action;
-use function filter_var;
-use function get_page_by_path;
-use function get_permalink;
-use function implode;
-use function json_decode;
-use function sanitize_email;
-use function sanitize_text_field;
-use function sanitize_textarea_field;
-use function sprintf;
-use function strtolower;
 use function substr;
-use function trim;
-use const FILTER_VALIDATE_EMAIL;
 
 final class Service
 {
@@ -44,7 +28,15 @@ final class Service
         private readonly ReservationsService $reservations,
         private readonly ReservationsRepository $reservationsRepository,
         private readonly CustomersRepository $customers,
-        private readonly StripeService $stripe
+        private readonly StripeService $stripe,
+        private readonly EventFormatter $eventFormatter,
+        private readonly TicketCreator $ticketCreator,
+        private readonly TicketCounter $ticketCounter,
+        private readonly TicketLister $ticketLister,
+        private readonly TicketCsvExporter $ticketCsvExporter,
+        private readonly BookingPayloadSanitizer $payloadSanitizer,
+        private readonly BookingPayloadValidator $payloadValidator,
+        private readonly EventNotesBuilder $notesBuilder
     ) {
     }
 
@@ -63,7 +55,7 @@ final class Service
             return [];
         }
 
-        return array_map(fn (array $row): array => $this->formatEvent($row), $rows);
+        return array_map(fn (array $row): array => $this->eventFormatter->format($row), $rows);
     }
 
     /**
@@ -79,7 +71,7 @@ final class Service
             return null;
         }
 
-        return $this->formatEvent($row);
+        return $this->eventFormatter->format($row);
     }
 
     /**
@@ -98,8 +90,8 @@ final class Service
             throw new RuntimeException(__('L\'evento non è prenotabile in questo momento.', 'fp-restaurant-reservations'));
         }
 
-        $sanitized = $this->sanitizeBookingPayload($payload);
-        $this->assertBookingPayload($sanitized);
+        $sanitized = $this->payloadSanitizer->sanitize($payload);
+        $this->payloadValidator->assert($sanitized);
 
         $remaining = $event['remaining_capacity'];
         if ($remaining !== null && $remaining < $sanitized['quantity']) {
@@ -114,7 +106,7 @@ final class Service
             'last_name'   => $sanitized['last_name'],
             'email'       => $sanitized['email'],
             'phone'       => $sanitized['phone'],
-            'notes'       => $this->buildReservationNotes($sanitized['notes'], $event),
+            'notes'       => $this->notesBuilder->build($sanitized['notes'], $event),
             'allergies'   => '',
             'language'    => $sanitized['language'],
             'locale'      => $sanitized['locale'],
@@ -136,7 +128,7 @@ final class Service
 
         $tickets = [];
         for ($i = 0; $i < $sanitized['quantity']; $i++) {
-            $ticket = $this->createTicket(
+            $ticket = $this->ticketCreator->create(
                 $event,
                 $reservationId,
                 $customerId,
@@ -197,238 +189,14 @@ final class Service
      */
     public function listTickets(int $eventId): array
     {
-        $ticketsTable      = $this->ticketsTable();
-        $reservationsTable = $this->reservationsRepository->tableName();
-        $customersTable    = $this->customers->tableName();
-
-        $statusPlaceholder = implode(', ', array_fill(0, count(self::ACTIVE_STATUSES), '%s'));
-        $sql               = $this->wpdb->prepare(
-            "SELECT t.*, c.email AS email, CONCAT_WS(' ', c.first_name, c.last_name) AS holder_name " .
-            "FROM {$ticketsTable} t " .
-            "LEFT JOIN {$reservationsTable} r ON r.id = t.reservation_id " .
-            "LEFT JOIN {$customersTable} c ON c.id = r.customer_id " .
-            "WHERE t.event_id = %d AND t.status IN ({$statusPlaceholder}) ORDER BY t.created_at ASC",
-            array_merge([$eventId], self::ACTIVE_STATUSES)
-        );
-
-        $rows = $this->wpdb->get_results($sql, ARRAY_A);
-        if (!is_array($rows)) {
-            return [];
-        }
-
-        return array_map(static fn (array $row): array => Ticket::fromRow($row)->toArray(), $rows);
+        return $this->ticketLister->list($eventId);
     }
 
     public function exportTicketsCsv(int $eventId): string
     {
-        $tickets = $this->listTickets($eventId);
-        if ($tickets === []) {
-            return "id;status;email;holder;qr_code\n";
-        }
-
-        $lines = ["id;status;email;holder;qr_code"];
-        foreach ($tickets as $ticket) {
-            $lines[] = sprintf(
-                '%d;%s;%s;%s;%s',
-                $ticket['id'],
-                $ticket['status'],
-                $ticket['email'] ?? '',
-                $ticket['holder'] ?? '',
-                $ticket['qr_code']
-            );
-        }
-
-        return implode("\n", $lines) . "\n";
+        return $this->ticketCsvExporter->export($eventId);
     }
 
-    private function formatEvent(array $row): array
-    {
-        $eventId = (int) ($row['id'] ?? 0);
-        $capacity = isset($row['capacity']) ? (int) $row['capacity'] : null;
-        $sold     = $this->countActiveTickets($eventId);
-
-        $settings = [];
-        if (!empty($row['settings_json'])) {
-            $decoded = json_decode((string) $row['settings_json'], true);
-            if (is_array($decoded)) {
-                $settings = $decoded;
-            }
-        }
-
-        $startAt = (string) ($row['start_at'] ?? '');
-
-        return [
-            'id'                  => $eventId,
-            'title'               => (string) ($row['title'] ?? ''),
-            'slug'                => (string) ($row['slug'] ?? ''),
-            'start_at'            => $startAt,
-            'end_at'              => (string) ($row['end_at'] ?? ''),
-            'capacity'            => $capacity,
-            'remaining_capacity'  => $capacity !== null ? max(0, $capacity - $sold) : null,
-            'price'               => isset($row['price']) ? (float) $row['price'] : null,
-            'currency'            => (string) ($row['currency'] ?? ''),
-            'status'              => (string) ($row['status'] ?? 'draft'),
-            'lang'                => (string) ($row['lang'] ?? ''),
-            'settings'            => $settings,
-            'permalink'           => $this->resolvePermalink((string) ($row['slug'] ?? '')),
-        ];
-    }
-
-    private function buildReservationNotes(string $notes, array $event): string
-    {
-        $notes = trim($notes);
-        $eventLabel = sprintf(__('Evento: %s (%s)', 'fp-restaurant-reservations'), $event['title'], $event['start_at']);
-
-        return $notes === '' ? $eventLabel : $notes . "\n" . $eventLabel;
-    }
-
-    private function resolvePermalink(string $slug): string
-    {
-        if ($slug === '') {
-            return '';
-        }
-
-        $post = get_page_by_path($slug, \OBJECT, 'fp_event');
-        if ($post !== null) {
-            $link = get_permalink($post);
-            if (is_string($link)) {
-                return $link;
-            }
-        }
-
-        return '';
-    }
-
-    private function createTicket(array $event, int $reservationId, ?int $customerId, array $payload, bool $paymentRequired, int $index): Ticket
-    {
-        $status  = $paymentRequired ? 'pending_payment' : 'confirmed';
-        $price   = $event['price'] !== null ? (float) $event['price'] : null;
-        $currency = $event['currency'] !== '' ? $event['currency'] : $payload['currency'];
-
-        $data = [
-            'event_id'       => $event['id'],
-            'reservation_id' => $reservationId,
-            'customer_id'    => $customerId,
-            'category'       => $payload['category'],
-            'price'          => $price,
-            'currency'       => $currency,
-            'status'         => $status,
-            'qr_code_text'   => '',
-            'created_at'     => current_time('mysql'),
-            'updated_at'     => current_time('mysql'),
-        ];
-
-        $inserted = $this->wpdb->insert($this->ticketsTable(), $data);
-        if ($inserted === false) {
-            throw new RuntimeException($this->wpdb->last_error ?: __('Impossibile creare il biglietto.', 'fp-restaurant-reservations'));
-        }
-
-        $ticketId = (int) $this->wpdb->insert_id;
-        $seed     = sprintf('event:%d|ticket:%d|email:%s|n:%d', $event['id'], $ticketId, strtolower($payload['email']), $index);
-        $qr       = QR::encode($seed);
-
-        $this->wpdb->update(
-            $this->ticketsTable(),
-            ['qr_code_text' => $qr],
-            ['id' => $ticketId]
-        );
-
-        $ticketRow = [
-            'id'             => $ticketId,
-            'event_id'       => $event['id'],
-            'reservation_id' => $reservationId,
-            'customer_id'    => $customerId,
-            'status'         => $status,
-            'category'       => $payload['category'],
-            'price'          => $price,
-            'currency'       => $currency,
-            'qr_code_text'   => $qr,
-            'created_at'     => current_time('mysql'),
-            'email'          => $payload['email'],
-            'holder_name'    => trim($payload['first_name'] . ' ' . $payload['last_name']),
-        ];
-
-        do_action('fp_resv_event_ticket_created', $ticketRow, $event, $payload);
-
-        return Ticket::fromRow($ticketRow);
-    }
-
-    private function countActiveTickets(int $eventId): int
-    {
-        if ($eventId <= 0) {
-            return 0;
-        }
-
-        $statuses     = implode(', ', array_fill(0, count(self::ACTIVE_STATUSES), '%s'));
-        $placeholders = array_merge([$eventId], self::ACTIVE_STATUSES);
-
-        $sql = $this->wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->ticketsTable()} WHERE event_id = %d AND status IN ({$statuses})",
-            $placeholders
-        );
-
-        $count = $this->wpdb->get_var($sql);
-
-        return $count !== null ? (int) $count : 0;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     *
-     * @return array<string, mixed>
-     */
-    private function sanitizeBookingPayload(array $payload): array
-    {
-        $defaults = [
-            'first_name'   => '',
-            'last_name'    => '',
-            'email'        => '',
-            'phone'        => '',
-            'notes'        => '',
-            'quantity'     => 1,
-            'category'     => '',
-            'language'     => 'it',
-            'locale'       => 'it_IT',
-            'location'     => 'event',
-            'currency'     => 'EUR',
-            'utm_source'   => '',
-            'utm_medium'   => '',
-            'utm_campaign' => '',
-        ];
-
-        $payload = array_merge($defaults, $payload);
-
-        $payload['first_name'] = sanitize_text_field((string) $payload['first_name']);
-        $payload['last_name']  = sanitize_text_field((string) $payload['last_name']);
-        $payload['email']      = sanitize_email((string) $payload['email']);
-        $payload['phone']      = sanitize_text_field((string) $payload['phone']);
-        $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
-        $payload['quantity']   = max(1, absint($payload['quantity']));
-        $payload['category']   = sanitize_text_field((string) $payload['category']);
-        $payload['language']   = sanitize_text_field((string) $payload['language']);
-        $payload['locale']     = sanitize_text_field((string) $payload['locale']);
-        $payload['location']   = sanitize_text_field((string) $payload['location']);
-        $payload['currency']   = sanitize_text_field((string) $payload['currency']);
-        $payload['utm_source'] = sanitize_text_field((string) $payload['utm_source']);
-        $payload['utm_medium'] = sanitize_text_field((string) $payload['utm_medium']);
-        $payload['utm_campaign'] = sanitize_text_field((string) $payload['utm_campaign']);
-
-        return $payload;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private function assertBookingPayload(array $payload): void
-    {
-        if ($payload['first_name'] === '' || $payload['last_name'] === '') {
-            throw new RuntimeException(__('Nome e cognome sono obbligatori per i biglietti evento.', 'fp-restaurant-reservations'));
-        }
-
-        if ($payload['email'] === '' || filter_var($payload['email'], FILTER_VALIDATE_EMAIL) === false) {
-            throw new RuntimeException(__('Inserisci un indirizzo email valido per l\'evento.', 'fp-restaurant-reservations'));
-        }
-    }
 
     private function eventsTable(): string
     {

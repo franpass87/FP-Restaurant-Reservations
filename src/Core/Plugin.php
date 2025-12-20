@@ -11,40 +11,92 @@ use FP\Resv\Core\Privacy;
 use FP\Resv\Core\Roles;
 use FP\Resv\Core\Scheduler;
 use FP\Resv\Core\Security;
+use FP\Resv\Core\ServiceRegistry;
 use FP\Resv\Domain\Brevo\AutomationService as BrevoAutomation;
 use FP\Resv\Domain\Brevo\Client as BrevoClient;
+use FP\Resv\Domain\Brevo\EventDispatcher as BrevoEventDispatcher;
+use FP\Resv\Domain\Brevo\ListManager as BrevoListManager;
 use FP\Resv\Domain\Brevo\Mapper as BrevoMapper;
+use FP\Resv\Domain\Brevo\PhoneCountryParser as BrevoPhoneParser;
 use FP\Resv\Domain\Brevo\Repository as BrevoRepository;
 use FP\Resv\Domain\Closures\AdminController as ClosuresAdminController;
 use FP\Resv\Domain\Closures\AjaxHandler as ClosuresAjaxHandler;
 use FP\Resv\Domain\Closures\REST as ClosuresREST;
+use FP\Resv\Domain\Closures\PayloadNormalizer as ClosuresPayloadNormalizer;
+use FP\Resv\Domain\Closures\PreviewGenerator as ClosuresPreviewGenerator;
+use FP\Resv\Domain\Closures\RecurrenceHandler as ClosuresRecurrenceHandler;
 use FP\Resv\Domain\Closures\Service as ClosuresService;
+use FP\Resv\Domain\Closures\ClosuresDateRangeResolver;
+use FP\Resv\Domain\Closures\ClosuresPayloadCollector;
+use FP\Resv\Domain\Closures\ClosuresModelExporter;
+use FP\Resv\Domain\Closures\ClosuresResponseBuilder;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
 use FP\Resv\Domain\Customers\Repository as CustomersRepository;
 use FP\Resv\Domain\Diagnostics\AdminController as DiagnosticsAdminController;
 use FP\Resv\Domain\Diagnostics\REST as DiagnosticsREST;
+use FP\Resv\Domain\Diagnostics\LogExporter as DiagnosticsLogExporter;
+use FP\Resv\Domain\Diagnostics\LogFormatter as DiagnosticsLogFormatter;
 use FP\Resv\Domain\Diagnostics\Service as DiagnosticsService;
 use FP\Resv\Domain\Events\CPT as EventsCPT;
 use FP\Resv\Domain\Events\REST as EventsREST;
 use FP\Resv\Domain\Events\Service as EventsService;
+use FP\Resv\Domain\Events\BookingPayloadSanitizer;
+use FP\Resv\Domain\Events\BookingPayloadValidator;
+use FP\Resv\Domain\Events\EventFormatter;
+use FP\Resv\Domain\Events\EventNotesBuilder;
+use FP\Resv\Domain\Events\EventPermalinkResolver;
+use FP\Resv\Domain\Events\TicketCounter;
+use FP\Resv\Domain\Events\TicketCreator;
+use FP\Resv\Domain\Events\TicketCsvExporter;
+use FP\Resv\Domain\Events\TicketLister;
 use FP\Resv\Domain\QA\CLI as QASeederCLI;
 use FP\Resv\Domain\QA\REST as QASeederREST;
 use FP\Resv\Domain\QA\Seeder as QASeeder;
 use FP\Resv\Domain\Notifications\Manager as NotificationsManager;
 use FP\Resv\Domain\Notifications\Settings as NotificationsSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationsTemplateRenderer;
+use FP\Resv\Domain\Notifications\BrevoEventSender;
+use FP\Resv\Domain\Notifications\EmailHeadersBuilder;
+use FP\Resv\Domain\Notifications\ManageUrlGenerator;
+use FP\Resv\Domain\Notifications\NotificationContextBuilder;
+use FP\Resv\Domain\Notifications\NotificationScheduler;
+use FP\Resv\Domain\Notifications\TimestampCalculator;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Payments\REST as PaymentsREST;
 use FP\Resv\Domain\Payments\StripeService;
 use FP\Resv\Domain\Reservations\AdminController as ReservationsAdminController;
 use FP\Resv\Domain\Reservations\AdminREST as ReservationsAdminREST;
+use FP\Resv\Domain\Reservations\Admin\AgendaHandler;
+use FP\Resv\Domain\Reservations\Admin\StatsHandler;
+use FP\Resv\Domain\Reservations\Admin\ArrivalsHandler;
+use FP\Resv\Domain\Reservations\Admin\OverviewHandler;
+use FP\Resv\Domain\Reservations\Admin\ReservationPayloadExtractor;
 use FP\Resv\Domain\Reservations\Availability as AvailabilityService;
+use FP\Resv\Domain\Reservations\Availability\ClosureEvaluator;
+use FP\Resv\Domain\Reservations\Availability\DataLoader;
+use FP\Resv\Domain\Reservations\Availability\ScheduleParser;
+use FP\Resv\Domain\Reservations\Availability\TableSuggester;
+use FP\Resv\Domain\Reservations\Availability\CapacityResolver;
+use FP\Resv\Domain\Reservations\Availability\SlotStatusDeterminer;
+use FP\Resv\Domain\Reservations\Availability\SlotPayloadBuilder;
+use FP\Resv\Domain\Reservations\Availability\ReservationFilter;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Reservations\REST as ReservationsREST;
+use FP\Resv\Domain\Reservations\REST\AvailabilityHandler;
+use FP\Resv\Domain\Reservations\REST\ReservationHandler;
 use FP\Resv\Domain\Reservations\Service as ReservationsService;
+use FP\Resv\Domain\Reservations\ReservationPayloadSanitizer;
+use FP\Resv\Domain\Reservations\SettingsResolver;
+use FP\Resv\Domain\Reservations\BrevoConfirmationEventSender;
 use FP\Resv\Domain\Reports\AdminController as ReportsAdminController;
 use FP\Resv\Domain\Reports\REST as ReportsREST;
+use FP\Resv\Domain\Reports\ChannelClassifier as ReportsChannelClassifier;
+use FP\Resv\Domain\Reports\CsvExporter as ReportsCsvExporter;
+use FP\Resv\Domain\Reports\DataNormalizer as ReportsDataNormalizer;
+use FP\Resv\Domain\Reports\DateRangeResolver as ReportsDateRangeResolver;
 use FP\Resv\Domain\Reports\Service as ReportsService;
+use FP\Resv\Domain\Settings\Admin\SettingsSanitizer;
+use FP\Resv\Domain\Settings\Admin\SettingsValidator;
 use FP\Resv\Domain\Settings\AdminPages;
 use FP\Resv\Domain\Settings\Language as LanguageSettings;
 use FP\Resv\Domain\Settings\Options;
@@ -54,13 +106,24 @@ use FP\Resv\Domain\Tracking\Clarity as ClarityTracking;
 use FP\Resv\Domain\Tracking\GA4 as GA4Tracking;
 use FP\Resv\Domain\Tracking\Manager as TrackingManager;
 use FP\Resv\Domain\Tracking\Meta as MetaTracking;
+use FP\Resv\Domain\Tracking\ReservationEventBuilder;
+use FP\Resv\Domain\Tracking\ServerSideEventDispatcher;
+use FP\Resv\Domain\Tracking\TrackingScriptGenerator;
+use FP\Resv\Domain\Tracking\UTMAttributionHandler;
 use FP\Resv\Domain\Surveys\REST as SurveysREST;
 use FP\Resv\Domain\Tables\AdminController as TablesAdminController;
+use FP\Resv\Domain\Tables\CapacityCalculator as TablesCapacityCalculator;
 use FP\Resv\Domain\Tables\LayoutService as TablesLayoutService;
+use FP\Resv\Domain\Tables\RoomTableNormalizer as TablesRoomTableNormalizer;
+use FP\Resv\Domain\Tables\TableSuggestionEngine as TablesTableSuggestionEngine;
 use FP\Resv\Domain\Tables\Repository as TablesRepository;
 use FP\Resv\Domain\Tables\REST as TablesREST;
 use FP\Resv\Frontend\WidgetController;
 use FP\Resv\Frontend\ManageController;
+use FP\Resv\Frontend\AssetManager;
+use FP\Resv\Frontend\CriticalCssManager;
+use FP\Resv\Frontend\PageBuilderCompatibility;
+use FP\Resv\Frontend\ContentFilter;
 use Throwable;
 use function sprintf;
 use function is_admin;
@@ -227,12 +290,23 @@ final class Plugin
             }
         }, 10, 2);
 
+        // Check if already initialized to prevent double initialization
+        static $initialized = false;
+        if ($initialized) {
+            return;
+        }
+        
         if (did_action('plugins_loaded')) {
+            $initialized = true;
             self::runBootstrapStage('bootstrap', static function (): void {
                 self::onPluginsLoaded();
             });
         } else {
-            add_action('plugins_loaded', static function (): void {
+            add_action('plugins_loaded', static function () use (&$initialized): void {
+                if ($initialized) {
+                    return;
+                }
+                $initialized = true;
                 self::runBootstrapStage('bootstrap', static function (): void {
                     self::onPluginsLoaded();
                 });
@@ -242,7 +316,15 @@ final class Plugin
 
     public static function onActivate(): void
     {
-        ServiceContainer::getInstance();
+        // Container will be initialized by Bootstrap if not already done
+        // For activation, we just need to ensure migrations run
+        if (class_exists('\FP\Resv\Kernel\LegacyBridge')) {
+            try {
+                \FP\Resv\Kernel\LegacyBridge::getContainer();
+            } catch (\RuntimeException $e) {
+                // Container not initialized yet, that's ok for activation
+            }
+        }
 
         Migrations::run();
 
@@ -321,12 +403,57 @@ final class Plugin
         ]);
     }
 
+    /**
+     * @deprecated 0.9.0-rc11 This method is deprecated. Initialization is now handled by Kernel\Bootstrap.
+     *             This method is kept for backward compatibility but should not be called directly.
+     *             If Bootstrap has already run, this method will do nothing to prevent double initialization.
+     */
     public static function onPluginsLoaded(): void
     {
-        $container = ServiceContainer::getInstance();
-        $container->register('plugin.file', self::$file);
-        $container->register('plugin.dir', self::$dir);
-        $container->register('plugin.url', self::$url);
+        // Prevent double initialization
+        static $initialized = false;
+        if ($initialized) {
+            return;
+        }
+        
+        // Check if Bootstrap has already initialized everything
+        // If so, skip legacy initialization to avoid conflicts
+        if (class_exists('\FP\Resv\Kernel\Bootstrap')) {
+            try {
+                \FP\Resv\Kernel\Bootstrap::container();
+                // Bootstrap already ran, skip legacy initialization
+                $initialized = true;
+                return;
+            } catch (\RuntimeException $e) {
+                // Bootstrap not initialized yet, continue with legacy initialization
+            }
+        }
+        
+        $initialized = true;
+        
+        // Try to get container (new or legacy)
+        $container = null;
+        if (class_exists('\FP\Resv\Kernel\LegacyBridge')) {
+            try {
+                $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
+            } catch (\RuntimeException $e) {
+                // Fallback to legacy container
+                $container = ServiceContainer::getInstance();
+            }
+        } else {
+            $container = ServiceContainer::getInstance();
+        }
+        
+        // Register plugin paths if container supports it
+        if (method_exists($container, 'register')) {
+            $container->register('plugin.file', self::$file);
+            $container->register('plugin.dir', self::$dir);
+            $container->register('plugin.url', self::$url);
+        } elseif (method_exists($container, 'singleton')) {
+            $container->singleton('plugin.file', fn() => self::$file);
+            $container->singleton('plugin.dir', fn() => self::$dir);
+            $container->singleton('plugin.url', fn() => self::$url);
+        }
 
         // Auto cache buster - aggiorna automaticamente la cache quando cambia la versione
         AutoCacheBuster::init();
@@ -334,228 +461,12 @@ final class Plugin
         // Garantisce che gli amministratori abbiano sempre le capability necessarie
         Roles::ensureAdminCapabilities();
 
-        // Core adapters (for testing)
-        $container->singleton('wp.adapter', static function (): Adapters\WordPressAdapter {
-            return new Adapters\WPFunctionsAdapter();
-        });
-
-        $options = new Options();
-        $container->register(Options::class, $options);
-        $container->register('settings.options', $options);
-
-        $languageSettings = new LanguageSettings($options);
-        $container->register(LanguageSettings::class, $languageSettings);
-        $container->register('settings.language', $languageSettings);
-
-        $notificationsSettings = new NotificationsSettings($options);
-        $container->register(NotificationsSettings::class, $notificationsSettings);
-        $container->register('notifications.settings', $notificationsSettings);
-
-        $notificationsTemplates = new NotificationsTemplateRenderer($notificationsSettings, $languageSettings);
-        $container->register(NotificationsTemplateRenderer::class, $notificationsTemplates);
-        $container->register('notifications.templates', $notificationsTemplates);
-
-        Consent::init($options);
-        Security::boot();
-
-        $mailer = new Mailer();
-        $mailer->registerHooks();
-        $container->register(Mailer::class, $mailer);
-        $container->register('core.mailer', $mailer);
-
-        // Async mailer (lazy)
-        $container->singleton('async.mailer', static function ($c) {
-            $asyncMailer = new AsyncMailer($c->get(Mailer::class));
-            $asyncMailer->boot();
-            return $asyncMailer;
-        });
-
-        $styleSettings = new StyleSettings($options);
-        $container->register(StyleSettings::class, $styleSettings);
-        $container->register('settings.style', $styleSettings);
-
         global $wpdb;
-
-        $paymentsRepository = new PaymentsRepository($wpdb);
-        $container->register(PaymentsRepository::class, $paymentsRepository);
-        $container->register('payments.repository', $paymentsRepository);
-
-        $stripe = new StripeService($options, $paymentsRepository);
-        $container->register(StripeService::class, $stripe);
-        $container->register('payments.stripe', $stripe);
-
-        $availability = new AvailabilityService($options, $wpdb);
-        $container->register(AvailabilityService::class, $availability);
-        $container->register('reservations.availability', $availability);
-
-        $customersRepository = new CustomersRepository($wpdb);
-        $container->register(CustomersRepository::class, $customersRepository);
-        $container->register('customers.repository', $customersRepository);
-
-        $reservationsRepository = new ReservationsRepository($wpdb);
-        $container->register(ReservationsRepository::class, $reservationsRepository);
-        $container->register('reservations.repository', $reservationsRepository);
-
-        $privacy = new Privacy($options, $customersRepository, $reservationsRepository, $wpdb);
-        $container->register(Privacy::class, $privacy);
-        $container->register('core.privacy', $privacy);
-
-        $googleCalendar = new GoogleCalendarService($options, $reservationsRepository);
-        $googleCalendar->boot();
-        $container->register(GoogleCalendarService::class, $googleCalendar);
-        $container->register('calendar.google', $googleCalendar);
-
-        $tablesRepository = new TablesRepository($wpdb);
-        $container->register(TablesRepository::class, $tablesRepository);
-        $container->register('tables.repository', $tablesRepository);
-
-        $tablesLayout = new TablesLayoutService($tablesRepository);
-        $container->register(TablesLayoutService::class, $tablesLayout);
-        $container->register('tables.layout', $tablesLayout);
-
-        $closuresService = new ClosuresService($wpdb, $options);
-        $container->register(ClosuresService::class, $closuresService);
-        $container->register('closures.service', $closuresService);
-
-        // Creiamo prima il BrevoClient per poterlo iniettare nei servizi che ne hanno bisogno
-        $brevoRepository = new BrevoRepository($wpdb);
-        $container->register(BrevoRepository::class, $brevoRepository);
-        $container->register('brevo.repository', $brevoRepository);
-
-        $brevoClient = new BrevoClient($options);
-        $container->register(BrevoClient::class, $brevoClient);
-        $container->register('brevo.client', $brevoClient);
-
-        $reservationsService = new ReservationsService(
-            $reservationsRepository,
-            $availability,
-            $options,
-            $languageSettings,
-            $mailer,
-            $customersRepository,
-            $stripe,
-            $notificationsSettings,
-            $notificationsTemplates,
-            $googleCalendar,
-            $brevoClient,
-            $brevoRepository
-        );
-        $container->register(ReservationsService::class, $reservationsService);
-        $container->register('reservations.service', $reservationsService);
-
-        $reportsService = new ReportsService($wpdb, $reservationsRepository, $paymentsRepository);
-        $container->register(ReportsService::class, $reportsService);
-        $container->register('reports.service', $reportsService);
-
-        $diagnosticsService = new DiagnosticsService($wpdb, $paymentsRepository, $reservationsRepository);
-        $container->register(DiagnosticsService::class, $diagnosticsService);
-        $container->register('diagnostics.service', $diagnosticsService);
-
-        $qaSeeder = new QASeeder($reservationsRepository, $customersRepository, $paymentsRepository, $wpdb);
-        $container->register(QASeeder::class, $qaSeeder);
-        $container->register('qa.seeder', $qaSeeder);
-
-        $qaSeederRest = new QASeederREST($qaSeeder);
-        $qaSeederRest->register();
-
-        $qaSeederCli = new QASeederCLI($qaSeeder);
-        $qaSeederCli->register();
-
-        $brevoMapper = new BrevoMapper($options);
-        $container->register(BrevoMapper::class, $brevoMapper);
-        $container->register('brevo.mapper', $brevoMapper);
-
-        $brevoAutomation = new BrevoAutomation(
-            $options,
-            $brevoClient,
-            $brevoMapper,
-            $brevoRepository,
-            $reservationsRepository,
-            $mailer,
-            $languageSettings,
-            $notificationsSettings
-        );
-        $brevoAutomation->boot();
-        $container->register(BrevoAutomation::class, $brevoAutomation);
-        $container->register('brevo.automation', $brevoAutomation);
-
-        $notificationsManager = new NotificationsManager(
-            $options,
-            $notificationsSettings,
-            $notificationsTemplates,
-            $reservationsRepository,
-            $mailer,
-            $brevoClient
-        );
-        $notificationsManager->boot();
-        $container->register(NotificationsManager::class, $notificationsManager);
-        $container->register('notifications.manager', $notificationsManager);
-
-        $eventsService = new EventsService($wpdb, $reservationsService, $reservationsRepository, $customersRepository, $stripe);
-        $container->register(EventsService::class, $eventsService);
-        $container->register('events.service', $eventsService);
-
-        $ga4     = new GA4Tracking($options);
-        $ads     = new AdsTracking($options);
-        $meta    = new MetaTracking($options);
-        $clarity = new ClarityTracking($options);
-
-        $container->register(GA4Tracking::class, $ga4);
-        $container->register(AdsTracking::class, $ads);
-        $container->register(MetaTracking::class, $meta);
-        $container->register(ClarityTracking::class, $clarity);
-
-        $trackingManager = new TrackingManager($options, $ga4, $ads, $meta, $clarity);
-        $trackingManager->boot();
-        $container->register(TrackingManager::class, $trackingManager);
-        $container->register('tracking.manager', $trackingManager);
-
-        if (is_admin()) {
-            // Ordine logico dei menu:
-            // 1. Menu principale + Impostazioni (AdminPages)
-            // 2. Agenda (operazioni quotidiane)
-            // 3. Sale & Tavoli (configurazione layout)
-            // 4. Chiusure (gestione eccezioni)
-            // 5. Report & Analytics (analisi dati)
-            // 6. Diagnostica (debugging e log)
-            
-            $adminPages = new AdminPages();
-            $adminPages->register();
-            $container->register(AdminPages::class, $adminPages);
-            $container->register('settings.admin_pages', $adminPages);
-
-            $reservationsAdmin = new ReservationsAdminController();
-            $reservationsAdmin->register();
-            $container->register(ReservationsAdminController::class, $reservationsAdmin);
-            $container->register('reservations.admin_controller', $reservationsAdmin);
-
-            // Feature flag: Sale & Tavoli
-            $tablesEnabled = (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
-            if ($tablesEnabled) {
-                $tablesAdmin = new TablesAdminController($tablesLayout);
-                $tablesAdmin->register();
-                $container->register(TablesAdminController::class, $tablesAdmin);
-                $container->register('tables.admin_controller', $tablesAdmin);
-            }
-
-            $closuresAdmin = new ClosuresAdminController($closuresService);
-            $closuresAdmin->register();
-            $container->register(ClosuresAdminController::class, $closuresAdmin);
-            $container->register('closures.admin_controller', $closuresAdmin);
-
-            $reportsAdmin = new ReportsAdminController($reportsService);
-            $reportsAdmin->register();
-            $container->register(ReportsAdminController::class, $reportsAdmin);
-            $container->register('reports.admin_controller', $reportsAdmin);
-
-            $diagnosticsAdmin = new DiagnosticsAdminController($diagnosticsService);
-            $diagnosticsAdmin->register();
-            $container->register(DiagnosticsAdminController::class, $diagnosticsAdmin);
-            $container->register('diagnostics.admin_controller', $diagnosticsAdmin);
-            
-            // Store for later use (avoid recalculation)
-            $container->register('feature.tables_enabled', $tablesEnabled);
-        }
+        $options = new Options();
+        
+        // Registra tutti i servizi tramite ServiceRegistry (DEPRECATED - use Service Providers instead)
+        $registry = new ServiceRegistry($container, $options, $wpdb);
+        $registry->registerAll();
 
         // Migrations run only once at plugin load (idempotent check inside)
         Migrations::run();
@@ -580,125 +491,11 @@ final class Plugin
             return $location;
         }, 1, 2);
 
-        $reservationsRest = new ReservationsREST($availability, $reservationsService, $reservationsRepository);
-        $reservationsRest->register();
-        $container->register(ReservationsREST::class, $reservationsRest);
-        $container->register('reservations.rest', $reservationsRest);
-
-        // Endpoint diretto che bypassa WordPress REST per evitare interferenze
-        $directEndpoint = new \FP\Resv\Domain\Reservations\DirectEndpoint($reservationsRest);
-        $directEndpoint->register();
-        $container->register(\FP\Resv\Domain\Reservations\DirectEndpoint::class, $directEndpoint);
-
-        $eventsRest = new EventsREST($eventsService);
-        $eventsRest->register();
-        $container->register(EventsREST::class, $eventsRest);
-        $container->register('events.rest', $eventsRest);
-
-        $paymentsRest = new PaymentsREST($stripe, $paymentsRepository, $reservationsRepository);
-        $paymentsRest->register();
-        $container->register(PaymentsREST::class, $paymentsRest);
-        $container->register('payments.rest', $paymentsRest);
-
-        $adminRest = new ReservationsAdminREST($reservationsRepository, $reservationsService, $googleCalendar, $tablesLayout);
-        $adminRest->register();
-        $container->register(ReservationsAdminREST::class, $adminRest);
-        $container->register('reservations.admin_rest', $adminRest);
-
-        // Registra le API Sale & Tavoli solo se abilitate
-        // Riutilizza il valore calcolato prima (se disponibile) per evitare duplicazione
-        $tablesEnabled = $container->has('feature.tables_enabled')
-            ? $container->get('feature.tables_enabled')
-            : (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
-            
-        if ($tablesEnabled) {
-            $tablesRest = new TablesREST($tablesLayout);
-            $tablesRest->register();
-            $container->register(TablesREST::class, $tablesRest);
-            $container->register('tables.rest', $tablesRest);
-        }
-
-        $closuresRest = new ClosuresREST($closuresService);
-        $closuresRest->register();
-        $container->register(ClosuresREST::class, $closuresRest);
-        $container->register('closures.rest', $closuresRest);
-        
-        // AJAX handler per Closures (più robusto di REST)
-        $closuresAjax = new ClosuresAjaxHandler($closuresService);
-        $closuresAjax->register();
-        $container->register(ClosuresAjaxHandler::class, $closuresAjax);
-
-        $surveysRest = new SurveysREST($options, $languageSettings, $reservationsRepository, $wpdb);
-        $surveysRest->register();
-        $container->register(SurveysREST::class, $surveysRest);
-        $container->register('surveys.rest', $surveysRest);
-
-        $reportsRest = new ReportsREST($reportsService);
-        $reportsRest->register(); // ← Registra gli endpoint REST
-        $container->register(ReportsREST::class, $reportsRest);
-        $container->register('reports.rest', $reportsRest);
-
-        $diagnosticsRest = new DiagnosticsREST($diagnosticsService);
-        $diagnosticsRest->register();
-        $container->register(DiagnosticsREST::class, $diagnosticsRest);
-        $container->register('diagnostics.rest', $diagnosticsRest);
-
-        $widgets = new WidgetController();
-        $widgets->boot();
-
-        $container->register(WidgetController::class, $widgets);
-        $container->register('frontend.widgets', $widgets);
-        
-        // Register dashboard widget (admin only)
-        if (is_admin()) {
-            $dashboardWidget = new \FP\Resv\Frontend\DashboardWidget();
-            $dashboardWidget->register();
-            $container->register(\FP\Resv\Frontend\DashboardWidget::class, $dashboardWidget);
-        }
-
-        // Register shortcodes - gestisce sia init già eseguito che non ancora
-        if (did_action('init')) {
-            // init già eseguito, registra direttamente
-            error_log('[FP-RESV] init già eseguito, registrazione diretta shortcode');
-            \FP\Resv\Frontend\Shortcodes::register();
-        } else {
-            // init non ancora eseguito, usa hook
-            add_action('init', static function(): void {
-                \FP\Resv\Frontend\Shortcodes::register();
-                
-                // Debug log solo in WP_DEBUG
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    global $shortcode_tags;
-                    if (!isset($shortcode_tags['fp_reservations'])) {
-                        error_log('[FP-RESV-INIT] WARNING: Shortcode fp_reservations NOT registered!');
-                    } else {
-                        error_log('[FP-RESV-INIT] ✅ Shortcode fp_reservations registrato correttamente');
-                    }
-                }
-            }, 0); // Priorità 0 per registrare il prima possibile
-        }
-        
-        // Fallback aggiuntivo: registra anche su plugins_loaded se init non è ancora stato eseguito
-        if (!did_action('init')) {
-            add_action('plugins_loaded', static function(): void {
-                // Verifica se lo shortcode è già registrato
-                global $shortcode_tags;
-                if (!isset($shortcode_tags['fp_reservations'])) {
-                    error_log('[FP-RESV-PLUGINS-LOADED] Shortcode non trovato, registrazione fallback...');
-                    \FP\Resv\Frontend\Shortcodes::register();
-                }
-            }, 20); // Priorità 20 per eseguire dopo l'inizializzazione principale
-        }
-
+        // Componenti non gestiti da ServiceRegistry (now handled by FrontendServiceProvider)
         $manage = new ManageController();
         $manage->boot();
         $container->register(ManageController::class, $manage);
         $container->register('frontend.manage', $manage);
-
-        $eventsCpt = new EventsCPT();
-        $eventsCpt->register();
-        $container->register(EventsCPT::class, $eventsCpt);
-        $container->register('events.cpt', $eventsCpt);
 
         Scheduler::init();
 

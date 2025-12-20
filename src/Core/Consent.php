@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core;
 
-use FP\Resv\Domain\Settings\Options;
+use FP\Resv\Domain\Settings\Options as DomainOptions;
+use FP\Resv\Core\Services\OptionsInterface;
+use FP\Resv\Core\OptionsAdapter;
 use function apply_filters;
 use function headers_sent;
 use function in_array;
@@ -52,16 +54,32 @@ final class Consent
      */
     private static $policyVersion = '1.0';
 
-    public static function init(Options $options): void
+    public static function init(OptionsInterface|DomainOptions $options): void
     {
-        self::$cookieTtlDays = self::resolveCookieTtl($options);
-        self::$policyVersion = self::resolvePolicyVersion($options);
+        // Convert OptionsInterface to DomainOptions if needed
+        $domainOptions = self::toDomainOptions($options);
+        
+        self::$cookieTtlDays = self::resolveCookieTtl($domainOptions);
+        self::$policyVersion = self::resolvePolicyVersion($domainOptions);
 
-        [$state, $meta] = self::loadState($options);
+        [$state, $meta] = self::loadState($domainOptions);
 
         self::$state       = $state;
         self::$meta        = $meta;
         self::$initialized = true;
+    }
+    
+    /**
+     * Convert OptionsInterface to DomainOptions-compatible object
+     */
+    private static function toDomainOptions(OptionsInterface|DomainOptions $options): DomainOptions|OptionsAdapter
+    {
+        if ($options instanceof DomainOptions) {
+            return $options;
+        }
+        
+        // Create adapter wrapper
+        return new OptionsAdapter($options);
     }
 
     public static function cookieName(): string
@@ -190,7 +208,7 @@ final class Consent
         self::$initialized = true;
     }
 
-    private static function loadState(Options $options): array
+    private static function loadState(DomainOptions|OptionsAdapter $options): array
     {
         $defaults = self::defaultState($options);
         $cookie   = $_COOKIE[self::COOKIE_NAME] ?? '';
@@ -249,7 +267,7 @@ final class Consent
         return [$state, $meta];
     }
 
-    private static function defaultState(Options $options): array
+    private static function defaultState(DomainOptions|OptionsAdapter $options): array
     {
         $settings = $options->getGroup('fp_resv_tracking', [
             'consent_mode_default' => 'auto',
@@ -284,7 +302,7 @@ final class Consent
         return apply_filters('fp_resv_consent_default_state', $base, $mode);
     }
 
-    private static function resolveCookieTtl(Options $options): int
+    private static function resolveCookieTtl(DomainOptions|OptionsAdapter $options): int
     {
         $settings = $options->getGroup('fp_resv_tracking', [
             'tracking_cookie_ttl_days' => '180',
@@ -342,7 +360,7 @@ final class Consent
         $_COOKIE[self::COOKIE_NAME] = $value;
     }
 
-    private static function resolvePolicyVersion(Options $options): string
+    private static function resolvePolicyVersion(DomainOptions|OptionsAdapter $options): string
     {
         $settings = $options->getGroup('fp_resv_tracking', [
             'privacy_policy_version' => '1.0',

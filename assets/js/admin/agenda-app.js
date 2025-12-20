@@ -1136,9 +1136,32 @@ class ReservationManager {
                 <div class="fp-detail-group">
                     <label>Cliente</label>
                     <div class="fp-detail-value">
-                        <div>${this.escapeHtml(resv.customer.first_name)} ${this.escapeHtml(resv.customer.last_name)}</div>
-                        ${resv.customer.email ? `<div class="fp-detail-meta">${this.escapeHtml(resv.customer.email)}</div>` : ''}
-                        ${resv.customer.phone ? `<div class="fp-detail-meta">${this.escapeHtml(resv.customer.phone)}</div>` : ''}
+                        <div class="fp-form-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Nome</label>
+                                <input type="text" class="fp-form-control" data-field="first_name" 
+                                       value="${this.escapeHtml(resv.customer.first_name || '')}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Cognome</label>
+                                <input type="text" class="fp-form-control" data-field="last_name" 
+                                       value="${this.escapeHtml(resv.customer.last_name || '')}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Email</label>
+                            <input type="email" class="fp-form-control" data-field="email" 
+                                   value="${this.escapeHtml(resv.customer.email || '')}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Telefono</label>
+                            <input type="tel" class="fp-form-control" data-field="phone" 
+                                   value="${this.escapeHtml(resv.customer.phone || '')}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
                     </div>
                 </div>
                 
@@ -1202,6 +1225,16 @@ class ReservationManager {
             return;
         }
         const status = statusField.value;
+        const firstName = this.dom.modalBody.querySelector('[data-field="first_name"]')?.value;
+        const lastName = this.dom.modalBody.querySelector('[data-field="last_name"]')?.value;
+        const email = this.dom.modalBody.querySelector('[data-field="email"]')?.value;
+        const phone = this.dom.modalBody.querySelector('[data-field="phone"]')?.value;
+
+        const updates = { status };
+        if (firstName !== undefined) updates.first_name = firstName.trim();
+        if (lastName !== undefined) updates.last_name = lastName.trim();
+        if (email !== undefined) updates.email = email.trim();
+        if (phone !== undefined) updates.phone = phone.trim();
 
         try {
             const response = await fetch(this.buildRestUrl(`agenda/reservations/${resv.id}`), {
@@ -1210,7 +1243,7 @@ class ReservationManager {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': this.config.nonce,
                 },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify(updates),
             });
 
             if (!response.ok) throw new Error('Failed to update reservation');
@@ -1250,6 +1283,9 @@ class ReservationManager {
     }
 
     async openNewReservationModal() {
+        // Reset dei dati della nuova prenotazione per evitare che vengano riutilizzati dati vecchi
+        this.newReservationData = {};
+        
         // Carica il modal con il form di selezione meal/date/party
         this.dom.modalTitle.textContent = 'Nuova Prenotazione';
         this.dom.modalBody.innerHTML = this.renderNewReservationStep1();
@@ -1567,8 +1603,24 @@ class ReservationManager {
     }
 
     showNewReservationStep3() {
+        // Assicurati che i campi del form siano vuoti quando si mostra lo step 3
         this.dom.modalBody.innerHTML = this.renderNewReservationStep3();
         this.bindNewReservationStep3();
+        
+        // Reset esplicito dei campi del form per evitare che vengano riutilizzati dati vecchi
+        const firstNameField = document.getElementById('new-first-name');
+        const lastNameField = document.getElementById('new-last-name');
+        const emailField = document.getElementById('new-email');
+        const phoneField = document.getElementById('new-phone');
+        const notesField = document.getElementById('new-notes');
+        const allergiesField = document.getElementById('new-allergies');
+        
+        if (firstNameField) firstNameField.value = '';
+        if (lastNameField) lastNameField.value = '';
+        if (emailField) emailField.value = '';
+        if (phoneField) phoneField.value = '';
+        if (notesField) notesField.value = '';
+        if (allergiesField) allergiesField.value = '';
     }
 
     renderNewReservationStep3() {

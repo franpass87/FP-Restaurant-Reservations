@@ -340,7 +340,12 @@ final class MealPlan
             }
         }
 
-        foreach (['hours', 'schedule', 'service_hours'] as $hoursKey) {
+        // Cerca hours_definition direttamente nell'entry se non è in availability
+        if (array_key_exists('hours_definition', $entry) && !array_key_exists('hours_definition', $source)) {
+            $source['hours_definition'] = $entry['hours_definition'];
+        }
+        
+        foreach (['hours_definition', 'hours', 'schedule', 'service_hours'] as $hoursKey) {
             if (!array_key_exists($hoursKey, $source)) {
                 continue;
             }

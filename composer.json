@@ -6,7 +6,8 @@
     "autoload": {
         "psr-4": {
             "FP\\Resv\\": "src/"
-        }
+        },
+        "files": []
     },
     "authors": [
         {

@@ -1,7 +1,7 @@
 # 🚀 START HERE - Benvenuto!
 
 **Plugin:** FP Restaurant Reservations  
-**Versione:** 0.9.0-rc7  
+**Versione:** 0.9.0-rc10.3  
 **Status:** ✅ Production Ready
 
 ---
@@ -157,6 +157,7 @@ docs/
 ---
 
 **Creato:** 2 Novembre 2025  
+**Aggiornato:** 19 Novembre 2025  
 **Il tuo punto di partenza per FP Restaurant Reservations!** 🍽️
 
 

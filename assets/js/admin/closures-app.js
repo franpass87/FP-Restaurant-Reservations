@@ -1,6 +1,44 @@
 (function () {
+    // #region agent log
+    const logInit = {
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        timestamp: Date.now(),
+        location: 'closures-app.js:init',
+        message: 'Closures app script loaded',
+        data: { 
+            root_found: !!document.querySelector('[data-fp-resv-closures]'),
+            document_ready: document.readyState
+        },
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A'
+    };
+    fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(logInit)
+    }).catch(() => {});
+    // #endregion
+    
     const root = document.querySelector('[data-fp-resv-closures]');
     if (!root) {
+        // #region agent log
+        const logNoRoot = {
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            location: 'closures-app.js:init',
+            message: 'Root element not found - script exiting',
+            data: {},
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'A'
+        };
+        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logNoRoot)
+        }).catch(() => {});
+        // #endregion
         return;
     }
 
@@ -67,6 +105,23 @@
     };
 
     const ajaxRequest = (action, data = {}) => {
+        // #region agent log
+        const logData = {
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            location: 'closures-app.js:ajaxRequest',
+            message: 'AJAX request start',
+            data: { action: action, data: data },
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'A'
+        };
+        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logData)
+        }).catch(() => {});
+        // #endregion
         // ✅ Removed console.log for production
         
         const formData = new FormData();
@@ -79,14 +134,107 @@
             }
         }
         
+        // #region agent log
+        const logBeforeFetch = {
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            location: 'closures-app.js:ajaxRequest:beforeFetch',
+            message: 'Before fetch call',
+            data: { 
+                ajaxUrl: ajaxUrl,
+                action: action,
+                hasNonce: !!nonce,
+                nonceLength: nonce ? nonce.length : 0
+            },
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'A'
+        };
+        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logBeforeFetch)
+        }).catch(() => {});
+        // #endregion
+        
         return fetch(ajaxUrl, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin',
         }).then((response) => {
+            // #region agent log
+            const logResponse = {
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                timestamp: Date.now(),
+                location: 'closures-app.js:ajaxRequest:response',
+                message: 'Fetch response received',
+                data: { 
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: response.url
+                },
+                sessionId: 'debug-session',
+                runId: 'run1',
+                hypothesisId: 'A'
+            };
+            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logResponse)
+            }).catch(() => {});
+            // #endregion
+            
             console.log('[FP Closures AJAX Response]', response.status);
+            
+            if (!response.ok) {
+                // #region agent log
+                const logError = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    timestamp: Date.now(),
+                    location: 'closures-app.js:ajaxRequest:responseError',
+                    message: 'Response not OK',
+                    data: { 
+                        status: response.status,
+                        statusText: response.statusText
+                    },
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'A'
+                };
+                fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(logError)
+                }).catch(() => {});
+                // #endregion
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             return response.json();
         }).then((result) => {
+            // #region agent log
+            const logResult = {
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                timestamp: Date.now(),
+                location: 'closures-app.js:ajaxRequest:result',
+                message: 'JSON parsed successfully',
+                data: { 
+                    hasSuccess: 'success' in result,
+                    success: result.success,
+                    hasData: 'data' in result
+                },
+                sessionId: 'debug-session',
+                runId: 'run1',
+                hypothesisId: 'A'
+            };
+            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logResult)
+            }).catch(() => {});
+            // #endregion
+            
             console.log('[FP Closures AJAX Result]', result);
             
             // WordPress AJAX ritorna {success: true/false, data: {...}}
@@ -97,6 +245,29 @@
             
             // Ritorna i dati (result.data contiene il payload)
             return result && result.data ? result.data : result;
+        }).catch((error) => {
+            // #region agent log
+            const logCatch = {
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                timestamp: Date.now(),
+                location: 'closures-app.js:ajaxRequest:catch',
+                message: 'Fetch error caught',
+                data: { 
+                    errorMessage: error.message,
+                    errorName: error.name,
+                    errorStack: error.stack ? error.stack.substring(0, 200) : null
+                },
+                sessionId: 'debug-session',
+                runId: 'run1',
+                hypothesisId: 'A'
+            };
+            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logCatch)
+            }).catch(() => {});
+            // #endregion
+            throw error;
         });
     };
 
@@ -337,6 +508,23 @@
 
     const loadClosures = () => {
         console.log('[FP Closures] loadClosures() chiamato');
+        // #region agent log
+        const logData = {
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            location: 'closures-app.js:loadClosures',
+            message: 'loadClosures called',
+            data: { root_exists: !!root },
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'A'
+        };
+        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logData)
+        }).catch(() => {});
+        // #endregion
         setLoading(true);
         ajaxRequest('fp_resv_closures_list', { include_inactive: 0 })
             .then((payload) => {

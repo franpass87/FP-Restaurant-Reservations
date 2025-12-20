@@ -7,6 +7,8 @@ namespace FP\Resv\Domain\Diagnostics;
 use DateTimeImmutable;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Domain\Diagnostics\ChannelsConfig;
+use FP\Resv\Domain\Diagnostics\LogExporter;
+use FP\Resv\Domain\Diagnostics\LogFormatter;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
@@ -49,7 +51,9 @@ final class Service
     public function __construct(
         private readonly wpdb $wpdb,
         private readonly PaymentsRepository $payments,
-        private readonly ReservationsRepository $reservations
+        private readonly ReservationsRepository $reservations,
+        private readonly LogExporter $exporter,
+        private readonly LogFormatter $formatter
     ) {
     }
 
@@ -127,43 +131,7 @@ final class Service
             ],
         };
 
-        $columns = array_map(static function (array $column): string {
-            return (string) ($column['label'] ?? $column['key']);
-        }, $result['columns']);
-
-        $stream = fopen('php://temp', 'r+');
-        if ($stream === false) {
-            return [
-                'filename'  => 'fp-resv-diagnostics.csv',
-                'mime_type' => 'text/csv',
-                'format'    => 'csv',
-                'delimiter' => ';',
-                'content'   => '',
-            ];
-        }
-
-        fputcsv($stream, $columns, ';');
-
-        foreach ($result['entries'] as $entry) {
-            $row = [];
-            foreach ($result['columns'] as $column) {
-                $key   = (string) $column['key'];
-                $row[] = isset($entry[$key]) ? $this->stringify($entry[$key]) : '';
-            }
-
-            fputcsv($stream, $row, ';');
-        }
-
-        rewind($stream);
-        $content = stream_get_contents($stream);
-
-        return [
-            'filename'  => sprintf('fp-resv-%s-logs-%s.csv', $channel, gmdate('Ymd-His')),
-            'mime_type' => 'text/csv',
-            'format'    => 'csv',
-            'delimiter' => ';',
-            'content'   => is_string($content) ? $content : '',
-        ];
+        return $this->exporter->exportToCsv($result, $channel);
     }
 
     /**
@@ -293,14 +261,9 @@ final class Service
             return null;
         }
 
-        $contentType = $this->normalizeContentType((string) ($row['content_type'] ?? 'text/html'));
+        $contentType = $this->formatter->normalizeContentType((string) ($row['content_type'] ?? 'text/html'));
         $body        = (string) ($row['body'] ?? '');
-
-        if ($contentType === 'text/html') {
-            $body = wp_kses_post($body);
-        } else {
-            $body = sanitize_textarea_field($body);
-        }
+        $body        = $this->formatter->sanitizeBody($body, $contentType);
 
         $status = strtolower((string) ($row['status'] ?? ''));
 
@@ -310,11 +273,11 @@ final class Service
             'recipient'             => (string) ($row['to_emails'] ?? ''),
             'subject'               => (string) ($row['subject'] ?? ''),
             'status'                => $status,
-            'status_label'          => $this->emailStatusLabel($status),
+            'status_label'          => $this->formatter->emailStatusLabel($status),
             'content_type'          => $contentType,
             'body'                  => $body,
             'created_at'            => (string) ($row['created_at'] ?? ''),
-            'created_at_formatted'  => $this->formatTimestamp((string) ($row['created_at'] ?? '')),
+            'created_at_formatted'  => $this->formatter->formatTimestamp((string) ($row['created_at'] ?? '')),
         ];
     }
 
@@ -895,51 +858,6 @@ final class Service
         return $entries;
     }
 
-    private function normalizeContentType(string $contentType): string
-    {
-        $normalized = strtolower(trim($contentType));
-
-        if ($normalized === '') {
-            return 'text/html';
-        }
-
-        if (str_contains($normalized, 'plain')) {
-            return 'text/plain';
-        }
-
-        if (str_contains($normalized, 'html')) {
-            return 'text/html';
-        }
-
-        return 'text/html';
-    }
-
-    private function emailStatusLabel(string $status): string
-    {
-        return match ($status) {
-            'sent'   => __('Inviata', 'fp-restaurant-reservations'),
-            'failed' => __('Errore', 'fp-restaurant-reservations'),
-            default  => ucfirst($status),
-        };
-    }
-
-    private function formatTimestamp(string $timestamp): string
-    {
-        $timestamp = trim($timestamp);
-        if ($timestamp === '') {
-            return '';
-        }
-
-        $time = strtotime($timestamp);
-        if ($time === false) {
-            return $timestamp;
-        }
-
-        $dateFormat = (string) get_option('date_format', 'Y-m-d');
-        $timeFormat = (string) get_option('time_format', 'H:i');
-
-        return wp_date(trim($dateFormat . ' ' . $timeFormat), $time);
-    }
 
     private function normalizeChannel(string $channel): ?string
     {
@@ -1058,22 +976,4 @@ final class Service
         ];
     }
 
-    private function stringify(mixed $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-
-        if (is_numeric($value)) {
-            return (string) $value;
-        }
-
-        if (is_array($value)) {
-            $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-            return is_string($encoded) ? $encoded : '';
-        }
-
-        return (string) $value;
-    }
 }

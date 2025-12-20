@@ -6,7 +6,9 @@ namespace FP\Resv\Domain\Settings;
 
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\Roles;
-use FP\Resv\Core\ServiceContainer;
+use FP\Resv\Kernel\LegacyBridge;
+use FP\Resv\Domain\Settings\Admin\SettingsSanitizer;
+use FP\Resv\Domain\Settings\Admin\SettingsValidator;
 use FP\Resv\Domain\Settings\FormColors;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\PagesConfig;
@@ -85,10 +87,16 @@ final class AdminPages
      */
     private array $pages;
     private bool $settingsRegistered = false;
+    private SettingsSanitizer $sanitizer;
+    private SettingsValidator $validator;
 
-    public function __construct()
-    {
+    public function __construct(
+        SettingsSanitizer $sanitizer,
+        SettingsValidator $validator
+    ) {
         $this->pages = PagesConfig::getPages();
+        $this->sanitizer = $sanitizer;
+        $this->validator = $validator;
     }
 
     public function register(): void
@@ -153,7 +161,7 @@ final class AdminPages
             return;
         }
 
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $style     = $container->get(Style::class);
         if (!$style instanceof Style) {
             $options = $container->get(Options::class);
@@ -206,7 +214,7 @@ final class AdminPages
 
         check_admin_referer('fp_resv_style_reset');
 
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $style     = $container->get(Style::class);
         if (!$style instanceof Style) {
             $options = $container->get(Options::class);
@@ -268,7 +276,7 @@ final class AdminPages
             wp_die(__('Non hai i permessi per accedere a questa pagina.', 'fp-restaurant-reservations'));
         }
 
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $formColors = $container->get(FormColors::class);
         
         if (!$formColors instanceof FormColors) {
@@ -297,7 +305,7 @@ final class AdminPages
 
         check_admin_referer('fp_resv_save_form_colors', 'fp_resv_colors_nonce');
 
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $formColors = $container->get(FormColors::class);
         
         if (!$formColors instanceof FormColors) {
@@ -331,7 +339,7 @@ final class AdminPages
 
         check_admin_referer('fp_resv_reset_form_colors');
 
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $formColors = $container->get(FormColors::class);
         
         if (!$formColors instanceof FormColors) {
@@ -446,7 +454,7 @@ final class AdminPages
                 [
                     'type'              => 'array',
                     'sanitize_callback' => function ($input) use ($pageKey) {
-                        return $this->sanitizePageOptions($pageKey, is_array($input) ? $input : []);
+                        return $this->sanitizer->sanitizePageOptions($pageKey, is_array($input) ? $input : []);
                     },
                 ]
             );
@@ -519,9 +527,9 @@ final class AdminPages
                 echo '<label><input type="checkbox" value="1" name="' . esc_attr($inputName) . '"' . ($checked ? ' checked="checked"' : '') . '> ' . esc_html((string) ($field['checkbox_label'] ?? '')) . '</label>';
                 break;
             case 'phone_prefix_map':
-                $map  = $this->decodePhonePrefixMapValue($value, $field);
+                $map  = $this->sanitizer->decodePhonePrefixMapValue($value, $field);
                 $rows = (int) ($field['rows'] ?? 4);
-                $display = $this->formatPhonePrefixMapValue($map);
+                $display = $this->sanitizer->formatPhonePrefixMapValue($map);
                 echo '<textarea class="large-text code" rows="' . esc_attr((string) $rows) . '" name="' . esc_attr($inputName) . '">';
                 echo esc_textarea($display);
                 echo '</textarea>';
@@ -774,7 +782,7 @@ final class AdminPages
      */
     private function renderStylePage(array $page): void
     {
-        $container = ServiceContainer::getInstance();
+        $container = LegacyBridge::getContainer();
         $style     = $container->get(Style::class);
         if (!$style instanceof Style) {
             $options = $container->get(Options::class);
@@ -869,524 +877,6 @@ final class AdminPages
         }
     }
 
-    /**
-     * @param array<string, mixed> $input
-     *
-     * @return array<string, mixed>
-     */
-    private function sanitizePageOptions(string $pageKey, array $input): array
-    {
-        $page = $this->pages[$pageKey] ?? null;
-        if ($page === null) {
-            return $input;
-        }
-
-        $sanitized = [];
-        foreach ($page['sections'] as $section) {
-            foreach ($section['fields'] as $fieldKey => $field) {
-                $value = $input[$fieldKey] ?? null;
-                $sanitized[$fieldKey] = $this->sanitizeField($pageKey, $fieldKey, $field, $value);
-            }
-        }
-
-        if ($pageKey === 'general') {
-            if (isset($sanitized['default_currency'])) {
-                $sanitized['default_currency'] = strtoupper(substr((string) $sanitized['default_currency'], 0, 3));
-            }
-            if (!empty($sanitized['restaurant_timezone']) && !in_array($sanitized['restaurant_timezone'], timezone_identifiers_list(), true)) {
-                $sanitized['restaurant_timezone'] = 'Europe/Rome';
-            }
-            
-            // Salva l'opzione di conservazione dati in un'opzione separata per il file uninstall.php
-            if (isset($sanitized['keep_data_on_uninstall'])) {
-                update_option('fp_resv_keep_data_on_uninstall', $sanitized['keep_data_on_uninstall'], false);
-            }
-        }
-
-        if ($pageKey === 'payments' && isset($sanitized['stripe_currency'])) {
-            $sanitized['stripe_currency'] = strtoupper(substr((string) $sanitized['stripe_currency'], 0, 3));
-        }
-
-
-        $this->validatePage($pageKey, $sanitized);
-
-        return $sanitized;
-    }
-
-    /**
-     * @param array<string, mixed> $field
-     */
-    private function sanitizeField(string $pageKey, string $fieldKey, array $field, mixed $value): mixed
-    {
-        $type = $field['type'] ?? 'text';
-
-        switch ($type) {
-            case 'checkbox':
-                return (!empty($value) && $value !== '0') ? '1' : '0';
-            case 'integer':
-                $int = (int) ($value ?? 0);
-                if (isset($field['min'])) {
-                    $int = max((int) $field['min'], $int);
-                }
-                if (isset($field['max'])) {
-                    $int = min((int) $field['max'], $int);
-                }
-
-                return (string) $int;
-            case 'number':
-                $raw = is_scalar($value) ? (string) $value : '';
-                $normalized = filter_var($raw, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-                if ($normalized === false || $normalized === null || $normalized === '') {
-                    return '';
-                }
-
-                return $normalized;
-            case 'url':
-                $raw = is_scalar($value) ? trim((string) $value) : '';
-                if ($raw === '') {
-                    return '';
-                }
-
-                $sanitized = esc_url_raw($raw);
-                if ($sanitized === '' || filter_var($sanitized, FILTER_VALIDATE_URL) === false) {
-                    $this->addError($pageKey, $fieldKey . '_invalid_url', sprintf(
-                        __('L\'URL fornito per %s non è valido.', 'fp-restaurant-reservations'),
-                        $field['label']
-                    ));
-
-                    return '';
-                }
-
-                return $sanitized;
-            case 'email':
-                $raw = is_scalar($value) ? trim((string) $value) : '';
-                if ($raw === '') {
-                    return '';
-                }
-
-                $sanitized = sanitize_email($raw);
-                if ($sanitized === '' || !is_email($sanitized)) {
-                    $this->addError($pageKey, $fieldKey . '_invalid_email', sprintf(
-                        __('L\'indirizzo email per %s non è valido.', 'fp-restaurant-reservations'),
-                        $field['label']
-                    ));
-
-                    return '';
-                }
-
-                return $sanitized;
-            case 'email_list':
-                return $this->sanitizeEmailList($pageKey, $fieldKey, $value, $field);
-            case 'language_map':
-                return $this->sanitizeLanguageMap($pageKey, $fieldKey, $value);
-            case 'phone_prefix_map':
-                return $this->sanitizePhonePrefixMap($pageKey, $fieldKey, $value);
-            case 'select':
-                $allowed = $field['options'] ?? [];
-                $raw     = is_scalar($value) ? (string) $value : '';
-                if (array_key_exists($raw, $allowed)) {
-                    return $raw;
-                }
-
-                return (string) ($field['default'] ?? (array_key_first($allowed) ?? ''));
-            case 'color':
-                $raw = is_scalar($value) ? trim((string) $value) : '';
-                if ($raw === '') {
-                    return '';
-                }
-
-                $sanitized = sanitize_hex_color($raw);
-                if ($sanitized === null) {
-                    $this->addError($pageKey, $fieldKey . '_invalid_color', sprintf(
-                        __('Il colore specificato per %s non è valido.', 'fp-restaurant-reservations'),
-                        $field['label']
-                    ));
-
-                    return '';
-                }
-
-                return $sanitized;
-            case 'textarea':
-                $raw = is_scalar($value) ? (string) $value : '';
-
-                return sanitize_textarea_field($raw);
-            case 'textarea_html':
-                $raw = is_scalar($value) ? (string) $value : '';
-
-                return wp_kses_post($raw);
-            case 'password':
-                $raw = is_scalar($value) ? (string) $value : '';
-
-                return trim($raw);
-            default:
-                $raw = is_scalar($value) ? (string) $value : '';
-
-                return sanitize_text_field($raw);
-        }
-    }
-
-    private function validatePage(string $pageKey, array $options): void
-    {
-        switch ($pageKey) {
-            case 'general':
-                if (!empty($options['restaurant_timezone']) && !in_array($options['restaurant_timezone'], timezone_identifiers_list(), true)) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_timezone',
-                        __('La timezone indicata non è riconosciuta. Usa un identificativo come Europe/Rome.', 'fp-restaurant-reservations')
-                    );
-                }
-                if (!empty($options['default_currency']) && !preg_match('/^[A-Z]{3}$/', (string) $options['default_currency'])) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_currency',
-                        __('Il codice valuta deve contenere 3 lettere maiuscole.', 'fp-restaurant-reservations')
-                    );
-                }
-                if (!empty($options['frontend_meals'])) {
-                    $this->validateMealPlanDefinition((string) $options['frontend_meals']);
-                }
-                break;
-            case 'notifications':
-                if (empty($options['restaurant_emails'])) {
-                    $this->addError(
-                        $pageKey,
-                        'missing_restaurant_emails',
-                        __('Specifica almeno un indirizzo email per le notifiche al ristorante.', 'fp-restaurant-reservations')
-                    );
-                }
-                if (empty($options['webmaster_emails'])) {
-                    $this->addError(
-                        $pageKey,
-                        'missing_webmaster_emails',
-                        __('Specifica almeno un indirizzo email per le notifiche al webmaster.', 'fp-restaurant-reservations')
-                    );
-                }
-                break;
-            case 'payments':
-                if (($options['stripe_enabled'] ?? '0') === '1') {
-                    if (empty($options['stripe_publishable_key']) || empty($options['stripe_secret_key'])) {
-                        $this->addError(
-                            $pageKey,
-                            'missing_stripe_keys',
-                            __('Chiavi Stripe obbligatorie quando i pagamenti sono abilitati.', 'fp-restaurant-reservations')
-                        );
-                    }
-                    if (($options['stripe_capture_type'] ?? '') === 'deposit' && empty($options['stripe_deposit_amount'])) {
-                        $this->addError(
-                            $pageKey,
-                            'missing_deposit_amount',
-                            __('Specifica l\'importo della caparra quando la modalità caparra è attiva.', 'fp-restaurant-reservations')
-                        );
-                    }
-                }
-                break;
-            case 'brevo':
-                if (($options['brevo_enabled'] ?? '0') === '1') {
-                    if (empty($options['brevo_api_key'])) {
-                        $this->addError(
-                            $pageKey,
-                            'missing_brevo_key',
-                            __('Specifica la chiave API Brevo per abilitare l\'integrazione.', 'fp-restaurant-reservations')
-                        );
-                    }
-                    if (!empty($options['brevo_review_place_id']) && !$this->isValidPlaceId((string) $options['brevo_review_place_id'])) {
-                        $this->addError(
-                            $pageKey,
-                            'invalid_place_id',
-                            __('Il Place ID Google specificato non sembra valido.', 'fp-restaurant-reservations')
-                        );
-                    }
-                }
-                break;
-            case 'google-calendar':
-                if (($options['google_calendar_enabled'] ?? '0') === '1') {
-                    if (empty($options['google_calendar_client_id']) || empty($options['google_calendar_client_secret'])) {
-                        $this->addError(
-                            $pageKey,
-                            'missing_google_credentials',
-                            __('Client ID e Client Secret sono obbligatori per Google Calendar.', 'fp-restaurant-reservations')
-                        );
-                    }
-                    if (!empty($options['google_calendar_redirect_uri']) && filter_var((string) $options['google_calendar_redirect_uri'], FILTER_VALIDATE_URL) === false) {
-                        $this->addError(
-                            $pageKey,
-                            'invalid_redirect_uri',
-                            __('L\'URL di redirect OAuth non è valido.', 'fp-restaurant-reservations')
-                        );
-                    }
-                }
-                break;
-            case 'language':
-                if (!empty($options['pdf_urls']) && !is_array($options['pdf_urls'])) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_pdf_map',
-                        __('Il formato degli URL PDF per lingua non è valido.', 'fp-restaurant-reservations')
-                    );
-                }
-                break;
-            case 'tracking':
-                if (!empty($options['ga4_measurement_id']) && !preg_match('/^G-[A-Z0-9]{4,}$/', (string) $options['ga4_measurement_id'])) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_ga4_id',
-                        __('Il Measurement ID GA4 deve iniziare con G- seguito da lettere maiuscole e numeri.', 'fp-restaurant-reservations')
-                    );
-                }
-                if (!empty($options['ga4_api_secret']) && strlen((string) $options['ga4_api_secret']) < 20) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_ga4_api_secret',
-                        __('Il GA4 API Secret sembra non essere valido. Verifica di aver copiato correttamente il token.', 'fp-restaurant-reservations')
-                    );
-                }
-                if (!empty($options['meta_access_token']) && strlen((string) $options['meta_access_token']) < 50) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_meta_access_token',
-                        __('Il Meta Access Token sembra non essere valido. Verifica di aver copiato correttamente il token.', 'fp-restaurant-reservations')
-                    );
-                }
-                break;
-        }
-    }
-    private function sanitizeEmailList(string $pageKey, string $fieldKey, mixed $value, array $field): array
-    {
-        $rawList = [];
-        if (is_string($value)) {
-            $rawList = preg_split('/[\n,;]/', $value) ?: [];
-        } elseif (is_array($value)) {
-            $rawList = $value;
-        }
-
-        $valid   = [];
-        $invalid = [];
-
-        foreach ($rawList as $email) {
-            $email = trim((string) $email);
-            if ($email === '') {
-                continue;
-            }
-
-            $sanitized = sanitize_email($email);
-            if ($sanitized === '' || !is_email($sanitized)) {
-                $invalid[] = $email;
-                continue;
-            }
-
-            $valid[] = $sanitized;
-        }
-
-        $valid = array_values(array_unique($valid));
-
-        if ($invalid !== []) {
-            $this->addError(
-                $pageKey,
-                $fieldKey . '_invalid_emails',
-                sprintf(
-                    __('Alcune email sono state ignorate perché non valide: %s', 'fp-restaurant-reservations'),
-                    implode(', ', array_map('wp_strip_all_tags', $invalid))
-                )
-            );
-        }
-
-        if (!empty($field['required']) && $valid === []) {
-            $this->addError(
-                $pageKey,
-                $fieldKey . '_required',
-                sprintf(
-                    __('Il campo %s richiede almeno un indirizzo email valido.', 'fp-restaurant-reservations'),
-                    $field['label']
-                )
-            );
-        }
-
-        return $valid;
-    }
-
-    private function sanitizeLanguageMap(string $pageKey, string $fieldKey, mixed $value): array
-    {
-        $lines = [];
-        if (is_string($value)) {
-            $lines = preg_split('/\n/', $value) ?: [];
-        } elseif (is_array($value)) {
-            foreach ($value as $lang => $url) {
-                $lines[] = $lang . '=' . $url;
-            }
-        }
-
-        $map     = [];
-        $invalid = [];
-
-        foreach ($lines as $line) {
-            $line = trim((string) $line);
-            if ($line === '') {
-                continue;
-            }
-
-            if (!str_contains($line, '=')) {
-                $invalid[] = $line;
-                continue;
-            }
-
-            [$lang, $url] = array_map('trim', explode('=', $line, 2));
-            $lang = strtolower($lang);
-            $lang = sanitize_key($lang);
-            if ($lang === '') {
-                $invalid[] = $line;
-                continue;
-            }
-
-            $sanitizedUrl = esc_url_raw($url);
-            if ($sanitizedUrl === '' || filter_var($sanitizedUrl, FILTER_VALIDATE_URL) === false) {
-                $invalid[] = $line;
-                continue;
-            }
-
-            $map[$lang] = $sanitizedUrl;
-        }
-
-        if ($invalid !== []) {
-            $this->addError(
-                $pageKey,
-                $fieldKey . '_invalid_map',
-                sprintf(
-                    __('Alcune righe non sono state accettate per il campo %s: %s', 'fp-restaurant-reservations'),
-                    $field['label'] ?? $fieldKey,
-                    implode(', ', array_map('wp_strip_all_tags', $invalid))
-                )
-            );
-        }
-
-        return $map;
-    }
-
-    private function sanitizePhonePrefixMap(string $pageKey, string $fieldKey, mixed $value): string
-    {
-        $raw      = is_scalar($value) ? (string) $value : '';
-        $segments = preg_split('/[\r\n,]+/', $raw) ?: [];
-        $map      = [];
-        $invalid  = [];
-
-        foreach ($segments as $segment) {
-            $segment = trim($segment);
-            if ($segment === '') {
-                continue;
-            }
-
-            if (!str_contains($segment, '=')) {
-                $invalid[] = $segment;
-                continue;
-            }
-
-            [$prefixRaw, $langRaw] = array_map('trim', explode('=', $segment, 2));
-            if ($prefixRaw === '' || $langRaw === '') {
-                $invalid[] = $segment;
-                continue;
-            }
-
-            $normalizedPrefix = str_replace(' ', '', $prefixRaw);
-            if (strpos($normalizedPrefix, '00') === 0) {
-                $normalizedPrefix = '+' . substr($normalizedPrefix, 2);
-            }
-            if (strpos($normalizedPrefix, '+') !== 0) {
-                $normalizedPrefix = '+' . ltrim($normalizedPrefix, '+');
-            }
-            if ($normalizedPrefix === '+') {
-                $invalid[] = $segment;
-                continue;
-            }
-
-            $languageCode = $this->normalizeLanguageCode($langRaw, true);
-            if ($languageCode === '') {
-                $languageCode = 'INT';
-            }
-
-            $map[$normalizedPrefix] = $languageCode;
-        }
-
-        if ($invalid !== []) {
-            $definition = $this->getFieldDefinition($pageKey, $fieldKey);
-            $fieldLabel = is_array($definition) && isset($definition['label']) ? (string) $definition['label'] : $fieldKey;
-
-            $this->addError(
-                $pageKey,
-                $fieldKey . '_invalid_prefix_map',
-                sprintf(
-                    __('Alcune righe non sono state accettate per il campo %s: %s', 'fp-restaurant-reservations'),
-                    $fieldLabel,
-                    implode(', ', array_map('wp_strip_all_tags', $invalid))
-                )
-            );
-        }
-
-        if ($map === []) {
-            $map = self::DEFAULT_PHONE_PREFIX_MAP;
-        }
-
-        $encoded = wp_json_encode($map);
-        if (!is_string($encoded)) {
-            $encoded = wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP);
-        }
-
-        return (string) $encoded;
-    }
-
-    /**
-     * @param array<string, mixed> $field
-     *
-     * @return array<string, string>
-     */
-    private function decodePhonePrefixMapValue(mixed $value, array $field): array
-    {
-        $raw = '';
-        if (is_string($value) && $value !== '') {
-            $raw = $value;
-        } elseif (is_string($field['default'] ?? null) && $field['default'] !== '') {
-            $raw = (string) $field['default'];
-        } else {
-            $raw = (string) wp_json_encode(self::DEFAULT_PHONE_PREFIX_MAP);
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return self::DEFAULT_PHONE_PREFIX_MAP;
-        }
-
-        $map = [];
-        foreach ($decoded as $prefix => $language) {
-            if (!is_string($prefix) || !is_string($language)) {
-                continue;
-            }
-
-            $prefix = trim($prefix);
-            if ($prefix === '') {
-                continue;
-            }
-
-            if (strpos($prefix, '+') !== 0) {
-                $prefix = '+' . ltrim($prefix, '+');
-            }
-
-            if ($prefix === '+') {
-                continue;
-            }
-
-            $langCode = $this->normalizeLanguageCode($language, true);
-            if ($langCode === '') {
-                $langCode = 'INT';
-            }
-
-            $map[$prefix] = $langCode;
-        }
-
-        if ($map === []) {
-            $map = self::DEFAULT_PHONE_PREFIX_MAP;
-        }
-
-        return $map;
-    }
 
     /**
      * @return array<string, array<int, array<string, string>>>
@@ -1427,7 +917,7 @@ final class AdminPages
         if ($source !== '') {
             $lines = preg_split('/\n/', $source) ?: [];
             foreach ($lines as $line) {
-                $entries = $this->splitServiceHoursEntries((string) $line);
+                $entries = $this->sanitizer->splitServiceHoursEntries((string) $line);
                 foreach ($entries as $entry) {
                     if ($entry === '' || !str_contains($entry, '=')) {
                         continue;
@@ -1552,189 +1042,6 @@ final class AdminPages
     /**
      * @param array<string, string> $map
      */
-    private function formatPhonePrefixMapValue(array $map): string
-    {
-        if ($map === []) {
-            return '';
-        }
-
-        $pairs = [];
-        foreach ($map as $prefix => $language) {
-            $pairs[] = $prefix . '=' . $language;
-        }
-
-        return implode(', ', $pairs);
-    }
-
-    private function normalizeLanguageCode(string $value, bool $allowInternational = false): string
-    {
-        $upper = strtoupper(trim($value));
-        if ($upper === '') {
-            return '';
-        }
-
-        if (strpos($upper, 'IT') === 0) {
-            return 'IT';
-        }
-
-        if (strpos($upper, 'EN') === 0) {
-            return 'EN';
-        }
-
-        if ($allowInternational && strpos($upper, 'INT') === 0) {
-            return 'INT';
-        }
-
-        return '';
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function collectInvalidServiceHoursEntries(string $definition): array
-    {
-        $lines       = preg_split('/\n/', $definition) ?: [];
-        $allowedDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        $invalid     = [];
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-
-            $entries = $this->splitServiceHoursEntries((string) $line);
-
-            foreach ($entries as $entry) {
-                $entry = trim($entry);
-                if ($entry === '') {
-                    continue;
-                }
-
-                if (!str_contains($entry, '=')) {
-                    $invalid[] = $entry;
-                    continue;
-                }
-
-                [$day, $ranges] = array_map('trim', explode('=', $entry, 2));
-                $day            = strtolower($day);
-
-                if (!in_array($day, $allowedDays, true)) {
-                    $invalid[] = $entry;
-                    continue;
-                }
-
-                $segments = preg_split('/[|,]/', $ranges) ?: [];
-                if ($segments === []) {
-                    $invalid[] = $entry;
-                    continue;
-                }
-
-                $invalidEntry = false;
-                foreach ($segments as $segment) {
-                    $segment = trim($segment);
-                    if ($segment === '') {
-                        $invalidEntry = true;
-                        break;
-                    }
-
-                    if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
-                        $invalidEntry = true;
-                        break;
-                    }
-
-                    $startMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
-                    $endMinutes   = ((int) $matches[3] * 60) + (int) $matches[4];
-
-                    if ($endMinutes <= $startMinutes) {
-                        $invalidEntry = true;
-                        break;
-                    }
-                }
-
-                if ($invalidEntry) {
-                    $invalid[] = $entry;
-                }
-            }
-        }
-
-        return $invalid;
-    }
-
-    private function validateMealPlanDefinition(string $definition): void
-    {
-        if (trim($definition) === '') {
-            return;
-        }
-
-        $meals = MealPlan::parse($definition);
-        if ($meals === []) {
-            return;
-        }
-
-        foreach ($meals as $meal) {
-            if (!is_array($meal)) {
-                continue;
-            }
-
-            $hoursDefinition = isset($meal['hours_definition']) ? (string) $meal['hours_definition'] : '';
-            if ($hoursDefinition === '') {
-                continue;
-            }
-
-            $invalid = $this->collectInvalidServiceHoursEntries($hoursDefinition);
-            if ($invalid === []) {
-                continue;
-            }
-
-            $label = isset($meal['label']) ? (string) $meal['label'] : '';
-            $key   = isset($meal['key']) ? sanitize_key((string) $meal['key']) : '';
-
-            $this->addError(
-                'general',
-                'invalid_service_hours_meal_' . ($key !== '' ? $key : md5($hoursDefinition)),
-                sprintf(
-                    __('Gli orari di servizio configurati per %1$s non sono validi: %2$s', 'fp-restaurant-reservations'),
-                    $label !== '' ? $label : ($key !== '' ? strtoupper($key) : __('Servizio', 'fp-restaurant-reservations')),
-                    implode(', ', array_map('wp_strip_all_tags', $invalid))
-                )
-            );
-        }
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function splitServiceHoursEntries(string $line): array
-    {
-        $normalized = trim(str_replace("\xc2\xa0", ' ', $line));
-        if ($normalized === '') {
-            return [];
-        }
-
-        $matches = [];
-        if (preg_match_all('/(?:^|\s+)([A-Za-z]{3})\s*=\s*(.+?)(?=\s*$|\s+[A-Za-z]{3}\s*=)/u', $normalized, $matches, PREG_SET_ORDER) > 0) {
-            $entries = [];
-            foreach ($matches as $match) {
-                if (!is_array($match) || !isset($match[1], $match[2])) {
-                    continue;
-                }
-
-                $entries[] = $match[1] . '=' . trim($match[2]);
-            }
-
-            if ($entries !== []) {
-                return $entries;
-            }
-        }
-
-        return [$normalized];
-    }
-
-    private function isValidPlaceId(string $placeId): bool
-    {
-        return (bool) preg_match('/^[A-Za-z0-9_-]{10,}$/', $placeId);
-    }
 
     private function addError(string $pageKey, string $code, string $message): void
     {

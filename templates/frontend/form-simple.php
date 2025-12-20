@@ -663,6 +663,24 @@ input[type="checkbox"].fp-checkbox {
             </div>
         </div>
         
+        <!-- Consensi Privacy nello step finale (riepilogo) -->
+        <div class="fp-field" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+            <fieldset class="fp-fieldset">
+                <legend class="screen-reader-text">Consensi Privacy</legend>
+                <div class="fp-checkbox-wrapper" style="display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;position:relative!important;z-index:10000!important;">
+                    <input type="checkbox" id="privacy-consent-final" name="fp_resv_consent" required class="fp-checkbox" aria-describedby="privacy-consent-text-final" style="width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;opacity:1!important;visibility:visible!important;display:inline-block!important;flex-shrink:0!important;pointer-events:auto!important;z-index:10001!important;position:relative!important;cursor:pointer!important;margin:0!important;padding:0!important;">
+                    <label for="privacy-consent-final" id="privacy-consent-text-final" style="pointer-events:auto!important;z-index:10000!important;position:relative!important;cursor:pointer!important;user-select:none!important;-webkit-user-select:none!important;-moz-user-select:none!important;-ms-user-select:none!important;flex:1!important;">
+                        Accetto la <a href="<?php echo esc_url($context['privacy']['policy_url'] ?? '#'); ?>" target="_blank" rel="noopener noreferrer">Privacy Policy</a> e il trattamento dei miei dati personali
+                        <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                    </label>
+                </div>
+                <div class="fp-checkbox-wrapper" style="display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;position:relative!important;z-index:10000!important;">
+                    <input type="checkbox" id="marketing-consent-final" name="fp_resv_marketing_consent" value="1" class="fp-checkbox" aria-describedby="marketing-consent-text-final" style="width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;opacity:1!important;visibility:visible!important;display:inline-block!important;flex-shrink:0!important;pointer-events:auto!important;z-index:10001!important;position:relative!important;cursor:pointer!important;margin:0!important;padding:0!important;">
+                    <label for="marketing-consent-final" id="marketing-consent-text-final" style="pointer-events:auto!important;z-index:10000!important;position:relative!important;cursor:pointer!important;user-select:none!important;-webkit-user-select:none!important;-moz-user-select:none!important;-ms-user-select:none!important;flex:1!important;">Acconsento al trattamento dei dati per comunicazioni marketing (opzionale)</label>
+                </div>
+            </fieldset>
+        </div>
+        
         <div class="fp-summary-note">
             <p>📝 <strong>Verifica attentamente tutti i dati</strong> prima di confermare la prenotazione. Una volta inviata, riceverai una email di conferma.</p>
         </div>

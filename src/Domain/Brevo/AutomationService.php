@@ -56,6 +56,9 @@ final class AutomationService
         private readonly ReservationsRepository $reservations,
         private readonly Mailer $mailer,
         private readonly Language $language,
+        private readonly ListManager $listManager,
+        private readonly PhoneCountryParser $phoneParser,
+        private readonly EventDispatcher $eventDispatcher,
         private readonly ?\FP\Resv\Domain\Notifications\Settings $notificationSettings = null
     ) {
     }
@@ -124,7 +127,7 @@ final class AutomationService
             $reservationDate = $this->findAttributeValue($attributes, ['RESERVATION_DATE', 'reservation_date'], $payload['date'] ?? '');
             $reservationTime = $this->findAttributeValue($attributes, ['RESERVATION_TIME', 'reservation_time'], $payload['time'] ?? '');
             $reservationParty = $this->findAttributeValue($attributes, ['RESERVATION_PARTY', 'reservation_party'], isset($payload['party']) ? (int) $payload['party'] : 0);
-            $eventProperties = $this->buildEventProperties(
+            $eventProperties = $this->eventDispatcher->buildEventProperties(
                 $contact,
                 $attributes,
                 [
@@ -152,7 +155,7 @@ final class AutomationService
                 ]
             );
 
-            $this->dispatchEvent(
+            $this->eventDispatcher->dispatchEvent(
                 'reservation_confirmed',
                 $email,
                 $eventProperties,
@@ -220,7 +223,7 @@ final class AutomationService
         // Invia evento reservation_confirmed SOLO se Brevo NON sta già gestendo
         // le email di conferma tramite email_confirmation (per evitare email duplicate)
         if ($currentStatus === 'confirmed' && $previousStatus !== 'confirmed' && !$this->isBrevoHandlingConfirmationEmails()) {
-            $eventProperties = $this->buildEventProperties(
+            $eventProperties = $this->eventDispatcher->buildEventProperties(
                 $contact,
                 $attributes,
                 [
@@ -248,7 +251,7 @@ final class AutomationService
                 ]
             );
 
-            $this->dispatchEvent(
+            $this->eventDispatcher->dispatchEvent(
                 'reservation_confirmed',
                 $email,
                 $eventProperties,
@@ -257,7 +260,7 @@ final class AutomationService
         }
 
         if ($currentStatus === 'visited') {
-            $eventProperties = $this->buildEventProperties(
+            $eventProperties = $this->eventDispatcher->buildEventProperties(
                 $contact,
                 $attributes,
                 [
@@ -286,7 +289,7 @@ final class AutomationService
             );
             $eventProperties['reservation']['visited_at'] = $context['visited_at'] ?? current_time('mysql');
 
-            $this->dispatchEvent(
+            $this->eventDispatcher->dispatchEvent(
                 'reservation_visited',
                 $email,
                 $eventProperties,
@@ -317,7 +320,7 @@ final class AutomationService
 
         $event = $result['positive'] ? 'survey_completed' : 'survey_negative';
 
-        $this->dispatchEvent(
+        $this->eventDispatcher->dispatchEvent(
             $event,
             $email,
             [
@@ -396,7 +399,7 @@ final class AutomationService
 
                 $attributes = $contact['attributes'] ?? [];
 
-                $eventProperties = $this->buildEventProperties(
+                $eventProperties = $this->eventDispatcher->buildEventProperties(
                     $contact,
                     $attributes,
                     [
@@ -425,7 +428,7 @@ final class AutomationService
                 );
                 $eventProperties['reservation']['surveyUrl'] = $surveyUrl;
 
-                $this->dispatchEvent(
+                $this->eventDispatcher->dispatchEvent(
                     'post_visit_24h',
                     $email,
                     $eventProperties,
@@ -513,7 +516,7 @@ final class AutomationService
         if ($listId !== null) {
             $payload['listIds'] = [$listId];
         } else {
-            $listIds = $this->defaultListIds();
+            $listIds = $this->listManager->defaultListIds();
             if ($listIds !== []) {
                 $payload['listIds'] = $listIds;
             }
@@ -530,113 +533,6 @@ final class AutomationService
         return $response;
     }
 
-    /**
-     * @param array<string, mixed> $properties
-     */
-    private function buildEventProperties(
-        array $contact,
-        array $attributes,
-        array $reservation,
-        array $meta = []
-    ): array {
-        $reservationPayload = array_filter(
-            $reservation,
-            static fn ($value): bool => $value !== null && $value !== ''
-        );
-
-        $metaPayload = array_filter(
-            $meta,
-            static fn ($value): bool => $value !== null && $value !== ''
-        );
-
-        // Formatta data e ora con il timezone corretto
-        $language = (string) ($meta['language'] ?? '');
-        if ($language === '') {
-            $language = $this->language->getDefaultLanguage();
-        }
-        
-        $general = $this->options->getGroup('fp_resv_general', [
-            'restaurant_timezone' => 'Europe/Rome',
-        ]);
-        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
-        if ($timezone === '') {
-            $timezone = 'Europe/Rome';
-        }
-
-        if (!empty($reservation['date']) && !empty($reservation['time'])) {
-            $reservationPayload['formatted_date'] = $this->language->formatDate(
-                (string) $reservation['date'],
-                $language
-            );
-            $reservationPayload['formatted_time'] = $this->language->formatTime(
-                (string) $reservation['time'],
-                $language
-            );
-            $reservationPayload['formatted_datetime'] = $this->language->formatDateTime(
-                (string) $reservation['date'],
-                (string) $reservation['time'],
-                $language,
-                $timezone
-            );
-        }
-
-        $firstNameKey = $this->findAttributeKey($attributes, ['FIRSTNAME', 'firstname', 'first_name']);
-        $lastNameKey = $this->findAttributeKey($attributes, ['LASTNAME', 'lastname', 'last_name']);
-        $phoneKey = $this->findAttributeKey($attributes, ['PHONE', 'phone']);
-
-        $properties = [
-            'reservation' => $reservationPayload,
-            'contact'     => array_filter(
-                [
-                    'email'      => $contact['email'] ?? '',
-                    'first_name' => $firstNameKey ? ($attributes[$firstNameKey] ?? '') : '',
-                    'last_name'  => $lastNameKey ? ($attributes[$lastNameKey] ?? '') : '',
-                    'phone'      => $phoneKey ? ($attributes[$phoneKey] ?? '') : '',
-                ],
-                static fn ($value): bool => $value !== null && $value !== ''
-            ),
-            'attributes'  => $attributes,
-        ];
-
-        if ($metaPayload !== []) {
-            $properties['meta'] = $metaPayload;
-        }
-
-        foreach ($attributes as $key => $value) {
-            if (!array_key_exists($key, $properties)) {
-                $properties[$key] = $value;
-            }
-        }
-
-        return $properties;
-    }
-
-    /**
-     * @param array<string, mixed> $properties
-     */
-    private function dispatchEvent(string $event, string $email, array $properties, int $reservationId): void
-    {
-        if ($email === '') {
-            return;
-        }
-
-        if ($this->repository->hasSuccessfulLog($reservationId, $event)) {
-            return;
-        }
-
-        $response = $this->client->sendEvent($event, [
-            'email'      => strtolower(trim($email)),
-            'properties' => $properties,
-        ]);
-
-        $status = $response['success'] ? 'success' : 'error';
-
-        $this->repository->log($reservationId, $event, [
-            'email'      => $email,
-            'properties' => $properties,
-            'response'   => $response,
-        ], $status, $response['success'] ? null : ($response['message'] ?? null));
-    }
 
     private function generateSurveyUrl(int $reservationId, string $email, array $reservation): string
     {
@@ -703,77 +599,6 @@ final class AutomationService
         return EmailList::parse($list);
     }
 
-    private function defaultListIds(): array
-    {
-        $settings = $this->options->getGroup('fp_resv_brevo', []);
-        $value    = (string) ($settings['brevo_list_id'] ?? '');
-        if ($value === '') {
-            return [];
-        }
-
-        $ids    = array_values(array_filter(array_map('trim', explode(',', $value)), static fn (string $id): bool => $id !== ''));
-        $result = [];
-
-        foreach ($ids as $id) {
-            if ($id === '') {
-                continue;
-            }
-
-            if (!ctype_digit($id)) {
-                $id = preg_replace('/[^0-9]/', '', $id);
-                if (!is_string($id) || $id === '') {
-                    continue;
-                }
-            }
-
-            $intId = (int) $id;
-            if ($intId > 0) {
-                $result[] = $intId;
-            }
-        }
-
-        return $result;
-    }
-
-    private function listIdForKey(string $key): ?int
-    {
-        $settings   = $this->options->getGroup('fp_resv_brevo', []);
-        $key        = strtoupper($key);
-        $candidates = [];
-
-        if ($key === 'IT') {
-            $candidates[] = (string) ($settings['brevo_list_id_it'] ?? '');
-        } elseif ($key === 'EN') {
-            $candidates[] = (string) ($settings['brevo_list_id_en'] ?? '');
-        } else {
-            $candidates[] = (string) ($settings['brevo_list_id_en'] ?? '');
-            $candidates[] = (string) ($settings['brevo_list_id_it'] ?? '');
-        }
-
-        $candidates[] = (string) ($settings['brevo_list_id'] ?? '');
-
-        foreach ($candidates as $candidate) {
-            $candidate = trim($candidate);
-            if ($candidate === '') {
-                continue;
-            }
-
-            if (!ctype_digit($candidate)) {
-                $candidate = preg_replace('/[^0-9]/', '', $candidate);
-                if (!is_string($candidate) || $candidate === '') {
-                    continue;
-                }
-            }
-
-            $listId = (int) $candidate;
-            if ($listId > 0) {
-                return $listId;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * Determina la lingua dal numero di telefono usando la mappa configurata.
      * Usa brevo_phone_prefix_map per associare prefissi a liste (es. +39 => IT).
@@ -781,48 +606,7 @@ final class AutomationService
      */
     public function parsePhoneCountry(string $phone): string
     {
-        $normalized = trim($phone);
-        if ($normalized === '') {
-            return 'EN';
-        }
-
-        $normalized = preg_replace('/[^0-9+]/', '', $normalized);
-        if (!is_string($normalized) || $normalized === '') {
-            return 'EN';
-        }
-
-        if ($normalized[0] !== '+') {
-            if (strpos($normalized, '00') === 0) {
-                $normalized = '+' . substr($normalized, 2);
-            } else {
-                $normalized = '+' . $normalized;
-            }
-        }
-
-        // Usa la mappa configurata per determinare la lista in base al prefisso
-        $settings = $this->options->getGroup('fp_resv_brevo', []);
-        $prefixMap = $this->decodePrefixMap($settings['brevo_phone_prefix_map'] ?? null);
-
-        // Cerca il prefisso più lungo che corrisponde (per gestire +1, +1869, ecc.)
-        $matchedLanguage = '';
-        $matchedLength = 0;
-
-        foreach ($prefixMap as $prefix => $language) {
-            if (strpos($normalized, $prefix) === 0) {
-                $prefixLength = strlen($prefix);
-                if ($prefixLength > $matchedLength) {
-                    $matchedLanguage = $language;
-                    $matchedLength = $prefixLength;
-                }
-            }
-        }
-
-        if ($matchedLanguage !== '') {
-            return strtoupper($matchedLanguage);
-        }
-
-        // Fallback: se non trova corrispondenze, usa EN
-        return 'EN';
+        return $this->phoneParser->parsePhoneCountry($phone);
     }
 
     /**
@@ -843,12 +627,12 @@ final class AutomationService
             $phone = (string) $contact['attributes']['PHONE'];
         }
 
-        $phoneCountry = $this->parsePhoneCountry($phone);
-        $targetKey    = $this->resolveListKey($forcedLang, $phoneCountry, $pageLanguage);
+        $phoneCountry = $this->phoneParser->parsePhoneCountry($phone);
+        $targetKey    = $this->listManager->resolveListKey($forcedLang, $phoneCountry, $pageLanguage);
 
-        $listId = $this->listIdForKey($targetKey);
+        $listId = $this->listManager->listIdForKey($targetKey);
         if ($listId === null && $targetKey !== 'INT') {
-            $listId = $this->listIdForKey('INT');
+            $listId = $this->listManager->listIdForKey('INT');
         }
 
         if ($listId === null) {
@@ -878,23 +662,6 @@ final class AutomationService
         ], $success ? 'success' : 'error', $success ? null : ($response['message'] ?? null));
     }
 
-    private function resolveListKey(string $forced, string $phoneCountry, string $pageLanguage): string
-    {
-        if ($forced !== '') {
-            return $forced;
-        }
-
-        if ($phoneCountry === 'IT' || $phoneCountry === 'EN') {
-            return $phoneCountry;
-        }
-
-        if ($pageLanguage === 'IT' || $pageLanguage === 'EN') {
-            return $pageLanguage;
-        }
-
-        return 'INT';
-    }
-
     private function normalizeLanguage(string $value, bool $allowInternational = false): string
     {
         $upper = strtoupper(trim($value));
@@ -915,61 +682,6 @@ final class AutomationService
         }
 
         return '';
-    }
-
-    /**
-     * Decodifica la mappa JSON dei prefissi telefonici.
-     *
-     * @return array<string, string>
-     */
-    private function decodePrefixMap(mixed $raw): array
-    {
-        if (!is_string($raw) || $raw === '') {
-            return [];
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        $map = [];
-
-        foreach ($decoded as $prefix => $language) {
-            if (!is_string($prefix)) {
-                continue;
-            }
-
-            $normalizedPrefix = $this->normalizePhonePrefix($prefix);
-            if ($normalizedPrefix === '') {
-                continue;
-            }
-
-            $languageCode = is_string($language) ? strtoupper(trim($language)) : '';
-            if ($languageCode !== '') {
-                $map[$normalizedPrefix] = $languageCode;
-            }
-        }
-
-        return $map;
-    }
-
-    private function normalizePhonePrefix(string $prefix): string
-    {
-        $normalized = str_replace(' ', '', trim($prefix));
-        if ($normalized === '') {
-            return '';
-        }
-
-        if (strpos($normalized, '00') === 0) {
-            $normalized = '+' . substr($normalized, 2);
-        }
-
-        if (strpos($normalized, '+') !== 0) {
-            $normalized = '+' . ltrim($normalized, '+');
-        }
-
-        return $normalized === '+' ? '' : $normalized;
     }
 
     private function isEnabled(): bool

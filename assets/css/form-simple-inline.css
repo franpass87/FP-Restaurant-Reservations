@@ -735,13 +735,14 @@ p:empty {
 }
 
 .fp-input--phone-prefix {
-    width: 140px;
+    width: 100px;
     flex-shrink: 0;
+    max-width: 100px;
 }
 
 .fp-input--phone-number {
     flex: 1;
-    min-width: 0;
+    min-width: 150px;
 }
 
 /* Time slots styling */
@@ -1070,12 +1071,14 @@ p:empty {
     
     /* Phone prefix responsive */
     .fp-input--phone-prefix {
-        width: 120px;
+        width: 90px;
+        max-width: 90px;
         font-size: 13px;
-        padding: 12px 8px;
+        padding: 12px 6px;
     }
     
     .fp-input--phone-number {
+        min-width: 120px;
         font-size: 13px;
         padding: 12px;
     }
@@ -1166,9 +1169,9 @@ p:empty {
     
     /* Phone input più compatto */
     .fp-input--phone-prefix {
-        width: 100px;
-        min-width: 100px;
-        max-width: 100px;
+        width: 90px;
+        min-width: 90px;
+        max-width: 90px;
         padding: 11px 6px;
         font-size: 12px;
     }
@@ -1385,6 +1388,9 @@ p:empty {
     align-items: flex-start !important;
     gap: 10px !important;
     margin-bottom: 8px;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
 }
 
 .fp-checkbox-wrapper label {
@@ -1400,6 +1406,13 @@ p:empty {
     word-wrap: break-word !important;
     overflow-wrap: break-word !important;
     hyphens: none !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+    /* Assicura che il label sia sempre cliccabile, anche nello step finale */
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* Checkbox styling - SPECIFICITÀ MASSIMA per sovrascrivere tema Salient */
@@ -1431,7 +1444,11 @@ input[type="checkbox"].fp-checkbox {
     visibility: visible !important;
     display: inline-block !important;
     vertical-align: middle !important;
-    z-index: 1 !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
+    /* Assicura che il checkbox sia sempre cliccabile, anche nello step finale */
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(55, 65, 81, 0.2) !important;
 }
 
 .fp-resv-simple .fp-field input[type="checkbox"].fp-checkbox:checked,
@@ -1600,5 +1617,328 @@ abbr.fp-required:hover,
     white-space: pre-wrap;
     font-size: 11px;
     overflow-x: auto;
+}
+
+/* Assicura che i checkbox siano sempre cliccabili, anche nello step finale */
+.fp-resv-simple .fp-step[data-step="4"] .fp-checkbox-wrapper,
+.fp-resv-simple .fp-step[data-step="3"] .fp-checkbox-wrapper,
+.fp-resv-simple .fp-step .fp-checkbox-wrapper {
+    pointer-events: auto !important;
+    z-index: 100 !important;
+    position: relative !important;
+}
+
+.fp-resv-simple .fp-step[data-step="4"] input[type="checkbox"].fp-checkbox,
+.fp-resv-simple .fp-step[data-step="3"] input[type="checkbox"].fp-checkbox,
+.fp-resv-simple .fp-step input[type="checkbox"].fp-checkbox {
+    pointer-events: auto !important;
+    z-index: 101 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+}
+
+.fp-resv-simple .fp-step[data-step="4"] .fp-checkbox-wrapper label,
+.fp-resv-simple .fp-step[data-step="3"] .fp-checkbox-wrapper label,
+.fp-resv-simple .fp-step .fp-checkbox-wrapper label {
+    pointer-events: auto !important;
+    z-index: 100 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+}
+
+/* REGOLE SPECIFICHE PER CHECKBOX FINALI - MASSIMA PRIORITÀ */
+#privacy-consent-final,
+#marketing-consent-final,
+#profiling-consent-final {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10000 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+}
+
+/* Assicura che i label dei checkbox finali siano cliccabili */
+#privacy-consent-text-final,
+#marketing-consent-text-final,
+#profiling-consent-text-final {
+    pointer-events: auto !important;
+    z-index: 9999 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+/* Assicura che i wrapper dei checkbox finali non blocchino i click */
+.fp-field fieldset .fp-checkbox-wrapper:has(#privacy-consent-final),
+.fp-field fieldset .fp-checkbox-wrapper:has(#marketing-consent-final),
+.fp-field fieldset .fp-checkbox-wrapper:has(#profiling-consent-final) {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 9998 !important;
+}
+
+/* FIX STRUTTURALE: Forza le dimensioni e la visibilità dei checkbox dello step 3 quando lo step è visibile */
+/* Queste regole hanno massima specificità per sovrascrivere qualsiasi CSS del tema */
+.fp-resv-simple .fp-step[data-step="3"].active #privacy-consent,
+.fp-resv-simple .fp-step[data-step="3"]:not([aria-hidden="true"]) #privacy-consent,
+.fp-resv-simple .fp-step[data-step="3"] #privacy-consent,
+#privacy-consent {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="3"].active #marketing-consent,
+.fp-resv-simple .fp-step[data-step="3"]:not([aria-hidden="true"]) #marketing-consent,
+.fp-resv-simple .fp-step[data-step="3"] #marketing-consent,
+#marketing-consent {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="3"].active #profiling-consent,
+.fp-resv-simple .fp-step[data-step="3"]:not([aria-hidden="true"]) #profiling-consent,
+.fp-resv-simple .fp-step[data-step="3"] #profiling-consent,
+#profiling-consent {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="3"].active #wheelchair-table,
+.fp-resv-simple .fp-step[data-step="3"]:not([aria-hidden="true"]) #wheelchair-table,
+.fp-resv-simple .fp-step[data-step="3"] #wheelchair-table,
+#wheelchair-table {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="3"].active #pets-allowed,
+.fp-resv-simple .fp-step[data-step="3"]:not([aria-hidden="true"]) #pets-allowed,
+.fp-resv-simple .fp-step[data-step="3"] #pets-allowed,
+#pets-allowed {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+/* FIX STRUTTURALE: Forza le dimensioni e la visibilità dei checkbox finali quando lo step 4 è visibile */
+/* Queste regole hanno massima specificità per sovrascrivere qualsiasi CSS del tema */
+.fp-resv-simple .fp-step[data-step="4"].active #privacy-consent-final,
+.fp-resv-simple .fp-step[data-step="4"]:not([aria-hidden="true"]) #privacy-consent-final,
+.fp-resv-simple .fp-step[data-step="4"] #privacy-consent-final,
+#privacy-consent-final {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="4"].active #marketing-consent-final,
+.fp-resv-simple .fp-step[data-step="4"]:not([aria-hidden="true"]) #marketing-consent-final,
+.fp-resv-simple .fp-step[data-step="4"] #marketing-consent-final,
+#marketing-consent-final {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.fp-resv-simple .fp-step[data-step="4"].active #profiling-consent-final,
+.fp-resv-simple .fp-step[data-step="4"]:not([aria-hidden="true"]) #profiling-consent-final,
+.fp-resv-simple .fp-step[data-step="4"] #profiling-consent-final,
+#profiling-consent-final {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    clip: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
 }
 

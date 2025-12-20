@@ -4,34 +4,16 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Notifications;
 
-use DateInterval;
-use DateTimeImmutable;
-use DateTimeZone;
-use Exception;
 use FP\Resv\Core\Mailer;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Settings\Options;
-use FP\Resv\Domain\Brevo\Client as BrevoClient;
-use FP\Resv\Core\Logging;
 use function add_action;
-use function add_query_arg;
 use function apply_filters;
-use function esc_url_raw;
-use function home_url;
 use function in_array;
 use function is_array;
 use function is_string;
-use function hash_hmac;
 use function strtolower;
-use function time;
-use function trailingslashit;
 use function trim;
-use function sprintf;
-use function substr;
-use function wp_get_scheduled_event;
-use function wp_schedule_single_event;
-use function wp_salt;
-use function wp_unschedule_event;
 
 final class Manager
 {
@@ -44,7 +26,11 @@ final class Manager
         private readonly TemplateRenderer $templates,
         private readonly ReservationsRepository $reservations,
         private readonly Mailer $mailer,
-        private readonly ?BrevoClient $brevoClient = null
+        private readonly NotificationScheduler $scheduler,
+        private readonly NotificationContextBuilder $contextBuilder,
+        private readonly EmailHeadersBuilder $headersBuilder,
+        private readonly ManageUrlGenerator $urlGenerator,
+        private readonly BrevoEventSender $brevoEventSender
     ) {
     }
 
@@ -64,11 +50,11 @@ final class Manager
         unset($reservation, $manageUrl);
 
         $status = strtolower((string) ($payload['status'] ?? ''));
-        $this->maybeScheduleReminder($reservationId, [
+        $this->scheduler->maybeScheduleReminder($reservationId, [
             'status' => $status,
             'date'   => (string) ($payload['date'] ?? ''),
             'time'   => (string) ($payload['time'] ?? ''),
-        ]);
+        ], [$this, 'dispatchReminder']);
     }
 
     /**
@@ -80,18 +66,17 @@ final class Manager
         $status = strtolower($currentStatus);
 
         if (in_array($status, ['cancelled', 'no-show'], true)) {
-            $this->cancelReminder($reservationId);
-            $this->cancelReview($reservationId);
-
+            $this->scheduler->cancelReminder($reservationId);
+            $this->scheduler->cancelReview($reservationId);
             return;
         }
 
-        $this->maybeScheduleReminder($reservationId, $context + ['status' => $status]);
+        $this->scheduler->maybeScheduleReminder($reservationId, $context + ['status' => $status], [$this, 'dispatchReminder']);
 
         $visitedAt = (string) ($context['visited_at'] ?? '');
         if ($status === 'visited' || $visitedAt !== '') {
-            $this->cancelReminder($reservationId);
-            $this->maybeScheduleReview($reservationId, $context + ['status' => $status]);
+            $this->scheduler->cancelReminder($reservationId);
+            $this->scheduler->maybeScheduleReview($reservationId, $context + ['status' => $status], [$this, 'dispatchReview']);
         }
     }
 
@@ -104,7 +89,7 @@ final class Manager
 
         // Se Brevo è configurato per gestire i reminder, invia l'evento invece dell'email
         if ($this->settings->shouldUseBrevo(Settings::CHANNEL_REMINDER) && $this->settings->isEnabled(Settings::CHANNEL_REMINDER)) {
-            $this->sendBrevoReminderEvent($reservationId, $reservation);
+            $this->brevoEventSender->sendReminderEvent($reservationId, $reservation);
             return;
         }
 
@@ -122,8 +107,8 @@ final class Manager
             return;
         }
 
-        $manageUrl = $this->generateManageUrl($reservationId, $email);
-        $context   = $this->buildContext($reservationId, $reservation, $manageUrl);
+        $manageUrl = $this->urlGenerator->generate($reservationId, $email);
+        $context   = $this->contextBuilder->build($reservationId, $reservation, $manageUrl);
 
         $rendered = $this->templates->render('reminder', $context + [
             'review_url' => '',
@@ -136,7 +121,7 @@ final class Manager
             return;
         }
 
-        $headers = $this->buildHeaders();
+        $headers = $this->headersBuilder->build();
         $this->mailer->send(
             $email,
             $subject,
@@ -160,7 +145,7 @@ final class Manager
 
         // Se Brevo è configurato per gestire le review, invia l'evento invece dell'email
         if ($this->settings->shouldUseBrevo(Settings::CHANNEL_REVIEW) && $this->settings->isEnabled(Settings::CHANNEL_REVIEW)) {
-            $this->sendBrevoReviewEvent($reservationId, $reservation);
+            $this->brevoEventSender->sendReviewEvent($reservationId, $reservation);
             return;
         }
 
@@ -173,8 +158,8 @@ final class Manager
             return;
         }
 
-        $manageUrl = $this->generateManageUrl($reservationId, $email);
-        $context   = $this->buildContext($reservationId, $reservation, $manageUrl);
+        $manageUrl = $this->urlGenerator->generate($reservationId, $email);
+        $context   = $this->contextBuilder->build($reservationId, $reservation, $manageUrl);
         $reviewUrl = $this->settings->reviewUrl();
 
         $rendered = $this->templates->render('review', $context + [
@@ -188,7 +173,7 @@ final class Manager
             return;
         }
 
-        $headers = $this->buildHeaders();
+        $headers = $this->headersBuilder->build();
         $this->mailer->send(
             $email,
             $subject,
@@ -203,358 +188,4 @@ final class Manager
         );
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function maybeScheduleReminder(int $reservationId, array $data): void
-    {
-        if (!$this->settings->shouldUsePlugin(Settings::CHANNEL_REMINDER) || !$this->settings->isEnabled(Settings::CHANNEL_REMINDER)) {
-            $this->cancelReminder($reservationId);
-
-            return;
-        }
-
-        $status = strtolower((string) ($data['status'] ?? ''));
-        if ($status !== 'confirmed') {
-            $this->cancelReminder($reservationId);
-
-            return;
-        }
-
-        $timestamp = $this->computeReminderTimestamp((string) ($data['date'] ?? ''), (string) ($data['time'] ?? ''));
-        if ($timestamp === null) {
-            $this->cancelReminder($reservationId);
-
-            return;
-        }
-
-        $this->scheduleEvent(self::HOOK_REMINDER, $timestamp, [$reservationId]);
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function maybeScheduleReview(int $reservationId, array $data): void
-    {
-        if (!$this->settings->shouldUsePlugin(Settings::CHANNEL_REVIEW) || !$this->settings->isEnabled(Settings::CHANNEL_REVIEW)) {
-            $this->cancelReview($reservationId);
-
-            return;
-        }
-
-        $timestamp = $this->computeReviewTimestamp(
-            (string) ($data['visited_at'] ?? ''),
-            (string) ($data['date'] ?? ''),
-            (string) ($data['time'] ?? '')
-        );
-
-        if ($timestamp === null) {
-            $this->cancelReview($reservationId);
-
-            return;
-        }
-
-        $this->scheduleEvent(self::HOOK_REVIEW, $timestamp, [$reservationId]);
-    }
-
-    private function cancelReminder(int $reservationId): void
-    {
-        $this->cancelEvent(self::HOOK_REMINDER, [$reservationId]);
-    }
-
-    private function cancelReview(int $reservationId): void
-    {
-        $this->cancelEvent(self::HOOK_REVIEW, [$reservationId]);
-    }
-
-    private function cancelEvent(string $hook, array $args): void
-    {
-        $existing = wp_get_scheduled_event($hook, $args);
-        if ($existing !== false && $existing !== null) {
-            wp_unschedule_event($existing->timestamp, $hook, $args);
-        }
-    }
-
-    private function scheduleEvent(string $hook, int $timestamp, array $args): void
-    {
-        $existing = wp_get_scheduled_event($hook, $args);
-        if ($existing !== false && $existing !== null) {
-            if ($existing->timestamp === $timestamp) {
-                return;
-            }
-
-            wp_unschedule_event($existing->timestamp, $hook, $args);
-        }
-
-        if ($timestamp <= time()) {
-            if ($hook === self::HOOK_REMINDER) {
-                $this->dispatchReminder((int) ($args[0] ?? 0));
-            } elseif ($hook === self::HOOK_REVIEW) {
-                $this->dispatchReview((int) ($args[0] ?? 0));
-            }
-
-            return;
-        }
-
-        wp_schedule_single_event($timestamp, $hook, $args);
-    }
-
-    private function computeReminderTimestamp(string $date, string $time): ?int
-    {
-        $date = trim($date);
-        $time = trim($time);
-        if ($date === '' || $time === '') {
-            return null;
-        }
-
-        $time = substr($time, 0, 5);
-
-        try {
-            $timezone  = new DateTimeZone($this->restaurantTimezone());
-            $dateTime  = new DateTimeImmutable($date . ' ' . $time, $timezone);
-            $offset    = $this->settings->offsetHours(Settings::CHANNEL_REMINDER, 4);
-            $scheduled = $dateTime->sub(new DateInterval('PT' . $offset . 'H'));
-        } catch (Exception) {
-            return null;
-        }
-
-        return $scheduled->getTimestamp();
-    }
-
-    private function computeReviewTimestamp(string $visitedAt, string $date, string $time): ?int
-    {
-        try {
-            $timezone = new DateTimeZone($this->restaurantTimezone());
-        } catch (Exception) {
-            $timezone = new DateTimeZone('Europe/Rome');
-        }
-
-        try {
-            if ($visitedAt !== '') {
-                $reference = new DateTimeImmutable($visitedAt, $timezone);
-            } elseif ($date !== '' && $time !== '') {
-                $reference = new DateTimeImmutable($date . ' ' . substr($time, 0, 5), $timezone);
-            } else {
-                return null;
-            }
-
-            $delay     = $this->settings->offsetHours(Settings::CHANNEL_REVIEW, 24);
-            $scheduled = $reference->add(new DateInterval('PT' . $delay . 'H'));
-        } catch (Exception) {
-            return null;
-        }
-
-        return $scheduled->getTimestamp();
-    }
-
-    /**
-     * @param array<string, mixed> $reservation
-     *
-     * @return array<string, mixed>
-     */
-    private function buildContext(int $reservationId, array $reservation, string $manageUrl): array
-    {
-        $time = (string) ($reservation['time'] ?? '');
-        if ($time !== '') {
-            $time = substr($time, 0, 5);
-        }
-
-        $restaurantName = $this->restaurantName();
-
-        return [
-            'id'         => $reservationId,
-            'status'     => (string) ($reservation['status'] ?? ''),
-            'date'       => (string) ($reservation['date'] ?? ''),
-            'time'       => $time,
-            'party'      => isset($reservation['party']) ? (int) $reservation['party'] : '',
-            'language'   => (string) ($reservation['customer_lang'] ?? ''),
-            'manage_url' => $manageUrl,
-            'customer'   => [
-                'first_name' => (string) ($reservation['first_name'] ?? ''),
-                'last_name'  => (string) ($reservation['last_name'] ?? ''),
-            ],
-            'restaurant' => [
-                'name' => $restaurantName,
-            ],
-        ];
-    }
-
-    private function buildHeaders(): array
-    {
-        $notifications = $this->settings->all();
-
-        $headers     = [];
-        $senderEmail = (string) ($notifications['sender_email'] ?? '');
-        $senderName  = (string) ($notifications['sender_name'] ?? '');
-
-        if ($senderEmail !== '') {
-            $from = $senderEmail;
-            if ($senderName !== '') {
-                $from = sprintf('%s <%s>', $senderName, $senderEmail);
-            }
-
-            $headers[] = 'From: ' . $from;
-        }
-
-        $replyTo = (string) ($notifications['reply_to_email'] ?? '');
-        if ($replyTo !== '') {
-            $headers[] = 'Reply-To: ' . $replyTo;
-        }
-
-        return $headers;
-    }
-
-    private function generateManageUrl(int $reservationId, string $email): string
-    {
-        $base = trailingslashit(apply_filters('fp_resv_manage_base_url', home_url('/')));
-        $token = $this->generateManageToken($reservationId, $email);
-
-        return esc_url_raw(add_query_arg([
-            'fp_resv_manage' => $reservationId,
-            'fp_resv_token'  => $token,
-        ], $base));
-    }
-
-    private function generateManageToken(int $reservationId, string $email): string
-    {
-        $email = strtolower(trim($email));
-        $data  = sprintf('%d|%s', $reservationId, $email);
-
-        return hash_hmac('sha256', $data, wp_salt('fp_resv_manage'));
-    }
-
-    private function restaurantTimezone(): string
-    {
-        $general = $this->options->getGroup('fp_resv_general', [
-            'restaurant_timezone' => 'Europe/Rome',
-        ]);
-
-        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
-        if ($timezone === '') {
-            $timezone = 'Europe/Rome';
-        }
-
-        return $timezone;
-    }
-
-    private function restaurantName(): string
-    {
-        $general = $this->options->getGroup('fp_resv_general', [
-            'restaurant_name' => '',
-        ]);
-
-        return (string) ($general['restaurant_name'] ?? '');
-    }
-
-    /**
-     * Invia un evento a Brevo per far partire l'automazione di reminder
-     *
-     * @param array<string, mixed> $reservation
-     */
-    private function sendBrevoReminderEvent(int $reservationId, array $reservation): void
-    {
-        if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
-            Logging::log('brevo', 'Brevo client non disponibile per invio evento reminder', [
-                'reservation_id' => $reservationId,
-                'email'          => $reservation['email'] ?? '',
-            ]);
-            return;
-        }
-
-        $email = (string) ($reservation['email'] ?? '');
-        if ($email === '') {
-            return;
-        }
-
-        $manageUrl = $this->generateManageUrl($reservationId, $email);
-
-        $eventProperties = [
-            'reservation' => array_filter([
-                'id'         => $reservationId,
-                'date'       => $reservation['date'] ?? '',
-                'time'       => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
-                'party'      => $reservation['party'] ?? 0,
-                'status'     => $reservation['status'] ?? '',
-                'location'   => $reservation['location_id'] ?? '',
-                'manage_url' => $manageUrl,
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-            'contact' => array_filter([
-                'first_name' => $reservation['first_name'] ?? '',
-                'last_name'  => $reservation['last_name'] ?? '',
-                'phone'      => $reservation['phone'] ?? '',
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-            'meta' => array_filter([
-                'language' => $reservation['customer_lang'] ?? '',
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-        ];
-
-        $response = $this->brevoClient->sendEvent('email_reminder', [
-            'email'      => strtolower(trim($email)),
-            'properties' => $eventProperties,
-        ]);
-
-        Logging::log('brevo', 'Evento email_reminder inviato a Brevo', [
-            'reservation_id' => $reservationId,
-            'email'          => $email,
-            'success'        => $response['success'] ?? false,
-            'response'       => $response,
-        ]);
-    }
-
-    /**
-     * Invia un evento a Brevo per far partire l'automazione di review
-     *
-     * @param array<string, mixed> $reservation
-     */
-    private function sendBrevoReviewEvent(int $reservationId, array $reservation): void
-    {
-        if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
-            Logging::log('brevo', 'Brevo client non disponibile per invio evento review', [
-                'reservation_id' => $reservationId,
-                'email'          => $reservation['email'] ?? '',
-            ]);
-            return;
-        }
-
-        $email = (string) ($reservation['email'] ?? '');
-        if ($email === '') {
-            return;
-        }
-
-        $manageUrl = $this->generateManageUrl($reservationId, $email);
-        $reviewUrl = $this->settings->reviewUrl();
-
-        $eventProperties = [
-            'reservation' => array_filter([
-                'id'         => $reservationId,
-                'date'       => $reservation['date'] ?? '',
-                'time'       => isset($reservation['time']) ? substr((string) $reservation['time'], 0, 5) : '',
-                'party'      => $reservation['party'] ?? 0,
-                'status'     => $reservation['status'] ?? '',
-                'location'   => $reservation['location_id'] ?? '',
-                'manage_url' => $manageUrl,
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-            'contact' => array_filter([
-                'first_name' => $reservation['first_name'] ?? '',
-                'last_name'  => $reservation['last_name'] ?? '',
-                'phone'      => $reservation['phone'] ?? '',
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-            'meta' => array_filter([
-                'language'   => $reservation['customer_lang'] ?? '',
-                'review_url' => $reviewUrl,
-            ], static fn ($value): bool => $value !== null && $value !== ''),
-        ];
-
-        $response = $this->brevoClient->sendEvent('email_review', [
-            'email'      => strtolower(trim($email)),
-            'properties' => $eventProperties,
-        ]);
-
-        Logging::log('brevo', 'Evento email_review inviato a Brevo', [
-            'reservation_id' => $reservationId,
-            'email'          => $email,
-            'success'        => $response['success'] ?? false,
-            'response'       => $response,
-        ]);
-    }
 }

@@ -67,8 +67,14 @@ final class Repository
 
     public function find(int $id): ?Reservation
     {
+        // JOIN con customers per recuperare i dati del cliente
+        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email as customer_email, c.phone '
+            . 'FROM ' . $this->tableName() . ' r '
+            . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
+            . 'WHERE r.id = %d LIMIT 1';
+        
         $row = $this->wpdb->get_row(
-            $this->wpdb->prepare('SELECT * FROM ' . $this->tableName() . ' WHERE id = %d', $id),
+            $this->wpdb->prepare($sql, $id),
             ARRAY_A
         );
 
@@ -76,31 +82,13 @@ final class Repository
             return null;
         }
 
-        $reservation         = new Reservation();
-        $reservation->id      = (int) $row['id'];
-        $reservation->status  = (string) $row['status'];
-        $reservation->date    = (string) $row['date'];
-        $reservation->time    = (string) $row['time'];
-        $reservation->party   = (int) $row['party'];
-        $reservation->email   = (string) ($row['email'] ?? '');
-        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
-        if (array_key_exists('calendar_event_id', $row)) {
-            $reservation->calendarEventId = $row['calendar_event_id'] !== null
-                ? (string) $row['calendar_event_id']
-                : null;
+        // Use Reservation::fromArray() instead of new Reservation()
+        // Map customer_email to email if email is not in reservation row
+        if (isset($row['customer_email']) && empty($row['email'])) {
+            $row['email'] = $row['customer_email'];
         }
-
-        if (array_key_exists('calendar_sync_status', $row)) {
-            $reservation->calendarSyncStatus = $row['calendar_sync_status'] !== null
-                ? (string) $row['calendar_sync_status']
-                : null;
-        }
-
-        if (!empty($row['calendar_synced_at'])) {
-            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at'], wp_timezone());
-        }
-
-    return $reservation;
+        
+        return Reservation::fromArray($row);
     }
 
     public function findByRequestId(string $requestId): ?Reservation
@@ -109,8 +97,8 @@ final class Repository
             return null;
         }
 
-        // JOIN con customers per recuperare l'email necessaria per il manage_url
-        $sql = 'SELECT r.*, c.email '
+        // JOIN con customers per recuperare i dati del cliente
+        $sql = 'SELECT r.*, c.first_name, c.last_name, c.email as customer_email, c.phone '
             . 'FROM ' . $this->tableName() . ' r '
             . 'LEFT JOIN ' . $this->customersTableName() . ' c ON r.customer_id = c.id '
             . 'WHERE r.request_id = %s ORDER BY r.id DESC LIMIT 1';
@@ -124,31 +112,13 @@ final class Repository
             return null;
         }
 
-        $reservation         = new Reservation();
-        $reservation->id      = (int) $row['id'];
-        $reservation->status  = (string) $row['status'];
-        $reservation->date    = (string) $row['date'];
-        $reservation->time    = (string) $row['time'];
-        $reservation->party   = (int) $row['party'];
-        $reservation->email   = (string) ($row['email'] ?? '');
-        $reservation->created = new DateTimeImmutable((string) $row['created_at'], wp_timezone());
-        if (array_key_exists('calendar_event_id', $row)) {
-            $reservation->calendarEventId = $row['calendar_event_id'] !== null
-                ? (string) $row['calendar_event_id']
-                : null;
+        // Use Reservation::fromArray() instead of new Reservation()
+        // Map customer_email to email if email is not in reservation row
+        if (isset($row['customer_email']) && empty($row['email'])) {
+            $row['email'] = $row['customer_email'];
         }
-
-        if (array_key_exists('calendar_sync_status', $row)) {
-            $reservation->calendarSyncStatus = $row['calendar_sync_status'] !== null
-                ? (string) $row['calendar_sync_status']
-                : null;
-        }
-
-        if (!empty($row['calendar_synced_at'])) {
-            $reservation->calendarSyncedAt = new DateTimeImmutable((string) $row['calendar_synced_at'], wp_timezone());
-        }
-
-        return $reservation;
+        
+        return Reservation::fromArray($row);
     }
 
     /**
@@ -172,10 +142,48 @@ final class Repository
         error_log('[FP Repository findAgendaRange] 📅 Range richiesto: ' . $startDate . ' -> ' . $endDate);
         error_log('[FP Repository findAgendaRange] 🔍 Query SQL: ' . $sql);
         
+        // #region agent log
+        $logFile = (defined('ABSPATH') ? ABSPATH : dirname(dirname(dirname(dirname(dirname(dirname(__DIR__))))))) . '.cursor/debug.log';
+        $queryStartTime = microtime(true);
+        $logData = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => __FILE__ . ':' . __LINE__,
+            'message' => 'Before SQL query execution',
+            'data' => ['sql_preview' => substr($sql, 0, 100)],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ]) . "\n";
+        @file_put_contents($logFile, $logData, FILE_APPEND);
+        // #endregion
+        
         $reservations = $this->wpdb->get_results(
             $this->wpdb->prepare($sql, $startDate, $endDate, 'cancelled'),
             ARRAY_A
         );
+        
+        // #region agent log
+        $queryEndTime = microtime(true);
+        $queryDuration = ($queryEndTime - $queryStartTime) * 1000;
+        $logData = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => __FILE__ . ':' . __LINE__,
+            'message' => 'After SQL query execution',
+            'data' => [
+                'last_error' => $this->wpdb->last_error ?: null,
+                'last_query' => $this->wpdb->last_query,
+                'results_count' => is_array($reservations) ? count($reservations) : 0,
+                'results_is_array' => is_array($reservations),
+                'query_duration_ms' => round($queryDuration, 2)
+            ],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ]) . "\n";
+        @file_put_contents($logFile, $logData, FILE_APPEND);
+        // #endregion
         
         // Check errori SQL
         if ($this->wpdb->last_error) {
@@ -225,6 +233,22 @@ final class Repository
         // Carica tutti i customers in un'unica query
         $customers = [];
         if (!empty($customerIds)) {
+            // #region agent log
+            $logFile = __DIR__ . '/../../../../../../.cursor/debug.log';
+            $logData = json_encode([
+                'id' => 'log_' . time() . '_' . uniqid(),
+                'timestamp' => time() * 1000,
+                'location' => __FILE__ . ':' . __LINE__,
+                'message' => 'Before customers query',
+                'data' => ['customer_ids_count' => count($customerIds)],
+                'sessionId' => 'debug-session',
+                'runId' => 'run1',
+                'hypothesisId' => 'B'
+            ]) . "\n";
+            @file_put_contents($logFile, $logData, FILE_APPEND);
+            $customersQueryStartTime = microtime(true);
+            // #endregion
+            
             // Sanitizza manualmente gli ID (sono già int da sopra, ma doppia sicurezza)
             $safeIds = array_map('intval', $customerIds);
             $placeholders = implode(',', array_fill(0, count($safeIds), '%d'));
@@ -235,6 +259,26 @@ final class Repository
                 . 'WHERE id IN (' . $placeholders . ')';
             
             $customersRows = $this->wpdb->get_results($this->wpdb->prepare($customersSql, ...$safeIds), ARRAY_A);
+            
+            // #region agent log
+            $customersQueryEndTime = microtime(true);
+            $customersQueryDuration = ($customersQueryEndTime - $customersQueryStartTime) * 1000;
+            $logData = json_encode([
+                'id' => 'log_' . time() . '_' . uniqid(),
+                'timestamp' => time() * 1000,
+                'location' => __FILE__ . ':' . __LINE__,
+                'message' => 'After customers query',
+                'data' => [
+                    'customers_count' => is_array($customersRows) ? count($customersRows) : 0,
+                    'customers_query_duration_ms' => round($customersQueryDuration, 2),
+                    'last_error' => $this->wpdb->last_error ?: null
+                ],
+                'sessionId' => 'debug-session',
+                'runId' => 'run1',
+                'hypothesisId' => 'B'
+            ]) . "\n";
+            @file_put_contents($logFile, $logData, FILE_APPEND);
+            // #endregion
             
             if (is_array($customersRows)) {
                 // Indicizza per customer_id per lookup veloce

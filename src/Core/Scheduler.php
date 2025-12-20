@@ -34,7 +34,7 @@ final class Scheduler
 
     public static function runPostVisitJobs(): void
     {
-        $container = ServiceContainer::getInstance();
+        $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
         $automation = $container->get(AutomationService::class);
         if ($automation instanceof AutomationService) {
             $automation->processDueJobs();
@@ -43,7 +43,8 @@ final class Scheduler
 
     public static function runRetentionCleanup(): void
     {
-        $privacy = ServiceContainer::getInstance()->get(Privacy::class);
+        $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
+        $privacy = $container->get(Privacy::class);
         if ($privacy instanceof Privacy) {
             $results = $privacy->runRetentionCleanup();
             do_action('fp_resv_retention_cleanup_completed', $results);

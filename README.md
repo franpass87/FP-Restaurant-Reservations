@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 0.9.0-rc7 (draft) 🚀 |
+| **Versione** | 0.9.0-rc10.3 🚀 |
 | **Status** | Production Ready ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -286,6 +286,10 @@ npm test
 ## 📝 CHANGELOG
 
 **Versioni recenti:**
+- **0.9.0-rc10.3** - Hotfix slot orari (mock → reali)
+- **0.9.0-rc10** - Security & race conditions
+- **0.9.0-rc9** - Bugfix calendario
+- **0.9.0-rc8** - Calendario date ottimizzato
 - **0.9.0-rc7** (draft) - Bugfix profondo + performance
 - **0.9.0-rc6** - Fix timezone PHP (20 correzioni)
 - **0.9.0-rc4** - Fix CSS header tema
@@ -334,5 +338,5 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 0.9.0-rc7  
-**Data:** 2 Novembre 2025
+**Versione:** 0.9.0-rc10.3  
+**Data:** 19 Novembre 2025

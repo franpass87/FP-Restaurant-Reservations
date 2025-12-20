@@ -46,16 +46,13 @@ final class AdminController
         // Assicura che gli amministratori abbiano sempre la capability necessaria
         Roles::ensureAdminCapabilities();
         
-        // Determina la capability appropriata: usa manage_options per admin se manage_fp_reservations non è disponibile
-        $capability = current_user_can('manage_options') && !current_user_can(self::CAPABILITY) 
-            ? 'manage_options' 
-            : self::CAPABILITY;
-        
+        // Usa sempre manage_options per garantire accesso agli amministratori
+        // Le pagine admin dovrebbero essere accessibili solo agli amministratori
         $this->pageHook = add_submenu_page(
             'fp-resv-settings',
             __('Diagnostica', 'fp-restaurant-reservations'),
             __('Diagnostica', 'fp-restaurant-reservations'),
-            $capability,
+            'manage_options',
             self::PAGE_SLUG,
             [$this, 'renderPage']
         ) ?: null;

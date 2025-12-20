@@ -98,7 +98,8 @@ final class REST
         $note = $request->get_param('note');
         $note = is_string($note) ? sanitize_text_field($note) : '';
 
-        $mailer = ServiceContainer::getInstance()->get(Mailer::class);
+        $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
+        $mailer = $container->get(Mailer::class);
         if (!$mailer instanceof Mailer) {
             return new WP_Error('fp_resv_mailer_unavailable', __('Mailer non disponibile.', 'fp-restaurant-reservations'), [
                 'status' => 500,
@@ -171,7 +172,8 @@ final class REST
             );
         }
 
-        $privacy = ServiceContainer::getInstance()->get(Privacy::class);
+        $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
+        $privacy = $container->get(Privacy::class);
         if (!$privacy instanceof Privacy) {
             return new WP_Error(
                 'fp_resv_privacy_unavailable',
@@ -209,7 +211,8 @@ final class REST
             );
         }
 
-        $privacy = ServiceContainer::getInstance()->get(Privacy::class);
+        $container = \FP\Resv\Kernel\LegacyBridge::getContainer();
+        $privacy = $container->get(Privacy::class);
         if (!$privacy instanceof Privacy) {
             return new WP_Error(
                 'fp_resv_privacy_unavailable',

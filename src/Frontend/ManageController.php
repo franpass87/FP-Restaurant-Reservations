@@ -6,10 +6,14 @@ namespace FP\Resv\Frontend;
 
 use FP\Resv\Core\EmailList;
 use FP\Resv\Core\Plugin;
-use FP\Resv\Core\ServiceContainer;
+use FP\Resv\Kernel\LegacyBridge;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use FP\Resv\Domain\Reservations\Service as ReservationsService;
 use FP\Resv\Domain\Settings\Language;
+use FP\Resv\Domain\Settings\Options;
+use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
+use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
+use FP\Resv\Core\Mailer;
 use function add_action;
 use function esc_html;
 use function file_exists;
@@ -25,6 +29,14 @@ use const FILTER_VALIDATE_INT;
 
 final class ManageController
 {
+    public function __construct(
+        private readonly ReservationsRepository $repository,
+        private readonly ReservationsService $service,
+        private readonly Language $language,
+        private readonly Options $options
+    ) {
+    }
+
     public function boot(): void
     {
         add_action('template_redirect', [$this, 'maybeRenderManagePage']);
@@ -46,30 +58,15 @@ final class ManageController
 
         $id = (int) $reservationId;
 
-        $container = ServiceContainer::getInstance();
-        /** @var ReservationsRepository|null $repo */
-        $repo = $container->get(ReservationsRepository::class);
-        /** @var ReservationsService|null $service */
-        $service = $container->get(ReservationsService::class);
-        /** @var Language|null $language */
-        $language = $container->get(Language::class);
-
-        if (!$repo instanceof ReservationsRepository || !$service instanceof ReservationsService) {
-            $this->renderError(__('Servizio non disponibile.', 'fp-restaurant-reservations'));
-            exit;
-        }
-
         // Feature flag: manage page enabled?
-        /** @var \FP\Resv\Domain\Settings\Options|null $options */
-        $options = $container->get(\FP\Resv\Domain\Settings\Options::class);
-        $general = $options instanceof \FP\Resv\Domain\Settings\Options ? $options->getGroup('fp_resv_general', []) : [];
+        $general = $this->options->getGroup('fp_resv_general', []);
         $manageEnabled = (string) ($general['enable_manage_page'] ?? '1') === '1';
         if (!$manageEnabled) {
             $this->renderError(__('Funzionalità disabilitata.', 'fp-restaurant-reservations'));
             exit;
         }
 
-        $reservation = $repo->findAgendaEntry($id);
+        $reservation = $this->repository->findAgendaEntry($id);
         if (!is_array($reservation)) {
             $this->renderError(__('Prenotazione non trovata.', 'fp-restaurant-reservations'));
             exit;
@@ -82,11 +79,12 @@ final class ManageController
             exit;
         }
 
-        $strings = $language instanceof Language ? $language->getStrings((string) ($reservation['customer_lang'] ?? 'it')) : [];
+        $strings = $this->language->getStrings((string) ($reservation['customer_lang'] ?? 'it'));
 
         // Handle action POST (cancel / change_time)
         $notice = '';
         if (isset($_SERVER['REQUEST_METHOD']) && strtoupper((string) $_SERVER['REQUEST_METHOD']) === 'POST') {
+            $general = $this->options->getGroup('fp_resv_general', []);
             $requestsEnabled = (string) ($general['enable_manage_requests'] ?? '1') === '1';
             $action = isset($_POST['fp_resv_action']) ? sanitize_text_field((string) $_POST['fp_resv_action']) : '';
             $desiredTime = isset($_POST['fp_resv_desired_time']) ? sanitize_text_field((string) $_POST['fp_resv_desired_time']) : '';
@@ -150,21 +148,19 @@ final class ManageController
 
     private function notifyStaffAction(int $reservationId, array $reservation, string $action, string $desiredTime, string $userNote): bool
     {
-        $container = ServiceContainer::getInstance();
-        /** @var \FP\Resv\Domain\Settings\Options|null $options */
-        $options = $container->get(\FP\Resv\Domain\Settings\Options::class);
-        if (!$options instanceof \FP\Resv\Domain\Settings\Options) {
+        $container = LegacyBridge::getContainer();
+        if ($container === null) {
             return false;
         }
 
-        $notifications = $options->getGroup('fp_resv_notifications', [
+        $notifications = $this->options->getGroup('fp_resv_notifications', [
             'restaurant_emails' => [],
             'sender_name'       => get_bloginfo('name'),
             'sender_email'      => get_bloginfo('admin_email'),
             'reply_to_email'    => '',
         ]);
 
-        $general = $options->getGroup('fp_resv_general', [
+        $general = $this->options->getGroup('fp_resv_general', [
             'restaurant_name' => get_bloginfo('name'),
         ]);
 
@@ -179,14 +175,14 @@ final class ManageController
         $subject = sprintf('%s - %s #%d', $restaurantName, $subjectAction, $reservationId);
 
         // Build context for notifications templating system
-        /** @var \FP\Resv\Domain\Notifications\Settings $notifSettings */
-        $notifSettings = $container->get(\FP\Resv\Domain\Notifications\Settings::class);
-        /** @var \FP\Resv\Domain\Notifications\TemplateRenderer $templates */
-        $templates     = $container->get(\FP\Resv\Domain\Notifications\TemplateRenderer::class);
-        /** @var \FP\Resv\Core\Mailer $mailer */
-        $mailer        = $container->get(\FP\Resv\Core\Mailer::class);
+        /** @var NotificationSettings|null $notifSettings */
+        $notifSettings = $container->get(NotificationSettings::class);
+        /** @var NotificationTemplateRenderer|null $templates */
+        $templates = $container->get(NotificationTemplateRenderer::class);
+        /** @var Mailer|null $mailer */
+        $mailer = $container->get(Mailer::class);
 
-        if (!$notifSettings instanceof \FP\Resv\Domain\Notifications\Settings || !$templates instanceof \FP\Resv\Domain\Notifications\TemplateRenderer || !$mailer instanceof \FP\Resv\Core\Mailer) {
+        if (!$notifSettings instanceof NotificationSettings || !$templates instanceof NotificationTemplateRenderer || !$mailer instanceof Mailer) {
             return false;
         }
 
@@ -249,16 +245,15 @@ final class ManageController
         );
     }
 
-    private function renderInlineTemplate(string $relativePath, array $context, \FP\Resv\Domain\Notifications\TemplateRenderer $templates): string
+    private function renderInlineTemplate(string $relativePath, array $context, NotificationTemplateRenderer $templates): string
     {
         $templatePath = Plugin::$dir . $relativePath;
         if (!file_exists($templatePath)) {
             return '';
         }
 
-        $languageService = ServiceContainer::getInstance()->get(\FP\Resv\Domain\Settings\Language::class);
-        $language = $languageService instanceof \FP\Resv\Domain\Settings\Language ? $languageService->ensureLanguage((string) ($context['language'] ?? 'it')) : 'it';
-        $strings = $languageService instanceof \FP\Resv\Domain\Settings\Language ? $languageService->getStrings($language) : [];
+        $language = $this->language->ensureLanguage((string) ($context['language'] ?? 'it'));
+        $strings = $this->language->getStrings($language);
 
         ob_start();
         /** @var array<string,mixed> $context */
@@ -269,20 +264,13 @@ final class ManageController
 
     private function logAudit(int $reservationId, string $action, string $userNote, string $desiredTime): void
     {
-        $container = ServiceContainer::getInstance();
-        /** @var ReservationsRepository|null $repo */
-        $repo = $container->get(ReservationsRepository::class);
-        if (!$repo instanceof ReservationsRepository) {
-            return;
-        }
-
         $details = [
             'action'       => $action,
             'user_note'    => $userNote,
             'desired_time' => substr($desiredTime, 0, 5),
         ];
 
-        $repo->logAudit([
+        $this->repository->logAudit([
             'actor_id'    => null,
             'actor_role'  => 'customer',
             'action'      => 'manage_request',

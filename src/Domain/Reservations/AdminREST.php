@@ -6,10 +6,20 @@ namespace FP\Resv\Domain\Reservations;
 
 use DateInterval;
 use DateTimeImmutable;
+use FP\Resv\Application\Reservations\CreateReservationUseCase;
+use FP\Resv\Application\Reservations\DeleteReservationUseCase;
+use FP\Resv\Application\Reservations\GetReservationUseCase;
+use FP\Resv\Application\Reservations\UpdateReservationUseCase;
+use FP\Resv\Application\Reservations\UpdateReservationStatusUseCase;
 use FP\Resv\Core\Roles;
 use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Core\Exceptions\ValidationException;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
+use FP\Resv\Domain\Reservations\Admin\AgendaHandler;
+use FP\Resv\Domain\Reservations\Admin\ArrivalsHandler;
+use FP\Resv\Domain\Reservations\Admin\OverviewHandler;
+use FP\Resv\Domain\Reservations\Admin\ReservationPayloadExtractor;
+use FP\Resv\Domain\Reservations\Admin\StatsHandler;
 use FP\Resv\Domain\Tables\LayoutService;
 use InvalidArgumentException;
 use RuntimeException;
@@ -44,11 +54,27 @@ use function substr;
 use function sprintf;
 use function wp_timezone;
 
+/**
+ * Legacy Admin REST Endpoint
+ * 
+ * @deprecated 0.9.0-rc11 This class should be migrated to use Application layer (Use Cases).
+ *             For now, it's kept for backward compatibility but new code should use Presentation layer.
+ */
 final class AdminREST
 {
     public function __construct(
         private readonly Repository $reservations,
-        private readonly Service $service,
+        private readonly Service $service, // Kept for backward compatibility
+        private readonly AgendaHandler $agendaHandler,
+        private readonly StatsHandler $statsHandler,
+        private readonly ArrivalsHandler $arrivalsHandler,
+        private readonly OverviewHandler $overviewHandler,
+        private readonly ReservationPayloadExtractor $payloadExtractor,
+        private readonly CreateReservationUseCase $createUseCase,
+        private readonly UpdateReservationUseCase $updateUseCase,
+        private readonly DeleteReservationUseCase $deleteUseCase,
+        private readonly GetReservationUseCase $getReservationUseCase,
+        private readonly UpdateReservationStatusUseCase $updateStatusUseCase,
         private readonly ?GoogleCalendarService $calendar = null,
         private readonly ?LayoutService $layout = null
     ) {
@@ -62,6 +88,21 @@ final class AdminREST
         if (did_action('rest_api_init')) {
             $this->registerRoutes();
         }
+        
+        // Clean output buffer before REST API responses
+        add_filter('rest_pre_serve_request', function ($served, $result, $request, $server) {
+            // Only for our endpoints
+            if (strpos($request->get_route(), '/fp-resv/') === 0) {
+                // Clean ALL output buffers before serving REST response
+                while (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                if (ob_get_level() === 0) {
+                    ob_start();
+                }
+            }
+            return $served;
+        }, 10, 4);
     }
 
     public function registerRoutes(): void
@@ -88,7 +129,9 @@ final class AdminREST
                 ]
             );
         } catch (\Throwable $e) {
-            error_log('[FP Resv AdminREST] ❌ ERRORE registrazione /agenda: ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv AdminREST] ❌ ERRORE registrazione /agenda: ' . $e->getMessage());
+            }
         }
 
         // DEBUG endpoint - solo se WP_DEBUG è attivo e utente ha permessi
@@ -153,7 +196,7 @@ final class AdminREST
             '/reservations/arrivals',
             [
                 'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'handleArrivals'],
+                'callback'            => [$this->arrivalsHandler, 'handle'],
                 'permission_callback' => [$this, 'checkPermissions'],
                 'args'                => [
                     'range' => [
@@ -197,65 +240,12 @@ final class AdminREST
             '/agenda/overview',
             [
                 'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'handleOverview'],
+                'callback'            => [$this->overviewHandler, 'handle'],
                 'permission_callback' => [$this, 'checkPermissions'],
             ]
         );
     }
 
-    public function handleArrivals(WP_REST_Request $request): WP_REST_Response|WP_Error
-    {
-        try {
-            $range = strtolower((string) $request->get_param('range'));
-            if (!in_array($range, ['today', 'week'], true)) {
-                $range = 'today';
-            }
-
-            $timezone = wp_timezone();
-            $start    = new DateTimeImmutable('today', $timezone);
-            $end      = $range === 'week' ? $start->add(new DateInterval('P6D')) : $start;
-
-            $filters = [];
-
-            $room = $request->get_param('room');
-            if ($room !== null && $room !== '') {
-                $filters['room'] = (string) $room;
-            }
-
-            $status = $request->get_param('status');
-            if ($status !== null && $status !== '') {
-                $filters['status'] = sanitize_text_field((string) $status);
-            }
-
-            $rows = $this->reservations->findArrivals(
-                $start->format('Y-m-d'),
-                $end->format('Y-m-d'),
-                $filters
-            );
-
-            $reservations = array_map([$this, 'mapArrivalReservation'], $rows);
-
-            $responseData = [
-                'range'        => [
-                    'mode'  => $range,
-                    'start' => $start->format('Y-m-d'),
-                    'end'   => $end->format('Y-m-d'),
-                ],
-                'reservations' => $reservations,
-            ];
-            
-            $response = rest_ensure_response($responseData);
-            
-            return $response;
-        } catch (Throwable $e) {
-            error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
-            return new WP_Error(
-                'fp_resv_arrivals_error',
-                sprintf(__('Errore nel caricamento degli arrivi: %s', 'fp-restaurant-reservations'), $e->getMessage()),
-                ['status' => 500]
-            );
-        }
-    }
 
     /**
      * Endpoint dedicato per statistiche dettagliate
@@ -306,15 +296,17 @@ final class AdminREST
                     continue;
                 }
                 try {
-                    $reservations[] = $this->mapAgendaReservation($row);
+                    $reservations[] = $this->agendaHandler->mapAgendaReservation($row);
                 } catch (Throwable $e) {
-                    error_log('[FP Resv Stats] Errore mapping prenotazione: ' . $e->getMessage());
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('[FP Resv Stats] Errore mapping prenotazione: ' . $e->getMessage());
+                    }
                     continue;
                 }
             }
 
             // Calcola statistiche dettagliate
-            $stats = $this->calculateDetailedStats($reservations, $rangeMode);
+            $stats = $this->statsHandler->calculateDetailedStats($reservations, $rangeMode);
 
             $responseData = [
                 'range' => [
@@ -329,7 +321,9 @@ final class AdminREST
             
             return $response;
         } catch (Throwable $e) {
-            error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
+            }
             return new WP_Error(
                 'fp_resv_stats_error',
                 sprintf(__('Errore nel caricamento delle statistiche: %s', 'fp-restaurant-reservations'), $e->getMessage()),
@@ -338,72 +332,6 @@ final class AdminREST
         }
     }
 
-    /**
-     * Endpoint per overview dashboard con metriche aggregate
-     */
-    public function handleOverview(WP_REST_Request $request): WP_REST_Response|WP_Error
-    {
-        try {
-            $timezone = wp_timezone();
-            $today = new DateTimeImmutable('today', $timezone);
-        
-        // Oggi
-        $todayRows = $this->reservations->findAgendaRange(
-            $today->format('Y-m-d'),
-            $today->format('Y-m-d')
-        );
-        
-        // Questa settimana
-        $weekStart = $today->modify('-' . ((int)$today->format('N') - 1) . ' days');
-        $weekEnd = $weekStart->add(new DateInterval('P6D'));
-        $weekRows = $this->reservations->findAgendaRange(
-            $weekStart->format('Y-m-d'),
-            $weekEnd->format('Y-m-d')
-        );
-        
-        // Questo mese
-        $monthStart = $today->modify('first day of this month');
-        $monthEnd = $today->modify('last day of this month');
-        $monthRows = $this->reservations->findAgendaRange(
-            $monthStart->format('Y-m-d'),
-            $monthEnd->format('Y-m-d')
-        );
-
-        // Mappa prenotazioni
-        $todayReservations = array_map([$this, 'mapAgendaReservation'], is_array($todayRows) ? $todayRows : []);
-        $weekReservations = array_map([$this, 'mapAgendaReservation'], is_array($weekRows) ? $weekRows : []);
-        $monthReservations = array_map([$this, 'mapAgendaReservation'], is_array($monthRows) ? $monthRows : []);
-
-            $responseData = [
-                'today' => [
-                    'date' => $today->format('Y-m-d'),
-                    'stats' => $this->calculateStats($todayReservations),
-                ],
-                'week' => [
-                    'start' => $weekStart->format('Y-m-d'),
-                    'end' => $weekEnd->format('Y-m-d'),
-                    'stats' => $this->calculateStats($weekReservations),
-                ],
-                'month' => [
-                    'start' => $monthStart->format('Y-m-d'),
-                    'end' => $monthEnd->format('Y-m-d'),
-                    'stats' => $this->calculateStats($monthReservations),
-                ],
-                'trends' => $this->calculateTrends($todayReservations, $weekReservations, $monthReservations),
-            ];
-            
-            $response = rest_ensure_response($responseData);
-            
-            return $response;
-        } catch (Throwable $e) {
-            error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
-            return new WP_Error(
-                'fp_resv_overview_error',
-                sprintf(__('Errore nel caricamento della panoramica: %s', 'fp-restaurant-reservations'), $e->getMessage()),
-                ['status' => 500]
-            );
-        }
-    }
 
     public function handleAgendaV2(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
@@ -579,7 +507,7 @@ final class AdminREST
                 error_log('[FP Resv Admin] STEP 1: Estrazione payload...');
             }
             
-            $payload = $this->extractReservationPayload($request);
+            $payload = $this->payloadExtractor->extract($request);
             
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('[FP Resv Admin] STEP 2: Payload estratto con successo: ' . wp_json_encode([
@@ -593,15 +521,21 @@ final class AdminREST
                 error_log('[FP Resv Admin] STEP 3: Chiamata service->create()...');
             }
             
-            // NON usiamo più ob_start() perché potrebbe causare problemi con la risposta REST
-            $result = $this->service->create($payload);
-            
+            // Use Application layer Use Case instead of direct service call
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 4: service->create() completato con successo');
-                error_log('[FP Resv Admin] Result keys: ' . implode(', ', array_keys($result ?? [])));
+                error_log('[FP Resv Admin] STEP 3: Chiamata CreateReservationUseCase->execute()...');
             }
             
-            $reservationId = (int) ($result['id'] ?? 0);
+            $reservation = $this->createUseCase->execute($payload);
+            $reservationId = $reservation->getId();
+            
+            // Convert model to array for compatibility
+            $result = $reservation->toArray();
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv Admin] STEP 4: CreateReservationUseCase->execute() completato con successo');
+                error_log('[FP Resv Admin] Reservation ID: ' . $reservationId);
+            }
             
             if ($reservationId <= 0) {
                 throw new RuntimeException('Prenotazione creata ma ID non valido');
@@ -656,7 +590,7 @@ final class AdminREST
                 ];
             } else {
                 $responseData = [
-                    'reservation' => $this->mapAgendaReservation($entry),
+                    'reservation' => $this->agendaHandler->mapAgendaReservation($entry),
                     'result'      => $result,
                 ];
             }
@@ -761,6 +695,34 @@ final class AdminREST
             $updates['allergies'] = sanitize_textarea_field((string) $request->get_param('allergies'));
         }
 
+        // Customer data updates - allow empty values for backend operations
+        if ($request->offsetExists('first_name')) {
+            $firstName = trim(sanitize_text_field((string) $request->get_param('first_name')));
+            // Allow empty string for backend operations
+            $updates['first_name'] = $firstName;
+        }
+
+        if ($request->offsetExists('last_name')) {
+            $lastName = trim(sanitize_text_field((string) $request->get_param('last_name')));
+            // Allow empty string for backend operations
+            $updates['last_name'] = $lastName;
+        }
+
+        if ($request->offsetExists('email')) {
+            $email = trim(sanitize_email((string) $request->get_param('email')));
+            // If email is provided, it must be valid; empty email is allowed for backend
+            if (!empty($email) && !is_email($email)) {
+                return new WP_Error('fp_resv_invalid_email', __('Email non valida.', 'fp-restaurant-reservations'), ['status' => 400]);
+            }
+            $updates['email'] = $email;
+        }
+
+        if ($request->offsetExists('phone')) {
+            $phone = trim(sanitize_text_field((string) $request->get_param('phone')));
+            // Allow empty string for backend operations
+            $updates['phone'] = $phone;
+        }
+
         if ($request->offsetExists('visited')) {
             $visited = (string) $request->get_param('visited');
             if (in_array(strtolower($visited), ['1', 'true', 'yes', 'on'], true)) {
@@ -785,8 +747,11 @@ final class AdminREST
             return new WP_Error('fp_resv_no_updates', __('Nessuna modifica fornita.', 'fp-restaurant-reservations'), ['status' => 400]);
         }
 
-        $original = $this->reservations->findAgendaEntry($id);
-        if ($original === null) {
+        // Use GetReservationUseCase to check if reservation exists
+        try {
+            $originalReservation = $this->getReservationUseCase->execute($id);
+            $original = $this->reservations->findAgendaEntry($id); // Still need array format for comparison
+        } catch (ValidationException $e) {
             return new WP_Error('fp_resv_reservation_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
         }
 
@@ -809,12 +774,23 @@ final class AdminREST
         }
 
         try {
-            $this->reservations->update($id, $updates);
+            // Use Application layer Use Case instead of direct repository call
+            $reservation = $this->updateUseCase->execute($id, $updates);
+        } catch (ValidationException $exception) {
+            return new WP_Error('fp_resv_update_failed', $exception->getMessage(), ['status' => 400]);
         } catch (RuntimeException $exception) {
             return new WP_Error('fp_resv_update_failed', $exception->getMessage(), ['status' => 500]);
         }
 
-        $entry = $this->reservations->findAgendaEntry($id);
+        // Use the reservation model returned by the Use Case
+        // Try to use mapAgendaReservationFromModel if available, otherwise fallback to findAgendaEntry
+        $entry = null;
+        if (method_exists($this->agendaHandler, 'mapAgendaReservationFromModel')) {
+            $entry = $this->agendaHandler->mapAgendaReservationFromModel($reservation);
+        } else {
+            // Fallback to array format
+            $entry = $this->reservations->findAgendaEntry($id);
+        }
 
         // Cattura eventuali output indesiderati da hook durante l'update
         ob_start();
@@ -835,12 +811,12 @@ final class AdminREST
         
         $hookOutput = ob_get_clean();
         
-        if ($hookOutput) {
+        if ($hookOutput && defined('WP_DEBUG') && WP_DEBUG) {
             error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante update: ' . $hookOutput);
         }
 
         return rest_ensure_response([
-            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+            'reservation' => $entry !== null ? $this->agendaHandler->mapAgendaReservation($entry) : null,
             'updated'     => array_keys($updates),
         ]);
     }
@@ -903,12 +879,12 @@ final class AdminREST
         do_action('fp_resv_reservation_moved', $id, $entry, $updates);
         $hookOutput = ob_get_clean();
         
-        if ($hookOutput) {
+        if ($hookOutput && defined('WP_DEBUG') && WP_DEBUG) {
             error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante move: ' . $hookOutput);
         }
 
         return rest_ensure_response([
-            'reservation' => $entry !== null ? $this->mapAgendaReservation($entry) : null,
+            'reservation' => $entry !== null ? $this->agendaHandler->mapAgendaReservation($entry) : null,
             'moved'       => true,
         ]);
     }
@@ -921,18 +897,28 @@ final class AdminREST
             return new WP_Error('fp_resv_invalid_reservation_id', __('ID prenotazione non valido.', 'fp-restaurant-reservations'), ['status' => 400]);
         }
 
-        // Verifica che la prenotazione esista
-        $entry = $this->reservations->findAgendaEntry($id);
-        error_log('[FP Resv] Prenotazione trovata: ' . ($entry ? 'SI' : 'NO'));
+        // Verifica che la prenotazione esista usando GetReservationUseCase
+        try {
+            $reservationModel = $this->getReservationUseCase->execute($id);
+            // Still need array format for hooks
+            $entry = $this->reservations->findAgendaEntry($id);
+        } catch (ValidationException $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv] Prenotazione non trovata: ' . $e->getMessage());
+            }
+            return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
+        }
         
         if ($entry === null) {
-            error_log('[FP Resv] Prenotazione non trovata nel database');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP Resv] Prenotazione non trovata nel database');
+            }
             return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
         }
 
         try {
-            // Elimina la prenotazione dal database
-            $deleted = $this->reservations->delete($id);
+            // Use Application layer Use Case instead of direct repository call
+            $deleted = $this->deleteUseCase->execute($id);
             
             if (!$deleted) {
                 throw new RuntimeException('Impossibile eliminare la prenotazione.');
@@ -983,7 +969,7 @@ final class AdminREST
             
             // Verifica se ci sono filter attivi
             $filters = $GLOBALS['wp_filter']['rest_pre_serve_request'] ?? null;
-            if ($filters) {
+            if ($filters && defined('WP_DEBUG') && WP_DEBUG) {
                 $filterCount = count($filters->callbacks ?? []);
                 error_log('[FP Resv] ATTENZIONE: Ci sono ' . $filterCount . ' filter su rest_pre_serve_request');
                 
@@ -1082,552 +1068,8 @@ final class AdminREST
         return $value;
     }
 
-    /**
-     * @param array<string, mixed> $row
-     *
-     * @return array<string, mixed>
-     */
-    private function mapAgendaReservation(array $row): array
-    {
-        // Estrazione semplice e sicura dei dati
-        $date = isset($row['date']) ? (string) $row['date'] : current_time('Y-m-d');
-        $time = isset($row['time']) ? substr((string) $row['time'], 0, 5) : '00:00';
-        
-        // Normalizza il tempo se non è nel formato corretto
-        if (!preg_match('/^\d{2}:\d{2}$/', $time)) {
-            $time = '00:00';
-        }
-        
-        return [
-            'id'         => isset($row['id']) ? (int) $row['id'] : 0,
-            'status'     => isset($row['status']) ? (string) $row['status'] : 'pending',
-            'date'       => $date,
-            'time'       => $time,
-            'slot_start' => $date . ' ' . $time,
-            'party'      => isset($row['party']) ? (int) $row['party'] : 2,
-            'meal'       => isset($row['meal']) ? (string) $row['meal'] : '',
-            'notes'      => isset($row['notes']) ? (string) $row['notes'] : '',
-            'allergies'  => isset($row['allergies']) ? (string) $row['allergies'] : '',
-            'room_id'    => isset($row['room_id']) && $row['room_id'] !== null ? (int) $row['room_id'] : null,
-            'table_id'   => isset($row['table_id']) && $row['table_id'] !== null ? (int) $row['table_id'] : null,
-            'customer'   => [
-                'id'         => isset($row['customer_id']) && $row['customer_id'] !== null ? (int) $row['customer_id'] : null,
-                'first_name' => isset($row['first_name']) ? (string) $row['first_name'] : '',
-                'last_name'  => isset($row['last_name']) ? (string) $row['last_name'] : '',
-                'email'      => isset($row['email']) ? (string) $row['email'] : '',
-                'phone'      => isset($row['phone']) ? (string) $row['phone'] : '',
-                'language'   => isset($row['customer_lang']) ? (string) $row['customer_lang'] : '',
-            ],
-        ];
-    }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function extractReservationPayload(WP_REST_Request $request): array
-    {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] extractReservationPayload() START');
-            error_log('[FP Resv Admin] Request has body params: ' . ($request->get_body_params() ? 'YES' : 'NO'));
-            error_log('[FP Resv Admin] Request has JSON params: ' . ($request->get_json_params() ? 'YES' : 'NO'));
-        }
-        
-        $payload = [
-            'date'       => $request->get_param('date') ?? '',
-            'time'       => $request->get_param('time') ?? '',
-            'party'      => $request->get_param('party') ?? 0,
-            'meal'       => $request->get_param('meal') ?? '',
-            'first_name' => $request->get_param('first_name') ?? '',
-            'last_name'  => $request->get_param('last_name') ?? '',
-            'email'      => $request->get_param('email') ?? '',
-            'phone'      => $request->get_param('phone') ?? '',
-            'notes'      => $request->get_param('notes') ?? '',
-            'allergies'  => $request->get_param('allergies') ?? '',
-            'language'   => $request->get_param('language') ?? '',
-            'locale'     => $request->get_param('locale') ?? '',
-            'location'   => $request->get_param('location') ?? '',
-            'currency'   => $request->get_param('currency') ?? '',
-            'utm_source' => $request->get_param('utm_source') ?? '',
-            'utm_medium' => $request->get_param('utm_medium') ?? '',
-            'utm_campaign' => $request->get_param('utm_campaign') ?? '',
-            'status'     => $request->get_param('status') ?? null,
-            'room_id'    => $request->get_param('room_id') ?? null,
-            'table_id'   => $request->get_param('table_id') ?? null,
-            'value'      => $request->get_param('value') ?? null,
-            'allow_partial_contact' => true,
-        ];
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] Payload base costruito, email: ' . ($payload['email'] ?? 'EMPTY'));
-        }
-
-        if ($request->offsetExists('visited') && in_array(strtolower((string) $request->get_param('visited')), ['1', 'true', 'yes', 'on'], true)) {
-            $payload['status'] = 'visited';
-        }
-        
-        // Validazione opzionale email (solo se fornita)
-        if (!empty($payload['email']) && !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] ERRORE: Email non valida: ' . $payload['email']);
-            }
-            throw new InvalidArgumentException(__('Email non valida', 'fp-restaurant-reservations'));
-        }
-        
-        // NOTA: Nome, cognome, email e telefono sono opzionali per prenotazioni da backend
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] extractReservationPayload() OK - payload valido (campi cliente opzionali)');
-        }
-        return $payload;
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     *
-     * @return array<string, mixed>
-     */
-    private function mapArrivalReservation(array $row): array
-    {
-        $time = isset($row['time']) ? substr((string) $row['time'], 0, 5) : '';
-
-        $guestParts = [];
-        if (!empty($row['first_name'])) {
-            $guestParts[] = (string) $row['first_name'];
-        }
-        if (!empty($row['last_name'])) {
-            $guestParts[] = (string) $row['last_name'];
-        }
-
-        $guest = trim(implode(' ', $guestParts));
-        if ($guest === '') {
-            $guest = (string) ($row['email'] ?? '');
-        }
-
-        $tableParts = [];
-        if (!empty($row['table_code'])) {
-            $tableParts[] = (string) $row['table_code'];
-        }
-        if (!empty($row['room_name'])) {
-            $tableParts[] = (string) $row['room_name'];
-        }
-
-        $tableLabel = $tableParts !== [] ? implode(' · ', $tableParts) : '';
-
-        $allergies = [];
-        if (!empty($row['allergies']) && is_string($row['allergies'])) {
-            $chunks = preg_split('/[\r
-,;]+/', (string) $row['allergies']) ?: [];
-            $allergies = array_values(array_filter(array_map(static function ($value) {
-                $value = trim((string) $value);
-
-                return $value !== '' ? $value : null;
-            }, $chunks)));
-        }
-
-        return [
-            'id'           => (int) ($row['id'] ?? 0),
-            'date'         => (string) ($row['date'] ?? ''),
-            'time'         => $time,
-            'party'        => (int) ($row['party'] ?? 0),
-            'table_label'  => $tableLabel,
-            'guest'        => $guest,
-            'notes'        => isset($row['notes']) ? (string) $row['notes'] : '',
-            'allergies'    => $allergies,
-            'status'       => (string) ($row['status'] ?? ''),
-            'language'     => (string) ($row['customer_lang'] ?? ($row['lang'] ?? '')),
-            'phone'        => isset($row['phone']) ? (string) $row['phone'] : '',
-        ];
-    }
-
-    /**
-     * Calcola statistiche aggregate sulle prenotazioni
-     * 
-     * @param array<int, array<string, mixed>> $reservations
-     * @return array<string, mixed>
-     */
-    private function calculateStats(array $reservations): array
-    {
-        $totalReservations = count($reservations);
-        $totalGuests = 0;
-        $statusCounts = [
-            'pending' => 0,
-            'confirmed' => 0,
-            'visited' => 0,
-            'no_show' => 0,
-            'cancelled' => 0,
-        ];
-        
-        foreach ($reservations as $resv) {
-            $totalGuests += (int)($resv['party'] ?? 0);
-            $status = (string)($resv['status'] ?? 'pending');
-            if (isset($statusCounts[$status])) {
-                $statusCounts[$status]++;
-            }
-        }
-        
-        return [
-            'total_reservations' => $totalReservations,
-            'total_guests' => $totalGuests,
-            'by_status' => $statusCounts,
-            'confirmed_percentage' => $totalReservations > 0 
-                ? round(($statusCounts['confirmed'] / $totalReservations) * 100, 1) 
-                : 0,
-        ];
-    }
-
-    /**
-     * Calcola statistiche dettagliate con breakdown temporale
-     * 
-     * @param array<int, array<string, mixed>> $reservations
-     * @param string $rangeMode
-     * @return array<string, mixed>
-     */
-    private function calculateDetailedStats(array $reservations, string $rangeMode): array
-    {
-        $baseStats = $this->calculateStats($reservations);
-        
-        // Raggruppa per servizio (pranzo/cena basato su orario)
-        $byService = [
-            'lunch' => ['count' => 0, 'guests' => 0],
-            'dinner' => ['count' => 0, 'guests' => 0],
-            'other' => ['count' => 0, 'guests' => 0],
-        ];
-        
-        // Raggruppa per giorno della settimana (solo per week/month)
-        $byDayOfWeek = [];
-        if ($rangeMode !== 'day') {
-            $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            foreach ($dayNames as $day) {
-                $byDayOfWeek[$day] = ['count' => 0, 'guests' => 0];
-            }
-        }
-        
-        // Media coperti per prenotazione
-        $partySizes = [];
-        
-        foreach ($reservations as $resv) {
-            $time = isset($resv['time']) ? substr((string)$resv['time'], 0, 5) : '00:00';
-            $hour = (int)substr($time, 0, 2);
-            $party = (int)($resv['party'] ?? 0);
-            
-            // Servizio
-            if ($hour >= 12 && $hour < 17) {
-                $byService['lunch']['count']++;
-                $byService['lunch']['guests'] += $party;
-            } elseif ($hour >= 19 && $hour < 24) {
-                $byService['dinner']['count']++;
-                $byService['dinner']['guests'] += $party;
-            } else {
-                $byService['other']['count']++;
-                $byService['other']['guests'] += $party;
-            }
-            
-            // Giorno settimana
-            if ($rangeMode !== 'day' && isset($resv['date'])) {
-                $date = new DateTimeImmutable($resv['date'], wp_timezone());
-                $dayName = $date->format('l');
-                if (isset($byDayOfWeek[$dayName])) {
-                    $byDayOfWeek[$dayName]['count']++;
-                    $byDayOfWeek[$dayName]['guests'] += $party;
-                }
-            }
-            
-            // Party sizes
-            $partySizes[] = $party;
-        }
-        
-        $result = array_merge($baseStats, [
-            'by_service' => $byService,
-            'average_party_size' => count($partySizes) > 0 
-                ? round(array_sum($partySizes) / count($partySizes), 1) 
-                : 0,
-            'median_party_size' => count($partySizes) > 0 
-                ? $this->calculateMedian($partySizes) 
-                : 0,
-        ]);
-        
-        if ($rangeMode !== 'day') {
-            $result['by_day_of_week'] = $byDayOfWeek;
-        }
-        
-        return $result;
-    }
-
-    /**
-     * Calcola trend confrontando periodi diversi
-     * 
-     * @param array<int, array<string, mixed>> $todayReservations
-     * @param array<int, array<string, mixed>> $weekReservations
-     * @param array<int, array<string, mixed>> $monthReservations
-     * @return array<string, mixed>
-     */
-    private function calculateTrends(array $todayReservations, array $weekReservations, array $monthReservations): array
-    {
-        $todayCount = count($todayReservations);
-        $weekCount = count($weekReservations);
-        $monthCount = count($monthReservations);
-        
-        $weekAverage = $weekCount > 0 ? round($weekCount / 7, 1) : 0;
-        $monthAverage = $monthCount > 0 ? round($monthCount / 30, 1) : 0;
-        
-        // Trend oggi vs media settimanale
-        $dailyTrend = 'stable';
-        if ($weekAverage > 0) {
-            $difference = (($todayCount - $weekAverage) / $weekAverage) * 100;
-            if ($difference > 10) {
-                $dailyTrend = 'up';
-            } elseif ($difference < -10) {
-                $dailyTrend = 'down';
-            }
-        }
-        
-        // Trend settimanale vs mensile
-        $weeklyTrend = 'stable';
-        if ($monthAverage > 0) {
-            $difference = (($weekAverage - $monthAverage) / $monthAverage) * 100;
-            if ($difference > 10) {
-                $weeklyTrend = 'up';
-            } elseif ($difference < -10) {
-                $weeklyTrend = 'down';
-            }
-        }
-        
-        return [
-            'daily' => [
-                'trend' => $dailyTrend,
-                'vs_week_average' => $weekAverage > 0 
-                    ? round((($todayCount - $weekAverage) / $weekAverage) * 100, 1) 
-                    : 0,
-            ],
-            'weekly' => [
-                'trend' => $weeklyTrend,
-                'average_per_day' => $weekAverage,
-                'vs_month_average' => $monthAverage > 0 
-                    ? round((($weekAverage - $monthAverage) / $monthAverage) * 100, 1) 
-                    : 0,
-            ],
-            'monthly' => [
-                'average_per_day' => $monthAverage,
-                'total' => $monthCount,
-            ],
-        ];
-    }
-
-    /**
-     * Calcola la mediana di un array di numeri
-     * 
-     * @param array<int, int> $numbers
-     * @return float
-     */
-    private function calculateMedian(array $numbers): float
-    {
-        sort($numbers);
-        $count = count($numbers);
-        
-        if ($count === 0) {
-            return 0;
-        }
-        
-        $middle = (int)floor($count / 2);
-        
-        if ($count % 2 === 0) {
-            return ($numbers[$middle - 1] + $numbers[$middle]) / 2;
-        }
-        
-        return (float)$numbers[$middle];
-    }
-
-    /**
-     * Organizza le prenotazioni in base alla vista (day/week/month)
-     * 
-     * @param array<int, array<string, mixed>> $reservations
-     * @param string $viewMode
-     * @param DateTimeImmutable $start
-     * @param DateTimeImmutable $end
-     * @return array<string, mixed>
-     */
-    private function organizeByView(array $reservations, string $viewMode, DateTimeImmutable $start, DateTimeImmutable $end): array
-    {
-        switch ($viewMode) {
-            case 'day':
-                return $this->organizeByTimeSlots($reservations);
-            case 'week':
-                return $this->organizeByDays($reservations, $start, 7);
-            case 'month':
-                return $this->organizeByDays($reservations, $start, (int)$end->format('d'));
-            default:
-                return [];
-        }
-    }
-
-    /**
-     * Organizza le prenotazioni per slot orari (vista giornaliera)
-     * 
-     * @param array<int, array<string, mixed>> $reservations
-     * @return array<string, mixed>
-     */
-    private function organizeByTimeSlots(array $reservations): array
-    {
-        $slots = [];
-        $timeSlots = $this->generateTimeSlots();
-        
-        // Inizializza tutti gli slot vuoti
-        foreach ($timeSlots as $slotTime) {
-            $slots[$slotTime] = [
-                'time' => $slotTime,
-                'reservations' => [],
-                'total_guests' => 0,
-                'capacity_used' => 0,
-            ];
-        }
-        
-        // Raggruppa prenotazioni per slot
-        foreach ($reservations as $resv) {
-            $time = isset($resv['time']) ? substr((string)$resv['time'], 0, 5) : '00:00';
-            
-            // Trova lo slot pi\u00f9 vicino
-            $slotTime = $this->findNearestSlot($time, $timeSlots);
-            
-            if (!isset($slots[$slotTime])) {
-                $slots[$slotTime] = [
-                    'time' => $slotTime,
-                    'reservations' => [],
-                    'total_guests' => 0,
-                    'capacity_used' => 0,
-                ];
-            }
-            
-            $slots[$slotTime]['reservations'][] = $resv;
-            $slots[$slotTime]['total_guests'] += (int)($resv['party'] ?? 0);
-        }
-        
-        // Rimuovi slot vuoti
-        $slots = array_filter($slots, static function($slot) {
-            return count($slot['reservations']) > 0;
-        });
-        
-        return [
-            'slots' => array_values($slots),
-            'timeline' => array_values($slots), // Alias per compatibilit\u00e0
-        ];
-    }
-
-    /**
-     * Organizza le prenotazioni per giorni (vista settimanale/mensile)
-     * 
-     * @param array<int, array<string, mixed>> $reservations
-     * @param DateTimeImmutable $startDate
-     * @param int $numDays
-     * @return array<string, mixed>
-     */
-    private function organizeByDays(array $reservations, DateTimeImmutable $startDate, int $numDays): array
-    {
-        $days = [];
-        
-        // Inizializza tutti i giorni
-        for ($i = 0; $i < $numDays; $i++) {
-            $date = $startDate->add(new DateInterval('P' . $i . 'D'));
-            $dateStr = $date->format('Y-m-d');
-            
-            $days[$dateStr] = [
-                'date' => $dateStr,
-                'day_name' => $this->getDayName($date),
-                'day_number' => (int)$date->format('d'),
-                'reservations' => [],
-                'total_guests' => 0,
-                'reservation_count' => 0,
-            ];
-        }
-        
-        // Raggruppa prenotazioni per giorno
-        foreach ($reservations as $resv) {
-            $date = (string)($resv['date'] ?? '');
-            
-            if (isset($days[$date])) {
-                $days[$date]['reservations'][] = $resv;
-                $days[$date]['total_guests'] += (int)($resv['party'] ?? 0);
-                $days[$date]['reservation_count']++;
-            }
-        }
-        
-        return [
-            'days' => array_values($days),
-        ];
-    }
-
-    /**
-     * Genera slot orari standard per la vista timeline
-     * 
-     * @return array<int, string>
-     */
-    private function generateTimeSlots(): array
-    {
-        $slots = [];
-        
-        // Pranzo: 12:00 - 15:00 (ogni 15 minuti)
-        for ($hour = 12; $hour <= 15; $hour++) {
-            for ($min = 0; $min < 60; $min += 15) {
-                if ($hour === 15 && $min > 0) break;
-                $slots[] = sprintf('%02d:%02d', $hour, $min);
-            }
-        }
-        
-        // Cena: 19:00 - 23:00 (ogni 15 minuti)
-        for ($hour = 19; $hour <= 23; $hour++) {
-            for ($min = 0; $min < 60; $min += 15) {
-                if ($hour === 23 && $min > 0) break;
-                $slots[] = sprintf('%02d:%02d', $hour, $min);
-            }
-        }
-        
-        return $slots;
-    }
-
-    /**
-     * Trova lo slot pi\u00f9 vicino a un orario dato
-     * 
-     * @param string $time
-     * @param array<int, string> $slots
-     * @return string
-     */
-    private function findNearestSlot(string $time, array $slots): string
-    {
-        if (in_array($time, $slots, true)) {
-            return $time;
-        }
-        
-        // Converti in minuti
-        [$hours, $minutes] = explode(':', $time);
-        $totalMinutes = ((int)$hours * 60) + (int)$minutes;
-        
-        // Arrotonda a 15 minuti
-        $roundedMinutes = (int)(round($totalMinutes / 15) * 15);
-        $roundedHours = (int)floor($roundedMinutes / 60);
-        $roundedMins = $roundedMinutes % 60;
-        
-        return sprintf('%02d:%02d', $roundedHours, $roundedMins);
-    }
-
-    /**
-     * Ottiene il nome del giorno in italiano
-     * 
-     * @param DateTimeImmutable $date
-     * @return string
-     */
-    private function getDayName(DateTimeImmutable $date): string
-    {
-        $dayNames = [
-            'Monday' => 'Luned\u00ec',
-            'Tuesday' => 'Marted\u00ec',
-            'Wednesday' => 'Mercoled\u00ec',
-            'Thursday' => 'Gioved\u00ec',
-            'Friday' => 'Venerd\u00ec',
-            'Saturday' => 'Sabato',
-            'Sunday' => 'Domenica',
-        ];
-        
-        $englishName = $date->format('l');
-        return $dayNames[$englishName] ?? $englishName;
-    }
 
     /**
      * Helper per debug: crea una rappresentazione della struttura dati senza i valori completi

@@ -1,129 +1,98 @@
-# 📚 Documentazione FP Restaurant Reservations
+# 📖 FP Restaurant Reservations - Documentazione
 
-**Benvenuto nella documentazione completa del plugin!**
-
----
-
-## 🚀 INIZIO RAPIDO
-
-### Utenti
-👉 **[guides/user/QUICK-START.md](guides/user/QUICK-START.md)** - Inizia qui!
-
-### Sviluppatori
-👉 **[guides/developer/README-BUILD.md](guides/developer/README-BUILD.md)** - Build & Deploy
-
-### Amministratori
-👉 **[MEALS-CONFIGURATION.md](MEALS-CONFIGURATION.md)** - Configurazione pasti
+**Versione:** 0.9.0-rc11  
+**Ultimo Aggiornamento:** 14 Dicembre 2025
 
 ---
 
-## 📂 STRUTTURA DOCUMENTAZIONE
+## 🎯 Benvenuto
 
-```
-docs/
-│
-├── 📖 INDEX.md                 ← Indice completo (inizia qui!)
-├── 📄 README.md                ← Questo file
-│
-├── 📁 guides/
-│   ├── user/                   ← Guide per utenti
-│   └── developer/              ← Guide per sviluppatori
-│
-├── 📁 api/                     ← Documentazione REST API
-│
-├── 📁 bugfixes/                ← Report bugfix recenti
-│   └── 2025-11-02/             ← Bugfix 2 Novembre
-│
-└── 📁 archive/                 ← Documenti storici
-    ├── fixes-2025/             ← Fix passati (157 file)
-    └── debug/                  ← Debug logs
-```
+Benvenuto nella documentazione del plugin **FP Restaurant Reservations**. Questo plugin gestisce il sistema di prenotazioni per ristoranti su WordPress.
 
 ---
 
-## 🎯 LINK DIRETTI
+## 🚀 Quick Start
 
-### Più Usati
+### Per Utenti
+- **[Quick Start Guide](guides/user/QUICK-START.md)** - Inizia qui per configurare il plugin
+- **[Configurazione Pasti](MEALS-CONFIGURATION.md)** - Configurazione meal plans
 
-1. **[INDEX.md](INDEX.md)** 📚 - Indice completo
-2. **[guides/user/QUICK-START.md](guides/user/QUICK-START.md)** 🚀 - Guida rapida
-3. **[SLOT-TIMES-SYSTEM.md](SLOT-TIMES-SYSTEM.md)** 🕐 - Sistema slot orari
-4. **[../CHANGELOG.md](../CHANGELOG.md)** 📝 - Changelog plugin
-5. **[MEALS-CONFIGURATION.md](MEALS-CONFIGURATION.md)** 🍽️ - Setup pasti
-
-### Bugfix Recenti
-
-- **[bugfixes/2025-11-02/SESSIONE-BUGFIX-COMPLETA-2025-11-02.md](bugfixes/2025-11-02/SESSIONE-BUGFIX-COMPLETA-2025-11-02.md)** - Report completo
-- **[BUGFIX-TIMEZONE-PHP-2025-11-02.md](BUGFIX-TIMEZONE-PHP-2025-11-02.md)** - Fix timezone
-- **[FIX-TIMEZONE-ITALIA.md](FIX-TIMEZONE-ITALIA.md)** - Fix timezone JS
-
-### API
-
-- **[api/API-AGENDA-BACKEND.md](api/API-AGENDA-BACKEND.md)** - API Agenda
-- **[api/TRACKING-MAP.md](api/TRACKING-MAP.md)** - Tracking eventi
+### Per Sviluppatori
+- **[Refactoring v0.9.0-rc11](REFACTORING-v0.9.0-rc11.md)** - Panoramica refactoring
+- **[Architettura Clean](guides/developer/ARCHITETTURA-CLEAN.md)** - Architettura del plugin
+- **[Using Use Cases](guides/developer/USING-USE-CASES.md)** - Come usare i Use Cases
 
 ---
 
-## 🔍 CERCA PER ARGOMENTO
+## 📚 Documentazione Principale
 
-### Timezone
-- [BUGFIX-TIMEZONE-PHP-2025-11-02.md](BUGFIX-TIMEZONE-PHP-2025-11-02.md)
-- [FIX-TIMEZONE-ITALIA.md](FIX-TIMEZONE-ITALIA.md)
-- [SLOT-TIMES-SYSTEM.md](SLOT-TIMES-SYSTEM.md)
+### Refactoring v0.9.0-rc11
+Il plugin è stato completamente refactorizzato seguendo i principi della Clean Architecture:
 
-### Cache & Performance
-- [guides/developer/CACHE-GUIDE.md](guides/developer/CACHE-GUIDE.md)
-- [guides/developer/CACHE-REFRESH-GUIDE.md](guides/developer/CACHE-REFRESH-GUIDE.md)
-- [ASSET-LOADING.md](ASSET-LOADING.md)
+- **[REFACTORING-v0.9.0-rc11.md](REFACTORING-v0.9.0-rc11.md)** - Riepilogo esecutivo
+- **[REFACTORING-DETTAGLIATO-v0.9.0-rc11.md](REFACTORING-DETTAGLIATO-v0.9.0-rc11.md)** - Dettagli completi
+- **[README-REFACTORING.md](README-REFACTORING.md)** - Guida sviluppatori
+- **[CHANGELOG-REFACTORING.md](CHANGELOG-REFACTORING.md)** - Changelog
 
-### Security
-- [SECURITY-REPORT.md](SECURITY-REPORT.md)
-- [bugfixes/2025-11-02/BUGFIX-SESSION-2-2025-11-02.md](bugfixes/2025-11-02/BUGFIX-SESSION-2-2025-11-02.md)
-
-### Testing
-- [TEST-SCENARIOS.md](TEST-SCENARIOS.md)
-- [CHECKLIST-TEST-1.0.md](CHECKLIST-TEST-1.0.md)
+### Deploy e Operazioni
+- **[DEPLOY-CHECKLIST-v0.9.0-rc11.md](DEPLOY-CHECKLIST-v0.9.0-rc11.md)** - Checklist deploy
+- **[ROADMAP-FUTURO.md](ROADMAP-FUTURO.md)** - Piano sviluppo futuro
 
 ---
 
-## 📊 STATISTICHE DOCUMENTAZIONE
+## 📖 Guide
 
-- **Guide utente:** 3
-- **Guide sviluppatore:** 5
-- **Documentazione API:** 3
-- **Bugfix report:** 6+ (ultimi in bugfixes/2025-11-02/)
-- **Documenti storici:** 157+ (in archive/)
-- **Totale documenti:** 180+
+### Guide Sviluppatore
+Vedi [guides/developer/INDEX.md](guides/developer/INDEX.md) per l'indice completo.
 
----
+Guide principali:
+- [Clean Architecture](guides/developer/ARCHITETTURA-CLEAN.md)
+- [Using Use Cases](guides/developer/USING-USE-CASES.md)
+- [Cache Guide](guides/developer/CACHE-GUIDE.md)
+- [Metrics Guide](guides/developer/METRICS-GUIDE.md)
 
-## 🆘 SUPPORTO
-
-### Non trovi quello che cerchi?
-
-1. **Consulta** [INDEX.md](INDEX.md) - Indice completo
-2. **Cerca** nei documenti per argomento
-3. **Controlla** [archive/fixes-2025/](archive/fixes-2025/) per fix specifici
-
-### Hai trovato un bug?
-
-1. Verifica in [../AUDIT/](../AUDIT/)
-2. Consulta [bugfixes/2025-11-02/](bugfixes/2025-11-02/)
-3. Apri issue su GitHub
+### Guide Utente
+Vedi [guides/user/](guides/user/) per le guide utente.
 
 ---
 
-## 🎯 PROSSIMI PASSI
+## 🌐 API
 
-1. **Leggi** [INDEX.md](INDEX.md) per navigare tutta la documentazione
-2. **Inizia** con [guides/user/QUICK-START.md](guides/user/QUICK-START.md)
-3. **Consulta** [../CHANGELOG.md](../CHANGELOG.md) per le novità
-
----
-
-**Benvenuto e buon lavoro!** 🚀
+Documentazione REST API:
+- [API Agenda Backend](api/API-AGENDA-BACKEND.md)
+- [Server-Side Tracking](api/SERVER-SIDE-TRACKING.md)
+- [Tracking Map](api/TRACKING-MAP.md)
 
 ---
 
-**Ultimo aggiornamento:** 2 Novembre 2025  
-**Versione plugin:** 0.9.0-rc7
+## 🐛 Bugfix
+
+Report bugfix recenti:
+- [bugfixes/](bugfixes/) - Fix applicati
+
+---
+
+## 📦 Archive
+
+Documenti storici:
+- [archive/refactoring-2025-12-14/](archive/refactoring-2025-12-14/) - Documenti refactoring
+- [archive/fixes-2025/](archive/fixes-2025/) - Fix storici
+- [archive/reports/](archive/reports/) - Report storici
+
+---
+
+## 🔍 Indice Completo
+
+Vedi [INDEX.md](INDEX.md) per l'indice completo di tutta la documentazione.
+
+---
+
+## 📝 Note
+
+- **Versione corrente:** 0.9.0-rc11
+- **PHP richiesto:** 8.1+
+- **WordPress richiesto:** 6.0+
+
+---
+
+**Ultimo aggiornamento:** 14 Dicembre 2025

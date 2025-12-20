@@ -10,6 +10,14 @@ use DateTimeInterface;
 use DateTimeZone;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\Metrics;
+use FP\Resv\Domain\Reservations\Availability\CapacityResolver;
+use FP\Resv\Domain\Reservations\Availability\ClosureEvaluator;
+use FP\Resv\Domain\Reservations\Availability\DataLoader;
+use FP\Resv\Domain\Reservations\Availability\ReservationFilter;
+use FP\Resv\Domain\Reservations\Availability\ScheduleParser;
+use FP\Resv\Domain\Reservations\Availability\SlotPayloadBuilder;
+use FP\Resv\Domain\Reservations\Availability\SlotStatusDeterminer;
+use FP\Resv\Domain\Reservations\Availability\TableSuggester;
 use FP\Resv\Domain\Reservations\ReservationStatuses;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
@@ -60,8 +68,18 @@ class Availability
      */
     private ?array $mealPlanCache = null;
 
-    public function __construct(private readonly Options $options, private readonly wpdb $wpdb)
-    {
+    public function __construct(
+        private readonly Options $options,
+        private readonly wpdb $wpdb,
+        private readonly DataLoader $dataLoader,
+        private readonly ClosureEvaluator $closureEvaluator,
+        private readonly TableSuggester $tableSuggester,
+        private readonly ScheduleParser $scheduleParser,
+        private readonly CapacityResolver $capacityResolver,
+        private readonly SlotStatusDeterminer $statusDeterminer,
+        private readonly SlotPayloadBuilder $payloadBuilder,
+        private readonly ReservationFilter $reservationFilter
+    ) {
     }
 
     /**
@@ -89,9 +107,9 @@ class Availability
         $timezone = $this->resolveTimezone();
         
         // Load data once for entire range
-        $rooms = $this->loadRooms($roomId);
-        $tables = $this->loadTables($roomId);
-        $closures = $this->loadClosures($from, $to->setTime(23, 59, 59), $timezone);
+        $rooms = $this->dataLoader->loadRooms($roomId);
+        $tables = $this->dataLoader->loadTables($roomId);
+        $closures = $this->dataLoader->loadClosures($from, $to->setTime(23, 59, 59), $timezone);
         
         $mealKey = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
         $mealSettings = $this->resolveMealSettings($mealKey);
@@ -106,7 +124,7 @@ class Availability
             $dayEnd = $dayStart->setTime(23, 59, 59);
 
             // Load reservations for this specific day
-            $reservations = $this->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
+            $reservations = $this->dataLoader->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
 
             // Calculate slots using preloaded data
             $slots = $this->calculateSlotsForDay(
@@ -157,7 +175,7 @@ class Availability
         }
 
         $timezone = $dayStart->getTimezone();
-        $schedule = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+        $schedule = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
 
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
@@ -201,7 +219,7 @@ class Availability
             )
         );
 
-        $roomCapacities = $this->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
+        $roomCapacities = $this->capacityResolver->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
         $slots = [];
 
         foreach ($schedule as $window) {
@@ -212,9 +230,9 @@ class Availability
                 $slotStart = $dayStart->add(new DateInterval('PT' . $minute . 'M'));
                 $slotEnd = $slotStart->add(new DateInterval('PT' . $turnoverMinutes . 'M'));
 
-                $closureEffect = $this->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
+                $closureEffect = $this->closureEvaluator->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
                 if ($closureEffect['status'] === 'blocked') {
-                    $slots[] = $this->buildSlotPayload(
+                    $slots[] = $this->payloadBuilder->build(
                         $slotStart,
                         $slotEnd,
                         'blocked',
@@ -227,9 +245,9 @@ class Availability
                     continue;
                 }
 
-                $availableTables = $this->filterAvailableTables($tables, $closureEffect['blocked_tables']);
+                $availableTables = $this->reservationFilter->filterAvailableTables($tables, $closureEffect['blocked_tables']);
                 $hasPhysicalTables = $availableTables !== [];
-                $overlapping = $this->filterOverlappingReservations($reservations, $slotStart, $slotEnd);
+                $overlapping = $this->reservationFilter->filterOverlapping($reservations, $slotStart, $slotEnd);
                 $parallelCount = count($overlapping);
                 $unassignedCapacity = 0;
 
@@ -245,7 +263,7 @@ class Availability
                     $reasons = $closureEffect['reasons'];
                     $reasons[] = __('Limite di prenotazioni parallele raggiunto per lo slot selezionato.', 'fp-restaurant-reservations');
 
-                    $slots[] = $this->buildSlotPayload(
+                    $slots[] = $this->payloadBuilder->build(
                         $slotStart,
                         $slotEnd,
                         'full',
@@ -258,14 +276,14 @@ class Availability
                     continue;
                 }
 
-                $baseCapacity = $this->resolveCapacityForScope($roomCapacities, $roomId, $hasPhysicalTables);
-                $allowedCapacity = $this->applyCapacityReductions(
+                $baseCapacity = $this->capacityResolver->resolveForScope($roomCapacities, $roomId, $hasPhysicalTables);
+                $allowedCapacity = $this->capacityResolver->applyReductions(
                     $baseCapacity,
                     $availableTables,
                     0,
                     $closureEffect['capacity_percent']
                 );
-                $capacity = $this->applyCapacityReductions(
+                $capacity = $this->capacityResolver->applyReductions(
                     $baseCapacity,
                     $availableTables,
                     $unassignedCapacity,
@@ -277,7 +295,7 @@ class Availability
                     $capacity = min($capacity, $mealSettings['capacity_limit']);
                 }
 
-                $status = $this->determineStatus($capacity, $allowedCapacity, $party);
+                $status = $this->statusDeterminer->determine($capacity, $allowedCapacity, $party);
                 $reasons = $closureEffect['reasons'];
 
                 if ($status === 'full' && $waitlistEnabled) {
@@ -285,10 +303,10 @@ class Availability
                 }
 
                 $suggestions = $hasPhysicalTables
-                    ? $this->suggestTables($availableTables, $party, $mergeStrategy)
+                    ? $this->tableSuggester->suggestTables($availableTables, $party, $mergeStrategy)
                     : [];
 
-                $slots[] = $this->buildSlotPayload(
+                $slots[] = $this->payloadBuilder->build(
                     $slotStart,
                     $slotEnd,
                     $status,
@@ -382,7 +400,7 @@ class Availability
             // Controlla ogni meal per questo giorno
             foreach ($mealsToCheck as $mealKey => $mealData) {
                 $mealSettings = $this->resolveMealSettings($mealKey);
-                $schedule = $this->resolveScheduleForDay($current, $mealSettings['schedule']);
+                $schedule = $this->scheduleParser->resolveScheduleForDay($current, $mealSettings['schedule']);
                 
                 // Un giorno è disponibile per un meal se ha almeno uno schedule configurato
                 $isAvailable = !empty($schedule);
@@ -440,7 +458,7 @@ class Availability
 
         $mealKey      = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
         $mealSettings = $this->resolveMealSettings($mealKey);
-        $schedule     = $this->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+        $schedule     = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
             
@@ -484,12 +502,12 @@ class Availability
             )
         );
 
-        $rooms      = $this->loadRooms($roomId);
-        $tables     = $this->loadTables($roomId);
-        $closures   = $this->loadClosures($dayStart, $dayEnd, $timezone);
-        $reservations = $this->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
+        $rooms      = $this->dataLoader->loadRooms($roomId);
+        $tables     = $this->dataLoader->loadTables($roomId);
+        $closures   = $this->dataLoader->loadClosures($dayStart, $dayEnd, $timezone);
+        $reservations = $this->dataLoader->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
 
-        $roomCapacities = $this->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
+        $roomCapacities = $this->capacityResolver->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
         $slots          = [];
 
         foreach ($schedule as $window) {
@@ -500,9 +518,9 @@ class Availability
                 $slotStart = $dayStart->add(new DateInterval('PT' . $minute . 'M'));
                 $slotEnd   = $slotStart->add(new DateInterval('PT' . $turnoverMinutes . 'M'));
 
-                $closureEffect = $this->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
+                $closureEffect = $this->closureEvaluator->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
                 if ($closureEffect['status'] === 'blocked') {
-                    $slots[] = $this->buildSlotPayload(
+                    $slots[] = $this->payloadBuilder->build(
                         $slotStart,
                         $slotEnd,
                         'blocked',
@@ -515,9 +533,9 @@ class Availability
                     continue;
                 }
 
-                $availableTables    = $this->filterAvailableTables($tables, $closureEffect['blocked_tables']);
+                $availableTables    = $this->reservationFilter->filterAvailableTables($tables, $closureEffect['blocked_tables']);
                 $hasPhysicalTables  = $availableTables !== [];
-                $overlapping        = $this->filterOverlappingReservations($reservations, $slotStart, $slotEnd);
+                $overlapping        = $this->reservationFilter->filterOverlapping($reservations, $slotStart, $slotEnd);
                 $parallelCount      = count($overlapping);
                 $unassignedCapacity = 0;
 
@@ -533,7 +551,7 @@ class Availability
                     $reasons = $closureEffect['reasons'];
                     $reasons[] = __('Limite di prenotazioni parallele raggiunto per lo slot selezionato.', 'fp-restaurant-reservations');
 
-                    $slots[] = $this->buildSlotPayload(
+                    $slots[] = $this->payloadBuilder->build(
                         $slotStart,
                         $slotEnd,
                         'full',
@@ -546,14 +564,14 @@ class Availability
                     continue;
                 }
 
-                $baseCapacity = $this->resolveCapacityForScope($roomCapacities, $roomId, $hasPhysicalTables);
-                $allowedCapacity = $this->applyCapacityReductions(
+                $baseCapacity = $this->capacityResolver->resolveForScope($roomCapacities, $roomId, $hasPhysicalTables);
+                $allowedCapacity = $this->capacityResolver->applyReductions(
                     $baseCapacity,
                     $availableTables,
                     0,
                     $closureEffect['capacity_percent']
                 );
-                $capacity = $this->applyCapacityReductions(
+                $capacity = $this->capacityResolver->applyReductions(
                     $baseCapacity,
                     $availableTables,
                     $unassignedCapacity,
@@ -565,7 +583,7 @@ class Availability
                     $capacity        = min($capacity, $mealSettings['capacity_limit']);
                 }
 
-                $status  = $this->determineStatus($capacity, $allowedCapacity, $party);
+                $status  = $this->statusDeterminer->determine($capacity, $allowedCapacity, $party);
                 $reasons = $closureEffect['reasons'];
 
                 if ($status === 'full' && $waitlistEnabled) {
@@ -573,10 +591,10 @@ class Availability
                 }
 
                 $suggestions = $hasPhysicalTables
-                    ? $this->suggestTables($availableTables, $party, $mergeStrategy)
+                    ? $this->tableSuggester->suggestTables($availableTables, $party, $mergeStrategy)
                     : [];
 
-                $slots[] = $this->buildSlotPayload(
+                $slots[] = $this->payloadBuilder->build(
                     $slotStart,
                     $slotEnd,
                     $status,
@@ -662,7 +680,7 @@ class Availability
     private function resolveMealSettings(string $mealKey): array
     {
         $defaultScheduleRaw = (string) $this->options->getField('fp_resv_general', 'service_hours_definition', '');
-        $scheduleMap        = $this->parseScheduleDefinition($defaultScheduleRaw);
+        $scheduleMap        = $this->scheduleParser->parseScheduleDefinition($defaultScheduleRaw);
         
         // Valori di default: se i campi sono vuoti, usa i default invece di convertire a 0
         $slotIntervalRaw = $this->options->getField('fp_resv_general', 'slot_interval_minutes', '15');
@@ -692,7 +710,7 @@ class Availability
                 // Log disabilitati
                 
                 if (!empty($meal['hours_definition'])) {
-                    $mealSchedule = $this->parseScheduleDefinition((string) $meal['hours_definition']);
+                    $mealSchedule = $this->scheduleParser->parseScheduleDefinition((string) $meal['hours_definition']);
                     
                     // Log disabilitati
                     if ($mealSchedule !== []) {
@@ -746,95 +764,6 @@ class Availability
         return $result;
     }
 
-    /**
-     * @param array<string, array<int, array{start:int,end:int}>> $scheduleMap
-     *
-     * @return array<int, array{start:int,end:int}>
-     */
-    private function resolveScheduleForDay(DateTimeImmutable $day, array $scheduleMap): array
-    {
-        $dayKey = strtolower($day->format('D')); // mon, tue, wed, etc.
-        
-        // Mapping italiano -> inglese per compatibilità
-        $italianToEnglish = [
-            'lun' => 'mon',
-            'mar' => 'tue',
-            'mer' => 'wed',
-            'gio' => 'thu',
-            'ven' => 'fri',
-            'sab' => 'sat',
-            'dom' => 'sun'
-        ];
-        
-        // Prova prima con il giorno inglese (formato standard PHP)
-        $schedule = $scheduleMap[$dayKey] ?? [];
-        
-        // Se vuoto, prova con il mapping italiano
-        if (empty($schedule)) {
-            foreach ($scheduleMap as $key => $value) {
-                if (isset($italianToEnglish[$key]) && $italianToEnglish[$key] === $dayKey) {
-                    $schedule = $value;
-                    break;
-                }
-            }
-        }
-
-        // Log disabilitati
-
-        return $schedule;
-    }
-
-    /**
-     * @return array<int, array{start:int,end:int}>
-     */
-    private function parseScheduleDefinition(string $raw): array
-    {
-        $schedule = [];
-        $lines    = $raw !== '' ? preg_split('/\n/', $raw) : false;
-
-        if ($lines === false || $lines === []) {
-            return $this->normalizeSchedule(self::DEFAULT_SCHEDULE);
-        }
-
-        foreach ($lines as $line) {
-            $line = trim((string) $line);
-            if ($line === '') {
-                continue;
-            }
-
-            if (!str_contains($line, '=')) {
-                continue;
-            }
-
-            [$day, $ranges] = array_map('trim', explode('=', $line, 2));
-            $day            = strtolower($day);
-
-            $segments = preg_split('/[|,]/', $ranges) ?: [];
-            foreach ($segments as $segment) {
-                $segment = trim($segment);
-                if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
-                    continue;
-                }
-
-                $start = ((int) $matches[1] * 60) + (int) $matches[2];
-                $end   = ((int) $matches[3] * 60) + (int) $matches[4];
-                if ($end <= $start) {
-                    continue;
-                }
-
-                $schedule[$day][] = [
-                    'start' => $start,
-                    'end'   => $end,
-                ];
-            }
-        }
-
-        if ($schedule === []) {
-            return $this->normalizeSchedule(self::DEFAULT_SCHEDULE);
-        }
-
-        return $schedule;
-    }
 
     /**
      * @return array<string, array<string, mixed>>
@@ -852,592 +781,7 @@ class Availability
         return $this->mealPlanCache;
     }
 
-    /**
-     * @param array<string, string[]> $definition
-     *
-     * @return array<string, array<int, array{start:int,end:int}>>
-     */
-    private function normalizeSchedule(array $definition): array
-    {
-        $normalized = [];
-        foreach ($definition as $day => $segments) {
-            foreach ($segments as $segment) {
-                if (!preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $segment, $matches)) {
-                    continue;
-                }
 
-                $start = ((int) $matches[1] * 60) + (int) $matches[2];
-                $end   = ((int) $matches[3] * 60) + (int) $matches[4];
-                if ($end <= $start) {
-                    continue;
-                }
-
-                $normalized[$day][] = [
-                    'start' => $start,
-                    'end'   => $end,
-                ];
-            }
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * @return array<int, array{id:int, capacity:int}>
-     */
-    private function loadRooms(?int $roomId): array
-    {
-        $cacheKey = 'fp_resv_rooms_' . ($roomId ?? 'all');
-        $cached = wp_cache_get($cacheKey, 'fp_resv');
-
-        if ($cached !== false && is_array($cached)) {
-            return $cached;
-        }
-
-        $table = $this->wpdb->prefix . 'fp_rooms';
-        $where = 'active = 1';
-        if ($roomId !== null) {
-            $where .= $this->wpdb->prepare(' AND id = %d', $roomId);
-        }
-
-        $rows = $this->wpdb->get_results("SELECT id, capacity FROM {$table} WHERE {$where}", ARRAY_A);
-        if (!is_array($rows)) {
-            return [];
-        }
-
-        $rooms = [];
-        foreach ($rows as $row) {
-            $rooms[(int) $row['id']] = [
-                'id'       => (int) $row['id'],
-                'capacity' => max(0, (int) $row['capacity']),
-            ];
-        }
-
-        wp_cache_set($cacheKey, $rooms, 'fp_resv', 300); // 5 minutes
-
-        return $rooms;
-    }
-
-    /**
-     * @return array<int, array{
-     *     id:int,
-     *     room_id:int,
-     *     capacity:int,
-     *     seats_min:int,
-     *     seats_max:int,
-     *     join_group:string|null
-     * }>
-     */
-    private function loadTables(?int $roomId): array
-    {
-        $cacheKey = 'fp_resv_tables_' . ($roomId ?? 'all');
-        $cached = wp_cache_get($cacheKey, 'fp_resv');
-
-        if ($cached !== false && is_array($cached)) {
-            return $cached;
-        }
-
-        $table = $this->wpdb->prefix . 'fp_tables';
-        $where = 'active = 1';
-        if ($roomId !== null) {
-            $where .= $this->wpdb->prepare(' AND room_id = %d', $roomId);
-        }
-
-        $rows = $this->wpdb->get_results("SELECT id, room_id, seats_min, seats_std, seats_max, join_group FROM {$table} WHERE {$where}", ARRAY_A);
-        if (!is_array($rows)) {
-            return [];
-        }
-
-        $tables = [];
-        foreach ($rows as $row) {
-            $seatsMin = max(0, (int) ($row['seats_min'] ?? 0));
-            $seatsStd = max($seatsMin, (int) ($row['seats_std'] ?? 0));
-            $seatsMax = max($seatsStd, (int) ($row['seats_max'] ?? 0));
-            $capacity = $seatsMax > 0 ? $seatsMax : ($seatsStd > 0 ? $seatsStd : $seatsMin);
-
-            $tables[(int) $row['id']] = [
-                'id'         => (int) $row['id'],
-                'room_id'    => (int) $row['room_id'],
-                'capacity'   => max(0, $capacity),
-                'seats_min'  => $seatsMin > 0 ? $seatsMin : 1,
-                'seats_max'  => $seatsMax > 0 ? $seatsMax : max(1, $capacity),
-                'join_group' => $row['join_group'] !== null ? trim((string) $row['join_group']) : null,
-            ];
-        }
-
-        wp_cache_set($cacheKey, $tables, 'fp_resv', 300); // 5 minutes
-
-        return $tables;
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function loadClosures(DateTimeImmutable $dayStart, DateTimeImmutable $dayEnd, DateTimeZone $timezone): array
-    {
-        $table = $this->wpdb->prefix . 'fp_closures';
-        $sql   = $this->wpdb->prepare(
-            "SELECT id, scope, room_id, table_id, type, start_at, end_at, recurrence_json, capacity_override_json FROM {$table} WHERE active = 1 AND ((start_at <= %s AND end_at >= %s) OR recurrence_json IS NOT NULL AND recurrence_json <> '')",
-            $dayEnd->format('Y-m-d H:i:s'),
-            $dayStart->format('Y-m-d H:i:s')
-        );
-
-        $rows = $this->wpdb->get_results($sql, ARRAY_A);
-        if (!is_array($rows)) {
-            return [];
-        }
-
-        $closures = [];
-        foreach ($rows as $row) {
-            $start = new DateTimeImmutable((string) $row['start_at'], $timezone);
-            $end   = new DateTimeImmutable((string) $row['end_at'], $timezone);
-
-            $recurrence = null;
-            if (!empty($row['recurrence_json'])) {
-                $decoded = json_decode((string) $row['recurrence_json'], true);
-                $recurrence = is_array($decoded) ? $decoded : null;
-            }
-
-            $capacityOverride = null;
-            if (!empty($row['capacity_override_json'])) {
-                $decoded = json_decode((string) $row['capacity_override_json'], true);
-                if (is_array($decoded)) {
-                    $capacityOverride = $decoded;
-                }
-            }
-
-            $closures[] = [
-                'id'                 => (int) $row['id'],
-                'scope'              => (string) $row['scope'],
-                'room_id'            => $row['room_id'] !== null ? (int) $row['room_id'] : null,
-                'table_id'           => $row['table_id'] !== null ? (int) $row['table_id'] : null,
-                'type'               => (string) $row['type'],
-                'start'              => $start,
-                'end'                => $end,
-                'recurrence'         => $recurrence,
-                'capacity_override'  => $capacityOverride,
-            ];
-        }
-
-        return $closures;
-    }
-
-    /**
-     * @return array<int, array{
-     *     id:int,
-     *     party:int,
-     *     table_id:int|null,
-     *     room_id:int|null,
-     *     window_start:DateTimeImmutable,
-     *     window_end:DateTimeImmutable
-     * }>
-     */
-    private function loadReservations(
-        DateTimeImmutable $dayStart,
-        DateTimeImmutable $dayEnd,
-        ?int $roomId,
-        int $turnoverMinutes,
-        int $bufferMinutes,
-        DateTimeZone $timezone
-    ): array {
-        $table    = $this->wpdb->prefix . 'fp_reservations';
-        
-        // Usa placeholders per gli status invece di concatenazione
-        $statusPlaceholders = implode(',', array_fill(0, count(self::ACTIVE_STATUSES), '%s'));
-        $sql = "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders})";
-        
-        $params = array_merge([$dayStart->format('Y-m-d')], self::ACTIVE_STATUSES);
-        $preparedSql = $this->wpdb->prepare($sql, ...$params);
-
-        $rows = $this->wpdb->get_results($preparedSql, ARRAY_A);
-        if (!is_array($rows)) {
-            return [];
-        }
-
-        $reservations = [];
-        foreach ($rows as $row) {
-            if ($roomId !== null && $row['room_id'] !== null && (int) $row['room_id'] !== $roomId) {
-                continue;
-            }
-
-            $time       = (string) $row['time'];
-            $start      = new DateTimeImmutable($dayStart->format('Y-m-d') . ' ' . $time, $timezone);
-            $windowFrom = $start->sub(new DateInterval('PT' . $bufferMinutes . 'M'));
-            $windowTo   = $start->add(new DateInterval('PT' . ($turnoverMinutes + $bufferMinutes) . 'M'));
-
-            $reservations[] = [
-                'id'           => (int) $row['id'],
-                'party'        => max(1, (int) $row['party']),
-                'table_id'     => $row['table_id'] !== null ? (int) $row['table_id'] : null,
-                'room_id'      => $row['room_id'] !== null ? (int) $row['room_id'] : null,
-                'window_start' => $windowFrom,
-                'window_end'   => $windowTo,
-            ];
-        }
-
-        return $reservations;
-    }
-
-    /**
-     * @param array<int, array{id:int, capacity:int}> $rooms
-     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $tables
-     *
-     * @return array<int, array{capacity:int, table_capacity:int}>
-     */
-    private function aggregateRoomCapacities(array $rooms, array $tables, int $defaultRoomCap): array
-    {
-        $capacities = [];
-        foreach ($rooms as $room) {
-            $capacities[$room['id']] = [
-                'capacity'       => max($room['capacity'], $defaultRoomCap),
-                'table_capacity' => 0,
-            ];
-        }
-
-        foreach ($tables as $table) {
-            $roomId = $table['room_id'];
-            if (!isset($capacities[$roomId])) {
-                $capacities[$roomId] = [
-                    'capacity'       => $defaultRoomCap,
-                    'table_capacity' => 0,
-                ];
-            }
-
-            $capacities[$roomId]['table_capacity'] += $table['capacity'];
-            $capacities[$roomId]['capacity'] = max(
-                $capacities[$roomId]['capacity'],
-                $capacities[$roomId]['table_capacity']
-            );
-        }
-
-        // FIX: Se non ci sono sale né tavoli, crea una sala virtuale con capacità di default
-        // Questo previene capacity = 0 quando i tavoli sono disabilitati
-        if (empty($capacities)) {
-            $capacities[0] = [
-                'capacity'       => $defaultRoomCap,
-                'table_capacity' => 0,
-            ];
-        }
-
-        return $capacities;
-    }
-
-    /**
-     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $tables
-     *
-     * @return array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}>
-     */
-    private function filterAvailableTables(array $tables, array $blockedTables): array
-    {
-        if ($blockedTables === []) {
-            return $tables;
-        }
-
-        foreach ($blockedTables as $tableId) {
-            unset($tables[$tableId]);
-        }
-
-        return $tables;
-    }
-
-    /**
-     * @param array<int, array{id:int, party:int, table_id:int|null, room_id:int|null, window_start:DateTimeImmutable, window_end:DateTimeImmutable}> $reservations
-     *
-     * @return array<int, array{id:int, party:int, table_id:int|null, room_id:int|null, window_start:DateTimeImmutable, window_end:DateTimeImmutable}>
-     */
-    private function filterOverlappingReservations(array $reservations, DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd): array
-    {
-        $overlapping = [];
-        foreach ($reservations as $reservation) {
-            if ($reservation['window_start'] < $slotEnd && $reservation['window_end'] > $slotStart) {
-                $overlapping[] = $reservation;
-            }
-        }
-
-        return $overlapping;
-    }
-
-    /**
-     * @param array<int, array{capacity:int, table_capacity:int}> $roomCapacities
-     */
-    private function resolveCapacityForScope(array $roomCapacities, ?int $roomId, bool $hasTables): int
-    {
-        if ($roomId !== null) {
-            $capacity = $roomCapacities[$roomId] ?? ['capacity' => 0, 'table_capacity' => 0];
-
-            return $hasTables ? max($capacity['table_capacity'], 0) : max($capacity['capacity'], 0);
-        }
-
-        $total = 0;
-        foreach ($roomCapacities as $capacity) {
-            $total += $hasTables ? $capacity['table_capacity'] : $capacity['capacity'];
-        }
-
-        return $total;
-    }
-
-    /**
-     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $tables
-     */
-    private function applyCapacityReductions(int $baseCapacity, array $tables, int $unassignedCapacity, int $capacityPercent): int
-    {
-        $tableCapacity = array_sum(array_map(static fn (array $table): int => $table['capacity'], $tables));
-        $capacity      = $tables === [] ? $baseCapacity : $tableCapacity;
-
-        $capacity = max(0, $capacity - $unassignedCapacity);
-
-        if ($capacityPercent < 100) {
-            $capacity = (int) floor($capacity * ($capacityPercent / 100));
-        }
-
-        return max(0, $capacity);
-    }
-
-    private function determineStatus(int $capacity, int $allowedCapacity, int $party): string
-    {
-        if ($capacity <= 0 || $capacity < $party) {
-            return 'full';
-        }
-
-        $normalizedAllowed = max($allowedCapacity, 0);
-        // Se non c'è un limite configurato (allowedCapacity = 0), usa la capacità effettiva
-        if ($normalizedAllowed === 0) {
-            // Verifica comunque se la capacità è sufficiente per il party
-            // e ritorna 'limited' se è sotto il 50% della capacità totale disponibile
-            if ($capacity < $party * 2) {
-                return 'limited';
-            }
-            return 'available';
-        }
-
-        $ratio = max(0, min(1, $capacity / $normalizedAllowed));
-        if ($ratio <= 0.25) {
-            return 'limited';
-        }
-
-        return 'available';
-    }
-
-    /**
-     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $availableTables
-     *
-     * @return array<int, array{tables:int[], seats:int, type:string}>
-     */
-    private function suggestTables(array $availableTables, int $party, string $mergeStrategy): array
-    {
-        $suggestions = [];
-
-        foreach ($availableTables as $table) {
-            if ($party >= $table['seats_min'] && $party <= $table['seats_max']) {
-                $suggestions[] = [
-                    'tables' => [$table['id']],
-                    'seats'  => $table['seats_max'],
-                    'type'   => 'single',
-                ];
-            }
-        }
-
-        if ($suggestions !== []) {
-            return array_slice($this->sortSuggestions($suggestions), 0, 3);
-        }
-
-        if ($mergeStrategy !== 'smart') {
-            return [];
-        }
-
-        $groups = [];
-        foreach ($availableTables as $table) {
-            $groupKey = $table['join_group'] ?: 'room_' . $table['room_id'];
-            $groups[$groupKey][] = $table;
-        }
-
-        foreach ($groups as $tablesGroup) {
-            $sorted = $this->sortTablesByCapacity($tablesGroup);
-            $set    = [];
-            $total  = 0;
-            foreach ($sorted as $table) {
-                $set[] = $table;
-                $total += $table['seats_max'];
-                if ($total >= $party) {
-                    $suggestions[] = [
-                        'tables' => array_map(static fn (array $t): int => $t['id'], $set),
-                        'seats'  => $total,
-                        'type'   => 'merge',
-                    ];
-                    break;
-                }
-            }
-        }
-
-        return array_slice($this->sortSuggestions($suggestions), 0, 3);
-    }
-
-    /**
-     * @param array<int, array{tables:int[], seats:int, type:string}> $suggestions
-     *
-     * @return array<int, array{tables:int[], seats:int, type:string}>
-     */
-    private function sortSuggestions(array $suggestions): array
-    {
-        usort(
-            $suggestions,
-            static function (array $a, array $b): int {
-                if ($a['seats'] === $b['seats']) {
-                    return count($a['tables']) <=> count($b['tables']);
-                }
-
-                return $a['seats'] <=> $b['seats'];
-            }
-        );
-
-        return $suggestions;
-    }
-
-    /**
-     * @param array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}> $tables
-     *
-     * @return array<int, array{id:int, room_id:int, capacity:int, seats_min:int, seats_max:int, join_group:string|null}>
-     */
-    private function sortTablesByCapacity(array $tables): array
-    {
-        usort(
-            $tables,
-            static function (array $a, array $b): int {
-                if ($a['seats_max'] === $b['seats_max']) {
-                    return $a['capacity'] <=> $b['capacity'];
-                }
-
-                return $a['seats_max'] <=> $b['seats_max'];
-            }
-        );
-
-        return $tables;
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $closures
-     *
-     * @return array{status:string, blocked_tables:int[], capacity_percent:int, reasons:string[]}
-     */
-    private function evaluateClosures(array $closures, DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd, ?int $roomId): array
-    {
-        $blockedTables   = [];
-        $capacityPercent = 100;
-        $status          = 'open';
-        $reasons         = [];
-
-        foreach ($closures as $closure) {
-            if (!$this->closureApplies($closure, $slotStart, $slotEnd, $roomId)) {
-                continue;
-            }
-
-            if ($closure['capacity_override'] !== null && isset($closure['capacity_override']['percent'])) {
-                $percent = (int) $closure['capacity_override']['percent'];
-                $capacityPercent = min($capacityPercent, max(0, min(100, $percent)));
-                $reasons[] = sprintf(
-                    __('Capienza ridotta al %d%% da una regola di orario speciale.', 'fp-restaurant-reservations'),
-                    $capacityPercent
-                );
-                continue;
-            }
-
-            if ($closure['scope'] === 'table' && $closure['table_id'] !== null) {
-                $blockedTables[] = $closure['table_id'];
-                $reasons[]       = __('Tavolo non disponibile per chiusura programmata.', 'fp-restaurant-reservations');
-                continue;
-            }
-
-            if ($closure['scope'] === 'room' && $roomId !== null && $closure['room_id'] !== null && $closure['room_id'] !== $roomId) {
-                continue;
-            }
-
-            $status    = 'blocked';
-            $reasons[] = __('Slot non prenotabile per chiusura programmata.', 'fp-restaurant-reservations');
-        }
-
-        return [
-            'status'          => $status,
-            'blocked_tables'  => $blockedTables,
-            'capacity_percent'=> $capacityPercent,
-            'reasons'         => $reasons,
-        ];
-    }
-
-    private function closureApplies(array $closure, DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd, ?int $roomId): bool
-    {
-        if ($closure['scope'] === 'room' && $roomId !== null && $closure['room_id'] !== null && $closure['room_id'] !== $roomId) {
-            return false;
-        }
-
-        if ($closure['scope'] === 'table' && $closure['table_id'] === null) {
-            return false;
-        }
-
-        if ($closure['recurrence'] !== null) {
-            return $this->recurringClosureApplies($closure, $slotStart, $slotEnd);
-        }
-
-        return $closure['start'] < $slotEnd && $closure['end'] > $slotStart;
-    }
-
-    private function recurringClosureApplies(array $closure, DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd): bool
-    {
-        $recurrence = $closure['recurrence'];
-        $type       = strtolower((string) ($recurrence['type'] ?? ''));
-        $until      = isset($recurrence['until']) ? trim((string) $recurrence['until']) : '';
-        $from       = isset($recurrence['from']) ? trim((string) $recurrence['from']) : '';
-
-        if ($from !== '') {
-            $fromDate = new DateTimeImmutable($from . ' 00:00:00', $slotStart->getTimezone());
-            if ($slotStart < $fromDate) {
-                return false;
-            }
-        }
-
-        if ($until !== '') {
-            $untilDate = new DateTimeImmutable($until . ' 23:59:59', $slotStart->getTimezone());
-            if ($slotStart > $untilDate) {
-                return false;
-            }
-        }
-
-        $dayKey = strtolower($slotStart->format('D'));
-
-        switch ($type) {
-            case 'weekly':
-                $days = $recurrence['days'] ?? [];
-                $days = is_array($days) ? array_map(static fn ($day): string => strtolower((string) $day), $days) : [];
-                if (!in_array($dayKey, $days, true) && !in_array((string) $slotStart->format('N'), $days, true)) {
-                    return false;
-                }
-                break;
-            case 'daily':
-                // Daily applies to all days within the from/until window.
-                break;
-            case 'monthly':
-                $days = $recurrence['days'] ?? [];
-                $days = is_array($days) ? $days : [];
-                $dayOfMonth = (int) $slotStart->format('j');
-                if ($days !== [] && !in_array($dayOfMonth, array_map('intval', $days), true)) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-        }
-
-        $startTime = $closure['start']->format('H:i:s');
-        $endTime   = $closure['end']->format('H:i:s');
-
-        $occurrenceStart = new DateTimeImmutable($slotStart->format('Y-m-d') . ' ' . $startTime, $slotStart->getTimezone());
-        $occurrenceEnd   = new DateTimeImmutable($slotStart->format('Y-m-d') . ' ' . $endTime, $slotStart->getTimezone());
-
-        if ($occurrenceEnd <= $occurrenceStart) {
-            $occurrenceEnd = $occurrenceEnd->add(new DateInterval('P1D'));
-        }
-
-        return $occurrenceStart < $slotEnd && $occurrenceEnd > $slotStart;
-    }
 
     /**
      * @param array<int, array{tables:int[], seats:int, type:string}> $slots
@@ -1483,31 +827,4 @@ class Availability
         return $normalized;
     }
 
-    /**
-     * @param array<int, array{tables:int[], seats:int, type:string}> $suggestions
-     *
-     * @return array<string, mixed>
-     */
-    private function buildSlotPayload(
-        DateTimeImmutable $start,
-        DateTimeImmutable $end,
-        string $status,
-        int $capacity,
-        int $party,
-        bool $waitlist,
-        array $reasons,
-        array $suggestions
-    ): array {
-        return [
-            'start'              => $start->format(DateTimeInterface::ATOM),
-            'end'                => $end->format(DateTimeInterface::ATOM),
-            'label'              => $start->format('H:i'),
-            'status'             => $status,
-            'available_capacity' => $capacity,
-            'requested_party'    => $party,
-            'waitlist_available' => $waitlist && $status === 'full',
-            'reasons'            => $reasons,
-            'suggested_tables'   => $suggestions,
-        ];
-    }
 }

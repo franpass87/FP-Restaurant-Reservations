@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Tables;
 
+use FP\Resv\Domain\Tables\CapacityCalculator;
+use FP\Resv\Domain\Tables\RoomTableNormalizer;
+use FP\Resv\Domain\Tables\TableSuggestionEngine;
 use InvalidArgumentException;
 use RuntimeException;
 use function array_map;
@@ -23,8 +26,12 @@ use function usort;
 
 final class LayoutService
 {
-    public function __construct(private readonly Repository $repository)
-    {
+    public function __construct(
+        private readonly Repository $repository,
+        private readonly RoomTableNormalizer $normalizer,
+        private readonly CapacityCalculator $capacityCalculator,
+        private readonly TableSuggestionEngine $suggestionEngine
+    ) {
     }
 
     /**
@@ -82,7 +89,7 @@ final class LayoutService
      */
     public function saveRoom(array $data, ?int $roomId = null): array
     {
-        $payload = $this->normalizeRoomData($data);
+        $payload = $this->normalizer->normalizeRoomData($data);
         if ($roomId === null) {
             $roomId = $this->repository->insertRoom($payload);
         } else {
@@ -111,7 +118,7 @@ final class LayoutService
      */
     public function saveTable(array $data, ?int $tableId = null): array
     {
-        $payload = $this->normalizeTableData($data);
+        $payload = $this->normalizer->normalizeTableData($data);
         $roomId = (int) $payload['room_id'];
         $this->assertRoomExists($roomId);
 
@@ -160,7 +167,7 @@ final class LayoutService
                 if (!is_array($entry)) {
                     continue;
                 }
-                $payload = $this->normalizeTableData(array_merge($entry, ['room_id' => $roomId]));
+                $payload = $this->normalizer->normalizeTableData(array_merge($entry, ['room_id' => $roomId]));
                 $code = (string) $payload['code'];
                 if (isset($existingCodes[$code])) {
                     if ($onDuplicate === 'skip') {
@@ -217,7 +224,7 @@ final class LayoutService
                 $this->repository->rollback();
                 throw new InvalidArgumentException(sprintf('Esiste già un tavolo con codice "%s" in questa sala.', $code));
             }
-            $payload = $this->normalizeTableData([
+            $payload = $this->normalizer->normalizeTableData([
                 'room_id'   => $roomId,
                 'code'      => $code,
                 'seats_std' => $seats,
@@ -294,10 +301,10 @@ final class LayoutService
             $tables[] = $this->hydrateTable($table);
         }
 
-        $code = $groupCode !== null ? $this->normalizeGroupCode($groupCode) : $this->generateGroupCode($roomId ?? 0);
+        $code = $groupCode !== null ? $this->normalizer->normalizeGroupCode($groupCode, $roomId ?? 0) : $this->normalizer->generateGroupCode($roomId ?? 0);
         $this->repository->updateJoinGroup($tableIds, $code);
 
-        $capacity = $this->calculateCapacity($tables);
+        $capacity = $this->capacityCalculator->calculateCapacity($tables);
 
         return [
             'code'     => $code,
@@ -355,7 +362,7 @@ final class LayoutService
             ];
         }
 
-        $suggestions = $this->buildSuggestions($candidates, $party, $maxTables);
+        $suggestions = $this->suggestionEngine->buildSuggestions($candidates, $party, $maxTables);
 
         return [
             'party'        => $party,
@@ -473,246 +480,4 @@ final class LayoutService
         ];
     }
 
-    /**
-     * @param array<string, mixed> $data
-     *
-     * @return array<string, mixed>
-     */
-    private function normalizeRoomData(array $data): array
-    {
-        $name = isset($data['name']) ? trim((string) $data['name']) : '';
-        if ($name === '') {
-            throw new InvalidArgumentException('Room name is required.');
-        }
-
-        $color = isset($data['color']) ? trim((string) $data['color']) : '';
-        if ($color !== '' && preg_match('/^#?[0-9a-fA-F]{6}$/', $color) !== 1) {
-            throw new InvalidArgumentException('Room color must be a valid hex value.');
-        }
-
-        if ($color !== '' && $color[0] !== '#') {
-            $color = '#' . $color;
-        }
-
-        return [
-            'name'        => $name,
-            'description' => isset($data['description']) ? trim((string) $data['description']) : '',
-            'color'       => $color,
-            'capacity'    => isset($data['capacity']) ? max(0, (int) $data['capacity']) : 0,
-            'order_index' => isset($data['order_index']) ? (int) $data['order_index'] : 0,
-            'active'      => !empty($data['active']),
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     *
-     * @return array<string, mixed>
-     */
-    private function normalizeTableData(array $data): array
-    {
-        $code = isset($data['code']) ? trim((string) $data['code']) : '';
-        if ($code === '') {
-            throw new InvalidArgumentException('Table code is required.');
-        }
-
-        if (!isset($data['room_id'])) {
-            throw new InvalidArgumentException('Table room_id is required.');
-        }
-
-        $roomId = (int) $data['room_id'];
-        if ($roomId <= 0) {
-            throw new InvalidArgumentException('Table room_id must be a positive integer.');
-        }
-
-        $status = isset($data['status']) ? strtolower(trim((string) $data['status'])) : 'available';
-        if (!in_array($status, ['available', 'blocked', 'maintenance', 'hidden'], true)) {
-            $status = 'available';
-        }
-
-        $attributes = [];
-        if (isset($data['attributes']) && is_array($data['attributes'])) {
-            $attributes = $data['attributes'];
-        }
-
-        return [
-            'room_id'    => $roomId,
-            'code'       => $code,
-            'status'     => $status,
-            'seats_min'  => isset($data['seats_min']) ? $this->positiveOrNull($data['seats_min']) : null,
-            'seats_std'  => isset($data['seats_std']) ? $this->positiveOrNull($data['seats_std']) : null,
-            'seats_max'  => isset($data['seats_max']) ? $this->positiveOrNull($data['seats_max']) : null,
-            'attributes' => $attributes,
-            'pos_x'      => isset($data['pos_x']) ? (float) $data['pos_x'] : null,
-            'pos_y'      => isset($data['pos_y']) ? (float) $data['pos_y'] : null,
-            'active'     => !empty($data['active']),
-            'order_index'=> isset($data['order_index']) ? (int) $data['order_index'] : 0,
-        ];
-    }
-
-    private function positiveOrNull(mixed $value): ?int
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $int = (int) $value;
-        return $int > 0 ? $int : null;
-    }
-
-    private function assertRoomExists(int $roomId): void
-    {
-        if ($roomId <= 0 || $this->repository->findRoom($roomId) === null) {
-            throw new InvalidArgumentException(sprintf('Room %d does not exist.', $roomId));
-        }
-    }
-
-    private function assertTableExists(int $tableId): void
-    {
-        if ($tableId <= 0 || $this->repository->findTable($tableId) === null) {
-            throw new InvalidArgumentException(sprintf('Table %d does not exist.', $tableId));
-        }
-    }
-
-    private function normalizeGroupCode(string $code): string
-    {
-        $code = trim($code);
-        if ($code === '') {
-            return $this->generateGroupCode();
-        }
-
-        if (preg_match('/^[A-Za-z0-9_-]{3,30}$/', $code) !== 1) {
-            throw new InvalidArgumentException('Group code must contain only alphanumeric characters, dashes, or underscores.');
-        }
-
-        return strtolower($code);
-    }
-
-    private function generateGroupCode(int $roomId = 0): string
-    {
-        return 'grp-' . ($roomId > 0 ? $roomId . '-' : '') . substr(uniqid('', true), -6);
-    }
-
-    /**
-     * @param array<int, Table> $tables
-     * @return array<string, mixed>
-     */
-    private function buildSuggestions(array $tables, int $party, int $maxTables): array
-    {
-        $best = null;
-        $alternatives = [];
-
-        $grouped = [];
-        foreach ($tables as $table) {
-            if ($table->joinGroup !== null) {
-                $grouped[$table->joinGroup][] = $table;
-            }
-        }
-
-        // Evaluate single tables first.
-        foreach ($tables as $table) {
-            $capacity = $this->calculateCapacity([$table]);
-            if ($capacity['max'] < $party) {
-                continue;
-            }
-
-            $score = $this->scoreSuggestion($capacity, $party, 1);
-            $suggestion = $this->formatSuggestion([$table], $capacity, $score, $table->joinGroup);
-            $this->maybeRegisterSuggestion($suggestion, $best, $alternatives);
-        }
-
-        // Evaluate join groups.
-        foreach ($grouped as $groupCode => $groupTables) {
-            $capacity = $this->calculateCapacity($groupTables);
-            if ($capacity['max'] < $party) {
-                continue;
-            }
-
-            $score = $this->scoreSuggestion($capacity, $party, count($groupTables));
-            $suggestion = $this->formatSuggestion($groupTables, $capacity, $score, $groupCode);
-            $this->maybeRegisterSuggestion($suggestion, $best, $alternatives);
-        }
-
-        // Greedy fallback combinations up to max tables.
-        $sorted = $tables;
-        usort($sorted, static function (Table $a, Table $b): int {
-            return ($b->seatsStd ?? $b->seatsMax ?? 0) <=> ($a->seatsStd ?? $a->seatsMax ?? 0);
-        });
-
-        $selection = [];
-        $capacity = ['min' => 0, 'std' => 0, 'max' => 0];
-        foreach ($sorted as $table) {
-            if (count($selection) >= $maxTables) {
-                break;
-            }
-
-            $selection[] = $table;
-            $capacity = $this->calculateCapacity($selection);
-            if ($capacity['max'] >= $party) {
-                $score = $this->scoreSuggestion($capacity, $party, count($selection));
-                $suggestion = $this->formatSuggestion($selection, $capacity, $score, null);
-                $this->maybeRegisterSuggestion($suggestion, $best, $alternatives);
-                break;
-            }
-        }
-
-        return [
-            'best'         => $best,
-            'alternatives' => array_values($alternatives),
-        ];
-    }
-
-    /**
-     * @param array<int, Table> $tables
-     * @param array<string, mixed> $capacity
-     * @return array<string, mixed>
-     */
-    private function formatSuggestion(array $tables, array $capacity, float $score, ?string $groupCode): array
-    {
-        $roomId = $tables[0]->roomId ?? 0;
-
-        return [
-            'room_id'    => $roomId,
-            'table_ids'  => array_map(static fn (Table $table): int => $table->id, $tables),
-            'join_group' => $groupCode,
-            'capacity'   => $capacity,
-            'score'      => $score,
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $suggestion
-     * @param array<string, mixed>|null $best
-     * @param array<string, array<string, mixed>> $alternatives
-     */
-    private function maybeRegisterSuggestion(array $suggestion, ?array &$best, array &$alternatives): void
-    {
-        $key = implode('-', $suggestion['table_ids']);
-        if (isset($alternatives[$key])) {
-            return;
-        }
-
-        if ($best === null || $suggestion['score'] < $best['score']) {
-            if ($best !== null) {
-                $alternatives[implode('-', $best['table_ids'])] = $best;
-            }
-
-            $best = $suggestion;
-
-            return;
-        }
-
-        $alternatives[$key] = $suggestion;
-    }
-
-    private function scoreSuggestion(array $capacity, int $party, int $tablesCount): float
-    {
-        $std = $capacity['std'] > 0 ? $capacity['std'] : $capacity['max'];
-        if ($std <= 0) {
-            return 1000.0;
-        }
-
-        $overCapacity = max(0, $std - $party);
-        return $overCapacity + ($tablesCount * 0.1);
-    }
 }

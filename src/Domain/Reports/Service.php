@@ -8,6 +8,10 @@ use DateInterval;
 use DatePeriod;
 use DateTimeImmutable;
 use FP\Resv\Domain\Payments\Repository as PaymentsRepository;
+use FP\Resv\Domain\Reports\ChannelClassifier;
+use FP\Resv\Domain\Reports\CsvExporter;
+use FP\Resv\Domain\Reports\DataNormalizer;
+use FP\Resv\Domain\Reports\DateRangeResolver;
 use FP\Resv\Domain\Reservations\Repository as ReservationsRepository;
 use wpdb;
 use function array_keys;
@@ -55,7 +59,11 @@ final class Service
     public function __construct(
         private readonly wpdb $wpdb,
         private readonly ReservationsRepository $reservations,
-        private readonly PaymentsRepository $payments
+        private readonly PaymentsRepository $payments,
+        private readonly CsvExporter $csvExporter,
+        private readonly DateRangeResolver $dateRangeResolver,
+        private readonly ChannelClassifier $channelClassifier,
+        private readonly DataNormalizer $dataNormalizer
     ) {
     }
 
@@ -95,7 +103,7 @@ final class Service
      */
     public function getAnalytics(array $args = []): array
     {
-        [$start, $end] = $this->resolveRange(
+        [$start, $end] = $this->dateRangeResolver->resolveRange(
             (string) ($args['start'] ?? ''),
             isset($args['end']) ? (string) $args['end'] : null
         );
@@ -141,7 +149,7 @@ final class Service
                 }
 
                 $covers = (int) ($row['party'] ?? 0);
-                $value  = $this->normalizeFloat($row['value'] ?? null);
+                $value  = $this->dataNormalizer->normalizeFloat($row['value'] ?? null);
                 $currency = (string) ($row['currency'] ?? '');
                 if ($currency !== '') {
                     $currencies[$currency] = true;
@@ -158,7 +166,7 @@ final class Service
                 $source   = strtolower(trim((string) ($row['utm_source'] ?? '')));
                 $medium   = strtolower(trim((string) ($row['utm_medium'] ?? '')));
                 $campaign = (string) ($row['utm_campaign'] ?? '');
-                $channel  = $this->classifyChannel($source, $medium);
+                $channel  = $this->channelClassifier->classifyChannel($source, $medium);
 
                 $channels[$channel]['reservations'] += 1;
                 $channels[$channel]['covers']       += $covers;
@@ -258,7 +266,7 @@ final class Service
             ];
         }, $analytics['topSources']);
 
-        $content = $this->buildCsv($headers, $rows, ',', false);
+        $content = $this->csvExporter->buildCsv($headers, $rows, ',', false);
 
         $range = $analytics['range'];
 
@@ -276,7 +284,7 @@ final class Service
      */
     public function getDailySummary(string $startDate, ?string $endDate = null): array
     {
-        [$start, $end] = $this->resolveRange($startDate, $endDate);
+        [$start, $end] = $this->dateRangeResolver->resolveRange($startDate, $endDate);
 
         $buckets = $this->bootstrapDailyBuckets($start, $end);
 
@@ -399,7 +407,7 @@ final class Service
      */
     public function exportReservations(array $args = []): array
     {
-        [$start, $end] = $this->resolveRange(
+        [$start, $end] = $this->dateRangeResolver->resolveRange(
             (string) ($args['from'] ?? ''),
             isset($args['to']) ? (string) $args['to'] : null
         );
@@ -436,17 +444,17 @@ final class Service
                     'reservation_id'  => (string) ($row['id'] ?? ''),
                     'status'          => (string) ($row['status'] ?? ''),
                     'date'            => (string) ($row['date'] ?? ''),
-                    'time'            => $this->formatTime((string) ($row['time'] ?? '')),
+                    'time'            => $this->dataNormalizer->formatTime((string) ($row['time'] ?? '')),
                     'party'           => (string) ($row['party'] ?? ''),
                     'meal'            => (string) ($row['meal'] ?? ''),
                     'location'        => (string) ($row['location_id'] ?? ''),
                     'language'        => (string) ($row['lang'] ?? ''),
-                    'customer_name'   => $this->composeName((string) ($row['first_name'] ?? ''), (string) ($row['last_name'] ?? '')),
+                    'customer_name'   => $this->dataNormalizer->composeName((string) ($row['first_name'] ?? ''), (string) ($row['last_name'] ?? '')),
                     'customer_email'  => (string) ($row['email'] ?? ''),
                     'customer_phone'  => (string) ($row['phone'] ?? ''),
                     'customer_lang'   => (string) ($row['customer_lang'] ?? ''),
-                    'notes'           => $this->sanitizeMultiline((string) ($row['notes'] ?? '')),
-                    'allergies'       => $this->sanitizeMultiline((string) ($row['allergies'] ?? '')),
+                    'notes'           => $this->dataNormalizer->sanitizeMultiline((string) ($row['notes'] ?? '')),
+                    'allergies'       => $this->dataNormalizer->sanitizeMultiline((string) ($row['allergies'] ?? '')),
                     'value'           => (string) ($row['value'] ?? ''),
                     'currency'        => (string) ($row['currency'] ?? ''),
                     'utm_source'      => (string) ($row['utm_source'] ?? ''),
@@ -483,7 +491,7 @@ final class Service
             'visited_at'     => 'visited_at',
         ]);
 
-        $content = $this->buildCsv($headers, $data, $delimiter, $withBom);
+        $content = $this->csvExporter->buildCsv($headers, $data, $delimiter, $withBom);
 
         $filename = sprintf(
             'fp-reservations-%s-%s.csv',
@@ -500,67 +508,6 @@ final class Service
         ];
     }
 
-    private function composeName(string $first, string $last): string
-    {
-        $full = trim($first . ' ' . $last);
-
-        return $full;
-    }
-
-    private function sanitizeMultiline(string $value): string
-    {
-        return trim(str_replace(["\r\n", "\n", "\r"], ' ', $value));
-    }
-
-    private function formatTime(string $time): string
-    {
-        if ($time === '') {
-            return '';
-        }
-
-        if (preg_match('/^\d{2}:\d{2}/', $time) === 1) {
-            return substr($time, 0, 5);
-        }
-
-        return $time;
-    }
-
-    /**
-     * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}
-     */
-    private function resolveRange(string $start, ?string $end): array
-    {
-        $startDate = $this->createDate($start) ?? new DateTimeImmutable('today');
-        $endDate   = $this->createDate($end ?? '') ?? $startDate;
-
-        if ($endDate < $startDate) {
-            [$startDate, $endDate] = [$endDate, $startDate];
-        }
-
-        return [$startDate->setTime(0, 0, 0), $endDate->setTime(0, 0, 0)];
-    }
-
-    private function createDate(string $value): ?DateTimeImmutable
-    {
-        $value = trim($value);
-        if ($value === '') {
-            return null;
-        }
-
-        $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
-        if ($date instanceof DateTimeImmutable) {
-            return $date;
-        }
-
-        return null;
-    }
-
-    private function normalizeDateString(string $value): ?string
-    {
-        $date = $this->createDate($value);
-
-        return $date?->format('Y-m-d');
-    }
 
     /**
      * @return array<string, array<string, mixed>>
@@ -595,38 +542,6 @@ final class Service
         return $buckets;
     }
 
-    /**
-     * @param array<int, string>               $headers
-     * @param array<int, array<string, string>> $rows
-     */
-    private function buildCsv(array $headers, array $rows, string $delimiter, bool $withBom): string
-    {
-        $handle = fopen('php://temp', 'r+');
-        if ($handle === false) {
-            return '';
-        }
-
-        if ($withBom) {
-            fwrite($handle, "\xEF\xBB\xBF");
-        }
-
-        fputcsv($handle, $headers, $delimiter);
-
-        foreach ($rows as $row) {
-            $line = [];
-            foreach ($headers as $header) {
-                $line[] = $row[$header] ?? '';
-            }
-
-            fputcsv($handle, $line, $delimiter);
-        }
-
-        rewind($handle);
-        $csv = stream_get_contents($handle);
-        fclose($handle);
-
-        return is_string($csv) ? $csv : '';
-    }
 
     /**
      * @return array<string, array<string, float|int|string>>
@@ -668,68 +583,4 @@ final class Service
         return $buckets;
     }
 
-    private function classifyChannel(string $source, string $medium): string
-    {
-        $source = strtolower($source);
-        $medium = strtolower($medium);
-
-        if ($source === '' && $medium === '') {
-            return 'direct';
-        }
-
-        if (str_contains($source, 'google') && ($medium === 'cpc' || $medium === 'ppc' || $medium === 'paid_search')) {
-            return 'google_ads';
-        }
-
-        if (str_contains($source, 'gclid')) {
-            return 'google_ads';
-        }
-
-        if (
-            str_contains($source, 'facebook')
-            || str_contains($source, 'instagram')
-            || str_contains($source, 'meta')
-            || $medium === 'paid_social'
-        ) {
-            return 'meta_ads';
-        }
-
-        if ($medium === 'email' || $medium === 'newsletter' || str_contains($source, 'newsletter')) {
-            return 'email';
-        }
-
-        if ($medium === 'organic' || str_contains($source, 'google') || str_contains($source, 'bing')) {
-            return 'organic';
-        }
-
-        if ($medium === 'referral') {
-            return 'referral';
-        }
-
-        if ($source === 'direct' || $medium === '(none)') {
-            return 'direct';
-        }
-
-        return 'other';
-    }
-
-    private function normalizeFloat(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        if (is_numeric($value)) {
-            return (float) $value;
-        }
-
-        if (is_string($value)) {
-            $normalized = str_replace(',', '.', $value);
-            if (is_numeric($normalized)) {
-                return (float) $normalized;
-            }
-        }
-
-        return 0.0;
-    }
 }

@@ -9,7 +9,14 @@ use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use FP\Resv\Domain\Settings\Style;
+use FP\Resv\Domain\Settings\Style\ColorCalculator;
+use FP\Resv\Domain\Settings\Style\ContrastReporter;
+use FP\Resv\Domain\Settings\Style\StyleCssGenerator;
+use FP\Resv\Domain\Settings\Style\StyleTokenBuilder;
+use FP\Resv\Frontend\AvailableDaysExtractor;
 use FP\Resv\Frontend\PhonePrefixes;
+use FP\Resv\Frontend\PhonePrefixProcessor;
+use FP\Resv\Kernel\LegacyBridge;
 use function apply_filters;
 use function array_key_exists;
 use function array_keys;
@@ -52,12 +59,22 @@ final class FormContext
     /**
      * @param array<string, mixed> $attributes
      */
-    public function __construct(Options $options, Language $language, array $attributes = [])
-    {
-        $this->options    = $options;
-        $this->language   = $language;
-        $this->attributes = $attributes;
+    public function __construct(
+        Options $options,
+        Language $language,
+        PhonePrefixProcessor $phonePrefixProcessor,
+        AvailableDaysExtractor $availableDaysExtractor,
+        array $attributes = []
+    ) {
+        $this->options                = $options;
+        $this->language               = $language;
+        $this->phonePrefixProcessor   = $phonePrefixProcessor;
+        $this->availableDaysExtractor  = $availableDaysExtractor;
+        $this->attributes             = $attributes;
     }
+
+    private PhonePrefixProcessor $phonePrefixProcessor;
+    private AvailableDaysExtractor $availableDaysExtractor;
 
     /**
      * @return array<string, mixed>
@@ -119,9 +136,9 @@ final class FormContext
         ];
 
         $brevoSettings  = $this->options->getGroup('fp_resv_brevo', []);
-        $customPrefixMap = $this->parsePhonePrefixMap($brevoSettings['brevo_phone_prefix_map'] ?? null);
-        $phonePrefixes   = $this->mergePhonePrefixes(PhonePrefixes::getDefaults(), $customPrefixMap);
-        $phonePrefixes   = $this->condensePhonePrefixes($phonePrefixes);
+        $customPrefixMap = $this->phonePrefixProcessor->parsePhonePrefixMap($brevoSettings['brevo_phone_prefix_map'] ?? null);
+        $phonePrefixes   = $this->phonePrefixProcessor->mergePhonePrefixes(PhonePrefixes::getDefaults(), $customPrefixMap);
+        $phonePrefixes   = $this->phonePrefixProcessor->condensePhonePrefixes($phonePrefixes);
 
         if ($phonePrefixes !== []) {
             $config['phone_prefixes'] = $phonePrefixes;
@@ -148,13 +165,13 @@ final class FormContext
         }
 
         // Estrai i giorni disponibili dalla configurazione del servizio
-        $availableDays = $this->extractAvailableDays($generalSettings, $meals);
+        $availableDays = $this->availableDaysExtractor->extractAvailableDays($generalSettings, $meals);
         if ($availableDays !== []) {
             $config['available_days'] = $availableDays;
         }
 
         // Arricchisci ogni meal con i suoi giorni disponibili specifici
-        $meals = $this->enrichMealsWithAvailableDays($meals, $generalSettings);
+        $meals = $this->availableDaysExtractor->enrichMealsWithAvailableDays($meals, $generalSettings);
 
         $dictionary  = $this->language->getStrings($languageData['language']);
         $formStrings = is_array($dictionary['form'] ?? null) ? $dictionary['form'] : [];
@@ -189,7 +206,8 @@ final class FormContext
 
         // CSS dinamico RIABILITATO per permettere branding personalizzato
         // Default: B/W (nero #000000) ma personalizzabile via admin panel
-        $styleService = new Style($this->options);
+        // Usa il container se disponibile, altrimenti crea un'istanza semplificata
+        $styleService = $this->getStyleService();
         $stylePayload = $styleService->buildFrontend($config['formId']);
 
         $pdfMapKeys = [];
@@ -372,376 +390,34 @@ final class FormContext
     }
 
     /**
-     * Estrae la mappa prefisso => lingua dalla configurazione JSON.
-     *
-     * @return array<string, string>
+     * Ottiene il servizio Style dal container o crea un'istanza con le dipendenze.
      */
-    private function parsePhonePrefixMap(mixed $raw): array
+    private function getStyleService(): Style
     {
-        if (!is_string($raw) || $raw === '') {
-            return [];
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        $map = [];
-
-        foreach ($decoded as $prefix => $language) {
-            if (!is_string($prefix)) {
-                continue;
-            }
-
-            $normalizedPrefix = $this->normalizePhonePrefix($prefix);
-            if ($normalizedPrefix === '') {
-                continue;
-            }
-
-            $languageCode = $this->normalizePhoneLanguage(is_string($language) ? $language : '');
-            $map[$normalizedPrefix] = $languageCode;
-        }
-
-        return $map;
-    }
-
-    /**
-     * Integra i prefissi di default con le personalizzazioni custom.
-     *
-     * @param array<int, array<string, string>> $defaults
-     * @param array<string, string> $customMap
-     *
-     * @return array<int, array<string, string>>
-     */
-    private function mergePhonePrefixes(array $defaults, array $customMap): array
-    {
-        if ($customMap === []) {
-            return $defaults;
-        }
-
-        $merged = [];
-
-        foreach ($defaults as $entry) {
-            if (!is_array($entry)) {
-                continue;
-            }
-
-            $prefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
-            $normalizedPrefix = $this->normalizePhonePrefix($prefix);
-
-            if ($normalizedPrefix === '' || !isset($entry['value']) || !isset($entry['label'])) {
-                continue;
-            }
-
-            // Sovrascrivi la lingua se presente nella mappa custom
-            $language = $customMap[$normalizedPrefix] ?? ($entry['language'] ?? 'INT');
-
-            $merged[] = [
-                'prefix'   => $normalizedPrefix,
-                'value'    => (string) $entry['value'],
-                'language' => $language,
-                'label'    => (string) $entry['label'],
-            ];
-        }
-
-        return $merged;
-    }
-
-    /**
-     * @param array<int, array<string, string>> $prefixes
-     *
-     * @return array<int, array<string, string>>
-     */
-    private function condensePhonePrefixes(array $prefixes): array
-    {
-        $groups = [];
-
-        foreach ($prefixes as $entry) {
-            if (!is_array($entry)) {
-                continue;
-            }
-
-            $rawPrefix = isset($entry['prefix']) ? (string) $entry['prefix'] : '';
-            $prefix    = $this->normalizePhonePrefix($rawPrefix);
-            if ($prefix === '') {
-                continue;
-            }
-
-            $digits = preg_replace('/[^0-9]/', '', substr($prefix, 1));
-            if (!is_string($digits) || $digits === '') {
-                continue;
-            }
-
-            $language = isset($entry['language']) ? (string) $entry['language'] : 'INT';
-            $label    = isset($entry['label']) ? (string) $entry['label'] : $prefix;
-
-            $normalizedLabel = str_replace("\u{00A0}", ' ', $label);
-            $name            = trim($normalizedLabel);
-            $parts           = preg_split('/\s*·\s*/u', $normalizedLabel, 2);
-            if (is_array($parts) && count($parts) === 2) {
-                $name = trim(str_replace("\u{00A0}", ' ', $parts[1]));
-            }
-
-            if (!isset($groups[$digits])) {
-                $groups[$digits] = [
-                    'prefix'    => $prefix,
-                    'value'     => $digits,
-                    'language'  => $language,
-                    'countries' => [],
-                ];
-            }
-
-            if ($name !== '') {
-                $groups[$digits]['countries'][$name] = true;
+        $container = LegacyBridge::getContainer();
+        
+        // Prova a ottenere dal container
+        if ($container && $container->has(Style::class)) {
+            $style = $container->get(Style::class);
+            if ($style instanceof Style) {
+                return $style;
             }
         }
-
-        if ($groups === []) {
-            return [];
-        }
-
-        // Deduplica i paesi che compaiono con prefissi diversi: mantiene
-        // la prima occorrenza e scarta le successive per evitare ripetizioni.
-        // Si preferiscono gruppi con prefisso più corto (es. +1 rispetto a +1869),
-        // in caso di pari lunghezza si usa l'ordinamento numerico del prefisso.
-
-        // Ordina i gruppi per lunghezza prefisso e poi per valore numerico
-        uasort(
-            $groups,
-            static function (array $a, array $b): int {
-                $lenA = strlen((string) ($a['value'] ?? ''));
-                $lenB = strlen((string) ($b['value'] ?? ''));
-                if ($lenA !== $lenB) {
-                    return $lenA <=> $lenB;
-                }
-
-                $numA = (int) ($a['value'] ?? 0);
-                $numB = (int) ($b['value'] ?? 0);
-
-                return $numA <=> $numB;
-            }
+        
+        // Se non disponibile nel container, crea le dipendenze manualmente
+        $colorCalculator = new ColorCalculator();
+        $tokenBuilder = new StyleTokenBuilder();
+        $cssGenerator = new StyleCssGenerator();
+        $contrastReporter = new ContrastReporter();
+        
+        return new Style(
+            $this->options,
+            $colorCalculator,
+            $tokenBuilder,
+            $cssGenerator,
+            $contrastReporter
         );
-
-        $usedCountries = [];
-        $options = [];
-
-        foreach ($groups as $group) {
-            $countries = array_keys($group['countries']);
-            sort($countries, SORT_NATURAL | SORT_FLAG_CASE);
-
-            // Filtra i paesi già utilizzati da un altro gruppo
-            $countries = array_values(array_filter(
-                $countries,
-                static function (string $name) use (&$usedCountries): bool {
-                    if ($name === '') {
-                        return false;
-                    }
-                    if (isset($usedCountries[$name])) {
-                        return false;
-                    }
-                    $usedCountries[$name] = true;
-                    return true;
-                }
-            ));
-
-            if ($countries === []) {
-                // Tutti i paesi di questo gruppo erano duplicati di altri prefissi
-                continue;
-            }
-
-            $label = $group['prefix'];
-            if ($countries !== []) {
-                $label .= ' · ' . implode(', ', $countries);
-            }
-
-            $options[] = [
-                'prefix'   => $group['prefix'],
-                'value'    => $group['value'],
-                'language' => $group['language'],
-                'label'    => $label,
-            ];
-        }
-
-        usort(
-            $options,
-            static function (array $first, array $second): int {
-                $firstLabel  = isset($first['label']) ? (string) $first['label'] : '';
-                $secondLabel = isset($second['label']) ? (string) $second['label'] : '';
-
-                return strnatcasecmp($firstLabel, $secondLabel);
-            }
-        );
-
-        return $options;
     }
 
-    private function normalizePhonePrefix(string $prefix): string
-    {
-        $normalized = str_replace(' ', '', trim($prefix));
-        if ($normalized === '') {
-            return '';
-        }
-
-        if (str_starts_with($normalized, '00')) {
-            $normalized = '+' . substr($normalized, 2);
-        } elseif (!str_starts_with($normalized, '+')) {
-            $normalized = '+' . ltrim($normalized, '+');
-        }
-
-        $digits = preg_replace('/[^0-9]/', '', substr($normalized, 1));
-        if (!is_string($digits) || $digits === '') {
-            return '';
-        }
-
-        return '+' . $digits;
-    }
-
-    private function normalizePhoneLanguage(string $value): string
-    {
-        $upper = strtoupper(trim($value));
-        if ($upper === '') {
-            return 'INT';
-        }
-
-        if (str_starts_with($upper, 'IT')) {
-            return 'IT';
-        }
-
-        if (str_starts_with($upper, 'EN')) {
-            return 'EN';
-        }
-
-        if (str_starts_with($upper, 'INT')) {
-            return 'INT';
-        }
-
-        return 'INT';
-    }
-
-    /**
-     * Estrae i giorni disponibili dalla configurazione del servizio.
-     *
-     * @param array<string, mixed> $generalSettings
-     * @param array<int, array<string, mixed>> $meals
-     * @return array<string>
-     */
-    private function extractAvailableDays(array $generalSettings, array $meals): array
-    {
-        $dayMapping = [
-            'mon' => '1',
-            'tue' => '2',
-            'wed' => '3',
-            'thu' => '4',
-            'fri' => '5',
-            'sat' => '6',
-            'sun' => '0',
-        ];
-
-        $availableDays = [];
-
-        // Se ci sono meal configurati, estrai i giorni da ciascun meal
-        if ($meals !== []) {
-            foreach ($meals as $meal) {
-                if (!empty($meal['hours_definition'])) {
-                    $days = $this->parseDaysFromSchedule((string) $meal['hours_definition']);
-                    $availableDays = array_merge($availableDays, $days);
-                }
-            }
-        }
-
-        // Se non ci sono giorni dai meal, usa il service_hours_definition generale
-        if ($availableDays === [] && !empty($generalSettings['service_hours_definition'])) {
-            $availableDays = $this->parseDaysFromSchedule((string) $generalSettings['service_hours_definition']);
-        }
-
-        // Rimuovi duplicati e ordina
-        $availableDays = array_unique($availableDays);
-        sort($availableDays);
-
-        // Converti i giorni in numeri ISO (0=domenica, 1=lunedì, ecc.)
-        $dayNumbers = [];
-        foreach ($availableDays as $day) {
-            if (isset($dayMapping[$day])) {
-                $dayNumbers[] = $dayMapping[$day];
-            }
-        }
-
-        return $dayNumbers;
-    }
-
-    /**
-     * Estrae i giorni dalla definizione dello schedule.
-     *
-     * @param string $scheduleDefinition
-     * @return array<string>
-     */
-    private function parseDaysFromSchedule(string $scheduleDefinition): array
-    {
-        $days = [];
-        $lines = preg_split('/\n/', $scheduleDefinition) ?: [];
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '' || !str_contains($line, '=')) {
-                continue;
-            }
-
-            [$day] = explode('=', $line, 2);
-            $day = strtolower(trim($day));
-
-            if ($day !== '') {
-                $days[] = $day;
-            }
-        }
-
-        return $days;
-    }
-
-    /**
-     * Arricchisce ogni meal con i giorni disponibili specifici.
-     *
-     * @param array<int, array<string, mixed>> $meals
-     * @param array<string, mixed> $generalSettings
-     * @return array<int, array<string, mixed>>
-     */
-    private function enrichMealsWithAvailableDays(array $meals, array $generalSettings): array
-    {
-        $dayMapping = [
-            'mon' => '1',
-            'tue' => '2',
-            'wed' => '3',
-            'thu' => '4',
-            'fri' => '5',
-            'sat' => '6',
-            'sun' => '0',
-        ];
-
-        foreach ($meals as $index => $meal) {
-            $days = [];
-
-            // Se il meal ha hours_definition specifico, usalo
-            if (!empty($meal['hours_definition'])) {
-                $days = $this->parseDaysFromSchedule((string) $meal['hours_definition']);
-            }
-            // Altrimenti usa service_hours_definition generale come fallback
-            elseif (!empty($generalSettings['service_hours_definition'])) {
-                $days = $this->parseDaysFromSchedule((string) $generalSettings['service_hours_definition']);
-            }
-
-            // Converti i giorni in numeri ISO
-            $dayNumbers = [];
-            foreach ($days as $day) {
-                if (isset($dayMapping[$day])) {
-                    $dayNumbers[] = $dayMapping[$day];
-                }
-            }
-
-            // Aggiungi i giorni disponibili al meal
-            $meals[$index]['available_days'] = $dayNumbers;
-        }
-
-        return $meals;
-    }
 }
 

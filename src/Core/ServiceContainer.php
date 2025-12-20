@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core;
 
+/**
+ * Legacy Service Container
+ * 
+ * @deprecated 0.9.0-rc11 Use Kernel\Container (PSR-11 compatible) instead.
+ *             This class is kept for backward compatibility but should not be used in new code.
+ */
 final class ServiceContainer
 {
     /**

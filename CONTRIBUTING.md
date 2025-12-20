@@ -4,7 +4,7 @@ Grazie per l'interesse nel contribuire a FP Restaurant Reservations! Questo docu
 
 ## 📊 Stato del Progetto
 
-**Versione attuale**: 0.1.6  
+**Versione attuale**: 0.9.0-rc10.3  
 **Status**: ✅ Production Ready  
 **Fasi completate**: 21/21  
 **Security audit**: ✅ 5/5 problemi risolti

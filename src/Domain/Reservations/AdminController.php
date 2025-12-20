@@ -38,7 +38,9 @@ final class AdminController
 
     public function register(): void
     {
-        add_action('admin_menu', [$this, 'registerMenu']);
+        // Register menu with priority 10 to ensure it runs after AdminPages (priority 5)
+        // but before other submenus (priority 20)
+        add_action('admin_menu', [$this, 'registerMenu'], 10);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('admin_head', [$this, 'removeOtherPluginNotices']);
         add_action('admin_head', [$this, 'addMobileViewportMeta']);

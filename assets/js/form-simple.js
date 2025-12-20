@@ -47,6 +47,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Ottieni il nonce subito
     fetchNonce();
+    
+    // Sincronizza i checkbox dello step finale con quelli dello step 3
+    // Flag per tracciare se i listener sono già stati aggiunti
+    let checkboxesSynced = false;
+    
+    function syncCheckboxes() {
+        // Evita listener duplicati
+        if (checkboxesSynced) {
+            return;
+        }
+        
+        const consentStep3 = document.querySelector('input[name="fp_resv_consent"]:not(#privacy-consent-final)');
+        const consentFinal = document.getElementById('privacy-consent-final');
+        if (consentStep3 && consentFinal) {
+            // Sincronizza da step finale a step 3
+            consentFinal.addEventListener('change', function() {
+                if (consentStep3) {
+                    consentStep3.checked = consentFinal.checked;
+                }
+            });
+            // Sincronizza da step 3 a step finale
+            consentStep3.addEventListener('change', function() {
+                consentFinal.checked = consentStep3.checked;
+            });
+        }
+        
+        const marketingStep3 = document.querySelector('input[name="fp_resv_marketing_consent"]:not(#marketing-consent-final)');
+        const marketingFinal = document.getElementById('marketing-consent-final');
+        if (marketingStep3 && marketingFinal) {
+            // Sincronizza da step finale a step 3
+            marketingFinal.addEventListener('change', function() {
+                if (marketingStep3) {
+                    marketingStep3.checked = marketingFinal.checked;
+                }
+            });
+            // Sincronizza da step 3 a step finale
+            marketingStep3.addEventListener('change', function() {
+                marketingFinal.checked = marketingStep3.checked;
+            });
+        }
+        
+        checkboxesSynced = true;
+    }
+    
     const nextBtn = document.getElementById('next-btn');
     const prevBtn = document.getElementById('prev-btn');
     const submitBtn = document.getElementById('submit-btn');
@@ -252,27 +296,203 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mostra/nascondi sezione servizi aggiuntivi
         document.getElementById('summary-extras-row').hidden = !hasExtras;
         
+        // Sincronizza i checkbox dello step finale con quelli dello step 3
+        // IMPORTANTE: sincronizza solo se i checkbox finali non sono stati ancora modificati dall'utente
+        // Questo permette all'utente di modificare i checkbox finali senza che vengano sovrascritti
+        const consentStep3 = document.querySelector('input[name="fp_resv_consent"]:not(#privacy-consent-final)');
+        const consentFinal = document.getElementById('privacy-consent-final');
+        if (consentStep3 && consentFinal) {
+            // Sincronizza solo se il checkbox finale non è stato ancora toccato dall'utente
+            // Usa un attributo data per tracciare se è stato modificato
+            if (!consentFinal.hasAttribute('data-user-modified')) {
+                consentFinal.checked = consentStep3.checked;
+            }
+            // FORZA le dimensioni e la visibilità del checkbox - CRITICO per la cliccabilità
+            consentFinal.style.setProperty('width', '20px', 'important');
+            consentFinal.style.setProperty('height', '20px', 'important');
+            consentFinal.style.setProperty('min-width', '20px', 'important');
+            consentFinal.style.setProperty('min-height', '20px', 'important');
+            consentFinal.style.setProperty('opacity', '1', 'important');
+            consentFinal.style.setProperty('visibility', 'visible', 'important');
+            consentFinal.style.setProperty('display', 'inline-block', 'important');
+            consentFinal.style.setProperty('pointer-events', 'auto', 'important');
+            consentFinal.style.setProperty('z-index', '10000', 'important');
+            consentFinal.style.setProperty('position', 'relative', 'important');
+            consentFinal.style.setProperty('cursor', 'pointer', 'important');
+            consentFinal.style.setProperty('margin', '0', 'important');
+            consentFinal.style.setProperty('padding', '0', 'important');
+            consentFinal.disabled = false;
+            consentFinal.readOnly = false;
+            
+            // Aggiungi listener per tracciare quando l'utente modifica il checkbox
+            if (!consentFinal.hasAttribute('data-listener-added')) {
+                consentFinal.addEventListener('change', function() {
+                    this.setAttribute('data-user-modified', 'true');
+                });
+                consentFinal.setAttribute('data-listener-added', 'true');
+            }
+        }
+        
+        const marketingStep3 = document.querySelector('input[name="fp_resv_marketing_consent"]:not(#marketing-consent-final)');
+        const marketingFinal = document.getElementById('marketing-consent-final');
+        if (marketingStep3 && marketingFinal) {
+            // Sincronizza solo se il checkbox finale non è stato ancora toccato dall'utente
+            if (!marketingFinal.hasAttribute('data-user-modified')) {
+                marketingFinal.checked = marketingStep3.checked;
+            }
+            // FORZA le dimensioni e la visibilità del checkbox - CRITICO per la cliccabilità
+            marketingFinal.style.setProperty('width', '20px', 'important');
+            marketingFinal.style.setProperty('height', '20px', 'important');
+            marketingFinal.style.setProperty('min-width', '20px', 'important');
+            marketingFinal.style.setProperty('min-height', '20px', 'important');
+            marketingFinal.style.setProperty('opacity', '1', 'important');
+            marketingFinal.style.setProperty('visibility', 'visible', 'important');
+            marketingFinal.style.setProperty('display', 'inline-block', 'important');
+            marketingFinal.style.setProperty('pointer-events', 'auto', 'important');
+            marketingFinal.style.setProperty('z-index', '10000', 'important');
+            marketingFinal.style.setProperty('position', 'relative', 'important');
+            marketingFinal.style.setProperty('cursor', 'pointer', 'important');
+            marketingFinal.style.setProperty('margin', '0', 'important');
+            marketingFinal.style.setProperty('padding', '0', 'important');
+            marketingFinal.disabled = false;
+            marketingFinal.readOnly = false;
+            
+            // Aggiungi listener per tracciare quando l'utente modifica il checkbox
+            if (!marketingFinal.hasAttribute('data-listener-added')) {
+                marketingFinal.addEventListener('change', function() {
+                    this.setAttribute('data-user-modified', 'true');
+                });
+                marketingFinal.setAttribute('data-listener-added', 'true');
+            }
+        }
+        
         console.log('Riepilogo popolato');
     }
     
     // Navigation
     function showStep(step) {
         console.log('showStep chiamata con step:', step);
-        steps.forEach(s => s.classList.remove('active'));
-        progressSteps.forEach(p => p.classList.remove('active', 'completed'));
         
+        // Valida che lo step sia valido
+        if (step < 1 || step > totalSteps) {
+            console.error('Step non valido:', step);
+            return;
+        }
+        
+        // Nascondi tutti gli step e rimuovi classi
+        // Verifica che steps sia un NodeList valido
+        if (steps && steps.length > 0) {
+            steps.forEach(s => {
+                if (s && s.nodeType === 1) { // Verifica che sia un elemento DOM
+                    s.classList.remove('active', 'completed');
+                    // Usa display: none con !important per nascondere (sovrascrive CSS)
+                    s.style.setProperty('display', 'none', 'important');
+                    s.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+        if (progressSteps && progressSteps.length > 0) {
+            progressSteps.forEach(p => {
+                if (p && p.nodeType === 1) {
+                    p.classList.remove('active', 'completed');
+                }
+            });
+        }
+        
+        // Mostra solo lo step corrente
         const currentStepEl = form.querySelector(`.fp-step[data-step="${step}"]`);
         console.log('Elemento step trovato:', currentStepEl);
         if (currentStepEl) {
             currentStepEl.classList.add('active');
+            // Mostra lo step corrente rimuovendo display: none
+            // Usa !important per sovrascrivere eventuali regole CSS
+            currentStepEl.style.setProperty('display', '', 'important');
+            currentStepEl.removeAttribute('aria-hidden');
+            currentStepEl.setAttribute('aria-hidden', 'false');
             console.log('Classe active aggiunta al step', step);
+            
+            // FIX CRITICO: Forza le dimensioni dei checkbox quando lo step 3 o 4 viene mostrato
+            // Questo è necessario perché quando uno step è nascosto con display:none, i checkbox non vengono renderizzati
+            if (step === 3 || step === 4) {
+                setTimeout(() => {
+                    let checkboxes = [];
+                    
+                    if (step === 3) {
+                        // Checkbox dello step 3
+                        const consentStep3 = document.getElementById('privacy-consent');
+                        const marketingStep3 = document.getElementById('marketing-consent');
+                        const profilingStep3 = document.getElementById('profiling-consent');
+                        const wheelchairCheckbox = document.getElementById('wheelchair-table');
+                        const petCheckbox = document.getElementById('pets-allowed');
+                        
+                        checkboxes = [consentStep3, marketingStep3, profilingStep3, wheelchairCheckbox, petCheckbox].filter(cb => cb !== null);
+                    } else if (step === 4) {
+                        // Checkbox dello step 4 finale
+                        const privacyFinal = document.getElementById('privacy-consent-final');
+                        const marketingFinal = document.getElementById('marketing-consent-final');
+                        const profilingFinal = document.getElementById('profiling-consent-final');
+                        
+                        checkboxes = [privacyFinal, marketingFinal, profilingFinal].filter(cb => cb !== null);
+                    }
+                    
+                    checkboxes.forEach(checkbox => {
+                        if (checkbox) {
+                            checkbox.style.setProperty('width', '20px', 'important');
+                            checkbox.style.setProperty('height', '20px', 'important');
+                            checkbox.style.setProperty('min-width', '20px', 'important');
+                            checkbox.style.setProperty('min-height', '20px', 'important');
+                            checkbox.style.setProperty('max-width', '20px', 'important');
+                            checkbox.style.setProperty('max-height', '20px', 'important');
+                            checkbox.style.setProperty('opacity', '1', 'important');
+                            checkbox.style.setProperty('visibility', 'visible', 'important');
+                            checkbox.style.setProperty('display', 'inline-block', 'important');
+                            checkbox.style.setProperty('flex-shrink', '0', 'important');
+                            checkbox.style.setProperty('pointer-events', 'auto', 'important');
+                            checkbox.style.setProperty('z-index', '10001', 'important');
+                            checkbox.style.setProperty('position', 'relative', 'important');
+                            checkbox.style.setProperty('cursor', 'pointer', 'important');
+                            checkbox.style.setProperty('margin', '0', 'important');
+                            checkbox.style.setProperty('padding', '0', 'important');
+                            checkbox.disabled = false;
+                            checkbox.readOnly = false;
+                            
+                            // Assicura che wrapper e label siano cliccabili
+                            const wrapper = checkbox.closest('.fp-checkbox-wrapper');
+                            if (wrapper) {
+                                wrapper.style.setProperty('pointer-events', 'auto', 'important');
+                                wrapper.style.setProperty('z-index', '10000', 'important');
+                                wrapper.style.setProperty('position', 'relative', 'important');
+                            }
+                            
+                            const label = document.querySelector(`label[for="${checkbox.id}"]`);
+                            if (label) {
+                                label.style.setProperty('pointer-events', 'auto', 'important');
+                                label.style.setProperty('cursor', 'pointer', 'important');
+                                label.style.setProperty('user-select', 'none', 'important');
+                            }
+                        }
+                    });
+                }, 100);
+            }
         } else {
             console.error('Elemento step non trovato per step:', step);
+            // Fallback: mostra il primo step se lo step richiesto non esiste
+            const firstStep = form.querySelector('.fp-step[data-step="1"]');
+            if (firstStep) {
+                firstStep.style.setProperty('display', '', 'important');
+                firstStep.removeAttribute('aria-hidden');
+                firstStep.setAttribute('aria-hidden', 'false');
+                firstStep.classList.add('active');
+                console.warn('Fallback: mostrato step 1');
+            }
         }
         
-        // Update progress
+        // Update progress - mostra gli step completati come completati
+        // Cerca sia nei progress steps che negli step stessi
         for (let i = 1; i <= step; i++) {
-            const progressStep = form.querySelector(`[data-step="${i}"]`);
+            // Cerca nei progress steps (indicatori di progresso)
+            const progressStep = form.querySelector(`.fp-progress-step[data-step="${i}"]`) || 
+                                 form.querySelector(`[data-step="${i}"].fp-progress-step`);
             if (progressStep) {
                 if (i < step) {
                     progressStep.classList.add('completed');
@@ -283,16 +503,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Update buttons
-        prevBtn.hidden = step <= 1;
-        nextBtn.hidden = step >= totalSteps;
-        submitBtn.hidden = step < totalSteps;
+        if (prevBtn) prevBtn.hidden = step <= 1;
+        if (nextBtn) nextBtn.hidden = step >= totalSteps;
+        if (submitBtn) submitBtn.hidden = step < totalSteps;
         
-        // Update button text for step 6
-        if (step === totalSteps) {
-            submitBtn.textContent = 'Conferma Prenotazione';
-        } else {
-            submitBtn.textContent = 'Prenota';
+        // Update button text
+        if (submitBtn) {
+            if (step === totalSteps) {
+                submitBtn.textContent = 'Conferma Prenotazione';
+            } else {
+                submitBtn.textContent = 'Prenota';
+            }
         }
+        
+        // Aggiorna lo stato corrente
+        currentStep = step;
     }
     
     // Aggiorna stato bottone "Avanti"
@@ -331,11 +556,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const lastName = document.getElementById('customer-last-name').value;
                 const email = document.getElementById('customer-email').value;
                 const phone = document.getElementById('customer-phone').value;
-                const consent = document.querySelector('input[name="fp_resv_consent"]').checked;
+                // Controlla i checkbox dello step 3 (escludi quelli dello step finale)
+                const consent = document.querySelector('input[name="fp_resv_consent"]:not(#privacy-consent-final)')?.checked || false;
                 return firstName !== '' && lastName !== '' && email !== '' && phone !== '' && consent;
             case 4:
-                // Step 4 è sempre valido (riepilogo)
-                return true;
+                // Step 4: controlla i checkbox dello step finale
+                const consentFinal = document.getElementById('privacy-consent-final')?.checked || document.querySelector('input[name="fp_resv_consent"]')?.checked || false;
+                return consentFinal;
         }
         return true;
     }
@@ -347,17 +574,40 @@ document.addEventListener('DOMContentLoaded', function() {
             // Se stiamo andando allo step 4 (riepilogo), popola i dati
             if (currentStep === 4) {
                 populateSummary();
+                // Inizializza la sincronizzazione dei checkbox quando si passa allo step 4
+                // Chiama solo se i checkbox finali sono nel DOM
+                if (document.getElementById('privacy-consent-final')) {
+                    syncCheckboxes();
+                }
             }
             
             showStep(currentStep);
         } else {
+            // Mostra messaggio specifico per step 3 se manca il consenso privacy
+            if (currentStep === 3) {
+                const consent = document.querySelector('input[name="fp_resv_consent"]:not(#privacy-consent-final)');
+                if (consent && !consent.checked) {
+                    showNotice('warning', 'È necessario accettare la Privacy Policy per procedere.');
+                    return;
+                }
+            }
+            // Mostra messaggio specifico per step 4 se manca il consenso privacy
+            if (currentStep === 4) {
+                const consent = document.getElementById('privacy-consent-final') || document.querySelector('input[name="fp_resv_consent"]');
+                if (consent && !consent.checked) {
+                    showNotice('warning', 'È necessario accettare la Privacy Policy per procedere.');
+                    return;
+                }
+            }
             showNotice('warning', 'Per favore completa tutti i campi richiesti.');
         }
     });
     
     prevBtn.addEventListener('click', function() {
-        currentStep--;
-        showStep(currentStep);
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
     });
     
     submitBtn.addEventListener('click', async function() {
@@ -408,8 +658,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 fp_resv_high_chair_count: document.getElementById('high-chair-count').value,
                 fp_resv_wheelchair_table: document.querySelector('input[name="fp_resv_wheelchair_table"]').checked ? '1' : '',
                 fp_resv_pets: document.querySelector('input[name="fp_resv_pets"]').checked ? '1' : '',
-                fp_resv_consent: document.querySelector('input[name="fp_resv_consent"]').checked,
-                fp_resv_marketing_consent: document.querySelector('input[name="fp_resv_marketing_consent"]').checked ? '1' : '',
+                // Usa i checkbox dello step finale se presenti, altrimenti quelli dello step 3
+                fp_resv_consent: (document.getElementById('privacy-consent-final')?.checked ?? document.querySelector('input[name="fp_resv_consent"]')?.checked) || false,
+                fp_resv_marketing_consent: (document.getElementById('marketing-consent-final')?.checked ?? document.querySelector('input[name="fp_resv_marketing_consent"]')?.checked) ? '1' : '',
                 fp_resv_location: document.querySelector('input[name="fp_resv_location"]').value || 'default',
                 fp_resv_locale: document.querySelector('input[name="fp_resv_locale"]').value || 'it_IT',
                 fp_resv_language: document.querySelector('input[name="fp_resv_language"]').value || 'it',
@@ -594,12 +845,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 areDatesReady = true;
                 updateNextButtonState();
                 
-                // Show info about fallback dates
+                // Hide info about fallback dates (non mostriamo più il conteggio)
                 if (infoEl) {
-                    infoEl.hidden = false;
-                    // Sanitizza meal per sicurezza (previene XSS)
-                    const safeMeal = String(meal).replace(/[<>]/g, '');
-                    infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${safeMeal} (modalità offline)</p>`;
+                    infoEl.hidden = true;
                 }
                 
                 // NON forzare lo step 2 - l'utente deve cliccare "Avanti"
@@ -647,9 +895,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const parseTime = performance.now() - parseStart;
                     console.log(`⏱️ [PERF] Parsing dati in ${parseTime.toFixed(2)}ms`);
                     
-                    // Show info if dates are available
-                    if (availableDates.length > 0) {
-                        infoEl.hidden = false;
+                    // Hide info about available dates (non mostriamo più il conteggio)
+                    if (infoEl) {
+                        infoEl.hidden = true;
                     }
                     
                     const updateStart = performance.now();
@@ -833,13 +1081,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('✅ Flatpickr aggiornato con', availableDates.length, 'date disponibili');
             }
             
-            // Show info about available dates
+            // Hide info about available dates (non mostriamo più il conteggio)
             const infoEl = document.getElementById('date-info');
             if (infoEl) {
-                infoEl.hidden = false;
-                // Sanitizza selectedMeal per sicurezza (previene XSS)
-                const safeMeal = String(selectedMeal).replace(/[<>]/g, '');
-                infoEl.innerHTML = `<p>📅 ${availableDates.length} date disponibili per ${safeMeal}</p>`;
+                infoEl.hidden = true;
             }
         } else {
             // No restrictions, allow all dates
@@ -1054,5 +1299,119 @@ document.addEventListener('DOMContentLoaded', function() {
         const partyInput = document.getElementById('party-size');
         if (partyInput) {
             partyInput.addEventListener('change', checkAndLoadTimeSlotsDebounced);
+        }
+        
+        // Inizializza: mostra solo il primo step (dopo che tutti gli elementi sono stati definiti)
+        showStep(1);
+        
+        // FIX STRUTTURALE: Assicura che i checkbox finali siano sempre renderizzati correttamente quando lo step 4 è mostrato
+        // Il problema è che quando lo step 4 è nascosto con display:none, i checkbox non vengono renderizzati dal browser
+        // Quando lo step viene mostrato, dobbiamo forzare il reflow per assicurare che i checkbox abbiano dimensioni corrette
+        // Salva la funzione showStep originale e la sovrascrivi
+        const originalShowStep = showStep;
+        showStep = function(step) {
+            // Chiama la funzione originale
+            originalShowStep(step);
+            
+            // FIX CRITICO: Forza il reflow dei checkbox quando lo step 3 o 4 viene mostrato
+            // Il problema è che quando uno step è nascosto con display:none, i checkbox non vengono renderizzati dal browser
+            // Quando lo step viene mostrato, dobbiamo forzare il reflow per assicurare che i checkbox abbiano dimensioni corrette
+            if (step === 3 || step === 4) {
+                // Usa doppio requestAnimationFrame per assicurare che il DOM sia completamente aggiornato e renderizzato
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // Verifica che lo step sia effettivamente visibile
+                        const stepEl = form.querySelector(`.fp-step[data-step="${step}"]`);
+                        if (!stepEl || stepEl.style.display === 'none' || stepEl.hasAttribute('aria-hidden')) {
+                            // Se lo step non è visibile, riprova dopo un breve delay
+                            setTimeout(() => {
+                                fixCheckboxesForStep(step);
+                            }, 100);
+                            return;
+                        }
+                        
+                        fixCheckboxesForStep(step);
+                    });
+                });
+            }
+        };
+        
+        // Funzione helper per fixare i checkbox di uno step
+        function fixCheckboxesForStep(step) {
+            let checkboxes = [];
+            
+            if (step === 3) {
+                // Checkbox dello step 3
+                const consentStep3 = document.getElementById('privacy-consent');
+                const marketingStep3 = document.getElementById('marketing-consent');
+                const profilingStep3 = document.getElementById('profiling-consent');
+                const wheelchairCheckbox = document.getElementById('wheelchair-table');
+                const petCheckbox = document.getElementById('pets-allowed');
+                
+                checkboxes = [consentStep3, marketingStep3, profilingStep3, wheelchairCheckbox, petCheckbox].filter(cb => cb !== null);
+            } else if (step === 4) {
+                // Checkbox dello step 4 finale
+                const privacyFinal = document.getElementById('privacy-consent-final');
+                const marketingFinal = document.getElementById('marketing-consent-final');
+                const profilingFinal = document.getElementById('profiling-consent-final');
+                
+                checkboxes = [privacyFinal, marketingFinal, profilingFinal].filter(cb => cb !== null);
+            }
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox) {
+                    // Forza il reflow leggendo offsetHeight - questo assicura che il browser calcoli le dimensioni
+                    void checkbox.offsetHeight;
+                    
+                    // SEMPRE forza le dimensioni, anche se non sono 0x0, per assicurare che siano corrette
+                    // Questo è necessario perché il CSS del tema potrebbe interferire
+                    checkbox.style.setProperty('width', '20px', 'important');
+                    checkbox.style.setProperty('height', '20px', 'important');
+                    checkbox.style.setProperty('min-width', '20px', 'important');
+                    checkbox.style.setProperty('min-height', '20px', 'important');
+                    checkbox.style.setProperty('max-width', '20px', 'important');
+                    checkbox.style.setProperty('max-height', '20px', 'important');
+                    checkbox.style.setProperty('opacity', '1', 'important');
+                    checkbox.style.setProperty('visibility', 'visible', 'important');
+                    checkbox.style.setProperty('display', 'inline-block', 'important');
+                    checkbox.style.setProperty('flex-shrink', '0', 'important');
+                    checkbox.style.setProperty('pointer-events', 'auto', 'important');
+                    checkbox.style.setProperty('z-index', '99999', 'important'); // Z-index molto alto per essere sopra tutto
+                    checkbox.style.setProperty('position', 'relative', 'important');
+                    checkbox.style.setProperty('cursor', 'pointer', 'important');
+                    checkbox.style.setProperty('margin', '0', 'important');
+                    checkbox.style.setProperty('padding', '0', 'important');
+                    checkbox.style.setProperty('border', '1px solid #d1d5db', 'important');
+                    checkbox.style.setProperty('background-color', '#ffffff', 'important');
+                    checkbox.style.setProperty('appearance', 'checkbox', 'important');
+                    checkbox.style.setProperty('-webkit-appearance', 'checkbox', 'important');
+                    checkbox.style.setProperty('-moz-appearance', 'checkbox', 'important');
+                    checkbox.style.setProperty('clip', 'auto', 'important');
+                    checkbox.style.setProperty('clip-path', 'none', 'important');
+                    checkbox.disabled = false;
+                    checkbox.readOnly = false;
+                    
+                    // Forza un altro reflow dopo aver impostato tutte le proprietà
+                    void checkbox.offsetHeight;
+                    void checkbox.offsetWidth;
+                    
+                    // Assicura che wrapper e label siano cliccabili
+                    const wrapper = checkbox.closest('.fp-checkbox-wrapper');
+                    if (wrapper) {
+                        wrapper.style.setProperty('pointer-events', 'auto', 'important');
+                        wrapper.style.setProperty('z-index', '99998', 'important');
+                        wrapper.style.setProperty('position', 'relative', 'important');
+                    }
+                    
+                    const label = document.querySelector(`label[for="${checkbox.id}"]`);
+                    if (label) {
+                        label.style.setProperty('pointer-events', 'auto', 'important');
+                        label.style.setProperty('cursor', 'pointer', 'important');
+                        label.style.setProperty('user-select', 'none', 'important');
+                        label.style.setProperty('z-index', '99997', 'important');
+                        label.style.setProperty('position', 'relative', 'important');
+                    }
+                }
+            });
         }
 });

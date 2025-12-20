@@ -4,35 +4,88 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core\Adapters;
 
-interface WordPressAdapter
+use function current_time;
+use function wp_timezone;
+use function wp_date;
+use function current_user_can;
+use function get_current_user_id;
+use function is_user_logged_in;
+use DateTimeZone;
+
+/**
+ * WordPress Adapter
+ * 
+ * Wraps WordPress core functions for dependency injection.
+ *
+ * @package FP\Resv\Core\Adapters
+ */
+final class WordPressAdapter implements WordPressAdapterInterface
 {
-    public function getCurrentTime(string $type = 'mysql'): string;
+    /**
+     * Get current time in specified format
+     * 
+     * @param string $type Type of time (mysql, timestamp, etc.)
+     * @return string|int
+     */
+    public function currentTime(string $type = 'mysql')
+    {
+        return current_time($type);
+    }
     
-    public function getSalt(string $scheme): string;
+    /**
+     * Get WordPress timezone
+     * 
+     * @return \DateTimeZone
+     */
+    public function timezone(): DateTimeZone
+    {
+        return wp_timezone();
+    }
     
-    public function getTransient(string $key): mixed;
+    /**
+     * Format date according to WordPress settings
+     * 
+     * @param string $format Date format
+     * @param int|string|null $timestamp Timestamp or date string
+     * @return string
+     */
+    public function formatDate(string $format, $timestamp = null): string
+    {
+        if ($timestamp === null) {
+            $timestamp = time();
+        }
+        
+        return wp_date($format, $timestamp);
+    }
     
-    public function setTransient(string $key, mixed $value, int $expiration): bool;
+    /**
+     * Check if current user has capability
+     * 
+     * @param string $capability Capability name
+     * @return bool
+     */
+    public function currentUserCan(string $capability): bool
+    {
+        return current_user_can($capability);
+    }
     
-    public function deleteTransient(string $key): bool;
+    /**
+     * Get current user ID
+     * 
+     * @return int
+     */
+    public function currentUserId(): int
+    {
+        return get_current_user_id();
+    }
     
-    public function cacheGet(string $key, string $group = ''): mixed;
-    
-    public function cacheSet(string $key, mixed $value, string $group = '', int $expiration = 0): bool;
-    
-    public function cacheDelete(string $key, string $group = ''): bool;
-    
-    public function cacheIncr(string $key, int $offset = 1, string $group = ''): int|false;
-    
-    public function getOption(string $option, mixed $default = false): mixed;
-    
-    public function updateOption(string $option, mixed $value, bool $autoload = null): bool;
-    
-    public function addOption(string $option, mixed $value, string $deprecated = '', bool $autoload = true): bool;
-    
-    public function deleteOption(string $option): bool;
-    
-    public function doAction(string $hook_name, mixed ...$args): void;
-    
-    public function applyFilters(string $hook_name, mixed $value, mixed ...$args): mixed;
+    /**
+     * Check if user is logged in
+     * 
+     * @return bool
+     */
+    public function isUserLoggedIn(): bool
+    {
+        return is_user_logged_in();
+    }
 }
