@@ -25,9 +25,13 @@ final class Lifecycle
             // Load requirements
             $requirementsPath = dirname($pluginFile) . '/src/Core/Requirements.php';
             if (!file_exists($requirementsPath) || !is_readable($requirementsPath)) {
-                if (function_exists('wp_die')) {
-                    wp_die('FP Restaurant Reservations: File Requirements.php non trovato.');
+                // Salva errore invece di wp_die
+                $errors = get_option('fp_resv_activation_errors', []);
+                if (!is_array($errors)) {
+                    $errors = [];
                 }
+                $errors[] = 'File Requirements.php non trovato in: ' . $requirementsPath;
+                update_option('fp_resv_activation_errors', $errors);
                 return;
             }
             
@@ -35,24 +39,25 @@ final class Lifecycle
             
             // Validate requirements only if class exists
             if (!class_exists('FP\Resv\Core\Requirements')) {
-                if (function_exists('wp_die')) {
-                    wp_die('FP Restaurant Reservations: Classe Requirements non trovata.');
+                // Salva errore invece di wp_die
+                $errors = get_option('fp_resv_activation_errors', []);
+                if (!is_array($errors)) {
+                    $errors = [];
                 }
+                $errors[] = 'Classe Requirements non trovata dopo il caricamento del file.';
+                update_option('fp_resv_activation_errors', $errors);
                 return;
             }
             
             // Validate requirements
             if (!\FP\Resv\Core\Requirements::validate()) {
-                if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-                    deactivate_plugins(plugin_basename($pluginFile));
+                // Salva errore invece di wp_die e deactivate_plugins
+                $errors = get_option('fp_resv_activation_errors', []);
+                if (!is_array($errors)) {
+                    $errors = [];
                 }
-                if (function_exists('wp_die')) {
-                    wp_die(
-                        __('FP Restaurant Reservations non può essere attivato perché l\'ambiente non soddisfa i requisiti minimi.', 'fp-restaurant-reservations'),
-                        __('Errore di attivazione', 'fp-restaurant-reservations'),
-                        ['back_link' => true]
-                    );
-                }
+                $errors[] = 'L\'ambiente non soddisfa i requisiti minimi del plugin.';
+                update_option('fp_resv_activation_errors', $errors);
                 return;
             }
             
@@ -85,9 +90,13 @@ final class Lifecycle
                 wp_cache_flush();
             }
         } catch (Throwable $e) {
-            if (function_exists('wp_die')) {
-                wp_die('FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage());
+            // Salva errore invece di wp_die
+            $errors = get_option('fp_resv_activation_errors', []);
+            if (!is_array($errors)) {
+                $errors = [];
             }
+            $errors[] = 'Errore durante attivazione Lifecycle: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+            update_option('fp_resv_activation_errors', $errors);
         }
     }
     
