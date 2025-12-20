@@ -145,7 +145,6 @@ $headingId = 'fp-resv-manager-title';
                 </select>
 
                 <div class="fp-search-box">
-                    <span class="dashicons dashicons-search"></span>
                     <input 
                         type="text" 
                         class="fp-search-input" 

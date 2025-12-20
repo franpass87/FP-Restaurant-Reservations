@@ -182,21 +182,10 @@
     color: #111827;
     margin-bottom: 10px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: bold;
     letter-spacing: -0.2px;
     position: relative;
-    padding-bottom: 6px;
-}
-
-.fp-step h3::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 50px;
-    height: 3px;
-    background: linear-gradient(90deg, #374151 0%, #6b7280 100%);
-    border-radius: 2px;
+    padding: 18px;
 }
 
 .fp-field {
@@ -248,18 +237,6 @@ label abbr {
     background: linear-gradient(90deg, transparent 0%, #d1d5db 50%, transparent 100%);
     margin: 12px 0;
     position: relative;
-}
-
-.fp-section-divider::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 8px;
-    height: 5px;
-    background: #6b7280;
-    border-radius: 2px;
 }
 
 /* NASCONDI paragrafi vuoti creati da wpautop */

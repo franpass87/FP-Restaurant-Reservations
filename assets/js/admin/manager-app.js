@@ -1106,9 +1106,6 @@ class ReservationManager {
                     <button type="button" class="fp-btn-icon" data-action="prev-week" title="Settimana precedente" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-left-alt2"></span>
                     </button>
-                    <button type="button" class="fp-btn fp-btn--secondary" data-action="this-week" style="padding: 8px 16px; border: 1px solid #0073aa; background: white; color: #0073aa; border-radius: 4px; cursor: pointer; font-weight: 500;">
-                        ${__('This Week', 'fp-restaurant-reservations')}
-                    </button>
                     <button type="button" class="fp-btn-icon" data-action="next-week" title="Settimana successiva" style="padding: 8px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">
                         <span class="dashicons dashicons-arrow-right-alt2"></span>
                     </button>
@@ -1283,10 +1280,6 @@ class ReservationManager {
 
         this.dom.weekCalendar.querySelector('[data-action="next-week"]')?.addEventListener('click', () => {
             this.navigateWeek(1);
-        });
-
-        this.dom.weekCalendar.querySelector('[data-action="this-week"]')?.addEventListener('click', () => {
-            this.setDate(new Date());
         });
     }
 
