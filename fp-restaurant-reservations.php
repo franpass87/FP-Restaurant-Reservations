@@ -493,7 +493,19 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     
     // Verifica che autoload.php sia stato creato
     $autoloadPath = $pluginDir . '/vendor/autoload.php';
-    $success = ($returnVar === 0 && is_readable($autoloadPath));
+    
+    // Verifica se l'output contiene HTML (significa che non è output di Composer)
+    $outputIsHtml = false;
+    if ($output && (stripos($output, '<html') !== false || stripos($output, '<script') !== false || stripos($output, '<div') !== false)) {
+        $outputIsHtml = true;
+    }
+    
+    // Verifica se autoload.php esiste (potrebbe essere stato creato nonostante l'output HTML)
+    $autoloadExists = is_readable($autoloadPath);
+    
+    // Considera successo se autoload.php esiste ed è valido, anche se l'output è HTML
+    // (potrebbe essere stato creato correttamente ma l'output è stato catturato insieme all'HTML)
+    $success = ($autoloadExists && filesize($autoloadPath) > 1000); // Almeno 1KB per essere valido
     
     if ($success) {
         // Rimuovi eventuali errori precedenti
@@ -509,7 +521,12 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     } else {
         // Salva dettagli dell'errore
         $errorDetails[] = 'Comando eseguito con return code: ' . $returnVar;
-        if ($output) {
+        
+        if ($outputIsHtml) {
+            $errorDetails[] = '⚠️ Output contiene HTML invece dell\'output di Composer';
+            $errorDetails[] = 'Questo indica che il comando potrebbe essere stato eseguito in un contesto web';
+            $errorDetails[] = 'Output (primi 500 caratteri): ' . substr(strip_tags($output), 0, 500);
+        } elseif ($output) {
             // Prendi solo le ultime 10 righe dell'output per non sovraccaricare
             $outputLines = explode("\n", $output);
             $lastLines = array_slice($outputLines, -10);
@@ -517,12 +534,26 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         } else {
             $errorDetails[] = 'Nessun output da Composer';
         }
+        
+        if (!$autoloadExists) {
+            $errorDetails[] = '❌ vendor/autoload.php non trovato dopo l\'esecuzione';
+        } else {
+            $fileSize = filesize($autoloadPath);
+            if ($fileSize < 1000) {
+                $errorDetails[] = '⚠️ vendor/autoload.php esiste ma è troppo piccolo (' . $fileSize . ' bytes) - potrebbe essere incompleto';
+            } else {
+                $errorDetails[] = '✅ vendor/autoload.php esiste e sembra valido (' . $fileSize . ' bytes)';
+                $errorDetails[] = 'Il plugin potrebbe funzionare. Prova a ricaricare la pagina.';
+            }
+        }
+        
         $errorDetails[] = 'Comando eseguito: ' . $command;
         $errorDetails[] = 'Composer trovato: ' . $composer;
         
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP Restaurant Reservations] Composer install fallito. Return code: ' . $returnVar);
-            error_log('[FP Restaurant Reservations] Output: ' . $output);
+            error_log('[FP Restaurant Reservations] Output is HTML: ' . ($outputIsHtml ? 'yes' : 'no'));
+            error_log('[FP Restaurant Reservations] Output: ' . substr($output, 0, 1000));
         }
         update_option('fp_resv_composer_install_error', $errorDetails);
     }
