@@ -148,6 +148,88 @@ if (!is_readable($autoload)) {
 require $autoload;
 
 /**
+ * Scarica composer.phar automaticamente
+ * 
+ * @param string $targetPath Path dove salvare composer.phar
+ * @return bool True se il download è riuscito, false altrimenti
+ */
+function fp_resv_download_composer_phar(string $targetPath): bool
+{
+    $composerUrl = 'https://getcomposer.org/download/latest-stable/composer.phar';
+    
+    // Prova prima con cURL (più affidabile)
+    if (function_exists('curl_init')) {
+        $ch = curl_init($composerUrl);
+        if ($ch === false) {
+            return false;
+        }
+        
+        $fp = @fopen($targetPath, 'wb');
+        if ($fp === false) {
+            curl_close($ch);
+            return false;
+        }
+        
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minuti timeout
+        curl_setopt($ch, CURLOPT_USERAGENT, 'FP-Restaurant-Reservations-Plugin/1.0');
+        
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        
+        curl_close($ch);
+        fclose($fp);
+        
+        if ($result === false || $httpCode !== 200) {
+            @unlink($targetPath);
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Restaurant Reservations] Download composer.phar fallito. HTTP Code: ' . $httpCode . ', Error: ' . $error);
+            }
+            return false;
+        }
+        
+        // Verifica che il file scaricato sia valido (dovrebbe essere > 1MB)
+        if (filesize($targetPath) < 1024 * 1024) {
+            @unlink($targetPath);
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Restaurant Reservations] composer.phar scaricato ma dimensione non valida: ' . filesize($targetPath));
+            }
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Fallback: usa file_get_contents (meno affidabile ma funziona su più server)
+    if (function_exists('file_get_contents') && ini_get('allow_url_fopen')) {
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 300,
+                'user_agent' => 'FP-Restaurant-Reservations-Plugin/1.0',
+                'follow_location' => true,
+            ],
+        ]);
+        
+        $content = @file_get_contents($composerUrl, false, $context);
+        
+        if ($content === false || strlen($content) < 1024 * 1024) {
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Restaurant Reservations] Download composer.phar con file_get_contents fallito');
+            }
+            return false;
+        }
+        
+        $written = @file_put_contents($targetPath, $content);
+        return $written !== false && $written > 0;
+    }
+    
+    return false;
+}
+
+/**
  * Installa automaticamente le dipendenze Composer
  * 
  * @param string $pluginDir Directory del plugin
@@ -238,17 +320,52 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         }
     }
     
+    // 5. Se Composer non è trovato, prova a scaricarlo automaticamente
     if ($composer === null) {
-        $errorDetails[] = 'Composer non trovato sul server';
-        $errorDetails[] = 'Cercato in: ' . $pluginDir . '/composer.phar';
-        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
-        $errorDetails[] = 'Comando globale "composer" non disponibile';
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP Restaurant Reservations] Composer non trovato. Installa Composer o aggiungi composer.phar nella directory del plugin.');
+        $localComposer = $pluginDir . '/composer.phar';
+        
+        // Verifica se possiamo scaricare composer.phar
+        if (function_exists('curl_init') || function_exists('file_get_contents')) {
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Restaurant Reservations] Composer non trovato, tentativo di download automatico...');
+            }
+            
+            $composerPharDownloaded = fp_resv_download_composer_phar($localComposer);
+            
+            if ($composerPharDownloaded && file_exists($localComposer)) {
+                // Rendi eseguibile se possibile
+                @chmod($localComposer, 0755);
+                $composer = 'php ' . escapeshellarg($localComposer);
+                
+                if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                    error_log('[FP Restaurant Reservations] composer.phar scaricato con successo: ' . $localComposer);
+                }
+            } else {
+                $errorDetails[] = 'Composer non trovato sul server';
+                $errorDetails[] = 'Cercato in: ' . $pluginDir . '/composer.phar';
+                $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
+                $errorDetails[] = 'Comando globale "composer" non disponibile';
+                $errorDetails[] = 'Tentativo di download automatico di composer.phar fallito';
+                if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                    error_log('[FP Restaurant Reservations] Composer non trovato e download automatico fallito.');
+                }
+                @unlink($lockFile);
+                update_option('fp_resv_composer_install_error', $errorDetails);
+                return false;
+            }
+        } else {
+            $errorDetails[] = 'Composer non trovato sul server';
+            $errorDetails[] = 'Cercato in: ' . $pluginDir . '/composer.phar';
+            $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
+            $errorDetails[] = 'Comando globale "composer" non disponibile';
+            $errorDetails[] = 'Impossibile scaricare composer.phar (curl e file_get_contents non disponibili)';
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Restaurant Reservations] Composer non trovato. Installa Composer o aggiungi composer.phar nella directory del plugin.');
+            }
+            @unlink($lockFile);
+            update_option('fp_resv_composer_install_error', $errorDetails);
+            return false;
         }
-        @unlink($lockFile);
-        update_option('fp_resv_composer_install_error', $errorDetails);
-        return false;
     }
     
     // Esegui composer install
