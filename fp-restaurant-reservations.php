@@ -134,30 +134,18 @@ function fp_resv_download_composer_phar(string $targetPath): bool
 function fp_resv_install_composer_dependencies(string $pluginDir): bool
 {
     $errorDetails = [];
-    $lockFile = $pluginDir . DIRECTORY_SEPARATOR . '.composer-install.lock';
-    
-    // Verifica permessi di scrittura PRIMA di creare il lock file
-    if (!is_writable($pluginDir)) {
-        $errorDetails[] = 'Directory plugin non scrivibile: ' . $pluginDir;
-        $errorDetails[] = 'Permessi directory: ' . substr(sprintf('%o', fileperms($pluginDir)), -4);
-        update_option('fp_resv_composer_install_error', $errorDetails);
-        return false;
-    }
+    $lockFile = $pluginDir . '/.composer-install.lock';
     
     if (file_exists($lockFile)) {
         $lockTime = filemtime($lockFile);
         if (time() - $lockTime > 600) {
             @unlink($lockFile);
         } else {
-            // Lock file ancora valido, probabilmente un'altra installazione è in corso
             return false;
         }
     }
     
     if (@file_put_contents($lockFile, time()) === false) {
-        $errorDetails[] = 'Impossibile creare file lock: ' . $lockFile;
-        $errorDetails[] = 'Verifica permessi di scrittura sulla directory';
-        update_option('fp_resv_composer_install_error', $errorDetails);
         return false;
     }
     register_shutdown_function(function () use ($lockFile) {
@@ -165,6 +153,11 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
             @unlink($lockFile);
         }
     });
+    
+    if (!is_writable($pluginDir)) {
+        @unlink($lockFile);
+        return false;
+    }
     
     $composer = null;
     $localComposer = $pluginDir . '/composer.phar';
@@ -194,22 +187,8 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     if ($composer === null) {
         $errorDetails[] = 'Composer non trovato sul server';
         $errorDetails[] = 'Cercato in: ' . $localComposer;
-        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . DIRECTORY_SEPARATOR . 'composer.phar';
+        $errorDetails[] = 'Cercato in: ' . dirname($pluginDir) . '/composer.phar';
         $errorDetails[] = 'Comando globale "composer" non disponibile';
-        
-        // Verifica se le funzioni necessarie per il download sono disponibili
-        $canDownload = (function_exists('curl_init') || (function_exists('file_get_contents') && ini_get('allow_url_fopen')));
-        if (!$canDownload) {
-            $errorDetails[] = 'Impossibile scaricare composer.phar: cURL e file_get_contents non disponibili';
-        }
-        
-        // Verifica funzioni PHP disponibili
-        $disabledFunctions = ini_get('disable_functions');
-        $errorDetails[] = 'Funzioni PHP disabilitate: ' . ($disabledFunctions ?: 'Nessuna');
-        $errorDetails[] = 'proc_open disponibile: ' . (function_exists('proc_open') && !in_array('proc_open', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
-        $errorDetails[] = 'exec disponibile: ' . (function_exists('exec') && !in_array('exec', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
-        $errorDetails[] = 'shell_exec disponibile: ' . (function_exists('shell_exec') && !in_array('shell_exec', explode(',', $disabledFunctions), true) ? 'Sì' : 'No');
-        
         update_option('fp_resv_composer_install_error', $errorDetails);
         @unlink($lockFile);
         return false;
@@ -254,9 +233,8 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
         
         if (is_resource($process)) {
             $executed = true;
-            // Timeout più lungo per produzione (10 minuti)
-            if (isset($pipes[1])) stream_set_timeout($pipes[1], 600);
-            if (isset($pipes[2])) stream_set_timeout($pipes[2], 600);
+            if (isset($pipes[1])) stream_set_timeout($pipes[1], 300);
+            if (isset($pipes[2])) stream_set_timeout($pipes[2], 300);
             
             // Leggi l'output in modo non bloccante
             $stdout = '';
@@ -363,26 +341,14 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
                 $errorDetails[] = 'Comando non eseguito - funzioni disponibili: proc_open=' . (function_exists('proc_open') ? 'Sì' : 'No') . ', exec=' . (function_exists('exec') ? 'Sì' : 'No') . ', shell_exec=' . (function_exists('shell_exec') ? 'Sì' : 'No');
             }
         }
-        $errorDetails[] = 'Comando eseguito: ' . (isset($command) ? $command : 'N/A');
+        $errorDetails[] = 'Comando eseguito: ' . $command;
         $errorDetails[] = 'Composer trovato: ' . $composer;
         $errorDetails[] = 'Directory plugin: ' . $pluginDir;
-        $errorDetails[] = 'Directory plugin (reale): ' . (isset($pluginDirReal) ? $pluginDirReal : 'N/A');
-        $errorDetails[] = 'Directory plugin (normalizzata): ' . (isset($pluginDirNormalized) ? $pluginDirNormalized : 'N/A');
         $errorDetails[] = 'Autoload path: ' . $autoloadPath;
         $errorDetails[] = 'Autoload esiste: ' . ($autoloadExists ? 'Sì' : 'No');
         if ($autoloadExists) {
             $errorDetails[] = 'Dimensione autoload: ' . filesize($autoloadPath) . ' bytes';
-        } else {
-            // Verifica se la directory vendor esiste
-            $vendorDir = dirname($autoloadPath);
-            $errorDetails[] = 'Directory vendor esiste: ' . (is_dir($vendorDir) ? 'Sì' : 'No');
-            if (is_dir($vendorDir)) {
-                $errorDetails[] = 'Permessi directory vendor: ' . substr(sprintf('%o', fileperms($vendorDir)), -4);
-            }
         }
-        $errorDetails[] = 'Comando eseguito con successo: ' . ($executed ? 'Sì' : 'No');
-        $errorDetails[] = 'PHP versione: ' . PHP_VERSION;
-        $errorDetails[] = 'Sistema operativo: ' . PHP_OS;
         update_option('fp_resv_composer_install_error', $errorDetails);
     } else {
         // Pulisci gli errori precedenti se l'installazione è riuscita
@@ -392,135 +358,121 @@ function fp_resv_install_composer_dependencies(string $pluginDir): bool
     return $success;
 }
 
+// Funzione per mostrare notice di attivazione
+function fp_resv_show_activation_notice(): void {
+    $activationErrors = get_option('fp_resv_activation_errors', []);
+    if (empty($activationErrors) || !is_array($activationErrors)) {
+        return;
+    }
+    
+    if (!function_exists('add_action')) {
+        return;
+    }
+    
+    add_action('admin_notices', static function () use ($activationErrors) {
+        $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
+        $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
+        foreach ($activationErrors as $error) {
+            $notice .= '<li>' . esc_html($error) . '</li>';
+        }
+        $notice .= '</ul>';
+        $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
+        $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
+        $notice .= '</div>';
+        echo $notice;
+    });
+}
+
 // Registra gli hook di attivazione/deattivazione PRIMA di caricare l'autoloader
 // Questo assicura che siano sempre disponibili, anche se l'autoloader non è ancora caricato
 register_activation_hook(__FILE__, static function (): void {
-    $pluginDir = dirname(__FILE__);
-    $autoload = $pluginDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    $activationErrors = [];
     
-    // Se autoload non esiste, prova a installarlo
-    if (!is_readable($autoload) && function_exists('fp_resv_install_composer_dependencies')) {
-        $installSuccess = fp_resv_install_composer_dependencies($pluginDir);
-        
-        // Ricontrolla dopo l'installazione
-        if (!$installSuccess || !is_readable($autoload)) {
-            // L'installazione è fallita, blocca l'attivazione
-            $errorDetails = get_option('fp_resv_composer_install_error', []);
-            $errorMessage = 'FP Restaurant Reservations: Impossibile installare le dipendenze Composer durante l\'attivazione.';
-            
-            if (!empty($errorDetails) && is_array($errorDetails)) {
-                $errorMessage .= "\n\nDettagli:\n";
-                foreach ($errorDetails as $detail) {
-                    $errorMessage .= "- " . $detail . "\n";
-                }
-            }
-            
-            // Disattiva il plugin
-            if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-                deactivate_plugins(plugin_basename(__FILE__));
-            }
-            
-            // Mostra errore e blocca l'attivazione
-            if (function_exists('wp_die')) {
-                wp_die(
-                    esc_html($errorMessage),
-                    'Errore di attivazione - FP Restaurant Reservations',
-                    ['back_link' => true]
-                );
-            }
-            return;
-        }
-    }
-    
-    // Verifica che autoload esista prima di procedere
-    if (!is_readable($autoload)) {
-        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-        }
-        if (function_exists('wp_die')) {
-            wp_die(
-                'FP Restaurant Reservations: File vendor/autoload.php non trovato. Verifica che le dipendenze Composer siano installate.',
-                'Errore di attivazione',
-                ['back_link' => true]
-            );
-        }
-        return;
-    }
-    
-    // Carica l'autoloader
     try {
-        @include $autoload;
-    } catch (Throwable $e) {
-        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-            deactivate_plugins(plugin_basename(__FILE__));
+        $pluginDir = dirname(__FILE__);
+        $autoload = $pluginDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+        
+        // Se autoload non esiste, prova a installarlo
+        if (!is_readable($autoload) && function_exists('fp_resv_install_composer_dependencies')) {
+            // Aumenta il timeout per l'installazione (se possibile)
+            if (function_exists('set_time_limit')) {
+                @set_time_limit(300); // 5 minuti
+            }
+            
+            $installSuccess = false;
+            try {
+                $installSuccess = fp_resv_install_composer_dependencies($pluginDir);
+            } catch (Throwable $e) {
+                // Cattura qualsiasi errore durante l'installazione
+                $activationErrors[] = 'Errore durante installazione dipendenze: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+                $errorDetails = [
+                    'Errore durante installazione: ' . $e->getMessage(),
+                    'File: ' . $e->getFile(),
+                    'Linea: ' . $e->getLine(),
+                ];
+                update_option('fp_resv_composer_install_error', $errorDetails);
+            }
+            
+            // Ricontrolla dopo l'installazione
+            if (!$installSuccess || !is_readable($autoload)) {
+                // L'installazione è fallita, salva i dettagli ma non bloccare
+                $errorDetails = get_option('fp_resv_composer_install_error', []);
+                
+                if (!empty($errorDetails) && is_array($errorDetails)) {
+                    foreach ($errorDetails as $detail) {
+                        $activationErrors[] = $detail;
+                    }
+                } else {
+                    $activationErrors[] = 'Impossibile installare le dipendenze Composer automaticamente.';
+                    $activationErrors[] = 'Possibili cause: Composer non disponibile, funzioni PHP disabilitate, permessi insufficienti, o timeout.';
+                }
+            }
         }
-        if (function_exists('wp_die')) {
-            wp_die(
-                'FP Restaurant Reservations: Errore durante il caricamento dell\'autoloader: ' . $e->getMessage(),
-                'Errore di attivazione',
-                ['back_link' => true]
-            );
-        }
-        return;
-    }
     
-    // Verifica che l'autoloader sia stato caricato correttamente
-    if (!class_exists('Composer\Autoload\ClassLoader')) {
-        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-        }
-        if (function_exists('wp_die')) {
-            wp_die(
-                'FP Restaurant Reservations: Autoloader Composer non caricato correttamente.',
-                'Errore di attivazione',
-                ['back_link' => true]
-            );
-        }
-        return;
-    }
-    
-    // Ora carica Lifecycle se possibile
-    $lifecyclePath = $pluginDir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Kernel' . DIRECTORY_SEPARATOR . 'Lifecycle.php';
-    if (file_exists($lifecyclePath) && is_readable($lifecyclePath)) {
-        try {
-            require_once $lifecyclePath;
-            if (class_exists('FP\Resv\Kernel\Lifecycle')) {
-                FP\Resv\Kernel\Lifecycle::activate(__FILE__);
+        // Verifica che autoload esista prima di procedere
+        if (!is_readable($autoload)) {
+            $activationErrors[] = 'File vendor/autoload.php non trovato. Le dipendenze Composer non sono installate.';
+        } else {
+            // Carica l'autoloader
+            try {
+                @include $autoload;
+            } catch (Throwable $e) {
+                $activationErrors[] = 'Errore durante il caricamento dell\'autoloader: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+            }
+            
+            // Verifica che l'autoloader sia stato caricato correttamente
+            if (!class_exists('Composer\Autoload\ClassLoader')) {
+                $activationErrors[] = 'Autoloader Composer non caricato correttamente.';
             } else {
-                if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-                    deactivate_plugins(plugin_basename(__FILE__));
+                // Ora carica Lifecycle se possibile
+                $lifecyclePath = $pluginDir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Kernel' . DIRECTORY_SEPARATOR . 'Lifecycle.php';
+                if (file_exists($lifecyclePath) && is_readable($lifecyclePath)) {
+                    try {
+                        require_once $lifecyclePath;
+                        if (class_exists('FP\Resv\Kernel\Lifecycle')) {
+                            FP\Resv\Kernel\Lifecycle::activate(__FILE__);
+                        } else {
+                            $activationErrors[] = 'Classe Lifecycle non trovata dopo il caricamento del file.';
+                        }
+                    } catch (Throwable $e) {
+                        $activationErrors[] = 'Errore durante l\'attivazione Lifecycle: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+                    }
+                } else {
+                    $activationErrors[] = 'File Lifecycle.php non trovato in: ' . $lifecyclePath;
                 }
-                if (function_exists('wp_die')) {
-                    wp_die(
-                        'FP Restaurant Reservations: Classe Lifecycle non trovata dopo il caricamento.',
-                        'Errore di attivazione',
-                        ['back_link' => true]
-                    );
-                }
-            }
-        } catch (Throwable $e) {
-            if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-                deactivate_plugins(plugin_basename(__FILE__));
-            }
-            if (function_exists('wp_die')) {
-                wp_die(
-                    'FP Restaurant Reservations: Errore durante l\'attivazione: ' . $e->getMessage(),
-                    'Errore di attivazione',
-                    ['back_link' => true]
-                );
             }
         }
+    } catch (Throwable $e) {
+        // Cattura qualsiasi errore fatale durante l'attivazione
+        $activationErrors[] = 'Errore critico durante l\'attivazione: ' . $e->getMessage() . ' (File: ' . $e->getFile() . ', Linea: ' . $e->getLine() . ')';
+    }
+    
+    // Salva gli errori se ci sono problemi (il notice verrà mostrato durante il caricamento normale)
+    if (!empty($activationErrors)) {
+        update_option('fp_resv_activation_errors', $activationErrors);
     } else {
-        if (function_exists('deactivate_plugins') && function_exists('plugin_basename')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-        }
-        if (function_exists('wp_die')) {
-            wp_die(
-                'FP Restaurant Reservations: File Lifecycle.php non trovato.',
-                'Errore di attivazione',
-                ['back_link' => true]
-            );
-        }
+        // Nessun errore, pulisci eventuali errori precedenti
+        delete_option('fp_resv_activation_errors');
     }
 });
 
@@ -657,19 +609,24 @@ if (!$autoloadLoaded) {
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
 // Gli hook di attivazione/deattivazione sono già stati registrati sopra (riga 257), prima del caricamento dell'autoloader
 
+// Mostra notice degli errori di attivazione se presenti
+if (function_exists('add_action')) {
+    add_action('admin_notices', 'fp_resv_show_activation_notice');
+}
+
 // Inizializza sistema di auto-aggiornamento da GitHub
 // Solo se l'autoloader è stato caricato correttamente
 try {
-    if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
-        $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-            'https://github.com/franpass87/FP-Restaurant-Reservations/',
-            __FILE__,
-            'fp-restaurant-reservations'
-        );
-        
-        // Usa le GitHub Releases per gli aggiornamenti
+if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/franpass87/FP-Restaurant-Reservations/',
+        __FILE__,
+        'fp-restaurant-reservations'
+    );
+    
+    // Usa le GitHub Releases per gli aggiornamenti
         if (method_exists($updateChecker, 'getVcsApi')) {
-            $updateChecker->getVcsApi()->enableReleaseAssets();
+    $updateChecker->getVcsApi()->enableReleaseAssets();
         }
     }
 } catch (Throwable $e) {
@@ -704,22 +661,22 @@ if (!class_exists('FP\Resv\Core\BootstrapGuard')) {
 }
 
 try {
-    FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
-        // Use new Bootstrap architecture
-        require_once __DIR__ . '/src/Kernel/Bootstrap.php';
-        
-        $boot = static function () use ($pluginFile): void {
-            FP\Resv\Kernel\Bootstrap::boot($pluginFile);
-        };
+FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
+    // Use new Bootstrap architecture
+    require_once __DIR__ . '/src/Kernel/Bootstrap.php';
+    
+    $boot = static function () use ($pluginFile): void {
+        FP\Resv\Kernel\Bootstrap::boot($pluginFile);
+    };
 
-        // Call on plugins_loaded instead of wp_loaded to ensure compatibility with legacy system
-        // This ensures ServiceRegistry and AdminPages are registered at the right time
-        if (\did_action('plugins_loaded')) {
-            $boot();
-        } else {
-            \add_action('plugins_loaded', $boot, 20); // Priority 20 to run after most plugins
-        }
-    });
+    // Call on plugins_loaded instead of wp_loaded to ensure compatibility with legacy system
+    // This ensures ServiceRegistry and AdminPages are registered at the right time
+    if (\did_action('plugins_loaded')) {
+        $boot();
+    } else {
+        \add_action('plugins_loaded', $boot, 20); // Priority 20 to run after most plugins
+    }
+});
 } catch (Throwable $e) {
     // Se c'è un errore durante il bootstrap, loggalo ma non bloccare il caricamento
     if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
