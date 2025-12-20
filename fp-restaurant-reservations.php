@@ -78,6 +78,8 @@ if (!is_readable($autoload)) {
         if (function_exists('add_action')) {
             add_action('admin_notices', function () use ($message, $autoload, $installAttempted) {
                 $errorDetails = get_option('fp_resv_composer_install_error', []);
+                // Ottieni la directory del plugin (due livelli sopra vendor/autoload.php)
+                $pluginDir = dirname(dirname($autoload));
                 
                 $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
                 $notice .= '<p>' . esc_html($message) . '</p>';
@@ -98,10 +100,16 @@ if (!is_readable($autoload)) {
                 
                 $notice .= '<p><strong>Soluzione:</strong></p>';
                 $notice .= '<ol style="margin-left: 20px;">';
-                $notice .= '<li>Apri un terminale (SSH) nella directory del plugin: <code>' . esc_html(dirname($autoload)) . '</code></li>';
-                $notice .= '<li>Esegui: <code>composer install --no-dev --prefer-dist</code></li>';
-                $notice .= '<li>Se Composer non è installato, installalo seguendo le istruzioni su <a href="https://getcomposer.org/download/" target="_blank">getcomposer.org</a></li>';
-                $notice .= '<li>Assicurati che la directory del plugin abbia permessi di scrittura (chmod 755 o 775)</li>';
+                $notice .= '<li>Apri un terminale (SSH) e vai nella directory del plugin:<br>';
+                $notice .= '<code style="display: block; margin: 5px 0; padding: 5px; background: #f0f0f0;">cd ' . esc_html($pluginDir) . '</code></li>';
+                $notice .= '<li>Esegui il comando Composer:<br>';
+                $notice .= '<code style="display: block; margin: 5px 0; padding: 5px; background: #f0f0f0;">composer install --no-dev --prefer-dist</code></li>';
+                $notice .= '<li>Se Composer non è installato sul server, puoi:<ul style="margin-top: 5px;">';
+                $notice .= '<li>Scaricare <code>composer.phar</code> e metterlo nella directory del plugin</li>';
+                $notice .= '<li>Oppure installare Composer globalmente seguendo le istruzioni su <a href="https://getcomposer.org/download/" target="_blank">getcomposer.org</a></li>';
+                $notice .= '</ul></li>';
+                $notice .= '<li>Assicurati che la directory del plugin abbia permessi di scrittura:<br>';
+                $notice .= '<code style="display: block; margin: 5px 0; padding: 5px; background: #f0f0f0;">chmod 755 ' . esc_html($pluginDir) . '</code></li>';
                 $notice .= '</ol>';
                 $notice .= '</div>';
                 echo $notice;
