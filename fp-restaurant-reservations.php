@@ -344,6 +344,21 @@ if (!is_readable($autoload)) {
     }
 }
 
+// Verifica finale che autoload.php esista prima di caricarlo
+if (!is_readable($autoload)) {
+    if (function_exists('add_action')) {
+        add_action('admin_notices', function () use ($autoload) {
+            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
+            $notice .= '<p>Il file autoload.php non è disponibile. Il plugin non può funzionare senza le dipendenze Composer.</p>';
+            $notice .= '<p><code>' . esc_html($autoload) . '</code></p>';
+            $notice .= '<p>Esegui <code>composer install</code> nella directory del plugin.</p>';
+            $notice .= '</div>';
+            echo $notice;
+        });
+    }
+    return;
+}
+
 require $autoload;
 
 // Le funzioni di installazione Composer sono già definite sopra, prima del require $autoload
@@ -362,9 +377,34 @@ if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
 
 // Bootstrap plugin using new architecture
 // Keep BootstrapGuard for error handling during transition
-require_once __DIR__ . '/src/Core/BootstrapGuard.php';
+$bootstrapGuardPath = __DIR__ . '/src/Core/BootstrapGuard.php';
+if (!is_readable($bootstrapGuardPath)) {
+    if (function_exists('add_action')) {
+        add_action('admin_notices', function () use ($bootstrapGuardPath) {
+            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
+            $notice .= '<p>File BootstrapGuard.php non trovato: ' . esc_html($bootstrapGuardPath) . '</p>';
+            $notice .= '</div>';
+            echo $notice;
+        });
+    }
+    return;
+}
+
+require_once $bootstrapGuardPath;
 
 $pluginFile = __FILE__;
+
+if (!class_exists('FP\Resv\Core\BootstrapGuard')) {
+    if (function_exists('add_action')) {
+        add_action('admin_notices', function () {
+            $notice = '<div class="notice notice-error"><p><strong>FP Restaurant Reservations - Errore Critico</strong></p>';
+            $notice .= '<p>La classe BootstrapGuard non è disponibile. Verifica che le dipendenze Composer siano installate correttamente.</p>';
+            $notice .= '</div>';
+            echo $notice;
+        });
+    }
+    return;
+}
 
 FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
     // Use new Bootstrap architecture
