@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Kernel;
 
-use FP\Resv\Core\Requirements;
 use FP\Resv\Providers\CoreServiceProvider;
 use FP\Resv\Providers\ServiceProvider;
 
@@ -33,8 +32,25 @@ final class Bootstrap
     {
         self::$pluginFile = $pluginFile;
         
-        // 1. Check requirements
-        if (!Requirements::validate()) {
+        // 1. Check requirements - ensure class is loaded
+        if (!class_exists('\FP\Resv\Core\Requirements')) {
+            // Try to load the class explicitly if autoloader hasn't loaded it yet
+            $pluginDir = dirname($pluginFile);
+            $requirementsPath = $pluginDir . '/src/Core/Requirements.php';
+            if (file_exists($requirementsPath) && is_readable($requirementsPath)) {
+                require_once $requirementsPath;
+            }
+            
+            // If still not found, throw exception
+            if (!class_exists('\FP\Resv\Core\Requirements')) {
+                throw new \RuntimeException(
+                    'Class "FP\\Resv\\Core\\Requirements" not found. ' .
+                    'Make sure Composer autoloader is loaded and the class file exists at: ' . $requirementsPath
+                );
+            }
+        }
+        
+        if (!\FP\Resv\Core\Requirements::validate()) {
             return;
         }
         
