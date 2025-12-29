@@ -25,7 +25,12 @@ final class REST
 
     public function register(): void
     {
-        add_action('rest_api_init', [$this, 'registerRoutes']);
+        // If rest_api_init already fired, register routes immediately
+        if (did_action('rest_api_init')) {
+            $this->registerRoutes();
+        } else {
+            add_action('rest_api_init', [$this, 'registerRoutes']);
+        }
     }
 
     public function registerRoutes(): void

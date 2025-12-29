@@ -171,6 +171,26 @@ final class AdminServiceProvider extends ServiceProvider
             $container->get(\FP\Resv\Domain\Reservations\AdminController::class);
         }
         
+        // Ensure ClosuresAdminController is instantiated to register the Closures SPA menu
+        if ($container->has(\FP\Resv\Domain\Closures\AdminController::class)) {
+            $container->get(\FP\Resv\Domain\Closures\AdminController::class);
+        }
+        
+        // Ensure TablesAdminController is instantiated to register the Tables menu
+        if ($container->has(\FP\Resv\Domain\Tables\AdminController::class)) {
+            $container->get(\FP\Resv\Domain\Tables\AdminController::class);
+        }
+        
+        // Ensure ReportsAdminController is instantiated to register the Reports menu
+        if ($container->has(\FP\Resv\Domain\Reports\AdminController::class)) {
+            $container->get(\FP\Resv\Domain\Reports\AdminController::class);
+        }
+        
+        // Ensure DiagnosticsAdminController is instantiated to register the Diagnostics menu
+        if ($container->has(\FP\Resv\Domain\Diagnostics\AdminController::class)) {
+            $container->get(\FP\Resv\Domain\Diagnostics\AdminController::class);
+        }
+        
         // Admin hooks are registered during controller instantiation
         // QA CLI and REST handlers are registered by BusinessServiceProvider
         if ($container->has(\FP\Resv\Domain\QA\CLI::class)) {

@@ -37,16 +37,38 @@ final class Bootstrap
             // Try to load the class explicitly if autoloader hasn't loaded it yet
             $pluginDir = dirname($pluginFile);
             $requirementsPath = $pluginDir . '/src/Core/Requirements.php';
-            if (file_exists($requirementsPath) && is_readable($requirementsPath)) {
-                require_once $requirementsPath;
+            
+            // Diagnostica avanzata per debug in produzione
+            $diagnostics = [];
+            $diagnostics['plugin_dir'] = $pluginDir;
+            $diagnostics['requirements_path'] = $requirementsPath;
+            $diagnostics['file_exists'] = file_exists($requirementsPath) ? 'yes' : 'no';
+            $diagnostics['is_readable'] = is_readable($requirementsPath) ? 'yes' : 'no';
+            
+            if (file_exists($requirementsPath)) {
+                $diagnostics['file_size'] = filesize($requirementsPath);
+                
+                if (is_readable($requirementsPath)) {
+                    // Usa include con output buffering per catturare errori
+                    ob_start();
+                    $includeResult = @include_once $requirementsPath;
+                    $includeOutput = ob_get_clean();
+                    
+                    $diagnostics['include_result'] = $includeResult ? 'success' : 'failed';
+                    if ($includeOutput) {
+                        $diagnostics['include_output'] = substr($includeOutput, 0, 500);
+                    }
+                    
+                    // Verifica di nuovo se la classe esiste ora
+                    $diagnostics['class_exists_after_include'] = class_exists('\FP\Resv\Core\Requirements') ? 'yes' : 'no';
+                }
             }
             
-            // If still not found, throw exception
+            // Se ancora non trovata, lancia eccezione con diagnostica completa
             if (!class_exists('\FP\Resv\Core\Requirements')) {
-                throw new \RuntimeException(
-                    'Class "FP\\Resv\\Core\\Requirements" not found. ' .
-                    'Make sure Composer autoloader is loaded and the class file exists at: ' . $requirementsPath
-                );
+                $errorMsg = 'Class "FP\\Resv\\Core\\Requirements" not found. ';
+                $errorMsg .= 'Diagnostics: ' . json_encode($diagnostics, JSON_UNESCAPED_SLASHES);
+                throw new \RuntimeException($errorMsg);
             }
         }
         

@@ -3,7 +3,7 @@
  * Plugin Name: FP Restaurant Reservations
  * Plugin URI: https://francescopasseri.com/projects/fp-restaurant-reservations
  * Description: Prenotazioni ristorante con eventi, calendario drag&drop, Brevo + Google Calendar, tracking GA4/Ads/Meta/Clarity e stile personalizzabile.
- * Version: 0.9.0-rc10.3
+ * Version: 0.9.0-rc10.4
  * Author: Francesco Passeri
  * Author URI: https://francescopasseri.com
  * Text Domain: fp-restaurant-reservations
@@ -67,15 +67,25 @@ function fp_resv_show_activation_notice(): void {
         return;
     }
     
+    // Rimuovi duplicati dall'array
+    $activationErrors = array_unique($activationErrors);
+    
     // Mostra direttamente il notice (questa funzione viene chiamata dentro add_action('admin_notices'))
-    $notice = '<div class="notice notice-error is-dismissible"><p><strong>FP Restaurant Reservations - Problemi durante l\'attivazione</strong></p>';
+    $notice = '<div class="notice notice-error is-dismissible">';
+    $notice .= '<p><strong>⚠️ FP Restaurant Reservations - Dipendenze mancanti</strong></p>';
     $notice .= '<ul style="margin-left: 20px; margin-top: 10px;">';
     foreach ($activationErrors as $error) {
         $notice .= '<li>' . (function_exists('esc_html') ? esc_html($error) : htmlspecialchars($error, ENT_QUOTES, 'UTF-8')) . '</li>';
     }
     $notice .= '</ul>';
-    $notice .= '<p><strong>Il plugin è stato attivato ma potrebbe non funzionare correttamente.</strong></p>';
-    $notice .= '<p>Risolvi i problemi sopra indicati e ricarica la pagina.</p>';
+    $notice .= '<p><strong>Come risolvere:</strong></p>';
+    $notice .= '<ol style="margin-left: 20px;">';
+    $notice .= '<li>Accedi al server via SSH o FTP</li>';
+    $notice .= '<li>Naviga alla directory del plugin: <code>wp-content/plugins/FP-Restaurant-Reservations/</code></li>';
+    $notice .= '<li>Esegui: <code>composer install --no-dev</code></li>';
+    $notice .= '<li>Ricarica questa pagina</li>';
+    $notice .= '</ol>';
+    $notice .= '<p style="margin-top: 10px;"><em>Oppure ri-carica il plugin completo (ZIP) che include già le dipendenze.</em></p>';
     $notice .= '</div>';
     echo $notice;
 }
@@ -515,6 +525,8 @@ try {
     if (!interface_exists('Psr\Container\ContainerInterface')) {
         // Prova a installare le dipendenze automaticamente se possibile
         $pluginDir = dirname(__FILE__);
+        $psrMissingError = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin: ' . $pluginDir;
+        
         if (function_exists('fp_resv_install_composer_dependencies')) {
             $installSuccess = false;
             try {
@@ -525,25 +537,20 @@ try {
             
             // Ricontrolla dopo l'installazione
             if (!$installSuccess || !interface_exists('Psr\Container\ContainerInterface')) {
-                $errors = get_option('fp_resv_activation_errors', []);
-                if (!is_array($errors)) {
-                    $errors = [];
-                }
-                $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin: ' . $pluginDir;
-                update_option('fp_resv_activation_errors', $errors);
+                // Usa un singolo errore, non aggiungere duplicati
+                update_option('fp_resv_activation_errors', [$psrMissingError]);
                 return;
             }
         } else {
             // Se la funzione non esiste, mostra solo il notice
-            $errors = get_option('fp_resv_activation_errors', []);
-            if (!is_array($errors)) {
-                $errors = [];
-            }
-            $errors[] = 'Dipendenza mancante: psr/container. Esegui "composer install" nella directory del plugin: ' . dirname(__FILE__);
-            update_option('fp_resv_activation_errors', $errors);
+            // Usa un singolo errore, non aggiungere duplicati
+            update_option('fp_resv_activation_errors', [$psrMissingError]);
             return;
         }
     }
+    
+    // Se siamo arrivati qui, le dipendenze sono OK - pulisci eventuali errori precedenti
+    delete_option('fp_resv_activation_errors');
     
     FP\Resv\Core\BootstrapGuard::run($pluginFile, static function () use ($pluginFile): void {
         $bootstrapPath = __DIR__ . '/src/Kernel/Bootstrap.php';

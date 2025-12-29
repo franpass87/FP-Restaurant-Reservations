@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 0.9.0-rc10.3
+Stable tag: 0.9.0-rc10.4
 License: GPLv2 or later
 
 == Description ==

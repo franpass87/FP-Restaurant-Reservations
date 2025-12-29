@@ -97,7 +97,12 @@ final class FrontendServiceProvider extends ServiceProvider
         // New architecture shortcode
         $container->singleton(
             \FP\Resv\Presentation\Frontend\Shortcodes\ReservationsShortcode::class,
-            \FP\Resv\Presentation\Frontend\Shortcodes\ReservationsShortcode::class
+            function (Container $container) {
+                return new \FP\Resv\Presentation\Frontend\Shortcodes\ReservationsShortcode(
+                    $container->get(\FP\Resv\Application\Reservations\CreateReservationUseCase::class),
+                    $container->get(\FP\Resv\Core\Services\LoggerInterface::class)
+                );
+            }
         );
     }
     

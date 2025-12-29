@@ -627,6 +627,16 @@ final class RESTServiceProvider extends ServiceProvider
                 ],
             ]);
             
+            // Ensure Diagnostics REST is instantiated (registers its own routes)
+            if ($container->has(\FP\Resv\Domain\Diagnostics\REST::class)) {
+                $container->get(\FP\Resv\Domain\Diagnostics\REST::class);
+            }
+            
+            // Ensure Reports REST is instantiated (registers its own routes)
+            if ($container->has(\FP\Resv\Domain\Reports\REST::class)) {
+                $container->get(\FP\Resv\Domain\Reports\REST::class);
+            }
+            
             // Closures routes
             register_rest_route('fp-resv/v1', '/closures', [
                 [
