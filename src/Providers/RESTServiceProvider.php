@@ -403,6 +403,12 @@ final class RESTServiceProvider extends ServiceProvider
      */
     public function boot(Container $container): void
     {
+        // Register AJAX handlers EARLY (before admin-ajax.php checks for hooks)
+        // This must be done outside rest_api_init callback
+        if ($container->has(\FP\Resv\Domain\Closures\AjaxHandler::class)) {
+            $container->get(\FP\Resv\Domain\Closures\AjaxHandler::class);
+        }
+        
         // Register REST routes
         $this->registerRoutes($container);
     }
