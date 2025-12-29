@@ -281,6 +281,10 @@ final class AjaxHandler
                 ob_start();
             }
             
+            // Prevent caching of AJAX responses
+            nocache_headers();
+            header('X-FP-Resv-Cache: no-store');
+            
             wp_send_json_success([
                 'items' => $items,
                 'count' => count($items),

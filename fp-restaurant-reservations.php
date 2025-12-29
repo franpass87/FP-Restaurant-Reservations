@@ -580,7 +580,8 @@ try {
         if (\did_action('plugins_loaded')) {
             $boot();
         } else {
-            \add_action('plugins_loaded', $boot, 20);
+            // Priority 0 to boot early - critical for AJAX handlers
+            \add_action('plugins_loaded', $boot, 0);
         }
     });
 } catch (Throwable $e) {

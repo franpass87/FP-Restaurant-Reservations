@@ -157,10 +157,18 @@
         }).catch(() => {});
         // #endregion
         
-        return fetch(ajaxUrl, {
+        // Add cache-busting timestamp to prevent browser/CDN caching
+        const cacheBustUrl = ajaxUrl + (ajaxUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+        
+        return fetch(cacheBustUrl, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin',
+            cache: 'no-store', // Prevent browser caching
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
         }).then((response) => {
             // #region agent log
             const logResponse = {
