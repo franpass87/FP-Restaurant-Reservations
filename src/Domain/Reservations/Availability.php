@@ -175,24 +175,53 @@ class Availability
         }
 
         $timezone = $dayStart->getTimezone();
-        $schedule = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+        $mealKey = $criteria['meal'] ?? '';
         
-        // Check for special openings if schedule is empty or if we're looking for a special meal
+        // Check if the meal is a special opening (starts with 'special_')
+        $isSpecialMeal = str_starts_with($mealKey, 'special_');
         $specialOpenings = $this->closureEvaluator->getSpecialOpenings($closures, $dayStart);
         $specialCapacityLimit = null;
         $isSpecialOpening = false;
+        $schedule = [];
         
-        // If schedule is empty but there are special openings, use their slots
-        if ($schedule === [] && $specialOpenings !== []) {
-            // Use slots from special openings
+        // If requesting a special meal, find and use its specific slots
+        if ($isSpecialMeal && $specialOpenings !== []) {
             foreach ($specialOpenings as $opening) {
-                $schedule = array_merge($schedule, $opening['slots']);
-                // Use the lowest capacity from all special openings
-                if ($specialCapacityLimit === null || $opening['capacity'] < $specialCapacityLimit) {
-                    $specialCapacityLimit = $opening['capacity'];
+                // Match by meal_key if available
+                if (isset($opening['meal_key']) && $opening['meal_key'] === $mealKey) {
+                    $schedule = $opening['slots'] ?? [];
+                    $specialCapacityLimit = $opening['capacity'] ?? null;
+                    $isSpecialOpening = true;
+                    break;
                 }
             }
-            $isSpecialOpening = true;
+            
+            // Fallback: if no exact match, use all special openings' slots
+            if ($schedule === []) {
+                foreach ($specialOpenings as $opening) {
+                    $schedule = array_merge($schedule, $opening['slots'] ?? []);
+                    if ($specialCapacityLimit === null || ($opening['capacity'] ?? PHP_INT_MAX) < $specialCapacityLimit) {
+                        $specialCapacityLimit = $opening['capacity'] ?? null;
+                    }
+                }
+                $isSpecialOpening = $schedule !== [];
+            }
+        }
+        
+        // For non-special meals or if no special slots found, use regular schedule
+        if ($schedule === []) {
+            $schedule = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+            
+            // Check for special openings if schedule is still empty
+            if ($schedule === [] && $specialOpenings !== []) {
+                foreach ($specialOpenings as $opening) {
+                    $schedule = array_merge($schedule, $opening['slots'] ?? []);
+                    if ($specialCapacityLimit === null || ($opening['capacity'] ?? PHP_INT_MAX) < $specialCapacityLimit) {
+                        $specialCapacityLimit = $opening['capacity'] ?? null;
+                    }
+                }
+                $isSpecialOpening = $schedule !== [];
+            }
         }
 
         if ($schedule === []) {
