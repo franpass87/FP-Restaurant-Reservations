@@ -348,6 +348,23 @@ final class AjaxHandler
                 'active'           => true,
                 'capacity_percent' => isset($_POST['capacity_percent']) ? (int) $_POST['capacity_percent'] : null,
             ];
+            
+            // Add special_opening fields
+            if (($payload['type'] ?? '') === 'special_opening') {
+                $payload['label'] = sanitize_text_field($_POST['label'] ?? '');
+                $payload['capacity'] = isset($_POST['capacity']) ? (int) $_POST['capacity'] : 40;
+                
+                // Parse special_hours from JSON string or array
+                $specialHours = $_POST['special_hours'] ?? [];
+                if (is_string($specialHours)) {
+                    // Remove extra escaping if present (from double JSON encoding)
+                    $specialHours = stripslashes($specialHours);
+                    $specialHours = json_decode($specialHours, true) ?? [];
+                }
+                $payload['special_hours'] = is_array($specialHours) ? $specialHours : [];
+                
+                error_log('[FP Closures AJAX] special_hours parsed: ' . wp_json_encode($payload['special_hours']));
+            }
 
             error_log('[FP Closures AJAX] Payload sanitizzato: ' . wp_json_encode($payload));
             error_log('[FP Closures AJAX] Timezone WordPress: ' . wp_timezone_string());
