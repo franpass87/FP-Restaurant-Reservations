@@ -172,6 +172,23 @@ final class FormContext
 
         // Arricchisci ogni meal con i suoi giorni disponibili specifici
         $meals = $this->availableDaysExtractor->enrichMealsWithAvailableDays($meals, $generalSettings);
+        
+        // Aggiungi aperture speciali come meals temporanei
+        $specialOpeningsProvider = new SpecialOpeningsProvider();
+        $specialMeals = $specialOpeningsProvider->getSpecialOpeningsAsMeals();
+        foreach ($specialMeals as $specialMeal) {
+            // Non sovrascrivere se esiste già un meal con la stessa chiave
+            $exists = false;
+            foreach ($meals as $existingMeal) {
+                if (($existingMeal['key'] ?? '') === ($specialMeal['key'] ?? '')) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
+                $meals[] = $specialMeal;
+            }
+        }
 
         $dictionary  = $this->language->getStrings($languageData['language']);
         $formStrings = is_array($dictionary['form'] ?? null) ? $dictionary['form'] : [];
