@@ -125,6 +125,10 @@ final class ReservationService implements ReservationServiceInterface
             if (isset($data['phone'])) {
                 $reservation->setPhone($data['phone']);
             }
+            
+            if (isset($data['party'])) {
+                $reservation->setParty((int) $data['party']);
+            }
         }
         
         // Save to repository

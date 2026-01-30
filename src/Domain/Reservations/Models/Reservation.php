@@ -122,6 +122,12 @@ final class Reservation
         $this->updatedAt = new DateTimeImmutable();
     }
     
+    public function setParty(int $party): void 
+    { 
+        $this->party = $party;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+    
     /**
      * Convert to array for persistence
      * 
