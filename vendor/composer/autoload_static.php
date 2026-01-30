@@ -280,6 +280,7 @@ class ComposerStaticInitf3c4ca4e72b2274ed7be5afa947d700c
         'FP\\Resv\\Frontend\\Elementor' => __DIR__ . '/../..' . '/src/Frontend/Elementor.php',
         'FP\\Resv\\Frontend\\Elementor\\ReservationWidget' => __DIR__ . '/../..' . '/src/Frontend/Elementor/ReservationWidget.php',
         'FP\\Resv\\Frontend\\FormContext' => __DIR__ . '/../..' . '/src/Frontend/FormContext.php',
+        'FP\\Resv\\Frontend\\SpecialOpeningsProvider' => __DIR__ . '/../..' . '/src/Frontend/SpecialOpeningsProvider.php',
         'FP\\Resv\\Frontend\\Gutenberg' => __DIR__ . '/../..' . '/src/Frontend/Gutenberg.php',
         'FP\\Resv\\Frontend\\ManageController' => __DIR__ . '/../..' . '/src/Frontend/ManageController.php',
         'FP\\Resv\\Frontend\\PageBuilderCompatibility' => __DIR__ . '/../..' . '/src/Frontend/PageBuilderCompatibility.php',

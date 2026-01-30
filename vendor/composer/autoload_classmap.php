@@ -253,6 +253,7 @@ return array(
     'FP\\Resv\\Frontend\\Elementor' => $baseDir . '/src/Frontend/Elementor.php',
     'FP\\Resv\\Frontend\\Elementor\\ReservationWidget' => $baseDir . '/src/Frontend/Elementor/ReservationWidget.php',
     'FP\\Resv\\Frontend\\FormContext' => $baseDir . '/src/Frontend/FormContext.php',
+    'FP\\Resv\\Frontend\\SpecialOpeningsProvider' => $baseDir . '/src/Frontend/SpecialOpeningsProvider.php',
     'FP\\Resv\\Frontend\\Gutenberg' => $baseDir . '/src/Frontend/Gutenberg.php',
     'FP\\Resv\\Frontend\\ManageController' => $baseDir . '/src/Frontend/ManageController.php',
     'FP\\Resv\\Frontend\\PageBuilderCompatibility' => $baseDir . '/src/Frontend/PageBuilderCompatibility.php',

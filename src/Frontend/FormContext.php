@@ -174,19 +174,28 @@ final class FormContext
         $meals = $this->availableDaysExtractor->enrichMealsWithAvailableDays($meals, $generalSettings);
         
         // Aggiungi aperture speciali come meals temporanei
-        $specialOpeningsProvider = new SpecialOpeningsProvider();
-        $specialMeals = $specialOpeningsProvider->getSpecialOpeningsAsMeals();
-        foreach ($specialMeals as $specialMeal) {
-            // Non sovrascrivere se esiste già un meal con la stessa chiave
-            $exists = false;
-            foreach ($meals as $existingMeal) {
-                if (($existingMeal['key'] ?? '') === ($specialMeal['key'] ?? '')) {
-                    $exists = true;
-                    break;
+        if (class_exists(SpecialOpeningsProvider::class)) {
+            try {
+                $specialOpeningsProvider = new SpecialOpeningsProvider();
+                $specialMeals = $specialOpeningsProvider->getSpecialOpeningsAsMeals();
+                foreach ($specialMeals as $specialMeal) {
+                    // Non sovrascrivere se esiste già un meal con la stessa chiave
+                    $exists = false;
+                    foreach ($meals as $existingMeal) {
+                        if (($existingMeal['key'] ?? '') === ($specialMeal['key'] ?? '')) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+                    if (!$exists) {
+                        $meals[] = $specialMeal;
+                    }
                 }
-            }
-            if (!$exists) {
-                $meals[] = $specialMeal;
+            } catch (\Throwable $e) {
+                // Ignore errors loading special openings
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP-RESV] Error loading special openings: ' . $e->getMessage());
+                }
             }
         }
 
