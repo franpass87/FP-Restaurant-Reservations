@@ -21,41 +21,54 @@ final class SpecialOpeningsProvider
      */
     public function getSpecialOpeningsAsMeals(): array
     {
-        global $wpdb;
-        
-        $table = $wpdb->prefix . 'fp_closures';
-        $now = new DateTimeImmutable('now', wp_timezone());
-        $futureLimit = $now->modify('+90 days');
-        
-        // Query for active special_opening closures that are current or in the future
-        $sql = $wpdb->prepare(
-            "SELECT id, start_at, end_at, capacity_override_json, note, recurrence_json
-             FROM {$table}
-             WHERE active = 1
-               AND type = %s
-               AND (
-                   end_at >= %s
-                   OR recurrence_json IS NOT NULL
-               )
-             ORDER BY start_at ASC",
-            ClosureModel::TYPE_SPECIAL_OPENING,
-            $now->format('Y-m-d H:i:s')
-        );
-        
-        $rows = $wpdb->get_results($sql, ARRAY_A);
-        if (!is_array($rows) || $rows === []) {
+        try {
+            global $wpdb;
+            
+            if (!$wpdb instanceof \wpdb) {
+                return [];
+            }
+            
+            $table = $wpdb->prefix . 'fp_closures';
+            $timezone = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone('Europe/Rome');
+            $now = new DateTimeImmutable('now', $timezone);
+            $futureLimit = $now->modify('+90 days');
+            
+            // Query for active special_opening closures that are current or in the future
+            $sql = $wpdb->prepare(
+                "SELECT id, start_at, end_at, capacity_override_json, note, recurrence_json
+                 FROM {$table}
+                 WHERE active = 1
+                   AND type = %s
+                   AND (
+                       end_at >= %s
+                       OR recurrence_json IS NOT NULL
+                   )
+                 ORDER BY start_at ASC",
+                ClosureModel::TYPE_SPECIAL_OPENING,
+                $now->format('Y-m-d H:i:s')
+            );
+            
+            $rows = $wpdb->get_results($sql, ARRAY_A);
+            if (!is_array($rows) || $rows === []) {
+                return [];
+            }
+            
+            $meals = [];
+            foreach ($rows as $row) {
+                $meal = $this->convertToMeal($row, $now, $futureLimit, $timezone);
+                if ($meal !== null) {
+                    $meals[] = $meal;
+                }
+            }
+            
+            return $meals;
+        } catch (\Throwable $e) {
+            // Log error but don't break the form
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP-RESV] SpecialOpeningsProvider error: ' . $e->getMessage());
+            }
             return [];
         }
-        
-        $meals = [];
-        foreach ($rows as $row) {
-            $meal = $this->convertToMeal($row, $now, $futureLimit);
-            if ($meal !== null) {
-                $meals[] = $meal;
-            }
-        }
-        
-        return $meals;
     }
     
     /**
@@ -64,7 +77,7 @@ final class SpecialOpeningsProvider
      * @param array<string, mixed> $row Database row
      * @return array<string, mixed>|null Meal array or null if invalid
      */
-    private function convertToMeal(array $row, DateTimeImmutable $now, DateTimeImmutable $futureLimit): ?array
+    private function convertToMeal(array $row, DateTimeImmutable $now, DateTimeImmutable $futureLimit, \DateTimeZone $timezone): ?array
     {
         $capacityOverride = json_decode((string) ($row['capacity_override_json'] ?? '{}'), true);
         if (!is_array($capacityOverride)) {
@@ -80,8 +93,8 @@ final class SpecialOpeningsProvider
         }
         
         // Calculate available days based on the closure dates
-        $startAt = new DateTimeImmutable($row['start_at'], wp_timezone());
-        $endAt = new DateTimeImmutable($row['end_at'], wp_timezone());
+        $startAt = new DateTimeImmutable($row['start_at'], $timezone);
+        $endAt = new DateTimeImmutable($row['end_at'], $timezone);
         
         // Build available_days array - dates when this special opening is active
         $availableDays = $this->calculateAvailableDays($startAt, $endAt, $row['recurrence_json'], $now, $futureLimit);
