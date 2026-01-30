@@ -272,10 +272,22 @@ class Availability
         foreach ($schedule as $window) {
             $startMinute = $window['start'];
             $endMinute = $window['end'];
+            
+            // Per aperture speciali, ogni fascia è uno slot singolo (non generiamo slot ogni slotInterval)
+            // La fascia oraria definita dall'utente (es. 19:30-20:30) è già lo slot prenotabile
+            if ($isSpecialOpening) {
+                $windowDuration = $endMinute - $startMinute;
+                // Usa la durata della fascia come turnover per questo slot
+                $effectiveTurnover = max($slotInterval, $windowDuration);
+                $effectiveInterval = $windowDuration; // Un solo slot per fascia
+            } else {
+                $effectiveTurnover = $turnoverMinutes;
+                $effectiveInterval = $slotInterval;
+            }
 
-            for ($minute = $startMinute; $minute + $turnoverMinutes <= $endMinute; $minute += $slotInterval) {
+            for ($minute = $startMinute; $minute + $effectiveTurnover <= $endMinute; $minute += $effectiveInterval) {
                 $slotStart = $dayStart->add(new DateInterval('PT' . $minute . 'M'));
-                $slotEnd = $slotStart->add(new DateInterval('PT' . $turnoverMinutes . 'M'));
+                $slotEnd = $slotStart->add(new DateInterval('PT' . $effectiveTurnover . 'M'));
 
                 $closureEffect = $this->closureEvaluator->evaluateClosures($closures, $slotStart, $slotEnd, $roomId);
                 if ($closureEffect['status'] === 'blocked') {
