@@ -276,10 +276,11 @@ final class Service
         };
 
         $typePriority = match ($model->type) {
-            'full'               => 30,
-            'special_hours'      => 20,
-            'capacity_reduction' => 10,
-            default              => 0,
+            Model::TYPE_SPECIAL_OPENING => 40, // Highest priority - opens normally closed days
+            Model::TYPE_FULL            => 30,
+            Model::TYPE_SPECIAL_HOURS   => 20,
+            Model::TYPE_CAPACITY_REDUCTION => 10,
+            default                     => 0,
         };
 
         return $scopePriority + $typePriority;

@@ -13,11 +13,11 @@ $headingId   = 'fp-resv-closures-title';
             <nav class="fp-resv-admin__breadcrumbs" aria-label="<?php esc_attr_e('Percorso', 'fp-restaurant-reservations'); ?>">
                 <a href="<?php echo esc_url($settingsUrl); ?>"><?php esc_html_e('FP Reservations', 'fp-restaurant-reservations'); ?></a>
                 <span class="fp-resv-admin__breadcrumb-separator" aria-hidden="true">/</span>
-                <span class="fp-resv-admin__breadcrumb-current"><?php esc_html_e('Chiusure', 'fp-restaurant-reservations'); ?></span>
+                <span class="fp-resv-admin__breadcrumb-current"><?php esc_html_e('Chiusure e Aperture', 'fp-restaurant-reservations'); ?></span>
             </nav>
             <div>
                 <h1 class="fp-resv-admin__title" id="<?php echo esc_attr($headingId); ?>">
-                    <?php esc_html_e('Chiusure & orari speciali', 'fp-restaurant-reservations'); ?>
+                    <?php esc_html_e('Chiusure e Aperture Speciali', 'fp-restaurant-reservations'); ?>
                 </h1>
                 <p class="fp-resv-admin__subtitle">
                     <?php esc_html_e('Programma sospensioni temporanee, riduzioni di capienza e note operative con anteprima dell’impatto sugli slot.', 'fp-restaurant-reservations'); ?>

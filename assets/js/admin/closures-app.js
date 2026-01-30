@@ -37,11 +37,11 @@
     };
 
     const defaults = {
-        headline: 'Chiusure programmate',
-        description: 'Gestisci chiusure e periodi speciali.',
-        createCta: 'Nuova chiusura',
-        empty: 'Nessuna chiusura programmata nel periodo selezionato.',
-        formTitle: 'Nuova chiusura',
+        headline: 'Chiusure e Aperture Speciali',
+        description: 'Gestisci chiusure, periodi speciali e aperture straordinarie.',
+        createCta: 'Nuova chiusura/apertura',
+        empty: 'Nessuna chiusura o apertura programmata nel periodo selezionato.',
+        formTitle: 'Nuova chiusura/apertura',
         startLabel: 'Inizio',
         endLabel: 'Fine',
         typeLabel: 'Tipologia',
@@ -51,11 +51,18 @@
         typeFull: 'Chiusura totale',
         typeCapacity: 'Riduzione capienza',
         typeSpecial: 'Orari speciali',
+        typeSpecialOpening: 'Apertura speciale',
         percentLabel: 'Capienza disponibile (%)',
-        save: 'Salva chiusura',
+        labelPlaceholder: 'Nome servizio (es. Brunch di Natale)',
+        capacityLabel: 'Capacità massima',
+        slotsLabel: 'Fasce orarie',
+        addSlotCta: 'Aggiungi fascia',
+        slotStartLabel: 'Dalle',
+        slotEndLabel: 'Alle',
+        save: 'Salva',
         cancel: 'Annulla',
         delete: 'Elimina',
-        confirmDelete: 'Eliminare definitivamente questa chiusura?',
+        confirmDelete: 'Eliminare definitivamente?',
     };
 
     const strings = { ...defaults, ...(settings.strings || {}) };
@@ -150,6 +157,7 @@
                     <option value="full">${strings.typeFull}</option>
                     <option value="capacity_reduction">${strings.typeCapacity}</option>
                     <option value="special_hours">${strings.typeSpecial}</option>
+                    <option value="special_opening">${strings.typeSpecialOpening}</option>
                 </select>
             </label>
             <label class="fp-resv-closures-form__field">
@@ -162,6 +170,21 @@
                 <span>${strings.percentLabel}</span>
                 <input type="number" name="percent" min="0" max="100" step="5" placeholder="50">
             </label>
+            <div class="fp-resv-closures-form__special-opening" hidden>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.labelPlaceholder.split(' (')[0]}</span>
+                    <input type="text" name="special_label" placeholder="${strings.labelPlaceholder}">
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.capacityLabel}</span>
+                    <input type="number" name="special_capacity" min="1" max="500" value="40">
+                </label>
+                <div class="fp-resv-closures-form__slots">
+                    <span class="fp-resv-closures-form__slots-label">${strings.slotsLabel}</span>
+                    <div class="fp-resv-closures-form__slots-list"></div>
+                    <button type="button" class="button button-secondary fp-resv-closures-form__add-slot">${strings.addSlotCta}</button>
+                </div>
+            </div>
             <label class="fp-resv-closures-form__field fp-resv-closures-form__field--wide">
                 <span>${strings.noteLabel}</span>
                 <textarea name="note" rows="2"></textarea>
@@ -179,6 +202,39 @@
     const noteField = form.querySelector('[name="note"]');
     const percentWrapper = form.querySelector('.fp-resv-closures-form__field--percent');
     const percentField = form.querySelector('[name="percent"]');
+    const specialOpeningWrapper = form.querySelector('.fp-resv-closures-form__special-opening');
+    const specialLabelField = form.querySelector('[name="special_label"]');
+    const specialCapacityField = form.querySelector('[name="special_capacity"]');
+    const slotsList = form.querySelector('.fp-resv-closures-form__slots-list');
+    const addSlotButton = form.querySelector('.fp-resv-closures-form__add-slot');
+    
+    // Helper to create a slot row
+    const createSlotRow = (startValue = '', endValue = '') => {
+        const row = document.createElement('div');
+        row.className = 'fp-resv-closures-form__slot-row';
+        row.innerHTML = `
+            <label>
+                <span>${strings.slotStartLabel}</span>
+                <input type="time" name="slot_start[]" value="${startValue}" required>
+            </label>
+            <label>
+                <span>${strings.slotEndLabel}</span>
+                <input type="time" name="slot_end[]" value="${endValue}" required>
+            </label>
+            <button type="button" class="button-link fp-resv-closures-form__remove-slot">&times;</button>
+        `;
+        row.querySelector('.fp-resv-closures-form__remove-slot').addEventListener('click', () => {
+            row.remove();
+        });
+        return row;
+    };
+    
+    // Add slot button handler
+    if (addSlotButton && slotsList) {
+        addSlotButton.addEventListener('click', () => {
+            slotsList.appendChild(createSlotRow());
+        });
+    }
 
     const list = document.createElement('div');
     list.className = 'fp-resv-closures-list';
@@ -218,6 +274,8 @@
                 return strings.typeCapacity;
             case 'special_hours':
                 return strings.typeSpecial;
+            case 'special_opening':
+                return strings.typeSpecialOpening;
             case 'full':
             default:
                 return strings.typeFull;
@@ -314,6 +372,34 @@
                 capLine.textContent = `${strings.percentLabel}: ${item.capacity_override.percent}%`;
                 card.appendChild(capLine);
             }
+            
+            // Special opening details
+            if (item.type === 'special_opening' && item.capacity_override) {
+                if (item.capacity_override.label) {
+                    const labelLine = document.createElement('p');
+                    labelLine.className = 'fp-resv-closure-card__meta fp-resv-closure-card__meta--highlight';
+                    labelLine.textContent = `🎉 ${item.capacity_override.label}`;
+                    card.appendChild(labelLine);
+                }
+                
+                if (Number.isFinite(item.capacity_override.capacity)) {
+                    const capLine = document.createElement('p');
+                    capLine.className = 'fp-resv-closure-card__meta';
+                    capLine.textContent = `${strings.capacityLabel}: ${item.capacity_override.capacity}`;
+                    card.appendChild(capLine);
+                }
+                
+                if (Array.isArray(item.capacity_override.slots) && item.capacity_override.slots.length > 0) {
+                    const slotsLine = document.createElement('p');
+                    slotsLine.className = 'fp-resv-closure-card__meta';
+                    const slotsText = item.capacity_override.slots
+                        .map(s => `${s.start || ''}-${s.end || ''}`)
+                        .filter(s => s !== '-')
+                        .join(', ');
+                    slotsLine.textContent = `${strings.slotsLabel}: ${slotsText}`;
+                    card.appendChild(slotsLine);
+                }
+            }
 
             if (item.note) {
                 const note = document.createElement('p');
@@ -373,6 +459,12 @@
         form.reset();
         if (percentWrapper) {
             percentWrapper.hidden = true;
+        }
+        if (specialOpeningWrapper) {
+            specialOpeningWrapper.hidden = true;
+        }
+        if (slotsList) {
+            slotsList.innerHTML = '';
         }
     };
 
@@ -462,6 +554,45 @@
             payload.capacity_percent = percent;
         }
         
+        if (payload.type === 'special_opening') {
+            // Collect label and capacity
+            payload.label = specialLabelField ? specialLabelField.value.trim() : '';
+            payload.capacity = specialCapacityField ? Number.parseInt(specialCapacityField.value, 10) : 40;
+            
+            if (!payload.label) {
+                if (debug) {
+                    console.error('[FP Closures] Special opening requires a label');
+                }
+                if (specialLabelField) specialLabelField.focus();
+                return;
+            }
+            
+            // Collect slots
+            const slots = [];
+            if (slotsList) {
+                const startInputs = slotsList.querySelectorAll('[name="slot_start[]"]');
+                const endInputs = slotsList.querySelectorAll('[name="slot_end[]"]');
+                startInputs.forEach((startInput, index) => {
+                    const endInput = endInputs[index];
+                    if (startInput && endInput && startInput.value && endInput.value) {
+                        slots.push({
+                            start: startInput.value,
+                            end: endInput.value,
+                        });
+                    }
+                });
+            }
+            
+            if (slots.length === 0) {
+                if (debug) {
+                    console.error('[FP Closures] Special opening requires at least one slot');
+                }
+                return;
+            }
+            
+            payload.special_hours = slots;
+        }
+        
         setLoading(true);
         ajaxRequest('fp_resv_closures_create', payload)
             .then((response) => {
@@ -488,12 +619,31 @@
         });
     }
 
-    if (typeField && percentWrapper) {
+    if (typeField) {
         typeField.addEventListener('change', () => {
-            const showPercent = typeField.value === 'capacity_reduction';
-            percentWrapper.hidden = !showPercent;
-            if (!showPercent && percentField) {
-                percentField.value = '';
+            const type = typeField.value;
+            const showPercent = type === 'capacity_reduction';
+            const showSpecialOpening = type === 'special_opening';
+            
+            if (percentWrapper) {
+                percentWrapper.hidden = !showPercent;
+                if (!showPercent && percentField) {
+                    percentField.value = '';
+                }
+            }
+            
+            if (specialOpeningWrapper) {
+                specialOpeningWrapper.hidden = !showSpecialOpening;
+                if (showSpecialOpening && slotsList && slotsList.children.length === 0) {
+                    // Add a default slot row when showing special opening
+                    slotsList.appendChild(createSlotRow('12:00', '15:00'));
+                }
+                if (!showSpecialOpening) {
+                    // Clear fields when hiding
+                    if (specialLabelField) specialLabelField.value = '';
+                    if (specialCapacityField) specialCapacityField.value = '40';
+                    if (slotsList) slotsList.innerHTML = '';
+                }
             }
         });
     }

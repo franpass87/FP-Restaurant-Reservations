@@ -176,6 +176,24 @@ class Availability
 
         $timezone = $dayStart->getTimezone();
         $schedule = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+        
+        // Check for special openings if schedule is empty or if we're looking for a special meal
+        $specialOpenings = $this->closureEvaluator->getSpecialOpenings($closures, $dayStart);
+        $specialCapacityLimit = null;
+        $isSpecialOpening = false;
+        
+        // If schedule is empty but there are special openings, use their slots
+        if ($schedule === [] && $specialOpenings !== []) {
+            // Use slots from special openings
+            foreach ($specialOpenings as $opening) {
+                $schedule = array_merge($schedule, $opening['slots']);
+                // Use the lowest capacity from all special openings
+                if ($specialCapacityLimit === null || $opening['capacity'] < $specialCapacityLimit) {
+                    $specialCapacityLimit = $opening['capacity'];
+                }
+            }
+            $isSpecialOpening = true;
+        }
 
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
@@ -290,13 +308,28 @@ class Availability
                     $closureEffect['capacity_percent']
                 );
 
+                // Apply capacity limit from meal settings
                 if ($mealSettings['capacity_limit'] !== null) {
                     $allowedCapacity = min($allowedCapacity, $mealSettings['capacity_limit']);
                     $capacity = min($capacity, $mealSettings['capacity_limit']);
                 }
+                
+                // Apply special opening capacity limit if applicable
+                if ($isSpecialOpening && $specialCapacityLimit !== null) {
+                    $allowedCapacity = min($allowedCapacity, $specialCapacityLimit);
+                    $capacity = min($capacity, $specialCapacityLimit);
+                }
 
                 $status = $this->statusDeterminer->determine($capacity, $allowedCapacity, $party);
                 $reasons = $closureEffect['reasons'];
+                
+                // Add note if this is a special opening
+                if ($isSpecialOpening && $specialOpenings !== []) {
+                    $openingLabel = $specialOpenings[0]['label'] ?? '';
+                    if ($openingLabel !== '') {
+                        $reasons[] = sprintf(__('Apertura speciale: %s', 'fp-restaurant-reservations'), $openingLabel);
+                    }
+                }
 
                 if ($status === 'full' && $waitlistEnabled) {
                     $reasons[] = __('Disponibile solo lista di attesa per questo orario.', 'fp-restaurant-reservations');
@@ -378,6 +411,9 @@ class Availability
         ]);
         $meals = $this->getMealPlan();
         
+        // Load closures for the entire range to check for special openings
+        $closures = $this->dataLoader->loadClosures($from, $to, $timezone);
+        
         // Se non ci sono meal configurati, usa lo schedule di default
         $mealsToCheck = [];
         if (empty($meals)) {
@@ -408,6 +444,17 @@ class Availability
                 
                 if ($isAvailable) {
                     $hasAnyAvailability = true;
+                }
+            }
+            
+            // Check for special openings on this day
+            $specialOpenings = $this->closureEvaluator->getSpecialOpenings($closures, $current);
+            if ($specialOpenings !== []) {
+                $hasAnyAvailability = true;
+                // Add special openings as available "meals"
+                foreach ($specialOpenings as $opening) {
+                    $specialMealKey = $opening['meal_key'] ?? 'special';
+                    $mealAvailability[$specialMealKey] = true;
                 }
             }
 
@@ -459,6 +506,26 @@ class Availability
         $mealKey      = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
         $mealSettings = $this->resolveMealSettings($mealKey);
         $schedule     = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
+        
+        // Load closures early to check for special openings
+        $closures = $this->dataLoader->loadClosures($dayStart, $dayEnd, $timezone);
+        
+        // Check for special openings if schedule is empty
+        $specialOpenings = $this->closureEvaluator->getSpecialOpenings($closures, $dayStart);
+        $specialCapacityLimit = null;
+        $isSpecialOpening = false;
+        
+        if ($schedule === [] && $specialOpenings !== []) {
+            // Use slots from special openings
+            foreach ($specialOpenings as $opening) {
+                $schedule = array_merge($schedule, $opening['slots']);
+                if ($specialCapacityLimit === null || $opening['capacity'] < $specialCapacityLimit) {
+                    $specialCapacityLimit = $opening['capacity'];
+                }
+            }
+            $isSpecialOpening = true;
+        }
+        
         if ($schedule === []) {
             $dayKey = strtolower($dayStart->format('D'));
             
@@ -504,7 +571,7 @@ class Availability
 
         $rooms      = $this->dataLoader->loadRooms($roomId);
         $tables     = $this->dataLoader->loadTables($roomId);
-        $closures   = $this->dataLoader->loadClosures($dayStart, $dayEnd, $timezone);
+        // Note: $closures already loaded above for special openings check
         $reservations = $this->dataLoader->loadReservations($dayStart, $dayEnd, $roomId, $turnoverMinutes, $bufferMinutes, $timezone);
 
         $roomCapacities = $this->capacityResolver->aggregateRoomCapacities($rooms, $tables, $defaultRoomCap);
@@ -582,9 +649,23 @@ class Availability
                     $allowedCapacity = min($allowedCapacity, $mealSettings['capacity_limit']);
                     $capacity        = min($capacity, $mealSettings['capacity_limit']);
                 }
+                
+                // Apply special opening capacity limit if applicable
+                if ($isSpecialOpening && $specialCapacityLimit !== null) {
+                    $allowedCapacity = min($allowedCapacity, $specialCapacityLimit);
+                    $capacity = min($capacity, $specialCapacityLimit);
+                }
 
                 $status  = $this->statusDeterminer->determine($capacity, $allowedCapacity, $party);
                 $reasons = $closureEffect['reasons'];
+                
+                // Add note if this is a special opening
+                if ($isSpecialOpening && $specialOpenings !== []) {
+                    $openingLabel = $specialOpenings[0]['label'] ?? '';
+                    if ($openingLabel !== '') {
+                        $reasons[] = sprintf(__('Apertura speciale: %s', 'fp-restaurant-reservations'), $openingLabel);
+                    }
+                }
 
                 if ($status === 'full' && $waitlistEnabled) {
                     $reasons[] = __('Disponibile solo lista di attesa per questo orario.', 'fp-restaurant-reservations');

@@ -49,8 +49,8 @@ final class PayloadNormalizer
         }
 
         $type = sanitize_key((string) ($data['type'] ?? $existing?->type ?? 'full'));
-        if (!in_array($type, ['full', 'capacity_reduction', 'special_hours'], true)) {
-            $type = 'full';
+        if (!in_array($type, Model::VALID_TYPES, true)) {
+            $type = Model::TYPE_FULL;
         }
 
         $timezone = wp_timezone();
@@ -251,6 +251,49 @@ final class PayloadNormalizer
                 'label'   => $label,
                 'percent' => $percent,
                 'slots'   => $slots,
+            ];
+        }
+
+        if ($type === Model::TYPE_SPECIAL_OPENING) {
+            $slots = [];
+            if (isset($data['special_hours']) && is_array($data['special_hours'])) {
+                foreach ($data['special_hours'] as $slot) {
+                    if (!is_array($slot)) {
+                        continue;
+                    }
+
+                    $slotStart = sanitize_text_field((string) ($slot['start'] ?? ''));
+                    $slotEnd   = sanitize_text_field((string) ($slot['end'] ?? ''));
+                    if ($slotStart === '' || $slotEnd === '') {
+                        continue;
+                    }
+
+                    $slots[] = [
+                        'start' => $slotStart,
+                        'end'   => $slotEnd,
+                        'label' => sanitize_text_field((string) ($slot['label'] ?? '')),
+                    ];
+                }
+            } elseif ($existing?->capacityOverride['slots'] ?? null) {
+                $slots = is_array($existing->capacityOverride['slots']) ? $existing->capacityOverride['slots'] : [];
+            }
+
+            $label = sanitize_text_field((string) ($data['label'] ?? $existing?->capacityOverride['label'] ?? ''));
+            $mealKey = sanitize_key((string) ($data['meal_key'] ?? $existing?->capacityOverride['meal_key'] ?? ''));
+            
+            // Auto-generate meal_key if not provided
+            if ($mealKey === '' && $label !== '') {
+                $mealKey = 'special_' . sanitize_key($label) . '_' . time();
+            }
+            
+            $capacity = isset($data['capacity']) ? max(1, (int) $data['capacity']) : (int) ($existing?->capacityOverride['capacity'] ?? 40);
+
+            return [
+                'mode'     => Model::TYPE_SPECIAL_OPENING,
+                'label'    => $label,
+                'meal_key' => $mealKey,
+                'capacity' => $capacity,
+                'slots'    => $slots,
             ];
         }
 
