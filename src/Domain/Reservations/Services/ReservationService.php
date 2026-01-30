@@ -127,8 +127,17 @@ final class ReservationService implements ReservationServiceInterface
             }
             
             if (isset($data['party'])) {
-                $reservation->setParty((int) $data['party']);
+                $newParty = (int) $data['party'];
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP ReservationService] Setting party from ' . $reservation->getParty() . ' to ' . $newParty);
+                }
+                $reservation->setParty($newParty);
             }
+        }
+        
+        // Log before save
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FP ReservationService] Saving reservation with party=' . $reservation->getParty());
         }
         
         // Save to repository

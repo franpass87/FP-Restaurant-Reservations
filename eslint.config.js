@@ -35,7 +35,8 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       "no-unused-vars": ["warn", { "args": "none", "caughtErrors": "none", "varsIgnorePattern": "^_" }],
-      "no-useless-escape": "off"
+      "no-useless-escape": "off",
+      "no-console": ["warn", { "allow": ["error"] }] // Warn on console.log/warn, allow console.error for critical errors
     }
   }
 ];

@@ -191,7 +191,13 @@ final class ReservationRepository implements ReservationRepositoryInterface
                 $reservation->setId((int) $wpdb->insert_id);
             } else {
                 // Update
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP ReservationRepository] UPDATE reservation id=' . $id . ' data=' . wp_json_encode($data));
+                }
                 $result = $wpdb->update($table, $data, ['id' => $id]);
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('[FP ReservationRepository] UPDATE result=' . var_export($result, true) . ' last_error=' . $wpdb->last_error);
+                }
                 
                 if ($result === false) {
                     $error = $wpdb->last_error ?: 'Unknown database error';

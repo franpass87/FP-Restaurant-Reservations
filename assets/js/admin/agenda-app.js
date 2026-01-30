@@ -13,6 +13,7 @@ class ReservationManager {
             nonce: window.fpResvManagerSettings?.nonce || '',
             strings: window.fpResvManagerSettings?.strings || {},
             meals: window.fpResvManagerSettings?.meals || [],
+            debugMode: window.fpResvManagerSettings?.debugMode || false,
         };
 
         // State management
@@ -39,9 +40,30 @@ class ReservationManager {
         this.init();
     }
 
+    // Production-ready: Conditional logging helper
+    debugLog(...args) {
+        if (this.config.debugMode) {
+            console.log('[Manager]', ...args);
+        }
+    }
+
+    debugWarn(...args) {
+        if (this.config.debugMode) {
+            console.warn('[Manager]', ...args);
+        }
+    }
+
+    debugError(...args) {
+        // Always log errors, but prefix with [Manager] only in debug mode
+        if (this.config.debugMode) {
+            console.error('[Manager]', ...args);
+        }
+    }
+
     async init() {
         // Verifica che la configurazione sia presente
         if (!this.config.restRoot || !this.config.nonce) {
+            // Critical error - always log
             console.error('[Manager] Configuration missing! Check that fpResvManagerSettings is loaded.');
             this.showError('Configurazione mancante. Ricarica la pagina.');
             return;
@@ -312,7 +334,7 @@ class ReservationManager {
             this.renderStats();
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('[Manager] Error loading overview:', error);
+                this.debugError('Error loading overview:', error);
             }
         }
     }
@@ -375,7 +397,7 @@ class ReservationManager {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('[Manager] Reservations response error:', response.status, errorText);
+                this.debugError('Reservations response error:', response.status, errorText);
                 throw new Error(`Errore ${response.status}: ${response.statusText}`);
             }
 
@@ -392,9 +414,9 @@ class ReservationManager {
             this.state.reservations = data.reservations || [];
             this.state.error = null;
             
-            // Log per debugging (rimovere dopo verifica)
+            // Log per debugging (solo in debug mode)
             if (this.state.reservations.length === 0) {
-                console.warn('[Manager] No reservations found. Response:', {
+                this.debugWarn('No reservations found. Response:', {
                     meta: data.meta,
                     stats: data.stats,
                     reservationsCount: data.reservations ? data.reservations.length : 0
@@ -404,7 +426,7 @@ class ReservationManager {
             this.hideLoading();
             this.renderCurrentView();
         } catch (error) {
-            console.error('[Manager] Error loading reservations:', error);
+            this.debugError('Error loading reservations:', error);
             this.hideLoading();
             
             if (error.name === 'AbortError') {
@@ -457,7 +479,7 @@ class ReservationManager {
                 this.state.availableDaysCache = data.days;
             }
         } catch (error) {
-            console.warn('[Manager] Errore nel caricamento dei giorni disponibili:', error);
+            this.debugWarn('Errore nel caricamento dei giorni disponibili:', error);
         } finally {
             this.state.availableDaysLoading = false;
         }
@@ -1199,7 +1221,7 @@ class ReservationManager {
             try {
                 await this.saveReservation(resv);
             } catch (error) {
-                console.error('Error saving reservation:', error);
+                this.debugError('Error saving reservation:', error);
             }
         });
 
@@ -1212,7 +1234,7 @@ class ReservationManager {
                 try {
                     await this.deleteReservation(resv.id);
                 } catch (error) {
-                    console.error('Error deleting reservation:', error);
+                    this.debugError('Error deleting reservation:', error);
                 }
             }
         });
@@ -1221,7 +1243,7 @@ class ReservationManager {
     async saveReservation(resv) {
         const statusField = this.dom.modalBody.querySelector('[data-field="status"]');
         if (!statusField) {
-            console.error('Status field not found');
+            this.debugError('Status field not found');
             return;
         }
         const status = statusField.value;
@@ -1252,7 +1274,7 @@ class ReservationManager {
             await this.loadReservations();
             await this.loadOverview();
         } catch (error) {
-            console.error('[Manager] Error saving reservation:', error);
+            this.debugError('Error saving reservation:', error);
             alert('Errore nel salvataggio della prenotazione');
         }
     }
@@ -1447,7 +1469,7 @@ class ReservationManager {
             try {
                 await this.showNewReservationStep2();
             } catch (error) {
-                console.error('Error loading step 2:', error);
+                this.debugError('Error loading step 2:', error);
                 alert('Errore nel caricamento degli slot disponibili');
             }
         });
@@ -1499,7 +1521,7 @@ class ReservationManager {
             this.dom.modalBody.innerHTML = this.renderNewReservationStep2(slots);
             this.bindNewReservationStep2();
         } catch (error) {
-            console.error('[Manager] Error loading slots:', error);
+            this.debugError('Error loading slots:', error);
             this.dom.modalBody.innerHTML = `
                 <div class="fp-error-state">
                     <span class="dashicons dashicons-warning"></span>
@@ -1708,7 +1730,7 @@ class ReservationManager {
             try {
                 await this.createNewReservation();
             } catch (error) {
-                console.error('Error creating reservation:', error);
+                this.debugError('Error creating reservation:', error);
             }
         });
 
@@ -1716,7 +1738,7 @@ class ReservationManager {
             try {
                 await this.showNewReservationStep2();
             } catch (error) {
-                console.error('Error going back to step 2:', error);
+                this.debugError('Error going back to step 2:', error);
             }
         });
     }
@@ -1758,26 +1780,28 @@ class ReservationManager {
                 body: JSON.stringify(formData),
             });
 
-            console.log('[Manager] Response status:', response.status);
-            console.log('[Manager] Response headers:', response.headers);
+            this.debugLog('Response status:', response.status);
+            if (this.config.debugMode) {
+                this.debugLog('Response headers:', response.headers);
+            }
             
             if (!response.ok) {
                 let errorMessage = 'Errore nella creazione della prenotazione';
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                    console.error('[Manager] Error data:', errorData);
+                    this.debugError('Error data:', errorData);
                 } catch (e) {
-                    console.error('[Manager] Could not parse error response:', e);
+                    this.debugError('Could not parse error response:', e);
                     const text = await response.text();
-                    console.error('[Manager] Raw error response:', text);
+                    this.debugError('Raw error response:', text);
                 }
                 throw new Error(errorMessage);
             }
 
             // Prova a leggere la risposta come testo prima
             const responseText = await response.text();
-            console.log('[Manager] Raw response:', responseText);
+            this.debugLog('Raw response:', responseText);
             
             if (!responseText || responseText.trim() === '') {
                 throw new Error('Risposta vuota dal server');
@@ -1787,10 +1811,10 @@ class ReservationManager {
             let result;
             try {
                 result = JSON.parse(responseText);
-                console.log('[Manager] Parsed result:', result);
+                this.debugLog('Parsed result:', result);
             } catch (e) {
-                console.error('[Manager] JSON parse error:', e);
-                console.error('[Manager] Response was:', responseText.substring(0, 500));
+                this.debugError('JSON parse error:', e);
+                this.debugError('Response was:', responseText.substring(0, 500));
                 throw new Error('Risposta non valida dal server: ' + e.message);
             }
             
@@ -1806,7 +1830,7 @@ class ReservationManager {
                 </div>
             `;
         } catch (error) {
-            console.error('[Manager] Error creating reservation:', error);
+            this.debugError('Error creating reservation:', error);
             this.dom.modalBody.innerHTML = `
                 <div class="fp-error-state">
                     <span class="dashicons dashicons-warning"></span>

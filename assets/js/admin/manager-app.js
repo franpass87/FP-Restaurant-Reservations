@@ -6,7 +6,26 @@
 // Funzione di traduzione globale con fallback
 const { __ } = wp.i18n || { __: (text) => text };
 
+/**
+ * FP Reservations Manager - Stile The Fork
+ * Gestione moderna delle prenotazioni ristorante
+ * 
+ * @class ReservationManager
+ */
 class ReservationManager {
+    // Constants
+    static SEARCH_DEBOUNCE_MS = 300;
+    static DOUBLE_TAP_THRESHOLD_MS = 300;
+    static API_TIMEOUT_OVERVIEW_MS = 10000;
+    static API_TIMEOUT_RESERVATIONS_MS = 15000;
+    static DEBUG_LOG_MAX_LENGTH = 500;
+
+    /**
+     * Crea una nuova istanza di ReservationManager
+     * Inizializza la configurazione, lo stato e il DOM cache
+     * 
+     * @constructor
+     */
     constructor() {
         // Configurazione
         this.config = {
@@ -37,13 +56,57 @@ class ReservationManager {
         // Cache DOM
         this.dom = {};
         
+        // Timeouts for cleanup
+        this.searchTimeout = null;
+        
         // Inizializza
         this.init();
     }
 
+    /**
+     * Log condizionale per debug (solo se debugMode è attivo)
+     * @private
+     * @param {...*} args - Argomenti da loggare
+     */
+    debugLog(...args) {
+        if (this.config.debugMode) {
+            console.log('[Manager]', ...args);
+        }
+    }
+
+    /**
+     * Warning condizionale per debug (solo se debugMode è attivo)
+     * @private
+     * @param {...*} args - Argomenti da loggare
+     */
+    debugWarn(...args) {
+        if (this.config.debugMode) {
+            console.warn('[Manager]', ...args);
+        }
+    }
+
+    /**
+     * Error condizionale per debug (solo se debugMode è attivo)
+     * @private
+     * @param {...*} args - Argomenti da loggare
+     */
+    debugError(...args) {
+        if (this.config.debugMode) {
+            console.error('[Manager]', ...args);
+        }
+    }
+
+    /**
+     * Inizializza il manager: verifica configurazione, cache DOM, bind event listeners
+     * e carica i dati iniziali
+     * 
+     * @async
+     * @private
+     */
     async init() {
         // Verifica che la configurazione sia presente
         if (!this.config.restRoot || !this.config.nonce) {
+            // Critical error - always log
             console.error('[Manager] Configuration missing! Check that fpResvManagerSettings is loaded.');
             this.showError('Configurazione mancante. Ricarica la pagina.');
             return;
@@ -69,6 +132,10 @@ class ReservationManager {
         await this.loadReservations();
     }
 
+    /**
+     * Cache degli elementi DOM più utilizzati per migliorare le performance
+     * @private
+     */
     cacheDom() {
         this.dom = {
             // Stats
@@ -107,6 +174,10 @@ class ReservationManager {
         };
     }
 
+    /**
+     * Popola il filtro servizi con i meal plan configurati
+     * @private
+     */
     populateServiceFilter() {
         if (!this.dom.serviceFilter) {
             return;
@@ -124,6 +195,10 @@ class ReservationManager {
         }
     }
 
+    /**
+     * Collega tutti gli event listeners agli elementi DOM
+     * @private
+     */
     bindEvents() {
         // Date navigation
         document.querySelectorAll('[data-action="prev-day"]').forEach(btn => {
@@ -169,14 +244,16 @@ class ReservationManager {
         }
 
         if (this.dom.searchInput) {
-            // Debounce search
-            let searchTimeout;
+            // Debounce search with proper cleanup
             this.dom.searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
+                if (this.searchTimeout !== null) {
+                    clearTimeout(this.searchTimeout);
+                }
+                this.searchTimeout = setTimeout(() => {
                     this.state.filters.search = e.target.value.toLowerCase();
                     this.filterReservations();
-                }, 300);
+                    this.searchTimeout = null;
+                }, ReservationManager.SEARCH_DEBOUNCE_MS);
             });
         }
 
@@ -243,7 +320,7 @@ class ReservationManager {
             element.addEventListener('touchend', (e) => {
                 // Previeni comportamento di default solo per questi elementi
                 const now = Date.now();
-                if (element._lastTap && now - element._lastTap < 300) {
+                if (element._lastTap && now - element._lastTap < ReservationManager.DOUBLE_TAP_THRESHOLD_MS) {
                     e.preventDefault();
                 }
                 element._lastTap = now;
@@ -367,7 +444,7 @@ class ReservationManager {
                 try {
                     await this.loadReservations();
                 } catch (error) {
-                    console.error('[Manager] Error refreshing reservations:', error);
+                    this.debugError('Error refreshing reservations:', error);
                 } finally {
                     mainContent.classList.remove('pull-to-refresh-loading');
                 }
@@ -403,16 +480,29 @@ class ReservationManager {
         }
     }
 
+    /**
+     * Imposta la data corrente a oggi
+     * @public
+     */
     goToToday() {
         this.setDate(new Date());
     }
 
+    /**
+     * Imposta una nuova data e ricarica le prenotazioni
+     * @public
+     * @param {Date} date - Data da impostare
+     */
     setDate(date) {
         this.state.currentDate = date;
         this.updateDatePicker();
         this.loadReservations();
     }
 
+    /**
+     * Aggiorna il valore del date picker con la data corrente
+     * @private
+     */
     updateDatePicker() {
         if (this.dom.datePicker) {
             this.dom.datePicker.value = this.formatDate(this.state.currentDate);
@@ -422,6 +512,9 @@ class ReservationManager {
     /**
      * Formatta data nel timezone locale (NON UTC!)
      * CRITICO: toISOString() converte sempre in UTC e può causare shift di giorno
+     * 
+     * @param {Date} date - Data da formattare
+     * @returns {string} Data formattata come YYYY-MM-DD
      */
     formatDate(date) {
         const year = date.getFullYear();
@@ -434,8 +527,13 @@ class ReservationManager {
     // VIEW MANAGEMENT
     // ============================================
 
+    /**
+     * Cambia la vista corrente (day/week/month/list)
+     * @public
+     * @param {string} view - Nome della vista ('day', 'week', 'month', 'list')
+     */
     setView(view) {
-        console.log('[Manager] 🔄 SET VIEW:', view, 'da', this.state.currentView);
+        this.debugLog('🔄 SET VIEW:', view, 'da', this.state.currentView);
         
         const previousView = this.state.currentView;
         this.state.currentView = view;
@@ -459,13 +557,13 @@ class ReservationManager {
         const previousNeedsRange = viewsRequiringReload.includes(previousView);
         const currentNeedsRange = viewsRequiringReload.includes(view);
         
-        console.log('[Manager] Previous needs range:', previousNeedsRange, '| Current needs range:', currentNeedsRange);
+        this.debugLog('Previous needs range:', previousNeedsRange, '| Current needs range:', currentNeedsRange);
         
         if (previousNeedsRange !== currentNeedsRange || (previousNeedsRange && currentNeedsRange && previousView !== view)) {
-            console.log('[Manager] 🔄 Ricarico prenotazioni per cambio vista');
+            this.debugLog('🔄 Ricarico prenotazioni per cambio vista');
             this.loadReservations();
         } else {
-            console.log('[Manager] 🎨 Solo re-render, nessun reload');
+            this.debugLog('🎨 Solo re-render, nessun reload');
             // Altrimenti, semplicemente re-render
             this.renderCurrentView();
         }
@@ -493,7 +591,7 @@ class ReservationManager {
     async loadOverview() {
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const timeoutId = setTimeout(() => controller.abort(), ReservationManager.API_TIMEOUT_OVERVIEW_MS);
             
             const response = await fetch(this.buildRestUrl('agenda/overview'), {
                 headers: {
@@ -519,7 +617,7 @@ class ReservationManager {
             this.renderStats();
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('[Manager] Error loading overview:', error);
+                this.debugError('Error loading overview:', error);
             }
         }
     }
@@ -564,8 +662,8 @@ class ReservationManager {
                 endDate = this.formatDate(lastDay);
                 range = 'month';
                 
-                console.log('[Manager] 📅 LOAD vista MESE:', year, month + 1);
-                console.log('[Manager] Range richiesto:', startDate, '->', endDate);
+                this.debugLog('📅 LOAD vista MESE:', year, month + 1);
+                this.debugLog('Range richiesto:', startDate, '->', endDate);
             }
             
             const params = new URLSearchParams({
@@ -575,10 +673,10 @@ class ReservationManager {
 
             const url = this.buildRestUrl(`agenda?${params.toString()}`);
             
-            console.log('[Manager] 🌐 Chiamata API:', url);
+            this.debugLog('🌐 Chiamata API:', url);
             
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const timeoutId = setTimeout(() => controller.abort(), ReservationManager.API_TIMEOUT_RESERVATIONS_MS);
             
             const response = await fetch(url, {
                 headers: {
@@ -604,7 +702,7 @@ class ReservationManager {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('[Manager] Reservations response error:', response.status, errorText);
+                this.debugError('Reservations response error:', response.status, errorText);
                 this.showDebugPanel({
                     error: true,
                     status: response.status,
@@ -631,7 +729,7 @@ class ReservationManager {
 
             const data = JSON.parse(text);
             
-            console.log('[Manager] 📦 Dati ricevuti dall\'endpoint:', {
+            this.debugLog('📦 Dati ricevuti dall\'endpoint:', {
                 hasReservations: !!data.reservations,
                 reservationsIsArray: Array.isArray(data.reservations),
                 reservationsLength: data.reservations ? data.reservations.length : 'NULL',
@@ -640,20 +738,20 @@ class ReservationManager {
                 dataKeys: Object.keys(data)
             });
             
-            console.log('[Manager] 📄 Risposta completa (primi 500 char):', JSON.stringify(data).substring(0, 500));
+            this.debugLog('📄 Risposta completa (primi char):', JSON.stringify(data).substring(0, ReservationManager.DEBUG_LOG_MAX_LENGTH));
             
             this.state.reservations = data.reservations || [];
             this.state.error = null;
             
-            console.log('[Manager] ✅ Prenotazioni ricevute dal backend:', this.state.reservations.length);
-            console.log('[Manager] Meta:', data.meta);
-            console.log('[Manager] Stats:', data.stats);
+            this.debugLog('✅ Prenotazioni ricevute dal backend:', this.state.reservations.length);
+            this.debugLog('Meta:', data.meta);
+            this.debugLog('Stats:', data.stats);
             
-            if (this.state.reservations.length > 0) {
-                console.log('[Manager] Prima prenotazione:', this.state.reservations[0]);
+            if (this.state.reservations.length > 0 && this.config.debugMode) {
+                this.debugLog('Prima prenotazione:', this.state.reservations[0]);
                 const lastIndex = this.state.reservations.length - 1;
                 if (lastIndex >= 0) {
-                    console.log('[Manager] Ultima prenotazione:', this.state.reservations[lastIndex]);
+                    this.debugLog('Ultima prenotazione:', this.state.reservations[lastIndex]);
                 }
             }
             
@@ -668,9 +766,9 @@ class ReservationManager {
                 url: url
             });
             
-            // Log per debugging (rimovere dopo verifica)
+            // Log per debugging (solo in debug mode)
             if (this.state.reservations.length === 0) {
-                console.warn('[Manager] ⚠️ No reservations found. Response:', {
+                this.debugWarn('⚠️ No reservations found. Response:', {
                     meta: data.meta,
                     stats: data.stats,
                     reservationsCount: data.reservations ? data.reservations.length : 0
@@ -680,7 +778,7 @@ class ReservationManager {
             this.hideLoading();
             this.renderCurrentView();
         } catch (error) {
-            console.error('[Manager] Error loading reservations:', error);
+            this.debugError('Error loading reservations:', error);
             this.hideLoading();
             
             if (error.name === 'AbortError') {
@@ -876,9 +974,9 @@ class ReservationManager {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        console.log('[Manager] 🗓️ RENDER MONTH VIEW');
-        console.log('[Manager] Anno:', year, 'Mese:', month + 1);
-        console.log('[Manager] Prenotazioni totali in state:', this.state.reservations.length);
+        this.debugLog('🗓️ RENDER MONTH VIEW');
+        this.debugLog('Anno:', year, 'Mese:', month + 1);
+        this.debugLog('Prenotazioni totali in state:', this.state.reservations.length);
         
         // Get first day of month and last day
         const firstDay = new Date(year, month, 1);
@@ -887,7 +985,7 @@ class ReservationManager {
         
         const firstDayStr = this.formatDate(firstDay);
         const lastDayStr = this.formatDate(lastDay);
-        console.log('[Manager] Range mese:', firstDayStr, '->', lastDayStr);
+        this.debugLog('Range mese:', firstDayStr, '->', lastDayStr);
         
         // Get day of week for first day (0 = Sunday, 1 = Monday, etc)
         let startDay = firstDay.getDay();
@@ -903,44 +1001,48 @@ class ReservationManager {
         const reservationsByDate = {};
         let totalReservationsInMonth = 0;
         
-        console.log('[Manager] === INIZIO RAGGRUPPAMENTO PRENOTAZIONI ===');
-        console.log('[Manager] Totale prenotazioni da processare:', this.state.reservations.length);
+        this.debugLog('=== INIZIO RAGGRUPPAMENTO PRENOTAZIONI ===');
+        this.debugLog('Totale prenotazioni da processare:', this.state.reservations.length);
         
         if (this.state.reservations.length === 0) {
-            console.warn('[Manager] ⚠️⚠️⚠️ NESSUNA PRENOTAZIONE IN STATE! ⚠️⚠️⚠️');
+            this.debugWarn('⚠️⚠️⚠️ NESSUNA PRENOTAZIONE IN STATE! ⚠️⚠️⚠️');
         }
         
         this.state.reservations.forEach((resv, index) => {
             const date = resv.date;
-            console.log(`[Manager] [${index + 1}/${this.state.reservations.length}] Prenotazione #${resv.id}:`, {
-                date: date,
-                time: resv.time,
-                party: resv.party,
-                status: resv.status,
-                inRange: date >= firstDayStr && date <= lastDayStr
-            });
+            if (this.config.debugMode) {
+                this.debugLog(`[${index + 1}/${this.state.reservations.length}] Prenotazione #${resv.id}:`, {
+                    date: date,
+                    time: resv.time,
+                    party: resv.party,
+                    status: resv.status,
+                    inRange: date >= firstDayStr && date <= lastDayStr
+                });
+            }
             
             // Verifica se la prenotazione è nel range del mese
             if (date >= firstDayStr && date <= lastDayStr) {
-                console.log(`[Manager] ✅ Prenotazione #${resv.id} È nel range del mese`);
+                if (this.config.debugMode) {
+                    this.debugLog(`✅ Prenotazione #${resv.id} È nel range del mese`);
+                }
                 totalReservationsInMonth++;
                 if (!reservationsByDate[date]) {
                     reservationsByDate[date] = [];
                 }
                 reservationsByDate[date].push(resv);
-            } else {
-                console.log(`[Manager] ❌ Prenotazione #${resv.id} FUORI dal range:`);
-                console.log(`[Manager]    Data: ${date} | Range: ${firstDayStr} - ${lastDayStr}`);
-                console.log(`[Manager]    date >= firstDayStr: ${date >= firstDayStr}`);
-                console.log(`[Manager]    date <= lastDayStr: ${date <= lastDayStr}`);
+            } else if (this.config.debugMode) {
+                this.debugLog(`❌ Prenotazione #${resv.id} FUORI dal range:`);
+                this.debugLog(`   Data: ${date} | Range: ${firstDayStr} - ${lastDayStr}`);
+                this.debugLog(`   date >= firstDayStr: ${date >= firstDayStr}`);
+                this.debugLog(`   date <= lastDayStr: ${date <= lastDayStr}`);
             }
         });
         
-        console.log('[Manager] === FINE RAGGRUPPAMENTO ===');
-        console.log('[Manager] Prenotazioni nel mese corrente:', totalReservationsInMonth);
-        console.log('[Manager] Giorni con prenotazioni:', Object.keys(reservationsByDate).length);
-        console.log('[Manager] Giorni:', Object.keys(reservationsByDate).sort());
-        console.log('[Manager] reservationsByDate:', reservationsByDate);
+        this.debugLog('=== FINE RAGGRUPPAMENTO ===');
+        this.debugLog('Prenotazioni nel mese corrente:', totalReservationsInMonth);
+        this.debugLog('Giorni con prenotazioni:', Object.keys(reservationsByDate).length);
+        this.debugLog('Giorni:', Object.keys(reservationsByDate).sort());
+        this.debugLog('reservationsByDate:', reservationsByDate);
         
         // Header
         let html = `
@@ -1338,11 +1440,11 @@ class ReservationManager {
     }
 
     openReservationModal(id) {
-        console.log('[Manager] Opening reservation modal for ID:', id);
+        this.debugLog('Opening reservation modal for ID:', id);
         
         const resv = this.state.reservations.find(r => r.id === id);
         if (!resv) {
-            console.error('[Manager] Reservation not found with ID:', id);
+            this.debugError('Reservation not found with ID:', id);
             return;
         }
 
@@ -1353,7 +1455,7 @@ class ReservationManager {
         this.dom.modalBody.innerHTML = this.renderReservationDetails(resv);
         this.dom.modal.style.display = 'flex';
 
-        console.log('[Manager] Modal HTML updated, now binding actions...');
+        this.debugLog('Modal HTML updated, now binding actions...');
         
         // Assicuriamoci che il DOM sia aggiornato prima di collegare gli eventi
         // Usiamo requestAnimationFrame per garantire che il browser abbia renderizzato il nuovo HTML
@@ -1487,79 +1589,81 @@ class ReservationManager {
     }
 
     bindModalActions(resv) {
-        console.log('[Manager] Binding modal actions for reservation ID:', resv.id);
+        this.debugLog('Binding modal actions for reservation ID:', resv.id);
         
         // Salva modifiche
         const saveBtn = this.dom.modalBody.querySelector('[data-modal-action="save"]');
         if (saveBtn) {
-            console.log('[Manager] ✅ Save button found');
+            this.debugLog('✅ Save button found');
             saveBtn.addEventListener('click', async () => {
                 try {
                     await this.saveReservation(resv);
                 } catch (error) {
-                    console.error('[Manager] Error saving reservation:', error);
+                    this.debugError('Error saving reservation:', error);
                 }
             });
         } else {
-            console.warn('[Manager] ❌ Save button NOT found');
+            this.debugWarn('❌ Save button NOT found');
         }
 
         // Chiudi modale (pulsante secondario)
         const closeBtn = this.dom.modalBody.querySelector('[data-modal-action="close"]');
         if (closeBtn) {
-            console.log('[Manager] ✅ Close button found');
+            this.debugLog('✅ Close button found');
             closeBtn.addEventListener('click', () => {
                 this.closeModal();
             });
         } else {
-            console.warn('[Manager] ❌ Close button NOT found');
+            this.debugWarn('❌ Close button NOT found');
         }
 
         // Annulla prenotazione
         const cancelReservationBtn = this.dom.modalBody.querySelector('[data-modal-action="cancel-reservation"]');
         if (cancelReservationBtn) {
-            console.log('[Manager] ✅ Cancel reservation button found');
+            this.debugLog('✅ Cancel reservation button found');
             cancelReservationBtn.addEventListener('click', async () => {
                 if (confirm('Sei sicuro di voler annullare questa prenotazione?')) {
                     try {
                         await this.cancelReservation(resv.id);
                     } catch (error) {
-                        console.error('[Manager] Error cancelling reservation:', error);
+                        this.debugError('Error cancelling reservation:', error);
                     }
                 }
             });
         } else {
-            console.log('[Manager] ℹ️ Cancel reservation button NOT found (might be hidden for cancelled reservations)');
+            this.debugLog('ℹ️ Cancel reservation button NOT found (might be hidden for cancelled reservations)');
         }
 
         // Elimina definitivamente
         const deleteBtn = this.dom.modalBody.querySelector('[data-modal-action="delete"]');
         if (deleteBtn) {
-            console.log('[Manager] ✅ Delete button found and binding event listener');
+            this.debugLog('✅ Delete button found and binding event listener');
             deleteBtn.addEventListener('click', async (e) => {
-                console.log('[Manager] Delete button clicked!', e);
+                this.debugLog('Delete button clicked!', e);
                 if (confirm('Sei sicuro di voler eliminare definitivamente questa prenotazione?')) {
-                    console.log('[Manager] User confirmed deletion');
+                    this.debugLog('User confirmed deletion');
                     try {
                         await this.deleteReservation(resv.id);
                     } catch (error) {
-                        console.error('[Manager] Error deleting reservation:', error);
+                        this.debugError('Error deleting reservation:', error);
                     }
                 } else {
-                    console.log('[Manager] User cancelled deletion');
+                    this.debugLog('User cancelled deletion');
                 }
             });
-            console.log('[Manager] Delete button event listener attached successfully');
+            this.debugLog('Delete button event listener attached successfully');
         } else {
-            console.error('[Manager] ❌ DELETE BUTTON NOT FOUND! This is the issue!');
-            console.error('[Manager] Modal body HTML:', this.dom.modalBody.innerHTML.substring(0, 500));
+            this.debugError('❌ DELETE BUTTON NOT FOUND! This is the issue!');
+            if (this.config.debugMode) {
+                this.debugError('Modal body HTML:', this.dom.modalBody.innerHTML.substring(0, ReservationManager.DEBUG_LOG_MAX_LENGTH));
+            }
         }
         
-        console.log('[Manager] Finished binding modal actions');
+        this.debugLog('Finished binding modal actions');
     }
 
     async saveReservation(resv) {
-        console.log('[Manager] Saving reservation ID:', resv.id);
+        this.debugLog('Saving reservation ID:', resv.id);
         
         const status = this.dom.modalBody.querySelector('[data-field="status"]')?.value;
         const party = this.dom.modalBody.querySelector('[data-field="party"]')?.value;
@@ -1580,7 +1684,7 @@ class ReservationManager {
         if (email !== undefined) updates.email = email.trim();
         if (phone !== undefined) updates.phone = phone.trim();
 
-        console.log('[Manager] Updates to save:', updates);
+        this.debugLog('Updates to save:', updates);
 
         try {
             const response = await fetch(this.buildRestUrl(`agenda/reservations/${resv.id}`), {
@@ -1598,14 +1702,14 @@ class ReservationManager {
                 throw new Error(errorData.message || 'Failed to update reservation');
             }
 
-            console.log('[Manager] Reservation saved successfully');
+            this.debugLog('Reservation saved successfully');
             this.closeModal();
             await this.loadReservations();
             await this.loadOverview();
             
             alert('Prenotazione salvata con successo');
         } catch (error) {
-            console.error('[Manager] Error saving reservation:', error);
+            this.debugError('Error saving reservation:', error);
             alert('Errore nel salvataggio della prenotazione: ' + error.message);
         }
     }
@@ -1633,18 +1737,18 @@ class ReservationManager {
             
             alert('Prenotazione annullata con successo');
         } catch (error) {
-            console.error('[Manager] Error cancelling reservation:', error);
+            this.debugError('Error cancelling reservation:', error);
             alert('Errore nell\'annullamento della prenotazione: ' + error.message);
         }
     }
 
     async deleteReservation(id) {
-        console.log('[Manager] Inizio eliminazione prenotazione ID:', id);
+        this.debugLog('Inizio eliminazione prenotazione ID:', id);
         
         try {
             const url = this.buildRestUrl(`agenda/reservations/${id}`);
-            console.log('[Manager] URL DELETE:', url);
-            console.log('[Manager] Nonce:', this.config.nonce);
+            this.debugLog('URL DELETE:', url);
+            this.debugLog('Nonce:', this.config.nonce);
             
             const response = await fetch(url, {
                 method: 'DELETE',
@@ -1654,32 +1758,34 @@ class ReservationManager {
                 credentials: 'same-origin',
             });
 
-            console.log('[Manager] DELETE Response Status:', response.status);
-            console.log('[Manager] DELETE Response OK:', response.ok);
-            console.log('[Manager] DELETE Response Headers:', {
-                'content-type': response.headers.get('content-type'),
-                'content-length': response.headers.get('content-length'),
-                'x-fp-delete-success': response.headers.get('x-fp-delete-success'),
-                'x-fp-reservation-id': response.headers.get('x-fp-reservation-id')
-            });
-            
-            console.log('[Manager] ALL Response Headers:');
-            for (let [key, value] of response.headers.entries()) {
-                console.log(`  ${key}: ${value}`);
+            if (this.config.debugMode) {
+                this.debugLog('DELETE Response Status:', response.status);
+                this.debugLog('DELETE Response OK:', response.ok);
+                this.debugLog('DELETE Response Headers:', {
+                    'content-type': response.headers.get('content-type'),
+                    'content-length': response.headers.get('content-length'),
+                    'x-fp-delete-success': response.headers.get('x-fp-delete-success'),
+                    'x-fp-reservation-id': response.headers.get('x-fp-reservation-id')
+                });
+                
+                this.debugLog('ALL Response Headers:');
+                for (let [key, value] of response.headers.entries()) {
+                    this.debugLog(`  ${key}: ${value}`);
+                }
             }
 
             // Leggi il body come testo prima
             const responseText = await response.text();
-            console.log('[Manager] DELETE Response Body:', responseText);
+            this.debugLog('DELETE Response Body:', responseText);
 
             if (!response.ok) {
                 let errorMessage = 'Errore nell\'eliminazione della prenotazione';
                 try {
                     const errorData = JSON.parse(responseText);
                     errorMessage = errorData.message || errorMessage;
-                    console.error('[Manager] DELETE Error Data:', errorData);
+                    this.debugError('DELETE Error Data:', errorData);
                 } catch (e) {
-                    console.error('[Manager] DELETE Response non è JSON valido:', responseText);
+                    this.debugError('DELETE Response non è JSON valido:', responseText);
                 }
                 throw new Error(errorMessage);
             }
@@ -1688,9 +1794,9 @@ class ReservationManager {
             let result = {};
             try {
                 result = JSON.parse(responseText);
-                console.log('[Manager] DELETE Success:', result);
+                this.debugLog('DELETE Success:', result);
             } catch (e) {
-                console.error('[Manager] DELETE Success ma response non è JSON:', responseText);
+                this.debugError('DELETE Success ma response non è JSON:', responseText);
                 // Se non è JSON ma status è 200, considera comunque successo
                 result = { success: true };
             }
@@ -1702,7 +1808,7 @@ class ReservationManager {
             // Mostra messaggio di successo
             alert('Prenotazione eliminata con successo');
         } catch (error) {
-            console.error('[Manager] DELETE Error:', error);
+            this.debugError('DELETE Error:', error);
             alert('Errore nell\'eliminazione della prenotazione: ' + error.message);
         }
     }
@@ -1800,7 +1906,7 @@ class ReservationManager {
             try {
                 await this.showNewReservationStep2();
             } catch (error) {
-                console.error('[Manager] Error loading step 2:', error);
+                this.debugError('Error loading step 2:', error);
                 alert('Errore nel caricamento degli slot disponibili');
             }
         });
@@ -1854,7 +1960,7 @@ class ReservationManager {
             this.dom.modalBody.innerHTML = this.renderNewReservationStep2(slots);
             this.bindNewReservationStep2();
         } catch (error) {
-            console.error('[Manager] Error loading slots:', error);
+            this.debugError('Error loading slots:', error);
             this.dom.modalBody.innerHTML = `
                 <div class="fp-error-state">
                     <span class="dashicons dashicons-warning"></span>
@@ -2071,7 +2177,7 @@ class ReservationManager {
             try {
                 await this.createNewReservation();
             } catch (error) {
-                console.error('[Manager] Error creating reservation:', error);
+                this.debugError('Error creating reservation:', error);
             }
         });
 
@@ -2107,7 +2213,7 @@ class ReservationManager {
             meal,
         };
         
-        console.log('[Manager] Creating reservation with data:', formData);
+        this.debugLog('Creating reservation with data:', formData);
 
         // Mostra loading
         this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Creazione prenotazione in corso...</p></div>';
@@ -2124,26 +2230,28 @@ class ReservationManager {
                 body: JSON.stringify(formData),
             });
 
-            console.log('[Manager] Response status:', response.status);
-            console.log('[Manager] Response headers:', response.headers);
+            this.debugLog('Response status:', response.status);
+            if (this.config.debugMode) {
+                this.debugLog('Response headers:', response.headers);
+            }
             
             if (!response.ok) {
                 let errorMessage = 'Errore nella creazione della prenotazione';
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                    console.error('[Manager] Error data:', errorData);
+                    this.debugError('Error data:', errorData);
                 } catch (e) {
-                    console.error('[Manager] Could not parse error response:', e);
+                    this.debugError('Could not parse error response:', e);
                     const text = await response.text();
-                    console.error('[Manager] Raw error response:', text);
+                    this.debugError('Raw error response:', text);
                 }
                 throw new Error(errorMessage);
             }
 
             // Prova a leggere la risposta come testo prima
             const responseText = await response.text();
-            console.log('[Manager] Raw response:', responseText);
+            this.debugLog('Raw response:', responseText);
             
             if (!responseText || responseText.trim() === '') {
                 throw new Error('Risposta vuota dal server');
@@ -2153,10 +2261,10 @@ class ReservationManager {
             let result;
             try {
                 result = JSON.parse(responseText);
-                console.log('[Manager] Parsed result:', result);
+                this.debugLog('Parsed result:', result);
             } catch (e) {
-                console.error('[Manager] JSON parse error:', e);
-                console.error('[Manager] Response was:', responseText.substring(0, 500));
+                this.debugError('JSON parse error:', e);
+                this.debugError('Response was:', responseText.substring(0, ReservationManager.DEBUG_LOG_MAX_LENGTH));
                 throw new Error('Risposta non valida dal server: ' + e.message);
             }
             
@@ -2172,7 +2280,7 @@ class ReservationManager {
                 </div>
             `;
         } catch (error) {
-            console.error('[Manager] Error creating reservation:', error);
+            this.debugError('Error creating reservation:', error);
             this.dom.modalBody.innerHTML = `
                 <div class="fp-error-state">
                     <span class="dashicons dashicons-warning"></span>

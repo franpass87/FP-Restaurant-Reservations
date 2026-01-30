@@ -476,7 +476,7 @@ class FormApp {
                 return;
             }
             
-            console.warn('[FP-RESV] Errore nel caricamento dei giorni disponibili:', error);
+            // Production-ready: removed debug warn (error is shown via UI)
             this.showCalendarError();
         })
         .finally(() => {
@@ -1027,7 +1027,7 @@ class FormApp {
         this.handleFirstInteraction();
 
         const direction = trigger.getAttribute('data-fp-resv-nav');
-        console.log('[FP-RESV] Navigation click:', direction, 'section:', section.getAttribute('data-step'));
+        // Production-ready: removed debug log
         
         if (direction === 'prev') {
             this.navigateToPrevious(section);
@@ -1212,9 +1212,7 @@ class FormApp {
             // Se il giorno non è disponibile per questo meal, resetta il campo
             if (!isAvailable) {
                 // Mostra un messaggio informativo
-                if (window.console && window.console.warn) {
-                    console.warn(`[FP-RESV] La data selezionata non è disponibile per questo servizio.`);
-                }
+                // Production-ready: removed debug warn (error handling is done via UI)
                 
                 // Mostra messaggio all'utente
                 const statusEl = this.form.querySelector('[data-fp-resv-date-status]');
@@ -1556,7 +1554,7 @@ class FormApp {
     updateSectionAttributes(section, state, options = {}) {
         const key = section.getAttribute('data-step') || '';
         const silent = options && options.silent === true;
-        console.log(`[FP-RESV] updateSectionAttributes: step=${key}, state=${state}, silent=${silent}`);
+        // Production-ready: removed debug log
         
         this.state.sectionStates[key] = state;
         section.setAttribute('data-state', state);
@@ -1578,7 +1576,7 @@ class FormApp {
             section.style.display = 'block';
             section.style.visibility = 'visible';
             section.style.opacity = '1';
-            console.log(`[FP-RESV] Step ${key} made visible`);
+            // Production-ready: removed debug log
         } else {
             section.hidden = true;
             section.setAttribute('hidden', '');
@@ -1586,7 +1584,7 @@ class FormApp {
             section.style.display = 'none';
             section.style.visibility = 'hidden';
             section.style.opacity = '0';
-            console.log(`[FP-RESV] Step ${key} hidden`);
+            // Production-ready: removed debug log
         }
 
         if (!silent) {
@@ -2018,22 +2016,21 @@ class FormApp {
         const start = performance.now();
         let latency = 0;
 
-        // DEBUG: Verifica finale del nonce prima dell'invio
+        // Production-ready: Critical security check (kept for nonce validation)
         if (!payload.fp_resv_nonce) {
+            // Critical error: nonce is required for security
             console.error('[FP-RESV] ATTENZIONE: Payload senza nonce! Tentativo di recupero...');
             const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
             if (nonceField && nonceField.value) {
                 payload.fp_resv_nonce = nonceField.value;
-                console.log('[FP-RESV] Nonce recuperato dal form:', payload.fp_resv_nonce.substring(0, 10) + '...');
+                // Production-ready: removed debug log (nonce recovered successfully)
             } else {
+                // Critical error: nonce is required
                 console.error('[FP-RESV] IMPOSSIBILE recuperare nonce!');
             }
         }
         
-        // DEBUG: Log del payload inviato
-        console.log('[FP-RESV] Payload inviato:', payload);
-        console.log('[FP-RESV] Nonce nel payload:', payload.fp_resv_nonce ? 'PRESENTE (' + payload.fp_resv_nonce.substring(0, 10) + '...)' : 'MANCANTE');
-        console.log('[FP-RESV] Endpoint:', endpoint);
+        // Production-ready: removed debug logs (payload, nonce presence, endpoint)
 
         try {
             const response = await fetch(endpoint, {
@@ -2049,49 +2046,37 @@ class FormApp {
             latency = Math.round(performance.now() - start);
             pushDataLayerEvent('ui_latency', { op: 'submit', ms: latency });
 
-            // DEBUG: Log della risposta grezza
-            console.log('[FP-RESV] Response status:', response.status);
-            console.log('[FP-RESV] Response headers:', {
-                contentType: response.headers.get('content-type'),
-                contentLength: response.headers.get('content-length')
-            });
+            // Production-ready: removed debug logs
             
             // Leggi il body come testo prima di parsare
             const responseText = await response.text();
-            console.log('[FP-RESV] Response text length:', responseText.length);
-            console.log('[FP-RESV] Response text preview:', responseText.substring(0, 200));
 
             if (!response.ok) {
                 let errorPayload;
                 try {
                     errorPayload = responseText ? JSON.parse(responseText) : {};
                 } catch (parseError) {
-                    console.error('[FP-RESV] Errore parsing risposta errore:', parseError);
+                    // Production-ready: removed debug error (error is handled via UI)
                     errorPayload = { message: 'Risposta non valida dal server' };
                 }
                 
-                // DEBUG: Log dell'errore ricevuto
-                console.error('[FP-RESV] Errore API:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    errorPayload: errorPayload,
-                });
+                // Production-ready: removed debug error log (error is shown via UI)
                 
                 // Se errore 403 (nonce invalido), prova a rigenerare il nonce e riprova
                 if (response.status === 403 && !this.state.nonceRetried) {
-                    console.warn('[FP-RESV] Errore 403 - Tentativo di rigenerazione nonce...');
+                    // Production-ready: removed debug warn (nonce retry is handled silently)
                     
                     // Aspetta 500ms per dare tempo ai cookie di essere impostati correttamente
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
                     const freshNonce = await this.refreshNonce();
-                    console.log('[FP-RESV] Nonce fresco ottenuto:', freshNonce ? (freshNonce.substring(0, 10) + '...') : 'FALLITO');
+                    // Production-ready: removed debug log (nonce refresh handled silently)
                     
                     if (freshNonce) {
                         this.state.nonceRetried = true;
                         payload.fp_resv_nonce = freshNonce;
                         
-                        console.log('[FP-RESV] Retry con nuovo nonce...');
+                        // Production-ready: removed debug log (retry handled silently)
                         
                         // Aspetta altri 200ms prima di riprovare
                         await new Promise(resolve => setTimeout(resolve, 200));
@@ -2109,13 +2094,13 @@ class FormApp {
                         
                         if (retryResponse.ok) {
                             const retryText = await retryResponse.text();
-                            console.log('[FP-RESV] Retry success - Response text:', retryText.substring(0, 200));
+                            // Production-ready: removed debug log (retry success handled silently)
                             
                             let data;
                             try {
                                 data = retryText ? JSON.parse(retryText) : {};
                             } catch (parseError) {
-                                console.error('[FP-RESV] Errore parsing retry success:', parseError);
+                                // Production-ready: removed debug error (error handled via UI)
                                 data = {};
                             }
                             
@@ -2147,8 +2132,9 @@ class FormApp {
             let data;
             try {
                 data = responseText ? JSON.parse(responseText) : {};
-                console.log('[FP-RESV] Risposta successo parsata:', data);
+                // Production-ready: removed debug log (success handled silently)
             } catch (parseError) {
+                // Critical error: malformed JSON response
                 console.error('[FP-RESV] ERRORE parsing risposta successo:', parseError);
                 console.error('[FP-RESV] Testo risposta:', responseText);
                 throw new Error('Risposta non valida dal server (JSON malformato)');
@@ -2294,15 +2280,15 @@ class FormApp {
             payload.fp_resv_date = convertDateToISO(payload.fp_resv_date);
         }
         
-        // DEBUG: Verifica che il nonce sia presente
-        console.log('[FP-RESV] Nonce nel form:', payload.fp_resv_nonce ? 'PRESENTE' : 'MANCANTE');
+        // Production-ready: Critical nonce check (silent in production, only errors if missing)
         if (!payload.fp_resv_nonce) {
-            console.warn('[FP-RESV] ATTENZIONE: Nonce mancante! Cercando nel DOM...');
+            // Critical: nonce is required for security, recover silently if possible
             const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
             if (nonceField) {
-                console.log('[FP-RESV] Nonce trovato nel DOM:', nonceField.value.substring(0, 10) + '...');
+                // Production-ready: removed debug log (nonce recovered successfully)
                 payload.fp_resv_nonce = nonceField.value;
             } else {
+                // Critical error: nonce is required for security
                 console.error('[FP-RESV] Campo nonce non trovato nel DOM!');
             }
         }
@@ -2334,7 +2320,7 @@ class FormApp {
         const nonceField = this.form.querySelector('input[name="fp_resv_nonce"]');
         
         if (!nonceField) {
-            console.warn('[FP-RESV] Campo nonce non trovato nel DOM! Creazione campo...');
+            // Production-ready: removed debug warn (nonce field creation handled silently)
             // Crea il campo se manca completamente
             const newNonceField = document.createElement('input');
             newNonceField.type = 'hidden';
@@ -2344,15 +2330,15 @@ class FormApp {
         }
         
         // SEMPRE rigenera il nonce all'inizializzazione per evitare nonce scaduti
-        console.log('[FP-RESV] Rigenerazione nonce per sicurezza...');
+        // Production-ready: removed debug log (nonce refresh handled silently)
         try {
             const newNonce = await this.refreshNonce();
-            if (newNonce) {
-                console.log('[FP-RESV] Nonce rigenerato con successo:', newNonce.substring(0, 10) + '...');
-            } else {
+            if (!newNonce) {
+                // Critical error: nonce is required for security
                 console.error('[FP-RESV] Impossibile ottenere nonce fresco!');
             }
         } catch (error) {
+            // Critical error: nonce refresh failed
             console.error('[FP-RESV] Errore richiesta nonce:', error);
         }
     }
@@ -2378,9 +2364,7 @@ class FormApp {
                 return data.nonce || null;
             }
         } catch (error) {
-            if (window.console && window.console.warn) {
-                console.warn('[fp-resv] Impossibile rigenerare il nonce', error);
-            }
+            // Production-ready: removed debug warn (error handled silently, nonce refresh is optional)
         }
         return null;
     }

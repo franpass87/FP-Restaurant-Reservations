@@ -1,3 +1,40 @@
+## 0.9.0-rc10.5 - Production Code Cleanup & Improvements (2025-11-XX)
+
+### Fixed - Memory Leak 🔴
+- **[FIX]** Memory leak fix: `setTimeout` nel search debounce ora viene correttamente pulito
+- **[FIX]** `searchTimeout` ora salvato come proprietà dell'istanza per permettere cleanup corretto
+
+### Changed - Code Quality & Production Readiness 🧹
+- **[CLEANUP]** Rimossi tutti i `console.log` di debug dai file JavaScript admin e frontend
+- **[CLEANUP]** Rimossi tutti i fetch di debug locale (127.0.0.1:7242) da closures-app.js
+- **[IMPROVEMENT]** Aggiunto sistema di logging condizionale basato su `debugMode` per file admin
+- **[IMPROVEMENT]** Frontend ora completamente pulito da log di debug (solo `console.error` per errori critici)
+- **[IMPROVEMENT]** Migliorata configurazione ESLint per prevenire `console.log` in futuro
+- **[DOC]** Aggiunta documentazione JSDoc alle funzioni principali di `ReservationManager`
+- **[REFACTOR]** Estratti magic numbers come costanti statiche della classe (timeouts, debounce delays)
+
+### Files Modified
+- `assets/js/admin/closures-app.js` - Rimossi fetch debug e console.log
+- `assets/js/admin/manager-app.js` - Aggiunto logging condizionale (~93 sostituzioni), fix memory leak, JSDoc
+- `assets/js/admin/agenda-app.js` - Aggiunto logging condizionale (~24 sostituzioni)
+- `assets/js/fe/onepage.js` - Rimossi tutti i console.log di debug (~17 rimozioni)
+- `eslint.config.js` - Aggiunta regola `no-console` per prevenire log futuri
+
+### Impact
+- ✅ **Performance**: Nessun overhead di console.log in produzione, memory leak risolto
+- ✅ **UX**: Console browser pulita per clienti finali
+- ✅ **Security**: Nessuna esposizione di dati di debug
+- ✅ **Code Quality**: Codice più professionale e production-ready con documentazione migliorata
+- ✅ **Maintainability**: ESLint previene console.log futuri, JSDoc migliora la documentazione
+
+### Technical Details
+- Admin files: Logging attivo solo se `debugMode: true` nelle impostazioni
+- Frontend: Solo `console.error` per errori critici (nonce, Flatpickr)
+- ESLint: Warning su `console.log/warn`, permesso solo `console.error`
+- Memory leak: `searchTimeout` ora proprietà di istanza con cleanup automatico
+
+---
+
 ## 0.9.0-rc10.3 - Fix Slot Orari Mock (2025-11-03)
 
 ### Fixed - Critical Bug 🔴

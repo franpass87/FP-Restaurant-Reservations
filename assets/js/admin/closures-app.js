@@ -1,44 +1,7 @@
 (function () {
-    // #region agent log
-    const logInit = {
-        id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-        timestamp: Date.now(),
-        location: 'closures-app.js:init',
-        message: 'Closures app script loaded',
-        data: { 
-            root_found: !!document.querySelector('[data-fp-resv-closures]'),
-            document_ready: document.readyState
-        },
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A'
-    };
-    fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logInit)
-    }).catch(() => {});
-    // #endregion
-    
+    // Production-ready: removed debug agent logs
     const root = document.querySelector('[data-fp-resv-closures]');
     if (!root) {
-        // #region agent log
-        const logNoRoot = {
-            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            location: 'closures-app.js:init',
-            message: 'Root element not found - script exiting',
-            data: {},
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A'
-        };
-        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logNoRoot)
-        }).catch(() => {});
-        // #endregion
         return;
     }
 
@@ -105,25 +68,7 @@
     };
 
     const ajaxRequest = (action, data = {}) => {
-        // #region agent log
-        const logData = {
-            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            location: 'closures-app.js:ajaxRequest',
-            message: 'AJAX request start',
-            data: { action: action, data: data },
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A'
-        };
-        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logData)
-        }).catch(() => {});
-        // #endregion
-        // ✅ Removed console.log for production
-        
+        // Production-ready: removed debug agent logs and console.log statements
         const formData = new FormData();
         formData.append('action', action);
         formData.append('nonce', nonce);
@@ -133,29 +78,6 @@
                 formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
             }
         }
-        
-        // #region agent log
-        const logBeforeFetch = {
-            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            location: 'closures-app.js:ajaxRequest:beforeFetch',
-            message: 'Before fetch call',
-            data: { 
-                ajaxUrl: ajaxUrl,
-                action: action,
-                hasNonce: !!nonce,
-                nonceLength: nonce ? nonce.length : 0
-            },
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A'
-        };
-        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logBeforeFetch)
-        }).catch(() => {});
-        // #endregion
         
         // Add cache-busting timestamp to prevent browser/CDN caching
         const cacheBustUrl = ajaxUrl + (ajaxUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
@@ -170,81 +92,12 @@
                 'Pragma': 'no-cache'
             }
         }).then((response) => {
-            // #region agent log
-            const logResponse = {
-                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                timestamp: Date.now(),
-                location: 'closures-app.js:ajaxRequest:response',
-                message: 'Fetch response received',
-                data: { 
-                    status: response.status,
-                    statusText: response.statusText,
-                    ok: response.ok,
-                    url: response.url
-                },
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'A'
-            };
-            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logResponse)
-            }).catch(() => {});
-            // #endregion
-            
-            console.log('[FP Closures AJAX Response]', response.status);
-            
             if (!response.ok) {
-                // #region agent log
-                const logError = {
-                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    timestamp: Date.now(),
-                    location: 'closures-app.js:ajaxRequest:responseError',
-                    message: 'Response not OK',
-                    data: { 
-                        status: response.status,
-                        statusText: response.statusText
-                    },
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'A'
-                };
-                fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(logError)
-                }).catch(() => {});
-                // #endregion
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             return response.json();
         }).then((result) => {
-            // #region agent log
-            const logResult = {
-                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                timestamp: Date.now(),
-                location: 'closures-app.js:ajaxRequest:result',
-                message: 'JSON parsed successfully',
-                data: { 
-                    hasSuccess: 'success' in result,
-                    success: result.success,
-                    hasData: 'data' in result
-                },
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'A'
-            };
-            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logResult)
-            }).catch(() => {});
-            // #endregion
-            
-            console.log('[FP Closures AJAX Result]', result);
-            
             // WordPress AJAX ritorna {success: true/false, data: {...}}
             if (result && result.success === false) {
                 const message = result.data && result.data.message ? result.data.message : 'Errore AJAX';
@@ -254,27 +107,6 @@
             // Ritorna i dati (result.data contiene il payload)
             return result && result.data ? result.data : result;
         }).catch((error) => {
-            // #region agent log
-            const logCatch = {
-                id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                timestamp: Date.now(),
-                location: 'closures-app.js:ajaxRequest:catch',
-                message: 'Fetch error caught',
-                data: { 
-                    errorMessage: error.message,
-                    errorName: error.name,
-                    errorStack: error.stack ? error.stack.substring(0, 200) : null
-                },
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'A'
-            };
-            fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logCatch)
-            }).catch(() => {});
-            // #endregion
             throw error;
         });
     };
@@ -430,17 +262,13 @@
     };
 
     const renderList = () => {
-        // ✅ Removed console.log for production
         list.innerHTML = '';
         if (state.items.length === 0) {
-            // ✅ Removed console.log for production
             emptyState.hidden = false;
             return;
         }
-        // ✅ Removed console.log for production
         emptyState.hidden = true;
         state.items.forEach((item, index) => {
-            // ✅ Removed console.log for production
             if (!item || !item.id) {
                 // Item non valido (manca id) - skip silently in production
                 return;
@@ -515,41 +343,24 @@
     };
 
     const loadClosures = () => {
-        console.log('[FP Closures] loadClosures() chiamato');
-        // #region agent log
-        const logData = {
-            id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            location: 'closures-app.js:loadClosures',
-            message: 'loadClosures called',
-            data: { root_exists: !!root },
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A'
-        };
-        fetch('http://127.0.0.1:7242/ingest/e2586453-b27e-4dc9-b251-b34729b9ef70', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logData)
-        }).catch(() => {});
-        // #endregion
+        // Production-ready: removed debug logs
         setLoading(true);
         ajaxRequest('fp_resv_closures_list', { include_inactive: 0 })
             .then((payload) => {
-                console.log('[FP Closures] loadClosures payload ricevuto:', payload);
                 const items = Array.isArray(payload && payload.items)
                     ? payload.items
                     : Array.isArray(payload)
                         ? payload
                         : [];
-                console.log('[FP Closures] Items estratti:', items);
-                console.log('[FP Closures] Numero items:', items.length);
                 state.items = items;
                 state.error = '';
                 render();
             })
             .catch((error) => {
-                console.error('[FP Closures] loadClosures error:', error);
+                // Only log critical errors in production
+                if (window.fpResvClosuresSettings && window.fpResvClosuresSettings.debug) {
+                    console.error('[FP Closures] loadClosures error:', error);
+                }
                 state.error = error && error.message ? error.message : 'Impossibile caricare le chiusure.';
                 renderError();
             })
@@ -583,23 +394,31 @@
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        console.log('[FP Closures] Form submit triggered');
+        
+        // Production-ready: removed debug logs, only critical validation errors logged conditionally
+        const debug = window.fpResvClosuresSettings && window.fpResvClosuresSettings.debug;
         
         if (!startField || !endField || !typeField) {
-            console.error('[FP Closures] Missing required fields');
+            if (debug) {
+                console.error('[FP Closures] Missing required fields');
+            }
             return;
         }
         const startValue = startField.value;
         const endValue = endField.value;
         if (!startValue || !endValue) {
-            console.error('[FP Closures] Missing start or end values');
+            if (debug) {
+                console.error('[FP Closures] Missing start or end values');
+            }
             form.reportValidity();
             return;
         }
         const startDate = new Date(startValue);
         const endDate = new Date(endValue);
         if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-            console.error('[FP Closures] Invalid dates');
+            if (debug) {
+                console.error('[FP Closures] Invalid dates');
+            }
             endField.setCustomValidity("La fine deve essere successiva all'inizio.");
             form.reportValidity();
             endField.setCustomValidity('');
@@ -634,24 +453,26 @@
         if (payload.type === 'capacity_reduction' && percentField) {
             const percent = Number.parseInt(percentField.value, 10);
             if (Number.isNaN(percent)) {
-                console.error('[FP Closures] Invalid percent value');
+                if (debug) {
+                    console.error('[FP Closures] Invalid percent value');
+                }
                 percentField.focus();
                 return;
             }
             payload.capacity_percent = percent;
         }
         
-        console.log('[FP Closures] Sending payload:', payload);
         setLoading(true);
         ajaxRequest('fp_resv_closures_create', payload)
             .then((response) => {
-                console.log('[FP Closures] Success response:', response);
                 state.error = '';
                 toggleForm(false);
                 loadClosures();
             })
             .catch((error) => {
-                console.error('[FP Closures] Error:', error);
+                if (debug) {
+                    console.error('[FP Closures] Error:', error);
+                }
                 state.error = error && error.message ? error.message : 'Impossibile creare la chiusura.';
                 renderError();
             })
