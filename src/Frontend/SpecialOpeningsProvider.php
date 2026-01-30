@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace FP\Resv\Frontend;
 
 use DateTimeImmutable;
-use FP\Resv\Domain\Closures\Model as ClosureModel;
 
 /**
  * Provides special openings as meals for the frontend form.
@@ -14,6 +13,7 @@ use FP\Resv\Domain\Closures\Model as ClosureModel;
  */
 final class SpecialOpeningsProvider
 {
+    private const TYPE_SPECIAL_OPENING = 'special_opening';
     /**
      * Load active special openings from database and convert them to meal format.
      *
@@ -44,7 +44,7 @@ final class SpecialOpeningsProvider
                        OR recurrence_json IS NOT NULL
                    )
                  ORDER BY start_at ASC",
-                ClosureModel::TYPE_SPECIAL_OPENING,
+                self::TYPE_SPECIAL_OPENING,
                 $now->format('Y-m-d H:i:s')
             );
             
