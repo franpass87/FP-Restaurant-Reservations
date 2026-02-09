@@ -48,10 +48,12 @@ final class TrackingScriptGenerator
         w.dataLayer = w.dataLayer || [];
         if (typeof w.gtag === 'function'){return;}
         w.gtag = function(){w.dataLayer.push(arguments);};
-        w.gtag('js', new Date());
-        w.gtag('consent', 'default', cfg.gtagConsent || gtagConsent());
-        if (cfg.ga4Id){ w.gtag('config', cfg.ga4Id, {send_page_view:false}); }
-        if (cfg.googleAdsId){ w.gtag('config', cfg.googleAdsId); }
+        if (!cfg.gtmOnly){
+            w.gtag('js', new Date());
+            w.gtag('consent', 'default', cfg.gtagConsent || gtagConsent());
+            if (cfg.ga4Id){ w.gtag('config', cfg.ga4Id, {send_page_view:false}); }
+            if (cfg.googleAdsId){ w.gtag('config', cfg.googleAdsId); }
+        }
     }
     function loadMetaPixel(){
         if (!cfg.metaPixelId){return;}
@@ -112,6 +114,7 @@ final class TrackingScriptGenerator
         if (!evt || typeof evt !== 'object'){return;}
         if (api.debug){ api.log('FP Resv event', evt); }
         ensureGtag();
+        if (cfg.gtmOnly){ return; }
         if (evt.ga4 && evt.ga4.name && typeof w.gtag === 'function'){
             w.gtag('event', evt.ga4.name, evt.ga4.params || {});
         }
@@ -140,8 +143,10 @@ final class TrackingScriptGenerator
         return event;
     };
     ensureGtag();
-    if (api.state.ads === 'granted'){ loadMetaPixel(); }
-    if (api.state.analytics === 'granted' && api.state.clarity === 'granted'){ loadClarity(); }
+    if (!cfg.gtmOnly){
+        if (api.state.ads === 'granted'){ loadMetaPixel(); }
+        if (api.state.analytics === 'granted' && api.state.clarity === 'granted'){ loadClarity(); }
+    }
 })(window, document);
 JS;
 

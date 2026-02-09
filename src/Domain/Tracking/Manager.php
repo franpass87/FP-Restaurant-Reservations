@@ -29,6 +29,7 @@ final class Manager
         'meta_pixel_id'           => '',
         'meta_access_token'       => '',
         'clarity_project_id'      => '',
+        'tracking_use_gtm'        => '0',
         'tracking_enable_debug'   => '0',
         'tracking_utm_cookie_days'=> '90',
         'tracking_cookie_ttl_days'=> '180',
@@ -112,9 +113,12 @@ final class Manager
             return;
         }
 
-        $gtagId = $this->ga4->measurementId() !== '' ? $this->ga4->measurementId() : $this->ads->gtagLoaderId();
-        if ($gtagId !== '') {
-            printf('<script async src="%s"></script>' . "\n", esc_url_raw('https://www.googletagmanager.com/gtag/js?id=' . rawurlencode($gtagId)));
+        $useGtm = ($settings['tracking_use_gtm'] ?? '0') === '1';
+        if (!$useGtm) {
+            $gtagId = $this->ga4->measurementId() !== '' ? $this->ga4->measurementId() : $this->ads->gtagLoaderId();
+            if ($gtagId !== '') {
+                printf('<script async src="%s"></script>' . "\n", esc_url_raw('https://www.googletagmanager.com/gtag/js?id=' . rawurlencode($gtagId)));
+            }
         }
 
         printf('<script id="fp-resv-tracking-config">%s</script>' . "\n", $this->scriptGenerator->generateBootstrap($json));
@@ -193,13 +197,16 @@ final class Manager
      */
     private function buildTrackingConfig(array $settings): array
     {
+        $useGtm = ($settings['tracking_use_gtm'] ?? '0') === '1';
+
         return [
             'debug'            => ($settings['tracking_enable_debug'] ?? '0') === '1',
-            'ga4Id'            => $this->ga4->measurementId(),
-            'googleAdsId'      => $this->ads->gtagLoaderId(),
+            'gtmOnly'          => $useGtm,
+            'ga4Id'            => $useGtm ? '' : $this->ga4->measurementId(),
+            'googleAdsId'      => $useGtm ? '' : $this->ads->gtagLoaderId(),
             'googleAdsSendTo'  => $this->ads->conversionId(),
-            'metaPixelId'      => $this->meta->pixelId(),
-            'clarityId'        => $this->clarity->projectId(),
+            'metaPixelId'      => $useGtm ? '' : $this->meta->pixelId(),
+            'clarityId'        => $useGtm ? '' : $this->clarity->projectId(),
             'consent'          => Consent::all(),
             'gtagConsent'      => Consent::gtagState(),
             'cookieName'       => Consent::cookieName(),

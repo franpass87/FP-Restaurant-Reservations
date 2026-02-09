@@ -1023,6 +1023,13 @@ final class PagesConfig
                 'type'    => 'text',
                 'default' => '',
             ],
+            'tracking_use_gtm' => [
+                'label'          => __('Usa Google Tag Manager', 'fp-restaurant-reservations'),
+                'type'           => 'checkbox',
+                'checkbox_label' => __('Gestisci GA4, Ads, Meta e Clarity da GTM: il plugin invia solo eventi al dataLayer.', 'fp-restaurant-reservations'),
+                'default'        => '0',
+                'description'     => __('Attiva se carichi i tag da GTM. Non inserire ID sopra (GA4, Ads, Meta, Clarity) per evitare doppio invio.', 'fp-restaurant-reservations'),
+            ],
             'consent_mode_default' => [
                 'label'       => __('Stato Consent Mode predefinito', 'fp-restaurant-reservations'),
                 'type'        => 'select',
