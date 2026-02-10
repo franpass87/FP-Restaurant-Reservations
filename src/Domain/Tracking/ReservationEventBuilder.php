@@ -41,10 +41,21 @@ final class ReservationEventBuilder
         ReservationModel $reservation,
         string $eventId
     ): array {
-        $status    = strtolower($reservation->getStatus());
-        $value     = isset($payload['value']) && is_numeric($payload['value']) ? (float) $payload['value'] : 0.0;
-        $currency  = is_string($payload['currency'] ?? null) && $payload['currency'] !== '' ? (string) $payload['currency'] : 'EUR';
-        $location  = is_string($payload['location'] ?? null) && $payload['location'] !== '' ? (string) $payload['location'] : 'default';
+        $status   = strtolower($reservation->getStatus());
+        $value    = isset($payload['value']) && is_numeric($payload['value']) ? (float) $payload['value'] : 0.0;
+        $currency = is_string($payload['currency'] ?? null) && $payload['currency'] !== '' ? (string) $payload['currency'] : 'EUR';
+        $location = is_string($payload['location'] ?? null) && $payload['location'] !== '' ? (string) $payload['location'] : 'default';
+
+        // Se value non è inviato ma c'è prezzo a persona, usa value stimato (per tracking conversioni/Purchase)
+        if ($value <= 0.0 && isset($payload['price_per_person']) && is_numeric($payload['price_per_person'])) {
+            $pricePerPerson = (float) $payload['price_per_person'];
+            if ($pricePerPerson > 0.0) {
+                $party = isset($payload['party']) && is_numeric($payload['party'])
+                    ? max(1, (int) $payload['party'])
+                    : max(1, $reservation->getParty());
+                $value = round($pricePerPerson * $party, 2);
+            }
+        }
 
         $event = [
             'event'       => 'reservation_submit',

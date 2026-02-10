@@ -204,8 +204,9 @@ final class ReservationHandler
             'profiling_consent' => $this->param($request, ['profiling_consent', 'fp_resv_profiling_consent']) ?? '',
             'policy_version'    => $this->param($request, ['policy_version', 'fp_resv_policy_version']) ?? '',
             'consent_timestamp' => $this->param($request, ['consent_ts', 'fp_resv_consent_ts']) ?? '',
-            'value'       => $this->param($request, ['value', 'fp_resv_value']),
-            'request_id'  => $requestId, // Salva il request_id per idempotenza
+            'value'             => $this->param($request, ['value', 'fp_resv_value']),
+            'price_per_person'   => $this->param($request, ['price_per_person', 'fp_resv_price_per_person']),
+            'request_id'        => $requestId, // Salva il request_id per idempotenza
             // extras
             'high_chair_count'  => $this->param($request, ['high_chair_count', 'fp_resv_high_chair_count']) ?? '0',
             'wheelchair_table'  => $this->param($request, ['wheelchair_table', 'fp_resv_wheelchair_table']) ?? '',

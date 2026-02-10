@@ -2200,12 +2200,25 @@ class FormApp {
             }, 300);
         }
 
-        if (data && Array.isArray(data.tracking)) {
+        if (data && Array.isArray(data.tracking) && data.tracking.length > 0) {
             data.tracking.forEach((entry) => {
                 if (entry && entry.event) {
                     pushDataLayerEvent(entry.event, entry);
                 }
             });
+        } else if (data && data.reservation) {
+            // Fallback per GTM: se il server non ha inviato tracking, pusha comunque reservation_confirmed
+            const res = data.reservation;
+            const confirmedPayload = {
+                reservation_id: res.id,
+                reservation_status: (res.status || 'confirmed').toLowerCase(),
+                reservation_party: res.party ?? res.guests,
+                reservation_date: res.date,
+                reservation_time: res.time,
+                value: res.value != null ? Number(res.value) : null,
+                currency: res.currency || 'EUR',
+            };
+            pushDataLayerEvent(this.events.confirmed || 'reservation_confirmed', confirmedPayload);
         }
     }
 
