@@ -190,6 +190,26 @@ final class AdminController
             $meals = [];
         }
 
+        // Aggiungi aperture speciali come meals (stessa logica di FormContext)
+        try {
+            $specialProvider = new \FP\Resv\Frontend\SpecialOpeningsProvider();
+            $specialMeals = $specialProvider->getSpecialOpeningsAsMeals();
+            foreach ($specialMeals as $specialMeal) {
+                $exists = false;
+                foreach ($meals as $existingMeal) {
+                    if (($existingMeal['key'] ?? '') === ($specialMeal['key'] ?? '')) {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (!$exists) {
+                    $meals[] = $specialMeal;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Non bloccare il manager se le aperture speciali non sono caricabili
+        }
+
         // Leggi opzione debug mode (opzionale, default false)
         $debugOptions = get_option('fp_resv_debug', []);
         $debugMode = is_array($debugOptions) && isset($debugOptions['manager_debug_panel']) 

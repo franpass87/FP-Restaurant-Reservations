@@ -300,6 +300,9 @@ final class SettingsSanitizer
             return '{}';
         }
 
+        // Raccogli i meal_key delle aperture speciali ancora attive per rimuovere dati orfani
+        $activeMealKeys = $this->getActiveSpecialOpeningMealKeys();
+
         $sanitized = [];
         $allowedKeys = ['slot_interval', 'turnover', 'buffer', 'max_parallel', 'capacity'];
 
@@ -309,6 +312,11 @@ final class SettingsSanitizer
             }
             $mealKey = sanitize_key($mealKey);
             if ($mealKey === '') {
+                continue;
+            }
+
+            // Rimuovi parametri per aperture speciali che non esistono più
+            if ($activeMealKeys !== null && !in_array($mealKey, $activeMealKeys, true)) {
                 continue;
             }
 
@@ -332,6 +340,48 @@ final class SettingsSanitizer
         $json = wp_json_encode($sanitized);
 
         return is_string($json) ? $json : '{}';
+    }
+
+    /**
+     * Recupera i meal_key delle aperture speciali attive dal DB.
+     * Restituisce null se la query fallisce (in tal caso non rimuoviamo nulla).
+     *
+     * @return string[]|null
+     */
+    private function getActiveSpecialOpeningMealKeys(): ?array
+    {
+        global $wpdb;
+
+        if (!$wpdb instanceof \wpdb) {
+            return null;
+        }
+
+        try {
+            $table = $wpdb->prefix . 'fp_closures';
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT capacity_override_json FROM {$table} WHERE active = 1 AND type = %s",
+                    'special_opening'
+                ),
+                ARRAY_A
+            );
+
+            if (!is_array($rows)) {
+                return null;
+            }
+
+            $keys = [];
+            foreach ($rows as $row) {
+                $override = json_decode((string) ($row['capacity_override_json'] ?? '{}'), true);
+                if (is_array($override) && !empty($override['meal_key'])) {
+                    $keys[] = (string) $override['meal_key'];
+                }
+            }
+
+            return $keys;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function sanitizeLanguageMap(string $pageKey, string $fieldKey, mixed $value): array
