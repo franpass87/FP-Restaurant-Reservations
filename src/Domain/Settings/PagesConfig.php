@@ -63,6 +63,12 @@ final class PagesConfig
                             'default'     => '',
                             'description' => __('Configura i pasti mostrati nel form, selezionando orari, durata dei turni, buffer, capacità e costo a persona senza ricordare la sintassi testuale.', 'fp-restaurant-reservations'),
                         ],
+                        'special_opening_params' => [
+                            'label'       => __('Parametri aperture speciali', 'fp-restaurant-reservations'),
+                            'type'        => 'special_opening_params',
+                            'default'     => '{}',
+                            'description' => __('Configura slot, turno, buffer e prenotazioni parallele per le aperture speciali (es. San Valentino). Le aperture si creano in Chiusure & Orari speciali.', 'fp-restaurant-reservations'),
+                        ],
                     ],
                 ],
                 'general-layout-preferences' => [

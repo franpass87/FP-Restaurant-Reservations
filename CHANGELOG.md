@@ -1,3 +1,42 @@
+## 0.9.0-rc10.7 - Aperture speciali in Turni e disponibilità (2025-02-11)
+
+### Added - Configurazione aperture speciali
+- **[NEW]** Le aperture speciali (es. San Valentino) compaiono ora nella sezione **Turni e disponibilità**
+- **[NEW]** Parametri configurabili per ogni apertura: Intervallo slot, Durata turno, Buffer, Prenotazioni parallele, Capacità massima
+- **[NEW]** Se imposti max_parallel per un' apertura speciale, il limite viene applicato; altrimenti si usa solo la capienza
+
+### Impact
+- ✅ Puoi gestire i parametri delle aperture speciali dallo stesso pannello dei pasti ordinari
+- ✅ Le aperture si creano ancora in Chiusure & Orari speciali; qui si configurano solo i parametri di disponibilità
+- ✅ Vuoto: messaggio con link a Chiusure & Orari speciali
+
+### Files Modified
+- `src/Domain/Settings/PagesConfig.php` — campo `special_opening_params`
+- `src/Domain/Settings/AdminPages.php` — render tipo `special_opening_params`
+- `src/Domain/Settings/Admin/SettingsSanitizer.php` — sanitizzazione JSON
+- `src/Frontend/SpecialOpeningsProvider.php` — `getSpecialOpeningsForAdmin()`
+- `src/Domain/Reservations/Availability.php` — `getSpecialOpeningParamsOverride()`, uso override in `resolveMealSettings`
+- `assets/js/admin/meal-plan.js` — UI aperture speciali
+- `assets/css/admin-settings.css` — stili sezione
+
+---
+
+## 0.9.0-rc10.6 - Fix max_parallel per aperture speciali (2025-02-11)
+
+### Fixed - Aperture speciali / Eventi 🔴
+- **[FIX]** Le aperture speciali (es. San Valentino capienza 60) bloccavano erroneamente nuove prenotazioni al raggiungimento di `max_parallel` prenotazioni, ignorando la capienza dell'evento
+- **[FIX]** Con capienza 60 e 4 prenotazioni da 8 persone (32 totali), lo slot veniva marcato "pieno" perché `parallelCount >= maxParallel` (es. 4)
+- **[IMPROVEMENT]** Per aperture speciali ora si usa **solo la capienza** dell'evento come limite; `max_parallel` è disattivato (resta attivo per pranzo/cena normale)
+
+### Impact
+- ✅ Eventi con capienza 60 accettano prenotazioni finché non si raggiungono 60 persone
+- ✅ Nessun cambio per il servizio pranzo/cena ordinario
+
+### Files Modified
+- `src/Domain/Reservations/Availability.php` — skip check `max_parallel` quando `$isSpecialOpening === true`
+
+---
+
 ## 0.9.0-rc10.5 - Production Code Cleanup & Improvements (2025-11-XX)
 
 ### Fixed - Memory Leak 🔴

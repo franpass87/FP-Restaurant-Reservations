@@ -12,6 +12,7 @@ use FP\Resv\Domain\Settings\Admin\SettingsValidator;
 use FP\Resv\Domain\Settings\FormColors;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\PagesConfig;
+use FP\Resv\Frontend\SpecialOpeningsProvider;
 use function __;
 use function add_action;
 use function add_query_arg;
@@ -621,6 +622,46 @@ final class AdminPages
                     . ' data-strings="' . esc_attr($stringsJson) . '"'
                     . ' data-hours-config="' . esc_attr($hoursConfigJson) . '"'
                     . '></div>';
+                break;
+            case 'special_opening_params':
+                $inputId = $optionKey . '-' . $fieldKey;
+                $paramsValue = is_string($value) ? $value : '{}';
+                if ($paramsValue === '' || json_decode($paramsValue) === null) {
+                    $paramsValue = '{}';
+                }
+
+                $provider = new SpecialOpeningsProvider();
+                $specialOpenings = $provider->getSpecialOpeningsForAdmin();
+
+                $openingsJson = wp_json_encode($specialOpenings);
+                if (!is_string($openingsJson)) {
+                    $openingsJson = '[]';
+                }
+
+                $strings = [
+                    'sectionTitle'   => __('Aperture speciali', 'fp-restaurant-reservations'),
+                    'emptyState'     => __('Nessuna apertura speciale attiva. Crea aperture in', 'fp-restaurant-reservations'),
+                    'slotLabel'      => __('Intervallo slot (minuti)', 'fp-restaurant-reservations'),
+                    'turnLabel'      => __('Durata turno (minuti)', 'fp-restaurant-reservations'),
+                    'bufferLabel'    => __('Buffer (minuti)', 'fp-restaurant-reservations'),
+                    'parallelLabel'  => __('Prenotazioni parallele', 'fp-restaurant-reservations'),
+                    'capacityLabel'  => __('Capacità massima', 'fp-restaurant-reservations'),
+                    'closuresLink'   => admin_url('admin.php?page=fp-resv-orari-speciali'),
+                ];
+                $stringsJson = wp_json_encode($strings);
+                if (!is_string($stringsJson)) {
+                    $stringsJson = '{}';
+                }
+
+                echo '<textarea id="' . esc_attr($inputId) . '" name="' . esc_attr($inputName) . '"'
+                    . ' data-special-opening-params-input hidden>'
+                    . esc_textarea($paramsValue) . '</textarea>';
+                echo '<div class="fp-resv-special-opening-params"'
+                    . ' data-special-opening-params'
+                    . ' data-target="#' . esc_attr($inputId) . '"'
+                    . ' data-openings="' . esc_attr($openingsJson) . '"'
+                    . ' data-value="' . esc_attr($paramsValue) . '"'
+                    . ' data-strings="' . esc_attr($stringsJson) . '"></div>';
                 break;
             case 'textarea':
                 $rows = (int) ($field['rows'] ?? 5);

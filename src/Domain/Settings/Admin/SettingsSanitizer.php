@@ -215,6 +215,12 @@ final class SettingsSanitizer
                 $raw = is_scalar($value) ? (string) $value : '';
 
                 return trim($raw);
+            case 'meal_plan':
+                $raw = is_scalar($value) ? (string) $value : '';
+
+                return sanitize_textarea_field($raw);
+            case 'special_opening_params':
+                return $this->sanitizeSpecialOpeningParams($value);
             default:
                 $raw = is_scalar($value) ? (string) $value : '';
 
@@ -274,6 +280,58 @@ final class SettingsSanitizer
         }
 
         return $valid;
+    }
+
+    /**
+     * Sanitize special_opening_params: JSON object meal_key => { slot_interval, turnover, buffer, max_parallel, capacity }
+     *
+     * @return string JSON string
+     */
+    private function sanitizeSpecialOpeningParams(mixed $value): string
+    {
+        $decoded = null;
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+        } elseif (is_array($value)) {
+            $decoded = $value;
+        }
+
+        if (!is_array($decoded)) {
+            return '{}';
+        }
+
+        $sanitized = [];
+        $allowedKeys = ['slot_interval', 'turnover', 'buffer', 'max_parallel', 'capacity'];
+
+        foreach ($decoded as $mealKey => $params) {
+            if (!is_string($mealKey) || $mealKey === '' || !is_array($params)) {
+                continue;
+            }
+            $mealKey = sanitize_key($mealKey);
+            if ($mealKey === '') {
+                continue;
+            }
+
+            $clean = [];
+            foreach ($allowedKeys as $key) {
+                if (!isset($params[$key])) {
+                    continue;
+                }
+                $v = $params[$key];
+                if (is_numeric($v)) {
+                    $int = (int) $v;
+                    $min = $key === 'max_parallel' || $key === 'capacity' ? 1 : ($key === 'buffer' ? 0 : 5);
+                    $clean[$key] = max($min, $int);
+                }
+            }
+            if ($clean !== []) {
+                $sanitized[$mealKey] = $clean;
+            }
+        }
+
+        $json = wp_json_encode($sanitized);
+
+        return is_string($json) ? $json : '{}';
     }
 
     private function sanitizeLanguageMap(string $pageKey, string $fieldKey, mixed $value): array

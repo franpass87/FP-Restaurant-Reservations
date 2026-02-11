@@ -15,6 +15,70 @@ final class SpecialOpeningsProvider
 {
     private const TYPE_SPECIAL_OPENING = 'special_opening';
     /**
+     * Load active special openings for admin (Turni e disponibilità).
+     * Returns minimal data: id, meal_key, label, capacity. No available_days calculation.
+     *
+     * @return array<int, array{id:int, meal_key:string, label:string, capacity:int, slots:array}>
+     */
+    public function getSpecialOpeningsForAdmin(): array
+    {
+        try {
+            global $wpdb;
+
+            if (!$wpdb instanceof \wpdb) {
+                return [];
+            }
+
+            $table = $wpdb->prefix . 'fp_closures';
+            $now = (new \DateTimeImmutable('now', wp_timezone()))->format('Y-m-d H:i:s');
+
+            $sql = $wpdb->prepare(
+                "SELECT id, capacity_override_json
+                 FROM {$table}
+                 WHERE active = 1
+                   AND type = %s
+                   AND (end_at >= %s OR recurrence_json IS NOT NULL)
+                 ORDER BY start_at ASC",
+                self::TYPE_SPECIAL_OPENING,
+                $now
+            );
+
+            $rows = $wpdb->get_results($sql, ARRAY_A);
+            if (!is_array($rows) || $rows === []) {
+                return [];
+            }
+
+            $result = [];
+            foreach ($rows as $row) {
+                $capacityOverride = json_decode((string) ($row['capacity_override_json'] ?? '{}'), true);
+                if (!is_array($capacityOverride)) {
+                    continue;
+                }
+
+                $label = $capacityOverride['label'] ?? '';
+                $mealKey = $capacityOverride['meal_key'] ?? '';
+                $slots = $capacityOverride['slots'] ?? [];
+
+                if ($label === '' || $mealKey === '' || empty($slots)) {
+                    continue;
+                }
+
+                $result[] = [
+                    'id' => (int) $row['id'],
+                    'meal_key' => $mealKey,
+                    'label' => $label,
+                    'capacity' => (int) ($capacityOverride['capacity'] ?? 40),
+                    'slots' => $slots,
+                ];
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
      * Load active special openings from database and convert them to meal format.
      *
      * @return array<int, array<string, mixed>> Array of meals in the same format as regular meals

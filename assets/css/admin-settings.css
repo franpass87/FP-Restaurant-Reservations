@@ -394,6 +394,29 @@
     align-self: flex-start;
 }
 
+/* Aperture speciali - parametri in Turni e disponibilità */
+.fp-resv-special-opening-params {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.fp-resv-special-opening-params__section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fp-resv-special-opening-params__section .fp-resv-meal-plan__title {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+}
+
+.fp-resv-special-opening-params__card {
+    margin-top: 0;
+}
+
 @media (max-width: 1200px) {
     .fp-resv-meal-plan__hours-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

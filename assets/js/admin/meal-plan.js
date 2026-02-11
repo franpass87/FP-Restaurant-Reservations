@@ -1062,4 +1062,159 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
         render();
         sync();
     });
+
+    // === Aperture speciali - parametri in Turni e disponibilità ===
+    const specialRoots = document.querySelectorAll('[data-special-opening-params]');
+    specialRoots.forEach((root) => {
+        const targetSelector = root.getAttribute('data-target');
+        const input = targetSelector ? document.querySelector(targetSelector) : null;
+        if (!(input instanceof HTMLTextAreaElement)) {
+            return;
+        }
+
+        let openings = [];
+        try {
+            const parsed = JSON.parse(root.getAttribute('data-openings') || '[]');
+            openings = Array.isArray(parsed) ? parsed : [];
+        } catch {
+            openings = [];
+        }
+
+        let params = {};
+        try {
+            const parsed = JSON.parse(root.getAttribute('data-value') || '{}');
+            params = parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            params = {};
+        }
+
+        let strings = {
+            sectionTitle: 'Aperture speciali',
+            emptyState: 'Nessuna apertura speciale attiva. Crea aperture in Chiusure & Orari speciali.',
+            slotLabel: 'Intervallo slot (minuti)',
+            turnLabel: 'Durata turno (minuti)',
+            bufferLabel: 'Buffer (minuti)',
+            parallelLabel: 'Prenotazioni parallele',
+            capacityLabel: 'Capacità massima',
+        };
+        try {
+            const parsed = JSON.parse(root.getAttribute('data-strings') || '{}');
+            if (parsed && typeof parsed === 'object') {
+                strings = { ...strings, ...parsed };
+            }
+        } catch {
+            // use defaults
+        }
+
+        const sync = () => {
+            input.value = JSON.stringify(params);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        root.innerHTML = '';
+
+        if (openings.length === 0) {
+            const section = document.createElement('div');
+            section.className = 'fp-resv-special-opening-params__section';
+            const h3 = document.createElement('h4');
+            h3.className = 'fp-resv-meal-plan__title';
+            h3.textContent = strings.sectionTitle;
+            section.appendChild(h3);
+            const p = document.createElement('p');
+            p.className = 'fp-resv-meal-plan__empty description';
+            p.textContent = (strings.emptyState || '') + ' ';
+            const link = document.createElement('a');
+            link.href = strings.closuresLink || '#';
+            link.textContent = 'Chiusure & Orari speciali';
+            link.target = '_blank';
+            p.appendChild(link);
+            section.appendChild(p);
+            root.appendChild(section);
+            return;
+        }
+
+        const section = document.createElement('div');
+        section.className = 'fp-resv-special-opening-params__section';
+        const h3 = document.createElement('h4');
+        h3.className = 'fp-resv-meal-plan__title';
+        h3.textContent = strings.sectionTitle;
+        section.appendChild(h3);
+
+        openings.forEach((opening) => {
+            const mealKey = opening.meal_key || '';
+            const label = opening.label || mealKey;
+            const def = params[mealKey] || {};
+            const card = document.createElement('div');
+            card.className = 'fp-resv-meal-plan__card fp-resv-special-opening-params__card';
+
+            const title = document.createElement('div');
+            title.className = 'fp-resv-meal-plan__title';
+            title.textContent = label;
+            card.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'fp-resv-meal-plan__numeric-grid';
+
+            const createNumInput = (key, min = 0, placeholderVal) => {
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.min = String(min);
+                inp.step = '1';
+                inp.value = def[key] !== undefined && def[key] !== '' ? String(def[key]) : '';
+                if (placeholderVal !== undefined && placeholderVal !== null) {
+                    inp.placeholder = String(placeholderVal);
+                }
+                inp.className = 'fp-resv-meal-plan__input';
+                inp.addEventListener('input', () => {
+                    const v = inp.value.trim();
+                    if (!params[mealKey]) params[mealKey] = {};
+                    const num = v === '' ? null : parseInt(v, 10);
+                    if (num === null || isNaN(num)) {
+                        delete params[mealKey][key];
+                    } else {
+                        params[mealKey][key] = Math.max(min, num);
+                    }
+                    if (Object.keys(params[mealKey]).length === 0) delete params[mealKey];
+                    sync();
+                });
+                return inp;
+            };
+
+            const slotLabel = document.createElement('label');
+            slotLabel.className = 'fp-resv-meal-plan__field';
+            slotLabel.innerHTML = '<span class="fp-resv-meal-plan__field-label">' + (strings.slotLabel || 'Slot') + '</span>';
+            slotLabel.appendChild(createNumInput('slot_interval', 5, 15));
+            grid.appendChild(slotLabel);
+
+            const turnLabel = document.createElement('label');
+            turnLabel.className = 'fp-resv-meal-plan__field';
+            turnLabel.innerHTML = '<span class="fp-resv-meal-plan__field-label">' + (strings.turnLabel || 'Turno') + '</span>';
+            turnLabel.appendChild(createNumInput('turnover', 5, 120));
+            grid.appendChild(turnLabel);
+
+            const bufferLabel = document.createElement('label');
+            bufferLabel.className = 'fp-resv-meal-plan__field';
+            bufferLabel.innerHTML = '<span class="fp-resv-meal-plan__field-label">' + (strings.bufferLabel || 'Buffer') + '</span>';
+            bufferLabel.appendChild(createNumInput('buffer', 0, 15));
+            grid.appendChild(bufferLabel);
+
+            const parallelLabel = document.createElement('label');
+            parallelLabel.className = 'fp-resv-meal-plan__field';
+            parallelLabel.innerHTML = '<span class="fp-resv-meal-plan__field-label">' + (strings.parallelLabel || 'Parallele') + '</span>';
+            parallelLabel.appendChild(createNumInput('max_parallel', 1, 8));
+            grid.appendChild(parallelLabel);
+
+            const capacityLabel = document.createElement('label');
+            capacityLabel.className = 'fp-resv-meal-plan__field';
+            capacityLabel.innerHTML = '<span class="fp-resv-meal-plan__field-label">' + (strings.capacityLabel || 'Capacità') + '</span>';
+            capacityLabel.appendChild(createNumInput('capacity', 1, opening.capacity));
+            grid.appendChild(capacityLabel);
+
+            card.appendChild(grid);
+            section.appendChild(card);
+        });
+
+        root.appendChild(section);
+        sync();
+    });
 })();

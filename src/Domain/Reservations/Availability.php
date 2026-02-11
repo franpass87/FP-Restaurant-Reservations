@@ -318,7 +318,10 @@ class Availability
                     }
                 }
 
-                if ($parallelCount >= $maxParallel) {
+                // Per aperture speciali senza override max_parallel: usa solo capienza
+                // Con override in Turni e disponibilità: applica il limite configurato
+                $skipParallel = $isSpecialOpening && ($mealSettings['skip_max_parallel_for_special'] ?? true);
+                if (!$skipParallel && $parallelCount >= $maxParallel) {
                     $reasons = $closureEffect['reasons'];
                     $reasons[] = __('Limite di prenotazioni parallele raggiunto per lo slot selezionato.', 'fp-restaurant-reservations');
 
@@ -655,7 +658,8 @@ class Availability
                     }
                 }
 
-                if ($parallelCount >= $maxParallel) {
+                $skipParallel = $isSpecialOpening && ($mealSettings['skip_max_parallel_for_special'] ?? true);
+                if (!$skipParallel && $parallelCount >= $maxParallel) {
                     $reasons = $closureEffect['reasons'];
                     $reasons[] = __('Limite di prenotazioni parallele raggiunto per lo slot selezionato.', 'fp-restaurant-reservations');
 
@@ -821,6 +825,8 @@ class Availability
 
         // Log disabilitati per evitare errori
 
+        $specialOverrides = null;
+
         if ($mealKey !== '') {
             $plan = $this->getMealPlan();
             
@@ -862,7 +868,27 @@ class Availability
                     $capacityLimit = max(1, (int) $meal['capacity']);
                 }
             } else {
-                // Meal key non trovato, usa default
+                // Meal key non trovato - per aperture speciali controlla override in Turni e disponibilità
+                if ($mealKey !== '' && str_starts_with($mealKey, 'special_')) {
+                    $specialOverrides = $this->getSpecialOpeningParamsOverride($mealKey);
+                    if ($specialOverrides !== []) {
+                        if (isset($specialOverrides['slot_interval']) && $specialOverrides['slot_interval'] > 0) {
+                            $slotInterval = max(5, (int) $specialOverrides['slot_interval']);
+                        }
+                        if (isset($specialOverrides['turnover']) && $specialOverrides['turnover'] > 0) {
+                            $turnoverMinutes = max($slotInterval, (int) $specialOverrides['turnover']);
+                        }
+                        if (isset($specialOverrides['buffer'])) {
+                            $bufferMinutes = max(0, (int) $specialOverrides['buffer']);
+                        }
+                        if (isset($specialOverrides['max_parallel']) && $specialOverrides['max_parallel'] > 0) {
+                            $maxParallel = max(1, (int) $specialOverrides['max_parallel']);
+                        }
+                        if (isset($specialOverrides['capacity']) && $specialOverrides['capacity'] > 0) {
+                            $capacityLimit = max(1, (int) $specialOverrides['capacity']);
+                        }
+                    }
+                }
             }
         }
 
@@ -870,20 +896,49 @@ class Availability
             $turnoverMinutes = $slotInterval;
         }
 
+        // Per aperture speciali: salta il check max_parallel a meno che non sia configurato
+        // esplicitamente dall'utente in Turni e disponibilità.
+        // Default true = salta (usa solo capienza). Copre anche il caso mealKey vuoto
+        // ma isSpecialOpening=true nel chiamante.
+        $skipMaxParallelForSpecial = true;
+        if ($mealKey !== '' && str_starts_with($mealKey, 'special_')) {
+            $checkOverrides = is_array($specialOverrides) ? $specialOverrides : $this->getSpecialOpeningParamsOverride($mealKey);
+            if (isset($checkOverrides['max_parallel']) && $checkOverrides['max_parallel'] !== null) {
+                $skipMaxParallelForSpecial = false;
+            }
+        }
+
         $result = [
-            'schedule'       => $scheduleMap,
-            'slot_interval'  => $slotInterval,
-            'turnover'       => $turnoverMinutes,
-            'buffer'         => $bufferMinutes,
-            'max_parallel'   => $maxParallel,
-            'capacity_limit' => $capacityLimit,
+            'schedule'                   => $scheduleMap,
+            'slot_interval'              => $slotInterval,
+            'turnover'                   => $turnoverMinutes,
+            'buffer'                     => $bufferMinutes,
+            'max_parallel'               => $maxParallel,
+            'capacity_limit'             => $capacityLimit,
+            'skip_max_parallel_for_special' => $skipMaxParallelForSpecial,
         ];
 
-        // Log disabilitati
-
-        // Log disabilitati
-
         return $result;
+    }
+
+    /**
+     * Get override params for a special opening from Turni e disponibilità.
+     *
+     * @return array{slot_interval?:int, turnover?:int, buffer?:int, max_parallel?:int, capacity?:int}
+     */
+    private function getSpecialOpeningParamsOverride(string $mealKey): array
+    {
+        $raw = $this->options->getField('fp_resv_general', 'special_opening_params', '{}');
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded) || !isset($decoded[$mealKey]) || !is_array($decoded[$mealKey])) {
+            return [];
+        }
+
+        return $decoded[$mealKey];
     }
 
 
