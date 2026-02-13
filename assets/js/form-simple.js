@@ -379,6 +379,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Scroll al top del form per evitare che l'utente resti in fondo
+        // dopo step lunghi (es. step 3 → step 4)
+        if (form && typeof form.scrollIntoView === 'function') {
+            requestAnimationFrame(function() {
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+        
         // Nascondi tutti gli step e rimuovi classi
         // Verifica che steps sia un NodeList valido
         if (steps && steps.length > 0) {

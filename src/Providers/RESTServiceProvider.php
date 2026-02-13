@@ -440,14 +440,13 @@ final class RESTServiceProvider extends ServiceProvider
                 $container->get(\FP\Resv\Domain\Reservations\REST::class);
             }
             
-            // Reservations routes
-            register_rest_route('fp-resv/v1', '/reservations', [
-                [
-                    'methods' => 'POST',
-                    'callback' => [$reservationsEndpoint, 'create'],
-                    'permission_callback' => '__return_true',
-                ],
-            ]);
+            // NOTE: POST /reservations è gestita dal legacy ReservationHandler
+            // (registrato in Domain\Reservations\REST) che include:
+            // - Nonce verification, rate limiting, honeypot, captcha
+            // - Consent check, idempotency
+            // - Email invio cliente/staff, Brevo integration
+            // - DataLayer tracking (reservation_confirmed/submit)
+            // NON sovrascrivere qui per evitare la perdita di tutti questi side-effects.
             
             register_rest_route('fp-resv/v1', '/reservations/(?P<id>\d+)', [
                 [

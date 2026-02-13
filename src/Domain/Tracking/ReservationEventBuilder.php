@@ -85,6 +85,7 @@ final class ReservationEventBuilder
         ];
 
         if ($status === 'confirmed') {
+            $event['event']                   = 'reservation_confirmed';
             $event['ga4']['name']             = 'reservation_confirmed';
             $event['reservation']['status']   = 'confirmed';
             $adsPayload                       = $this->ads->conversionPayload($reservationId, $value, $currency);
@@ -97,8 +98,10 @@ final class ReservationEventBuilder
                 $event['meta']['event_id'] = $eventId;
             }
         } elseif ($status === 'waitlist') {
+            $event['event']       = 'waitlist_joined';
             $event['ga4']['name'] = 'waitlist_joined';
         } elseif ($status === 'pending_payment') {
+            $event['event']       = 'reservation_payment_required';
             $event['ga4']['name'] = 'reservation_payment_required';
         }
 
