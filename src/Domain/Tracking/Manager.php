@@ -84,6 +84,7 @@ final class Manager
     public function boot(): void
     {
         add_action('init', [$this, 'captureAttribution']);
+        add_action('wp_head', [$this, 'renderDataLayerInit'], 0);
         add_action('wp_head', [$this, 'renderHead'], 1);
         add_action('wp_footer', [$this, 'renderFooter'], 90);
         add_action('fp_resv_reservation_created', [$this, 'handleReservationCreated'], 10, 3);
@@ -98,6 +99,19 @@ final class Manager
 
         $cookieDays = (int) ($this->settings()['tracking_utm_cookie_days'] ?? 90);
         $this->utmHandler->capture($cookieDays);
+    }
+
+    /**
+     * Inizializza dataLayer il prima possibile (priority 0) per garantire
+     * che GTM e il plugin condividano lo stesso array prima di qualsiasi altro script.
+     */
+    public function renderDataLayerInit(): void
+    {
+        if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
+            return;
+        }
+
+        echo "<script id=\"fp-resv-datalayer-init\">(function(w){w.dataLayer=w.dataLayer||[];})(window);</script>\n";
     }
 
     public function renderHead(): void

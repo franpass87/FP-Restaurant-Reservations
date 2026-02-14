@@ -2200,25 +2200,41 @@ class FormApp {
             }, 300);
         }
 
+        // 1. Pusha gli eventi server-side ECCETTO reservation_confirmed
+        //    (quest'ultimo viene sempre pushato sotto in formato flat per GTM).
+        //    Gli eventi server passano comunque per fpResvTracking.dispatch()
+        //    che li invia a gtag/fbq quando NON si usa GTM.
         if (data && Array.isArray(data.tracking) && data.tracking.length > 0) {
             data.tracking.forEach((entry) => {
-                if (entry && entry.event) {
+                if (entry && entry.event && entry.event !== 'reservation_confirmed') {
                     pushDataLayerEvent(entry.event, entry);
                 }
             });
-        } else if (data && data.reservation) {
-            // Fallback per GTM: se il server non ha inviato tracking, pusha comunque reservation_confirmed
-            const res = data.reservation;
-            const confirmedPayload = {
-                reservation_id: res.id,
-                reservation_status: (res.status || 'confirmed').toLowerCase(),
-                reservation_party: res.party ?? res.guests,
-                reservation_date: res.date,
-                reservation_time: res.time,
-                value: res.value != null ? Number(res.value) : null,
-                currency: res.currency || 'EUR',
+        }
+
+        // 2. Pusha SEMPRE reservation_confirmed con struttura FLAT per GTM.
+        //    Estrae i dati dalla risposta server (tracking o reservation) per
+        //    popolare le Data Layer Variables di GTM (reservation_id, value, ecc.)
+        //    Non ha ga4.name, quindi fpResvTracking.dispatch() non lo reinvia a gtag.
+        if (data) {
+            const tracking = Array.isArray(data.tracking) && data.tracking.length > 0 ? data.tracking[0] : null;
+            const res = data.reservation || {};
+            const ga4Params = (tracking && tracking.ga4 && tracking.ga4.params) || {};
+            const resvData = (tracking && tracking.reservation) || {};
+
+            const flatPayload = {
+                reservation_id: ga4Params.reservation_id || resvData.id || res.id,
+                reservation_status: ga4Params.reservation_status || resvData.status || (res.status || 'confirmed').toLowerCase(),
+                reservation_party: ga4Params.reservation_party || resvData.party || res.party || res.guests,
+                reservation_date: ga4Params.reservation_date || resvData.date || res.date,
+                reservation_time: ga4Params.reservation_time || resvData.time || res.time,
+                reservation_location: ga4Params.reservation_location || resvData.location || res.location || 'default',
+                value: ga4Params.value != null ? ga4Params.value : (res.value != null ? Number(res.value) : null),
+                currency: ga4Params.currency || res.currency || 'EUR',
+                event_id: (tracking && tracking.event_id) || undefined,
             };
-            pushDataLayerEvent(this.events.confirmed || 'reservation_confirmed', confirmedPayload);
+
+            pushDataLayerEvent(this.events.confirmed || 'reservation_confirmed', flatPayload);
         }
     }
 

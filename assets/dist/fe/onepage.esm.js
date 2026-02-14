@@ -1054,21 +1054,28 @@ class rt {
         behavior: "smooth",
         block: "center"
       });
-    }, 300)), t && Array.isArray(t.tracking) && t.tracking.length > 0)
+    }, 300));
+    if (t && Array.isArray(t.tracking) && t.tracking.length > 0)
       t.tracking.forEach((i) => {
-        i && i.event && v(i.event, i);
+        i && i.event && i.event !== "reservation_confirmed" && v(i.event, i);
       });
-    else if (t && t.reservation) {
-      const i = t.reservation, s = {
-        reservation_id: i.id,
-        reservation_status: (i.status || "confirmed").toLowerCase(),
-        reservation_party: i.party ?? i.guests,
-        reservation_date: i.date,
-        reservation_time: i.time,
-        value: i.value != null ? Number(i.value) : null,
-        currency: i.currency || "EUR"
-      };
-      v(this.events.confirmed || "reservation_confirmed", s);
+    if (t) {
+      const i = Array.isArray(t.tracking) && t.tracking.length > 0 ? t.tracking[0] : null,
+        s = t.reservation || {},
+        n = (i && i.ga4 && i.ga4.params) || {},
+        r = (i && i.reservation) || {},
+        o = {
+          reservation_id: n.reservation_id || r.id || s.id,
+          reservation_status: n.reservation_status || r.status || (s.status || "confirmed").toLowerCase(),
+          reservation_party: n.reservation_party || r.party || s.party || s.guests,
+          reservation_date: n.reservation_date || r.date || s.date,
+          reservation_time: n.reservation_time || r.time || s.time,
+          reservation_location: n.reservation_location || r.location || s.location || "default",
+          value: n.value != null ? n.value : (s.value != null ? Number(s.value) : null),
+          currency: n.currency || s.currency || "EUR",
+          event_id: (i && i.event_id) || void 0
+        };
+      v(this.events.confirmed || "reservation_confirmed", o);
     }
   }
   handleSubmitError(t, e) {
