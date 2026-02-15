@@ -27,6 +27,12 @@ use function str_replace;
 use function strlen;
 use function strpos;
 use function trim;
+use function wp_enqueue_script;
+use function wp_enqueue_style;
+use function wp_register_script;
+use function wp_register_style;
+use function wp_script_is;
+use function wp_style_is;
 
 /**
  * Gestisce il rendering degli shortcode del form di prenotazione.
@@ -57,6 +63,10 @@ final class ShortcodeRenderer
                 $atts,
                 'fp_reservations'
             );
+
+            // Force-enqueue scripts when the shortcode actually renders.
+            // shouldEnqueue() may miss shortcodes inside WPBakery/Elementor containers.
+            $this->ensureScriptsEnqueued();
 
             $this->checkInitialization();
             $context = $this->buildContext($atts);
@@ -160,6 +170,58 @@ final class ShortcodeRenderer
             } elseif ($filter === 'convert_chars') {
                 add_filter('the_content', 'convert_chars');
             }
+        }
+    }
+
+    /**
+     * Garantisce che gli script frontend siano enqueued.
+     *
+     * Viene chiamato direttamente dal render della shortcode come fallback
+     * nel caso in cui shouldEnqueue() non rilevi la shortcode (es. WPBakery,
+     * Elementor, widget, template part). Poiché gli script sono registrati
+     * nel footer, possono essere enqueued anche durante il rendering del contenuto.
+     */
+    private function ensureScriptsEnqueued(): void
+    {
+        // Se gli script sono già enqueued (shouldEnqueue ha funzionato), non fare nulla.
+        if (wp_script_is('fp-resv-onepage-module', 'enqueued') || wp_script_is('fp-resv-onepage', 'enqueued')) {
+            return;
+        }
+
+        error_log('[FP-RESV] Scripts not enqueued by shouldEnqueue() — force-enqueuing from shortcode render');
+
+        $version = Plugin::assetVersion();
+        $modulePath = Plugin::$dir . 'assets/dist/fe/onepage.esm.js';
+        $legacyPath = Plugin::$dir . 'assets/dist/fe/onepage.iife.js';
+        $moduleUrl  = Plugin::$url . 'assets/dist/fe/onepage.esm.js';
+        $legacyUrl  = Plugin::$url . 'assets/dist/fe/onepage.iife.js';
+
+        if (file_exists($modulePath)) {
+            wp_register_script('fp-resv-onepage-module', $moduleUrl, ['flatpickr', 'flatpickr-it'], $version, true);
+            wp_enqueue_script('fp-resv-onepage-module');
+        }
+
+        if (file_exists($legacyPath)) {
+            wp_register_script('fp-resv-onepage', $legacyUrl, ['flatpickr', 'flatpickr-it'], $version, true);
+            wp_enqueue_script('fp-resv-onepage');
+        }
+
+        // Enqueue Flatpickr CSS/JS if not already done
+        if (!wp_style_is('flatpickr', 'enqueued')) {
+            wp_register_style('flatpickr', Plugin::$url . 'assets/vendor/flatpickr.min.css', [], '4.6.13');
+            wp_enqueue_style('flatpickr');
+        }
+        if (!wp_script_is('flatpickr', 'enqueued')) {
+            wp_register_script('flatpickr', Plugin::$url . 'assets/vendor/flatpickr.min.js', [], '4.6.13', true);
+            wp_enqueue_script('flatpickr');
+        }
+        if (!wp_script_is('flatpickr-it', 'enqueued')) {
+            wp_register_script('flatpickr-it', Plugin::$url . 'assets/vendor/flatpickr-it.js', ['flatpickr'], '4.6.13', true);
+            wp_enqueue_script('flatpickr-it');
+        }
+        if (!wp_style_is('fp-resv-form', 'enqueued')) {
+            wp_register_style('fp-resv-form', Plugin::$url . 'assets/css/form.css', ['flatpickr'], $version);
+            wp_enqueue_style('fp-resv-form');
         }
     }
 

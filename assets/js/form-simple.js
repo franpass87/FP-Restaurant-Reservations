@@ -1,4 +1,4 @@
-console.log('🚀 JavaScript del form caricato! [VERSIONE AUDIT COMPLETO v2.3]');
+console.log('🚀 JavaScript del form caricato! [VERSIONE AUDIT COMPLETO v2.4 + GTM TRACKING]');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM caricato, inizializzo form...');
@@ -9,6 +9,39 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Form non trovato!');
         return;
     }
+
+    // ─── GTM / DataLayer Tracking Helper ─────────────────────────
+    // Pusha eventi FLAT nel dataLayer per essere letti da GTM come
+    // Data Layer Variables (DLV). Usa fpResvTracking.dispatch() come
+    // fallback per modalità non-GTM (gtag diretto).
+    let _reservationStartFired = false;
+
+    function pushDataLayerEvent(eventName, params) {
+        window.dataLayer = window.dataLayer || [];
+        var payload = { event: eventName };
+        if (params && typeof params === 'object') {
+            for (var key in params) {
+                if (params.hasOwnProperty(key) && params[key] !== undefined && params[key] !== null) {
+                    payload[key] = params[key];
+                }
+            }
+        }
+        window.dataLayer.push(payload);
+        console.log('[FP-RESV-TRACKING] dataLayer.push:', eventName, payload);
+
+        // Dispatch a fpResvTracking se presente (per modalità non-GTM)
+        if (window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
+            try {
+                window.fpResvTracking.dispatch({
+                    event: eventName,
+                    ga4: { name: eventName, params: params || {} }
+                });
+            } catch (e) {
+                console.warn('[FP-RESV-TRACKING] dispatch error:', e);
+            }
+        }
+    }
+    // ─── Fine Helper ─────────────────────────────────────────────
     
     // Funzione helper per mostrare notice
     function showNotice(type, message, duration = 5000) {
@@ -126,6 +159,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
+
+                // GTM: reservation_start (solo alla prima interazione)
+                if (!_reservationStartFired) {
+                    _reservationStartFired = true;
+                    var locationVal = (document.querySelector('input[name="fp_resv_location"]') || {}).value || 'default';
+                    pushDataLayerEvent('reservation_start', {
+                        reservation_location: locationVal,
+                        meal_type: selectedMeal
+                    });
+                }
                 
                 // Reset selectedTime quando cambi meal
                 selectedTime = null;
@@ -686,7 +729,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             console.log('📤 Invio prenotazione al server...', payload);
-            
+
+            // GTM: reservation_submit (pre-AJAX, flat per DLV)
+            pushDataLayerEvent('reservation_submit', {
+                reservation_date: payload.fp_resv_date,
+                reservation_time: payload.fp_resv_time,
+                reservation_party: payload.fp_resv_party,
+                reservation_location: payload.fp_resv_location || 'default',
+                meal_type: payload.fp_resv_meal,
+                currency: payload.fp_resv_currency || 'EUR'
+            });
+
             // Invia la richiesta al server
             const response = await fetch('/wp-json/fp-resv/v1/reservations', {
                 method: 'POST',
@@ -704,7 +757,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Successo!
                 console.log('✅ Prenotazione creata con successo:', data);
                 showNotice('success', data.message || 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');
-                
+
+                // ─── GTM: reservation_confirmed (flat per DLV) ───
+                var res = (data && data.reservation) || {};
+                var trackingArr = (data && Array.isArray(data.tracking)) ? data.tracking : [];
+                var firstTrack = trackingArr.length > 0 ? trackingArr[0] : null;
+                var ga4p = (firstTrack && firstTrack.ga4 && firstTrack.ga4.params) || {};
+                var resvData = (firstTrack && firstTrack.reservation) || {};
+
+                pushDataLayerEvent('reservation_confirmed', {
+                    reservation_id: ga4p.reservation_id || resvData.id || res.id,
+                    reservation_status: ga4p.reservation_status || resvData.status || (res.status || 'confirmed').toLowerCase(),
+                    reservation_party: ga4p.reservation_party || resvData.party || res.party || res.guests || payload.fp_resv_party,
+                    reservation_date: ga4p.reservation_date || resvData.date || res.date || payload.fp_resv_date,
+                    reservation_time: ga4p.reservation_time || resvData.time || res.time || payload.fp_resv_time,
+                    reservation_location: ga4p.reservation_location || resvData.location || res.location || payload.fp_resv_location || 'default',
+                    meal_type: ga4p.meal_type || resvData.meal_type || payload.fp_resv_meal,
+                    value: ga4p.value != null ? ga4p.value : (res.value != null ? Number(res.value) : undefined),
+                    currency: ga4p.currency || res.currency || payload.fp_resv_currency || 'EUR',
+                    event_id: (firstTrack && firstTrack.event_id) || undefined
+                });
+
+                // GTM: purchase (se presente nella risposta server)
+                var purchaseEntry = trackingArr.find(function(e) { return e && e.event === 'purchase'; });
+                if (purchaseEntry) {
+                    var pGa4 = (purchaseEntry.ga4 && purchaseEntry.ga4.params) || {};
+                    var pData = purchaseEntry.purchase || {};
+                    pushDataLayerEvent('purchase', {
+                        value: pGa4.value || pData.value,
+                        currency: pGa4.currency || pData.currency || 'EUR',
+                        value_is_estimated: pData.value_is_estimated || true,
+                        reservation_id: pGa4.reservation_id || ga4p.reservation_id || res.id,
+                        reservation_party: pGa4.reservation_party || pData.party_size || payload.fp_resv_party,
+                        meal_type: pGa4.meal_type || pData.meal_type || payload.fp_resv_meal,
+                        event_id: purchaseEntry.event_id || undefined
+                    });
+                }
+
+                // Dispatch server-side tracking (per modalità non-GTM)
+                trackingArr.forEach(function(entry) {
+                    if (entry && window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
+                        try { window.fpResvTracking.dispatch(entry); } catch(e) {}
+                    }
+                });
+                // ─── Fine GTM ───
+
                 // Nascondi il riepilogo dopo la conferma
                 const summaryStep = form.querySelector('.fp-step[data-step="4"]');
                 if (summaryStep) {
