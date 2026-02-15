@@ -161,32 +161,28 @@ final class Plugin
 
     /**
      * Get the asset version string with cache busting timestamp.
-     * This ensures browser caches are invalidated when the plugin is updated.
-     * 
-     * In development mode (WP_DEBUG), uses current timestamp to force cache invalidation.
-     * In production, uses last upgrade timestamp for stable caching.
-     * 
-     * @return string Version string like "0.1.6.1234567890"
+     *
+     * In debug mode uses filemtime of key frontend files; in production
+     * uses the latest between wp_option upgrade timestamp and the main
+     * JS bundle mtime (so git-pull deployments bust cache automatically).
+     *
+     * @return string  e.g. "0.1.6.1739500000"
      */
     public static function assetVersion(): string
     {
-        // Return cached version if already calculated in this request
         if (self::$assetVersionCache !== null) {
             return self::$assetVersionCache;
         }
-        
+
         // In debug mode, use file modification time to auto-detect changes
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            // Use the latest modification time of key frontend files
             $files = [
-                self::$dir . 'templates/frontend/form.php',
-                self::$dir . 'assets/css/form-thefork.css',
+                self::$dir . 'templates/frontend/form-simple.php',
+                self::$dir . 'assets/js/form-simple.js',
                 self::$dir . 'assets/css/form.css',
-                self::$dir . 'assets/dist/fe/onepage.esm.js',
-                self::$dir . 'assets/dist/fe/onepage.iife.js',
                 self::$dir . 'assets/js/admin/reports-dashboard.js',
             ];
-            
+
             $latestTime = time();
             foreach ($files as $file) {
                 if (file_exists($file)) {
@@ -196,20 +192,20 @@ final class Plugin
                     }
                 }
             }
-            
+
             self::$assetVersionCache = self::VERSION . '.' . $latestTime;
             return self::$assetVersionCache;
         }
-        
-        // In production, use filemtime of key JS bundle for automatic cache busting
-        // when deploying via git pull (without going through WP upgrader).
-        $esmPath = self::$dir . 'assets/dist/fe/onepage.esm.js';
-        $bundleMtime = file_exists($esmPath) ? (int) filemtime($esmPath) : 0;
+
+        // Production: use filemtime of form-simple.js for automatic cache
+        // busting when deploying via git pull.
+        $jsPath = self::$dir . 'assets/js/form-simple.js';
+        $bundleMtime = file_exists($jsPath) ? (int) filemtime($jsPath) : 0;
 
         if (!function_exists('get_option')) {
             return self::VERSION . '.' . ($bundleMtime ?: time());
         }
-        
+
         $upgradeTime = get_option('fp_resv_last_upgrade', false);
         if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
             $upgradeTime = time();
@@ -217,13 +213,10 @@ final class Plugin
                 update_option('fp_resv_last_upgrade', $upgradeTime, false);
             }
         }
-        
-        // Use the LATEST between upgrade timestamp and bundle file mtime
-        // so git pull deployments also bust the cache automatically.
-        $effectiveTime = max((int) $upgradeTime, $bundleMtime);
-        
-        self::$assetVersionCache = self::VERSION . '.' . $effectiveTime;
 
+        $effectiveTime = max((int) $upgradeTime, $bundleMtime);
+
+        self::$assetVersionCache = self::VERSION . '.' . $effectiveTime;
         return self::$assetVersionCache;
     }
 

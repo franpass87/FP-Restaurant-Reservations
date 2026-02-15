@@ -32,10 +32,9 @@ final class WidgetController
         add_filter('vc_raw_html_content', [$this->pageBuilderCompat, 'forceWPBakeryShortcodeProcessing'], 1);
         add_filter('wpb_js_composer_shortcode_content', [$this->pageBuilderCompat, 'preventWPBakeryEscape'], 10, 2);
         
-        // Asset management
+        // Asset management (solo CSS — JS caricato dal template form-simple.php)
         add_action('wp_enqueue_scripts', [$this->assetManager, 'enqueue'], 999);
         add_action('wp_head', [$this->cssManager, 'render'], 9999);
-        add_filter('script_loader_tag', [$this->assetManager, 'filterScriptTag'], 10, 3);
         
         // Content filtering
         add_filter('the_content', [$this->contentFilter, 'forceShortcodeExecution'], 999);
