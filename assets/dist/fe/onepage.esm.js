@@ -1044,12 +1044,13 @@ class rt {
   handleSubmitSuccess(t) {
     this.clearError();
     const e = t && t.message || this.copy.submitSuccess;
-    if (this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, setTimeout(() => {
+    this.successAlert && (this.successAlert.textContent = e, this.successAlert.hidden = !1, setTimeout(() => {
       this.successAlert.scrollIntoView({
         behavior: "smooth",
         block: "center"
       }), typeof this.successAlert.focus == "function" && this.successAlert.focus();
-    }, 100)), this.form && (this.form.setAttribute("data-state", "submitted"), this.form.style.transition = "opacity 0.3s ease-out", this.form.style.opacity = "0", setTimeout(() => {
+    }, 100));
+    this.form && (this.form.setAttribute("data-state", "submitted"), this.form.style.transition = "opacity 0.3s ease-out", this.form.style.opacity = "0", setTimeout(() => {
       this.form.style.display = "none", this.successAlert && this.successAlert.scrollIntoView({
         behavior: "smooth",
         block: "center"
@@ -1057,7 +1058,7 @@ class rt {
     }, 300));
     if (t && Array.isArray(t.tracking) && t.tracking.length > 0)
       t.tracking.forEach((i) => {
-        i && i.event && i.event !== "reservation_confirmed" && v(i.event, i);
+        i && window.fpResvTracking && typeof window.fpResvTracking.dispatch == "function" && window.fpResvTracking.dispatch(i);
       });
     if (t) {
       const i = Array.isArray(t.tracking) && t.tracking.length > 0 ? t.tracking[0] : null,
@@ -1076,6 +1077,22 @@ class rt {
           event_id: (i && i.event_id) || void 0
         };
       v(this.events.confirmed || "reservation_confirmed", o);
+    }
+    if (t && Array.isArray(t.tracking)) {
+      const i = t.tracking.find((l) => l && l.event === "purchase");
+      if (i) {
+        const s = (i.ga4 && i.ga4.params) || {},
+          n = i.purchase || {};
+        v(this.events.purchase || "purchase", {
+          value: s.value || n.value,
+          currency: s.currency || n.currency || "EUR",
+          value_is_estimated: n.value_is_estimated || !0,
+          reservation_id: s.reservation_id,
+          reservation_party: s.reservation_party || n.party_size,
+          meal_type: s.meal_type || n.meal_type,
+          event_id: i.event_id || void 0
+        });
+      }
     }
   }
   handleSubmitError(t, e) {

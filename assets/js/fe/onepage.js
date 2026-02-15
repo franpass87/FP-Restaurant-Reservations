@@ -2200,14 +2200,14 @@ class FormApp {
             }, 300);
         }
 
-        // 1. Pusha gli eventi server-side ECCETTO reservation_confirmed
-        //    (quest'ultimo viene sempre pushato sotto in formato flat per GTM).
-        //    Gli eventi server passano comunque per fpResvTracking.dispatch()
-        //    che li invia a gtag/fbq quando NON si usa GTM.
+        // 1. Dispatcha gli eventi server-side a gtag/fbq/ads (per modalità non-GTM)
+        //    SENZA pusharli nel dataLayer. Evita trigger duplicati e strutture
+        //    nested inutilizzabili come DLV in GTM. In modalità gtmOnly,
+        //    dispatch() ritorna subito senza effetti.
         if (data && Array.isArray(data.tracking) && data.tracking.length > 0) {
             data.tracking.forEach((entry) => {
-                if (entry && entry.event && entry.event !== 'reservation_confirmed') {
-                    pushDataLayerEvent(entry.event, entry);
+                if (entry && window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
+                    window.fpResvTracking.dispatch(entry);
                 }
             });
         }
@@ -2215,7 +2215,7 @@ class FormApp {
         // 2. Pusha SEMPRE reservation_confirmed con struttura FLAT per GTM.
         //    Estrae i dati dalla risposta server (tracking o reservation) per
         //    popolare le Data Layer Variables di GTM (reservation_id, value, ecc.)
-        //    Non ha ga4.name, quindi fpResvTracking.dispatch() non lo reinvia a gtag.
+        //    Non ha ga4.name, quindi dispatch() non lo reinvia a gtag.
         if (data) {
             const tracking = Array.isArray(data.tracking) && data.tracking.length > 0 ? data.tracking[0] : null;
             const res = data.reservation || {};
@@ -2235,6 +2235,25 @@ class FormApp {
             };
 
             pushDataLayerEvent(this.events.confirmed || 'reservation_confirmed', flatPayload);
+        }
+
+        // 3. Se presente un evento purchase stimato, pusha versione FLAT per GTM.
+        //    dispatch() lo ha già inviato a gtag nel passo 1 (modalità non-GTM).
+        if (data && Array.isArray(data.tracking)) {
+            const purchaseEntry = data.tracking.find(e => e && e.event === 'purchase');
+            if (purchaseEntry) {
+                const pGa4 = (purchaseEntry.ga4 && purchaseEntry.ga4.params) || {};
+                const pData = purchaseEntry.purchase || {};
+                pushDataLayerEvent(this.events.purchase || 'purchase', {
+                    value: pGa4.value || pData.value,
+                    currency: pGa4.currency || pData.currency || 'EUR',
+                    value_is_estimated: pData.value_is_estimated || true,
+                    reservation_id: pGa4.reservation_id,
+                    reservation_party: pGa4.reservation_party || pData.party_size,
+                    meal_type: pGa4.meal_type || pData.meal_type,
+                    event_id: purchaseEntry.event_id || undefined,
+                });
+            }
         }
     }
 
