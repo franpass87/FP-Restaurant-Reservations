@@ -201,30 +201,28 @@ final class Plugin
             return self::$assetVersionCache;
         }
         
-        // In production, use upgrade timestamp for stable caching
+        // In production, use filemtime of key JS bundle for automatic cache busting
+        // when deploying via git pull (without going through WP upgrader).
+        $esmPath = self::$dir . 'assets/dist/fe/onepage.esm.js';
+        $bundleMtime = file_exists($esmPath) ? (int) filemtime($esmPath) : 0;
+
         if (!function_exists('get_option')) {
-            // Fallback if WordPress not fully loaded yet (shouldn't happen in normal flow)
-            return self::VERSION . '.' . time();
+            return self::VERSION . '.' . ($bundleMtime ?: time());
         }
         
         $upgradeTime = get_option('fp_resv_last_upgrade', false);
         if ($upgradeTime === false || $upgradeTime === 0 || $upgradeTime === '0') {
-            // If never set, use current time as fallback
             $upgradeTime = time();
             if (function_exists('update_option')) {
                 update_option('fp_resv_last_upgrade', $upgradeTime, false);
             }
         }
         
-        self::$assetVersionCache = self::VERSION . '.' . (int) $upgradeTime;
-
-        $adminAnalyticsScript = self::$dir . 'assets/js/admin/reports-dashboard.js';
-        if (file_exists($adminAnalyticsScript)) {
-            $mtime = filemtime($adminAnalyticsScript);
-            if ($mtime !== false) {
-                self::$assetVersionCache .= '.' . $mtime;
-            }
-        }
+        // Use the LATEST between upgrade timestamp and bundle file mtime
+        // so git pull deployments also bust the cache automatically.
+        $effectiveTime = max((int) $upgradeTime, $bundleMtime);
+        
+        self::$assetVersionCache = self::VERSION . '.' . $effectiveTime;
 
         return self::$assetVersionCache;
     }

@@ -61,9 +61,8 @@ final class AssetManager
         unset($src);
 
         if ($handle === self::HANDLE_MODULE) {
-            if (str_contains($tag, 'type=')) {
-                return $tag;
-            }
+            // Remove any existing type attribute and force type="module"
+            $tag = preg_replace('/\s+type\s*=\s*["\'][^"\']*["\']/', '', $tag);
             return str_replace('<script ', '<script type="module" ', $tag);
         }
 
