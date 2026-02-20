@@ -156,6 +156,13 @@ final class PagesConfig
                 'max'         => 120,
                 'description' => __('I dati delle prenotazioni verranno anonimizzati dopo il periodo indicato.', 'fp-restaurant-reservations'),
             ],
+            'pdf_urls' => [
+                'label'       => __('Menu PDF per lingua', 'fp-restaurant-reservations'),
+                'type'        => 'language_map',
+                'rows'        => 3,
+                'default'     => [],
+                'description' => __('URL del menu PDF mostrato nel form. Formato: it=https://... Una riga per lingua.', 'fp-restaurant-reservations'),
+            ],
         ];
     }
 
@@ -891,13 +898,6 @@ final class PagesConfig
                             'rows'        => 3,
                             'default'     => "it_IT\nen_US",
                             'description' => __('Uno per riga, formato locale WordPress.', 'fp-restaurant-reservations'),
-                        ],
-                        'pdf_urls' => [
-                            'label'       => __('URL PDF per lingua', 'fp-restaurant-reservations'),
-                            'type'        => 'language_map',
-                            'rows'        => 3,
-                            'default'     => [],
-                            'description' => __('Formato: it=https://... Una riga per lingua.', 'fp-restaurant-reservations'),
                         ],
                         'language_cookie_days' => [
                             'label'       => __('Durata cookie lingua (giorni)', 'fp-restaurant-reservations'),

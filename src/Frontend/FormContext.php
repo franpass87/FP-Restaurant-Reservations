@@ -89,12 +89,12 @@ final class FormContext
             'default_currency'            => 'EUR',
             'enable_waitlist'             => '0',
             'data_retention_months'       => '24',
+            'pdf_urls'                    => [],
         ];
 
         $languageDefaults = [
             'language_fallback_locale'   => 'it_IT',
             'language_supported_locales' => 'it_IT' . PHP_EOL . 'en_US',
-            'pdf_urls'                   => [],
             'language_cookie_days'       => '30',
         ];
 
@@ -223,22 +223,27 @@ final class FormContext
             is_array($formStrings['step_content'] ?? null) ? $formStrings['step_content'] : [],
             is_array($formStrings['step_order'] ?? null) ? $formStrings['step_order'] : ['date', 'party', 'slots', 'details', 'confirm']
         );
+        $pdfSettings = $generalSettings;
+        if (empty($pdfSettings['pdf_urls']) || !is_array($pdfSettings['pdf_urls'])) {
+            $legacyPdf = $languageSettings['pdf_urls'] ?? [];
+            if (is_array($legacyPdf) && $legacyPdf !== []) {
+                $pdfSettings['pdf_urls'] = $legacyPdf;
+            }
+        }
+
         $pdfUrl = $this->resolvePdfUrl(
             $languageData['language'],
-            $languageSettings,
+            $pdfSettings,
             $supportedLocales,
             $fallbackLocale
         );
 
-        // CSS dinamico RIABILITATO per permettere branding personalizzato
-        // Default: B/W (nero #000000) ma personalizzabile via admin panel
-        // Usa il container se disponibile, altrimenti crea un'istanza semplificata
         $styleService = $this->getStyleService();
         $stylePayload = $styleService->buildFrontend($config['formId']);
 
         $pdfMapKeys = [];
-        if (isset($languageSettings['pdf_urls']) && is_array($languageSettings['pdf_urls'])) {
-            $pdfMapKeys = array_keys($languageSettings['pdf_urls']);
+        if (isset($pdfSettings['pdf_urls']) && is_array($pdfSettings['pdf_urls'])) {
+            $pdfMapKeys = array_keys($pdfSettings['pdf_urls']);
         }
 
         $viewEvent = DataLayer::push([

@@ -910,7 +910,7 @@ final class AdminPages
             case 'google-calendar':
                 return __('Sincronizza turni e prenotazioni con Google Calendar in modo sicuro.', 'fp-restaurant-reservations');
             case 'language':
-                return __('Personalizza testi, PDF multilingua e copy del widget.', 'fp-restaurant-reservations');
+                return __('Personalizza testi, localizzazione e copy del widget.', 'fp-restaurant-reservations');
             case 'tracking':
                 return __('Definisci eventi e integrazioni analytics per marketing e attribuzione.', 'fp-restaurant-reservations');
             default:

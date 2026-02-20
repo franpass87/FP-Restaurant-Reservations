@@ -54,6 +54,13 @@ final class SettingsValidator
                 if (!empty($options['frontend_meals'])) {
                     $this->sanitizer->validateMealPlanDefinition((string) $options['frontend_meals']);
                 }
+                if (!empty($options['pdf_urls']) && !is_array($options['pdf_urls'])) {
+                    $this->addError(
+                        $pageKey,
+                        'invalid_pdf_map',
+                        __('Il formato degli URL PDF per lingua non è valido.', 'fp-restaurant-reservations')
+                    );
+                }
                 break;
             case 'notifications':
                 if (empty($options['restaurant_emails'])) {
@@ -126,13 +133,6 @@ final class SettingsValidator
                 }
                 break;
             case 'language':
-                if (!empty($options['pdf_urls']) && !is_array($options['pdf_urls'])) {
-                    $this->addError(
-                        $pageKey,
-                        'invalid_pdf_map',
-                        __('Il formato degli URL PDF per lingua non è valido.', 'fp-restaurant-reservations')
-                    );
-                }
                 break;
             case 'tracking':
                 if (!empty($options['ga4_measurement_id']) && !preg_match('/^G-[A-Z0-9]{4,}$/', (string) $options['ga4_measurement_id'])) {
