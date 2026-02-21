@@ -300,7 +300,9 @@ final class BusinessServiceProvider extends ServiceProvider
             function (Container $container) {
                 $availability = $container->get(\FP\Resv\Domain\Reservations\Availability::class);
                 $googleCalendar = $container->get(\FP\Resv\Domain\Calendar\GoogleCalendarService::class);
-                return new \FP\Resv\Domain\Reservations\AvailabilityGuard($availability, $googleCalendar);
+                $dataLoader = $container->get(\FP\Resv\Domain\Reservations\Availability\DataLoader::class);
+                $options = new \FP\Resv\Domain\Settings\Options();
+                return new \FP\Resv\Domain\Reservations\AvailabilityGuard($availability, $googleCalendar, $dataLoader, $options);
             }
         );
         

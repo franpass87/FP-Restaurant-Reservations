@@ -42,8 +42,16 @@
         createCta: 'Nuova chiusura/apertura',
         empty: 'Nessuna chiusura o apertura programmata nel periodo selezionato.',
         formTitle: 'Nuova chiusura/apertura',
+        modeLabel: 'Cosa vuoi fare?',
+        modeDay: 'Chiudi giorno intero',
+        modeSlot: 'Chiudi fascia oraria',
+        modeAdvanced: 'Avanzato (riduzione/apertura speciale)',
+        dateLabel: 'Data',
+        dateEndLabel: 'Data fine (per più giorni)',
         startLabel: 'Inizio',
         endLabel: 'Fine',
+        timeFromLabel: 'Dalle ore',
+        timeToLabel: 'Alle ore',
         typeLabel: 'Tipologia',
         scopeLabel: 'Ambito',
         noteLabel: 'Nota (facoltativa)',
@@ -143,48 +151,89 @@
     form.innerHTML = `
         <header><h3>${strings.formTitle}</h3></header>
         <div class="fp-resv-closures-form__grid">
-            <label class="fp-resv-closures-form__field">
-                <span>${strings.startLabel}</span>
-                <input type="datetime-local" name="start" required>
-            </label>
-            <label class="fp-resv-closures-form__field">
-                <span>${strings.endLabel}</span>
-                <input type="datetime-local" name="end" required>
-            </label>
-            <label class="fp-resv-closures-form__field">
-                <span>${strings.typeLabel}</span>
-                <select name="type">
-                    <option value="full">${strings.typeFull}</option>
-                    <option value="capacity_reduction">${strings.typeCapacity}</option>
-                    <option value="special_hours">${strings.typeSpecial}</option>
-                    <option value="special_opening">${strings.typeSpecialOpening}</option>
+            <label class="fp-resv-closures-form__field fp-resv-closures-form__field--wide">
+                <span>${strings.modeLabel}</span>
+                <select name="closure_mode">
+                    <option value="day">${strings.modeDay}</option>
+                    <option value="slot">${strings.modeSlot}</option>
+                    <option value="advanced">${strings.modeAdvanced}</option>
                 </select>
             </label>
-            <label class="fp-resv-closures-form__field">
-                <span>${strings.scopeLabel}</span>
-                <select name="scope">
-                    <option value="restaurant">${strings.scopeRestaurant}</option>
-                </select>
-            </label>
-            <label class="fp-resv-closures-form__field fp-resv-closures-form__field--percent" hidden>
-                <span>${strings.percentLabel}</span>
-                <input type="number" name="percent" min="0" max="100" step="5" placeholder="50">
-            </label>
-            <div class="fp-resv-closures-form__special-opening" hidden>
+
+            <!-- Modalità GIORNO: solo date picker -->
+            <div class="fp-resv-closures-form__mode-day">
                 <label class="fp-resv-closures-form__field">
-                    <span>${strings.labelPlaceholder.split(' (')[0]}</span>
-                    <input type="text" name="special_label" placeholder="${strings.labelPlaceholder}">
+                    <span>${strings.dateLabel}</span>
+                    <input type="date" name="day_date" required>
                 </label>
                 <label class="fp-resv-closures-form__field">
-                    <span>${strings.capacityLabel}</span>
-                    <input type="number" name="special_capacity" min="1" max="500" value="40">
+                    <span>${strings.dateEndLabel}</span>
+                    <input type="date" name="day_date_end">
                 </label>
-                <div class="fp-resv-closures-form__slots">
-                    <span class="fp-resv-closures-form__slots-label">${strings.slotsLabel}</span>
-                    <div class="fp-resv-closures-form__slots-list"></div>
-                    <button type="button" class="button button-secondary fp-resv-closures-form__add-slot">${strings.addSlotCta}</button>
+            </div>
+
+            <!-- Modalità SLOT: data + ora inizio/fine -->
+            <div class="fp-resv-closures-form__mode-slot" hidden>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.dateLabel}</span>
+                    <input type="date" name="slot_date" required>
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.timeFromLabel}</span>
+                    <input type="time" name="slot_time_from" required>
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.timeToLabel}</span>
+                    <input type="time" name="slot_time_to" required>
+                </label>
+            </div>
+
+            <!-- Modalità AVANZATA: form originale completo -->
+            <div class="fp-resv-closures-form__mode-advanced" hidden>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.startLabel}</span>
+                    <input type="datetime-local" name="start">
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.endLabel}</span>
+                    <input type="datetime-local" name="end">
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.typeLabel}</span>
+                    <select name="type">
+                        <option value="full">${strings.typeFull}</option>
+                        <option value="capacity_reduction">${strings.typeCapacity}</option>
+                        <option value="special_hours">${strings.typeSpecial}</option>
+                        <option value="special_opening">${strings.typeSpecialOpening}</option>
+                    </select>
+                </label>
+                <label class="fp-resv-closures-form__field">
+                    <span>${strings.scopeLabel}</span>
+                    <select name="scope">
+                        <option value="restaurant">${strings.scopeRestaurant}</option>
+                    </select>
+                </label>
+                <label class="fp-resv-closures-form__field fp-resv-closures-form__field--percent" hidden>
+                    <span>${strings.percentLabel}</span>
+                    <input type="number" name="percent" min="0" max="100" step="5" placeholder="50">
+                </label>
+                <div class="fp-resv-closures-form__special-opening" hidden>
+                    <label class="fp-resv-closures-form__field">
+                        <span>${strings.labelPlaceholder.split(' (')[0]}</span>
+                        <input type="text" name="special_label" placeholder="${strings.labelPlaceholder}">
+                    </label>
+                    <label class="fp-resv-closures-form__field">
+                        <span>${strings.capacityLabel}</span>
+                        <input type="number" name="special_capacity" min="1" max="500" value="40">
+                    </label>
+                    <div class="fp-resv-closures-form__slots">
+                        <span class="fp-resv-closures-form__slots-label">${strings.slotsLabel}</span>
+                        <div class="fp-resv-closures-form__slots-list"></div>
+                        <button type="button" class="button button-secondary fp-resv-closures-form__add-slot">${strings.addSlotCta}</button>
+                    </div>
                 </div>
             </div>
+
             <label class="fp-resv-closures-form__field fp-resv-closures-form__field--wide">
                 <span>${strings.noteLabel}</span>
                 <textarea name="note" rows="2"></textarea>
@@ -196,6 +245,10 @@
         </div>
     `;
 
+    const modeField = form.querySelector('[name="closure_mode"]');
+    const modeDayWrapper = form.querySelector('.fp-resv-closures-form__mode-day');
+    const modeSlotWrapper = form.querySelector('.fp-resv-closures-form__mode-slot');
+    const modeAdvancedWrapper = form.querySelector('.fp-resv-closures-form__mode-advanced');
     const typeField = form.querySelector('[name="type"]');
     const startField = form.querySelector('[name="start"]');
     const endField = form.querySelector('[name="end"]');
@@ -207,6 +260,23 @@
     const specialCapacityField = form.querySelector('[name="special_capacity"]');
     const slotsList = form.querySelector('.fp-resv-closures-form__slots-list');
     const addSlotButton = form.querySelector('.fp-resv-closures-form__add-slot');
+
+    const switchMode = (mode) => {
+        if (modeDayWrapper) modeDayWrapper.hidden = mode !== 'day';
+        if (modeSlotWrapper) modeSlotWrapper.hidden = mode !== 'slot';
+        if (modeAdvancedWrapper) modeAdvancedWrapper.hidden = mode !== 'advanced';
+
+        // Gestisci required sui campi per evitare validazione su campi nascosti
+        form.querySelectorAll('.fp-resv-closures-form__mode-day input').forEach(i => { i.required = mode === 'day' && !i.name.includes('end'); });
+        form.querySelectorAll('.fp-resv-closures-form__mode-slot input').forEach(i => { i.required = mode === 'slot'; });
+        if (startField) startField.required = mode === 'advanced';
+        if (endField) endField.required = mode === 'advanced';
+    };
+
+    if (modeField) {
+        modeField.addEventListener('change', () => switchMode(modeField.value));
+        switchMode(modeField.value);
+    }
     
     // Helper to create a slot row
     const createSlotRow = (startValue = '', endValue = '') => {
@@ -466,14 +536,20 @@
         if (slotsList) {
             slotsList.innerHTML = '';
         }
+        // Reset alla modalità "giorno" di default
+        if (modeField) {
+            modeField.value = 'day';
+            switchMode('day');
+        }
     };
 
     const toggleForm = (open) => {
         state.formOpen = open;
         form.hidden = !open;
         toggleButton.textContent = open ? strings.cancel : strings.createCta;
-        if (open && startField) {
-            startField.focus();
+        if (open) {
+            const dayInput = form.querySelector('[name="day_date"]');
+            if (dayInput) dayInput.focus();
         }
         if (!open) {
             resetForm();
@@ -484,126 +560,136 @@
         toggleForm(!state.formOpen);
     });
 
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        
-        // Production-ready: removed debug logs, only critical validation errors logged conditionally
+    // Formatta le date mantenendo il timezone locale con offset
+    const formatLocalDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const offset = -date.getTimezoneOffset();
+        const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+        const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
+        const offsetSign = offset >= 0 ? '+' : '-';
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${offsetSign}${offsetHours}:${offsetMinutes}`;
+    };
+
+    const buildPayloadFromMode = () => {
+        const mode = modeField ? modeField.value : 'advanced';
         const debug = window.fpResvClosuresSettings && window.fpResvClosuresSettings.debug;
-        
-        if (!startField || !endField || !typeField) {
-            if (debug) {
-                console.error('[FP Closures] Missing required fields');
+
+        if (mode === 'day') {
+            const dateVal = form.querySelector('[name="day_date"]')?.value;
+            const dateEndVal = form.querySelector('[name="day_date_end"]')?.value;
+            if (!dateVal) { form.reportValidity(); return null; }
+            const endDate = dateEndVal || dateVal;
+            if (endDate < dateVal) {
+                state.error = 'La data fine non può essere anteriore alla data inizio.';
+                renderError();
+                return null;
             }
-            return;
+            const startDate = new Date(dateVal + 'T00:00:00');
+            const end = new Date(endDate + 'T23:59:59');
+            return {
+                scope: 'restaurant',
+                type: 'full',
+                start_at: formatLocalDateTime(startDate),
+                end_at: formatLocalDateTime(end),
+                note: noteField ? noteField.value.trim() : '',
+            };
         }
+
+        if (mode === 'slot') {
+            const dateVal = form.querySelector('[name="slot_date"]')?.value;
+            const timeFrom = form.querySelector('[name="slot_time_from"]')?.value;
+            const timeTo = form.querySelector('[name="slot_time_to"]')?.value;
+            if (!dateVal || !timeFrom || !timeTo) { form.reportValidity(); return null; }
+            if (timeTo <= timeFrom) {
+                state.error = "L'ora di fine deve essere successiva all'ora di inizio.";
+                renderError();
+                return null;
+            }
+            const startDate = new Date(dateVal + 'T' + timeFrom + ':00');
+            const endDate = new Date(dateVal + 'T' + timeTo + ':00');
+            return {
+                scope: 'restaurant',
+                type: 'full',
+                start_at: formatLocalDateTime(startDate),
+                end_at: formatLocalDateTime(endDate),
+                note: noteField ? noteField.value.trim() : '',
+            };
+        }
+
+        // mode === 'advanced'
+        if (!startField || !endField || !typeField) { return null; }
         const startValue = startField.value;
         const endValue = endField.value;
-        if (!startValue || !endValue) {
-            if (debug) {
-                console.error('[FP Closures] Missing start or end values');
-            }
-            form.reportValidity();
-            return;
-        }
-        const startDate = new Date(startValue);
-        const endDate = new Date(endValue);
-        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-            if (debug) {
-                console.error('[FP Closures] Invalid dates');
-            }
+        if (!startValue || !endValue) { form.reportValidity(); return null; }
+        const sDate = new Date(startValue);
+        const eDate = new Date(endValue);
+        if (Number.isNaN(sDate.getTime()) || Number.isNaN(eDate.getTime()) || eDate <= sDate) {
             endField.setCustomValidity("La fine deve essere successiva all'inizio.");
             form.reportValidity();
             endField.setCustomValidity('');
-            return;
+            return null;
         }
-        
-        // Formatta le date mantenendo il timezone locale con offset
-        const formatLocalDateTime = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            
-            // Calcola offset timezone (es: +01:00 o +02:00)
-            const offset = -date.getTimezoneOffset();
-            const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
-            const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
-            const offsetSign = offset >= 0 ? '+' : '-';
-            
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${offsetSign}${offsetHours}:${offsetMinutes}`;
-        };
-        
+
         const payload = {
             scope: 'restaurant',
             type: typeField.value,
-            start_at: formatLocalDateTime(startDate),
-            end_at: formatLocalDateTime(endDate),
+            start_at: formatLocalDateTime(sDate),
+            end_at: formatLocalDateTime(eDate),
             note: noteField ? noteField.value.trim() : '',
         };
+
         if (payload.type === 'capacity_reduction' && percentField) {
             const percent = Number.parseInt(percentField.value, 10);
-            if (Number.isNaN(percent)) {
-                if (debug) {
-                    console.error('[FP Closures] Invalid percent value');
-                }
-                percentField.focus();
-                return;
-            }
+            if (Number.isNaN(percent)) { percentField.focus(); return null; }
             payload.capacity_percent = percent;
         }
-        
+
         if (payload.type === 'special_opening') {
-            // Collect label and capacity
             payload.label = specialLabelField ? specialLabelField.value.trim() : '';
             payload.capacity = specialCapacityField ? Number.parseInt(specialCapacityField.value, 10) : 40;
-            
             if (!payload.label) {
-                if (debug) {
-                    console.error('[FP Closures] Special opening requires a label');
-                }
                 if (specialLabelField) specialLabelField.focus();
-                return;
+                return null;
             }
-            
-            // Collect slots
             const slots = [];
             if (slotsList) {
                 const startInputs = slotsList.querySelectorAll('[name="slot_start[]"]');
                 const endInputs = slotsList.querySelectorAll('[name="slot_end[]"]');
-                startInputs.forEach((startInput, index) => {
-                    const endInput = endInputs[index];
-                    if (startInput && endInput && startInput.value && endInput.value) {
-                        slots.push({
-                            start: startInput.value,
-                            end: endInput.value,
-                        });
+                startInputs.forEach((si, idx) => {
+                    const ei = endInputs[idx];
+                    if (si && ei && si.value && ei.value) {
+                        slots.push({ start: si.value, end: ei.value });
                     }
                 });
             }
-            
             if (slots.length === 0) {
-                if (debug) {
-                    console.error('[FP Closures] Special opening requires at least one slot');
-                }
-                return;
+                if (debug) console.error('[FP Closures] Special opening requires at least one slot');
+                return null;
             }
-            
             payload.special_hours = slots;
         }
-        
+
+        return payload;
+    };
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const payload = buildPayloadFromMode();
+        if (!payload) return;
+
         setLoading(true);
         ajaxRequest('fp_resv_closures_create', payload)
-            .then((response) => {
+            .then(() => {
                 state.error = '';
                 toggleForm(false);
                 loadClosures();
             })
             .catch((error) => {
-                if (debug) {
-                    console.error('[FP Closures] Error:', error);
-                }
                 state.error = error && error.message ? error.message : 'Impossibile creare la chiusura.';
                 renderError();
             })
@@ -635,11 +721,9 @@
             if (specialOpeningWrapper) {
                 specialOpeningWrapper.hidden = !showSpecialOpening;
                 if (showSpecialOpening && slotsList && slotsList.children.length === 0) {
-                    // Add a default slot row when showing special opening
                     slotsList.appendChild(createSlotRow('12:00', '15:00'));
                 }
                 if (!showSpecialOpening) {
-                    // Clear fields when hiding
                     if (specialLabelField) specialLabelField.value = '';
                     if (specialCapacityField) specialCapacityField.value = '40';
                     if (slotsList) slotsList.innerHTML = '';
@@ -647,6 +731,14 @@
             }
         });
     }
+
+    // Imposta la data di default per le modalità giorno/slot
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const dayDateInput = form.querySelector('[name="day_date"]');
+    const slotDateInput = form.querySelector('[name="slot_date"]');
+    if (dayDateInput) dayDateInput.value = todayStr;
+    if (slotDateInput) slotDateInput.value = todayStr;
 
     list.addEventListener('click', (event) => {
         const target = event.target;

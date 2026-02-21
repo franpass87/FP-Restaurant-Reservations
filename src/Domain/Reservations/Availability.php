@@ -148,6 +148,16 @@ class Availability
     }
 
     /**
+     * Restituisce il limite giornaliero di prenotazioni (0 = nessun limite).
+     */
+    private function getMaxDailyReservations(): int
+    {
+        $raw = $this->options->getField('fp_resv_general', 'max_daily_reservations', '0');
+
+        return ($raw !== '' && $raw !== null) ? max(0, (int) $raw) : 0;
+    }
+
+    /**
      * Calculate slots for a single day using preloaded data.
      * 
      * @param array<string, mixed> $criteria
@@ -176,6 +186,26 @@ class Availability
 
         $timezone = $dayStart->getTimezone();
         $mealKey = $criteria['meal'] ?? '';
+
+        // Limite giornaliero: se raggiunto, il giorno è chiuso
+        $maxDaily = $this->getMaxDailyReservations();
+        if ($maxDaily > 0) {
+            $dailyCount = $this->dataLoader->countDailyActiveReservations($dayStart->format('Y-m-d'));
+            if ($dailyCount >= $maxDaily) {
+                return [
+                    'date' => $dayStart->format('Y-m-d'),
+                    'timezone' => $timezone->getName(),
+                    'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
+                    'slots' => [],
+                    'meta' => [
+                        'has_availability' => false,
+                        'reason' => __('Numero massimo di prenotazioni giornaliere raggiunto.', 'fp-restaurant-reservations'),
+                        'daily_count' => $dailyCount,
+                        'daily_limit' => $maxDaily,
+                    ],
+                ];
+            }
+        }
         
         // Check if the meal is a special opening (starts with 'special_')
         $isSpecialMeal = str_starts_with($mealKey, 'special_');
@@ -468,6 +498,7 @@ class Availability
             }
         }
 
+        $maxDaily = $this->getMaxDailyReservations();
         $results = [];
         $current = $from;
 
@@ -499,6 +530,17 @@ class Availability
                 foreach ($specialOpenings as $opening) {
                     $specialMealKey = $opening['meal_key'] ?? 'special';
                     $mealAvailability[$specialMealKey] = true;
+                }
+            }
+
+            // Limite giornaliero: se raggiunto, il giorno è chiuso
+            if ($hasAnyAvailability && $maxDaily > 0) {
+                $dailyCount = $this->dataLoader->countDailyActiveReservations($dateKey);
+                if ($dailyCount >= $maxDaily) {
+                    $hasAnyAvailability = false;
+                    foreach ($mealAvailability as $k => $v) {
+                        $mealAvailability[$k] = false;
+                    }
                 }
             }
 
@@ -546,6 +588,28 @@ class Availability
         $timezone = $this->resolveTimezone();
         $dayStart = new DateTimeImmutable($dateString . ' 00:00:00', $timezone);
         $dayEnd   = $dayStart->setTime(23, 59, 59);
+
+        // Limite giornaliero: se raggiunto, il giorno è chiuso
+        $maxDaily = $this->getMaxDailyReservations();
+        if ($maxDaily > 0) {
+            $dailyCount = $this->dataLoader->countDailyActiveReservations($dateString);
+            if ($dailyCount >= $maxDaily) {
+                $stopTimer();
+
+                return [
+                    'date'     => $dateString,
+                    'timezone' => $timezone->getName(),
+                    'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
+                    'slots'    => [],
+                    'meta'     => [
+                        'has_availability' => false,
+                        'reason' => __('Numero massimo di prenotazioni giornaliere raggiunto.', 'fp-restaurant-reservations'),
+                        'daily_count' => $dailyCount,
+                        'daily_limit' => $maxDaily,
+                    ],
+                ];
+            }
+        }
 
         $mealKey      = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
         $mealSettings = $this->resolveMealSettings($mealKey);

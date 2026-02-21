@@ -174,6 +174,26 @@ final class DataLoader
     }
 
     /**
+     * Conta le prenotazioni attive per una data specifica.
+     *
+     * @param string $date Data nel formato Y-m-d
+     * @return int Numero di prenotazioni attive nella giornata
+     */
+    public function countDailyActiveReservations(string $date): int
+    {
+        $table = $this->wpdb->prefix . 'fp_reservations';
+        $activeStatuses = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
+        $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '%s'));
+
+        $sql = "SELECT COUNT(*) FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders})";
+        $params = array_merge([$date], $activeStatuses);
+
+        $count = $this->wpdb->get_var($this->wpdb->prepare($sql, ...$params));
+
+        return $count !== null ? (int) $count : 0;
+    }
+
+    /**
      * @return array<int, array{
      *     id:int,
      *     party:int,

@@ -156,6 +156,14 @@ final class PagesConfig
                 'max'         => 120,
                 'description' => __('I dati delle prenotazioni verranno anonimizzati dopo il periodo indicato.', 'fp-restaurant-reservations'),
             ],
+            'max_daily_reservations' => [
+                'label'       => __('Limite prenotazioni giornaliere', 'fp-restaurant-reservations'),
+                'type'        => 'integer',
+                'default'     => '0',
+                'min'         => 0,
+                'max'         => 999,
+                'description' => __('Numero massimo di prenotazioni accettate per giorno. 0 = nessun limite (usa solo la capienza per slot).', 'fp-restaurant-reservations'),
+            ],
             'pdf_urls' => [
                 'label'       => __('Menu PDF per lingua', 'fp-restaurant-reservations'),
                 'type'        => 'language_map',

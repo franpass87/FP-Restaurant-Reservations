@@ -7,10 +7,13 @@ namespace FP\Resv\Domain\Reservations;
 use FP\Resv\Core\Exceptions\ConflictException;
 use FP\Resv\Core\Logging;
 use FP\Resv\Domain\Calendar\GoogleCalendarService;
+use FP\Resv\Domain\Reservations\Availability\DataLoader;
 use FP\Resv\Domain\Reservations\ReservationStatuses;
+use FP\Resv\Domain\Settings\Options;
 use function __;
 use function in_array;
 use function is_array;
+use function max;
 use function substr;
 use Throwable;
 
@@ -25,7 +28,9 @@ final class AvailabilityGuard
 
     public function __construct(
         private readonly Availability $availability,
-        private readonly ?GoogleCalendarService $calendar = null
+        private readonly ?GoogleCalendarService $calendar = null,
+        private readonly ?DataLoader $dataLoader = null,
+        private readonly ?Options $options = null
     ) {
     }
 
@@ -79,6 +84,22 @@ final class AvailabilityGuard
         // Skip per stati che non occupano capacità
         if (!in_array($status, self::ACTIVE_STATUSES, true)) {
             return;
+        }
+
+        // Limite giornaliero (safety net dentro transazione)
+        if ($this->dataLoader !== null && $this->options !== null) {
+            $maxDailyRaw = $this->options->getField('fp_resv_general', 'max_daily_reservations', '0');
+            $maxDaily = ($maxDailyRaw !== '' && $maxDailyRaw !== null) ? max(0, (int) $maxDailyRaw) : 0;
+
+            if ($maxDaily > 0) {
+                $dailyCount = $this->dataLoader->countDailyActiveReservations($date);
+                if ($dailyCount >= $maxDaily) {
+                    throw new ConflictException(
+                        __('Numero massimo di prenotazioni giornaliere raggiunto. Scegli un altro giorno.', 'fp-restaurant-reservations'),
+                        ['date' => $date, 'daily_count' => $dailyCount, 'daily_limit' => $maxDaily]
+                    );
+                }
+            }
         }
 
         // Calcola la disponibilità per lo slot richiesto

@@ -183,8 +183,66 @@
     font-weight: 600;
 }
 
+/* Mode sections */
+.fp-resv-closures-form__mode-day,
+.fp-resv-closures-form__mode-slot,
+.fp-resv-closures-form__mode-advanced {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    padding: 14px 16px;
+    border: 1px dashed rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    background: rgba(248, 250, 252, 0.6);
+}
+
+.fp-resv-closures-form__mode-day[hidden],
+.fp-resv-closures-form__mode-slot[hidden],
+.fp-resv-closures-form__mode-advanced[hidden] {
+    display: none;
+}
+
+/* Slot row inside special openings */
+.fp-resv-closures-form__slot-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.fp-resv-closures-form__slot-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.fp-resv-closures-form__slot-row label span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fp-resv-admin-muted, #64748b);
+}
+
+.fp-resv-closures-form__remove-slot {
+    color: #dc2626;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.fp-resv-closure-card__meta--highlight {
+    font-weight: 600;
+    color: #7c3aed;
+}
+
 @media (max-width: 782px) {
     .fp-resv-closures-form__grid {
+        grid-template-columns: 1fr;
+    }
+    .fp-resv-closures-form__mode-day,
+    .fp-resv-closures-form__mode-slot,
+    .fp-resv-closures-form__mode-advanced {
         grid-template-columns: 1fr;
     }
 }
