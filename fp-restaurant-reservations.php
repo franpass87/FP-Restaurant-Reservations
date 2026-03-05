@@ -1,4 +1,7 @@
 <?php
+/*
+Plugin Name: FP Restaurant Reservations
+*/
 /**
  * Plugin Name: FP Restaurant Reservations
  * Plugin URI: https://francescopasseri.com/projects/fp-restaurant-reservations
