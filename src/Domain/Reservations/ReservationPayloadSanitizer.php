@@ -87,9 +87,13 @@ final class ReservationPayloadSanitizer
         $payload['time']       = Sanitizer::sanitizeTime($payload['time']);
         $payload['party']      = Sanitizer::sanitizeInteger($payload['party'], ['min' => 1]);
         
-        $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
-        if ($maxCapacity > 0) {
-            $payload['party'] = min($payload['party'], $maxCapacity);
+        // Lo staff (bypass_availability) non è vincolato al limite di capienza della sala
+        $bypassAvailability = $this->toBool($payload['bypass_availability'] ?? false);
+        if (!$bypassAvailability) {
+            $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
+            if ($maxCapacity > 0) {
+                $payload['party'] = min($payload['party'], $maxCapacity);
+            }
         }
         
         $payload['first_name'] = sanitize_text_field((string) $payload['first_name']);

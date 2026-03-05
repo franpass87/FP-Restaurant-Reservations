@@ -564,7 +564,11 @@ class Service
         $validator->assertValidTime($payload['time']);
         $validator->assertValidDateTime($payload['date'], $payload['time']); // Controlla che data+ora non sia nel passato
         
-        $maxCapacity = (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
+        // Lo staff (bypass_availability) non è vincolato al limite di capienza: passa 0 = nessun limite
+        $bypassAvailability = (bool) ($payload['bypass_availability'] ?? false);
+        $maxCapacity = $bypassAvailability
+            ? 0
+            : (int) $this->options->getField('fp_resv_rooms', 'default_room_capacity', '40');
         $validator->assertValidParty($payload['party'], $maxCapacity);
         
         $validator->assertValidContact($payload);
