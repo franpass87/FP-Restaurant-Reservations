@@ -1845,6 +1845,8 @@ class ReservationManager {
                 <option value="dinner">Cena</option>
             `;
         }
+        // Opzione speciale sempre disponibile per lo staff
+        mealOptions += `<option value="__private_event__">— Evento Privato (orario libero) —</option>`;
         
         return `
             <div class="fp-new-reservation">
@@ -1869,7 +1871,7 @@ class ReservationManager {
 
                     <div class="fp-form-group">
                         <label for="new-party">Numero Coperti *</label>
-                        <input type="number" id="new-party" class="fp-form-control" min="1" max="20" value="2" required />
+                        <input type="number" id="new-party" class="fp-form-control" min="1" value="2" required />
                     </div>
 
                     <div class="fp-form-actions">
@@ -1918,6 +1920,13 @@ class ReservationManager {
 
     async showNewReservationStep2() {
         const { meal, date, party } = this.newReservationData;
+
+        // Evento privato: salta la chiamata availability, mostra orario libero
+        if (meal === '__private_event__') {
+            this.dom.modalBody.innerHTML = this.renderNewReservationStep2FreeTime();
+            this.bindNewReservationStep2FreeTime();
+            return;
+        }
 
         // Mostra loading
         this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Caricamento slot disponibili...</p></div>';
@@ -1972,6 +1981,59 @@ class ReservationManager {
                 </div>
             `;
         }
+    }
+
+    renderNewReservationStep2FreeTime() {
+        const { date, party } = this.newReservationData;
+        return `
+            <div class="fp-new-reservation">
+                <div class="fp-step-indicator">
+                    <div class="fp-step is-complete">1. Dettagli</div>
+                    <div class="fp-step is-active">2. Orario</div>
+                    <div class="fp-step">3. Cliente</div>
+                </div>
+                <div class="fp-selection-summary">
+                    <strong>Tipo:</strong> Evento Privato |
+                    <strong>Data:</strong> ${date} |
+                    <strong>Coperti:</strong> ${party}
+                </div>
+                <form id="fp-new-reservation-form-step2-free">
+                    <div class="fp-form-group">
+                        <label for="new-free-time">Orario *</label>
+                        <input type="time" id="new-free-time" class="fp-form-control" required style="max-width:160px;" />
+                        <p class="fp-field-hint">Inserisci l'orario dell'evento (es. 20:00)</p>
+                    </div>
+                    <div class="fp-form-actions">
+                        <button type="button" class="fp-btn fp-btn--secondary" data-action="back-step1-free">
+                            ← Indietro
+                        </button>
+                        <button type="submit" class="fp-btn fp-btn--primary">
+                            Avanti →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    bindNewReservationStep2FreeTime() {
+        const form = document.getElementById('fp-new-reservation-form-step2-free');
+        if (!form) return;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const timeInput = document.getElementById('new-free-time');
+            if (!timeInput || !timeInput.value) {
+                alert('Inserisci un orario');
+                return;
+            }
+            this.newReservationData.time = timeInput.value;
+            this.showNewReservationStep3();
+        });
+
+        this.dom.modalBody.querySelector('[data-action="back-step1-free"]')?.addEventListener('click', () => {
+            this.openNewReservationModal();
+        });
     }
 
     renderNewReservationStep2(slots) {
@@ -2094,14 +2156,14 @@ class ReservationManager {
 
     renderNewReservationStep3() {
         const { meal, date, time, party } = this.newReservationData;
-        // time è in formato ISO (2025-10-12T19:00:00+00:00), estraiamo solo l'ora
+        // time è in formato ISO (2025-10-12T19:00:00+00:00) o HH:MM, estraiamo solo l'ora
         const timeFormatted = time.includes('T') 
             ? time.split('T')[1].substring(0, 5) 
             : time.substring(0, 5);
 
         // Trova il label del meal selezionato
-        let mealLabel = meal;
-        if (this.config.meals && this.config.meals.length > 0) {
+        let mealLabel = meal === '__private_event__' ? 'Evento Privato' : meal;
+        if (meal !== '__private_event__' && this.config.meals && this.config.meals.length > 0) {
             const mealConfig = this.config.meals.find(m => m.key === meal);
             if (mealConfig) {
                 mealLabel = mealConfig.label || meal;

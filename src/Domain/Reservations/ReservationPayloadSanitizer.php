@@ -105,6 +105,10 @@ final class ReservationPayloadSanitizer
         $payload['notes']      = sanitize_textarea_field((string) $payload['notes']);
         $payload['allergies']  = sanitize_textarea_field((string) $payload['allergies']);
         $payload['meal']       = sanitize_text_field((string) $payload['meal']);
+        // Evento privato da backend: normalizza il sentinel a stringa vuota per il DB
+        if ($payload['meal'] === '__private_event__') {
+            $payload['meal'] = '';
+        }
         $payload['language']   = sanitize_text_field((string) $payload['language']);
         $payload['locale']     = sanitize_text_field((string) $payload['locale']);
         $payload['location']   = sanitize_text_field((string) $payload['location']);
