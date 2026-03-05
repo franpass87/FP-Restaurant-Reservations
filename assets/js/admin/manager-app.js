@@ -2170,6 +2170,17 @@ class ReservationManager {
             }
         }
 
+        // Checkbox "non scalare capienza" solo per eventi privati
+        const privateEventCheckbox = meal === '__private_event__' ? `
+            <div class="fp-form-group fp-private-event-option">
+                <label class="fp-checkbox-label">
+                    <input type="checkbox" id="new-exclude-from-availability" value="1" checked />
+                    <span>Non scalare la capienza del giorno</span>
+                </label>
+                <p class="fp-field-hint">Se spuntato, questo evento privato non ridurrà i posti disponibili per gli altri servizi della giornata (come se fosse in una sala separata).</p>
+            </div>
+        ` : '';
+
         return `
             <div class="fp-new-reservation">
                 <div class="fp-step-indicator">
@@ -2224,6 +2235,8 @@ class ReservationManager {
                         <textarea id="new-allergies" class="fp-form-control" rows="2" placeholder="Eventuali allergie..."></textarea>
                     </div>
 
+                    ${privateEventCheckbox}
+
                     <div class="fp-form-actions">
                         <button type="button" class="fp-btn fp-btn--secondary" data-action="back-step2">
                             ← Indietro
@@ -2269,6 +2282,7 @@ class ReservationManager {
             timeFormatted = time.split('T')[1].substring(0, 5);
         }
         
+        const excludeCheckbox = document.getElementById('new-exclude-from-availability');
         const formData = {
             date,
             time: timeFormatted,  // Usa solo HH:MM
@@ -2281,6 +2295,7 @@ class ReservationManager {
             allergies: document.getElementById('new-allergies').value,
             status: 'confirmed',
             meal,
+            exclude_from_availability: excludeCheckbox ? (excludeCheckbox.checked ? 1 : 0) : 0,
         };
         
         this.debugLog('Creating reservation with data:', formData);

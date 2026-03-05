@@ -185,7 +185,7 @@ final class DataLoader
         $activeStatuses = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
         $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '%s'));
 
-        $sql = "SELECT COUNT(*) FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders})";
+        $sql = "SELECT COUNT(*) FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders}) AND exclude_from_availability = 0";
         $params = array_merge([$date], $activeStatuses);
 
         $count = $this->wpdb->get_var($this->wpdb->prepare($sql, ...$params));
@@ -216,7 +216,7 @@ final class DataLoader
         // Usa placeholders per gli status invece di concatenazione
         $activeStatuses = ReservationStatuses::ACTIVE_FOR_AVAILABILITY;
         $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '%s'));
-        $sql = "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders})";
+        $sql = "SELECT id, party, room_id, table_id, time FROM {$table} WHERE date = %s AND status IN ({$statusPlaceholders}) AND exclude_from_availability = 0";
         
         $params = array_merge([$dayStart->format('Y-m-d')], $activeStatuses);
         $preparedSql = $this->wpdb->prepare($sql, ...$params);

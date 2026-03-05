@@ -386,6 +386,7 @@ class Service
             'room_id'      => $sanitized['room_id'],
             'table_id'     => $sanitized['table_id'],
             'request_id'   => $sanitized['request_id'],
+            'exclude_from_availability' => (int) (bool) ($sanitized['exclude_from_availability'] ?? false),
         ];
 
             Logging::log('reservations', 'Pronto per INSERT nel database', [

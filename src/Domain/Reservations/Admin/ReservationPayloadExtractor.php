@@ -54,8 +54,9 @@ final class ReservationPayloadExtractor
             'room_id'    => $request->get_param('room_id') ?? null,
             'table_id'   => $request->get_param('table_id') ?? null,
             'value'      => $request->get_param('value') ?? null,
-            'allow_partial_contact' => true,
-            'bypass_availability'   => true,
+            'allow_partial_contact'      => true,
+            'bypass_availability'        => true,
+            'exclude_from_availability'  => $request->get_param('exclude_from_availability') ?? false,
         ];
 
         if (defined('WP_DEBUG') && WP_DEBUG) {

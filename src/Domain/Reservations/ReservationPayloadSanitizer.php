@@ -78,7 +78,8 @@ final class ReservationPayloadSanitizer
             'wheelchair_table' => false,
             'pets'             => false,
             'allow_partial_contact' => false,
-            'bypass_availability'   => false,
+            'bypass_availability'        => false,
+            'exclude_from_availability'  => false,
         ];
 
         $payload = array_merge($defaults, $payload);
@@ -148,7 +149,9 @@ final class ReservationPayloadSanitizer
             ? sanitize_text_field($payload['request_id'])
             : null;
         $payload['allow_partial_contact'] = $this->toBool($payload['allow_partial_contact']);
-        $payload['bypass_availability']   = $this->toBool($payload['bypass_availability']);
+        $payload['bypass_availability']      = $this->toBool($payload['bypass_availability']);
+        // Solo il backend admin può impostare questo flag
+        $payload['exclude_from_availability'] = $this->toBool($payload['exclude_from_availability'] ?? false);
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;

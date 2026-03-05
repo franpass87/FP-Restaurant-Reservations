@@ -1,3 +1,28 @@
+## 0.9.0-rc10.10 - Evento privato: esclusione dalla disponibilità (2026-03-05)
+
+### Added - exclude_from_availability
+- **[NEW]** Nuova colonna `exclude_from_availability TINYINT(1) DEFAULT 0` nella tabella `fp_reservations`
+- **[NEW]** Le prenotazioni con questo flag a `1` non vengono conteggiate nel calcolo della disponibilità (né in `loadReservations` né in `countDailyActiveReservations`)
+- **[NEW]** Nello step 3 del form backend, per gli eventi privati appare un checkbox "Non scalare la capienza del giorno" (spuntato di default)
+- **[NEW]** Il flag viene trasmesso via REST, sanitizzato e salvato nel DB
+
+### Impact
+- ✅ Un evento privato può coesistere con altri servizi della stessa giornata senza ridurne la capienza disponibile
+- ✅ Il checkbox è visibile solo per eventi privati (`__private_event__`), non per prenotazioni normali
+- ✅ Nessun impatto su prenotazioni frontend esistenti
+
+### Files Modified
+- `src/Core/Migrations.php` — bump DB_VERSION a `2026.03.05`, `applyAlterations()` aggiunge la colonna via `ALTER TABLE`
+- `src/Domain/Reservations/Availability/DataLoader.php` — filtro `exclude_from_availability = 0` in entrambe le query
+- `src/Domain/Reservations/ReservationPayloadSanitizer.php` — default e sanitizzazione del flag
+- `src/Domain/Reservations/Admin/ReservationPayloadExtractor.php` — lettura dal request
+- `src/Domain/Reservations/Service.php` — passaggio al repository insert
+- `assets/js/admin/manager-app.js` — checkbox condizionale nello step 3, lettura nel submit
+- `assets/js/admin/agenda-app.js` — idem
+- `assets/css/admin-manager.css` — stili per `.fp-private-event-option` e `.fp-checkbox-label`
+
+---
+
 ## 0.9.0-rc10.8 - Staff bypass disponibilità (2026-03-05)
 
 ### Added - Staff override capacità

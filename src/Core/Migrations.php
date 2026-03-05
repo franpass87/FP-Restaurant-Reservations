@@ -9,7 +9,7 @@ use wpdb;
 final class Migrations
 {
     private const OPTION_KEY = 'fp_resv_db_version';
-    private const DB_VERSION = '2025.10.12';
+    private const DB_VERSION = '2026.03.05';
 
     public static function run(): void
     {
@@ -27,6 +27,8 @@ final class Migrations
         foreach (self::getTableDefinitions($wpdb, $charsetCollate) as $sql) {
             dbDelta($sql);
         }
+
+        self::applyAlterations($wpdb);
 
         update_option(self::OPTION_KEY, self::DB_VERSION);
     }
@@ -318,5 +320,28 @@ CREATE TABLE {$auditLogTable} (
 SQL;
 
         return $tables;
+    }
+
+    /**
+     * Alterazioni incrementali alle tabelle esistenti.
+     * dbDelta non aggiunge colonne mancanti in modo affidabile — usiamo ALTER TABLE espliciti.
+     */
+    private static function applyAlterations(wpdb $wpdb): void
+    {
+        $table = $wpdb->prefix . 'fp_reservations';
+
+        // Aggiunge exclude_from_availability se non esiste già
+        $col = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'exclude_from_availability'",
+                DB_NAME,
+                $table
+            )
+        );
+
+        if (empty($col)) {
+            $wpdb->query("ALTER TABLE `{$table}` ADD COLUMN `exclude_from_availability` TINYINT(1) NOT NULL DEFAULT 0");
+            $wpdb->query("ALTER TABLE `{$table}` ADD KEY `exclude_from_availability` (`exclude_from_availability`)");
+        }
     }
 }
