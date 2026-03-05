@@ -1,3 +1,23 @@
+## 0.9.0-rc10.8 - Staff bypass disponibilità (2026-03-05)
+
+### Added - Staff override capacità
+- **[NEW]** Lo staff (prenotazioni create dal pannello admin) può ora creare prenotazioni anche quando lo slot è pieno o ha raggiunto il limite di capienza
+- **[NEW]** Il flag `bypass_availability` viene impostato automaticamente a `true` per tutte le prenotazioni create dal backend admin
+- **[NEW]** `AvailabilityGuard::guardAvailabilityForSlot()` accetta il parametro opzionale `$bypassAvailability` (default `false`)
+
+### Impact
+- ✅ Lo staff può inserire prenotazioni extra senza essere bloccato dai limiti di capienza
+- ✅ Le prenotazioni frontend continuano a rispettare i limiti normalmente
+- ✅ Nessun impatto su sicurezza: il bypass è disponibile solo tramite endpoint admin (richiede `manage_options`)
+
+### Files Modified
+- `src/Domain/Reservations/Admin/ReservationPayloadExtractor.php` — aggiunto `bypass_availability: true`
+- `src/Domain/Reservations/ReservationPayloadSanitizer.php` — preservazione flag `bypass_availability`
+- `src/Domain/Reservations/AvailabilityGuard.php` — parametro `$bypassAvailability`, skip immediato se `true`
+- `src/Domain/Reservations/Service.php` — passaggio del flag al guard
+
+---
+
 ## 0.9.0-rc10.7 - Aperture speciali in Turni e disponibilità (2025-02-11)
 
 ### Added - Configurazione aperture speciali

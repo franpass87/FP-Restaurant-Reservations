@@ -326,7 +326,8 @@ class Service
                 $sanitized['party'],
                 $sanitized['room_id'],
                 $sanitized['meal'],
-                $status
+                $status,
+                (bool) ($sanitized['bypass_availability'] ?? false)
             );
             
             // #region agent log

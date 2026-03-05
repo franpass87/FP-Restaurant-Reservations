@@ -71,6 +71,7 @@ final class AvailabilityGuard
      * @param int|null $roomId Sala richiesta (opzionale)
      * @param string $meal Identificatore del meal plan (pranzo/cena)
      * @param string $status Lo stato della prenotazione che si sta per creare
+     * @param bool $bypassAvailability Se true, salta il controllo disponibilità (solo per staff)
      * @throws ConflictException Se non c'è disponibilità
      */
     public function guardAvailabilityForSlot(
@@ -79,8 +80,14 @@ final class AvailabilityGuard
         int $party,
         ?int $roomId,
         string $meal,
-        string $status
+        string $status,
+        bool $bypassAvailability = false
     ): void {
+        // Staff bypass: lo slot viene accettato indipendentemente dalla capienza
+        if ($bypassAvailability) {
+            return;
+        }
+
         // Skip per stati che non occupano capacità
         if (!in_array($status, self::ACTIVE_STATUSES, true)) {
             return;

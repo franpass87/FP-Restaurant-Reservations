@@ -78,6 +78,7 @@ final class ReservationPayloadSanitizer
             'wheelchair_table' => false,
             'pets'             => false,
             'allow_partial_contact' => false,
+            'bypass_availability'   => false,
         ];
 
         $payload = array_merge($defaults, $payload);
@@ -139,6 +140,7 @@ final class ReservationPayloadSanitizer
             ? sanitize_text_field($payload['request_id'])
             : null;
         $payload['allow_partial_contact'] = $this->toBool($payload['allow_partial_contact']);
+        $payload['bypass_availability']   = $this->toBool($payload['bypass_availability']);
 
         if (is_array($payload['value'])) {
             $payload['value'] = null;
