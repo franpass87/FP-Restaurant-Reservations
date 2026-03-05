@@ -1986,21 +1986,29 @@ class ReservationManager {
             }
         }
         
-        // Filtra solo slot available
-        const availableSlots = slots.filter(slot => slot.status === 'available');
+        // Backend admin: mostra tutti gli slot (anche pieni/bloccati) con badge di stato
+        const allSlots = slots.filter(slot => slot.status !== undefined);
 
         let slotsHtml = '';
-        if (availableSlots.length === 0) {
-            slotsHtml = '<p class="fp-no-slots">Nessuno slot disponibile per questi criteri.</p>';
+        if (allSlots.length === 0) {
+            slotsHtml = '<p class="fp-no-slots">Nessuno slot configurato per questa data.</p>';
         } else {
-            slotsHtml = availableSlots.map(slot => {
-                const time = slot.label || slot.start; // label è già in formato HH:MM
+            slotsHtml = allSlots.map(slot => {
+                const time = slot.label || slot.start;
                 const capacity = slot.available_capacity || 0;
+                const status = slot.status || 'available';
+                const statusLabels = {
+                    available: '',
+                    limited: ' <span class="fp-slot-badge fp-slot-badge--limited">Limitato</span>',
+                    full: ' <span class="fp-slot-badge fp-slot-badge--full">Pieno</span>',
+                    blocked: ' <span class="fp-slot-badge fp-slot-badge--blocked">Bloccato</span>',
+                };
+                const badge = statusLabels[status] || '';
                 return `
-                    <label class="fp-slot-option">
+                    <label class="fp-slot-option fp-slot-option--${status}">
                         <input type="radio" name="slot" value="${slot.start}" required />
-                        <span class="fp-slot-time">${this.escapeHtml(time)}</span>
-                        <span class="fp-slot-capacity">${capacity} posti</span>
+                        <span class="fp-slot-time">${this.escapeHtml(time)}${badge}</span>
+                        <span class="fp-slot-capacity">${capacity} posti liberi</span>
                     </label>
                 `;
             }).join('');
@@ -2032,7 +2040,7 @@ class ReservationManager {
                         <button type="button" class="fp-btn fp-btn--secondary" data-action="back-step1">
                             ← Indietro
                         </button>
-                        <button type="submit" class="fp-btn fp-btn--primary" ${availableSlots.length === 0 ? 'disabled' : ''}>
+                        <button type="submit" class="fp-btn fp-btn--primary" ${allSlots.length === 0 ? 'disabled' : ''}>
                             Avanti →
                         </button>
                     </div>

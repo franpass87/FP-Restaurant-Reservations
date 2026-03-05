@@ -1185,6 +1185,56 @@ select.fp-form-control {
     color: var(--fp-gray-500);
 }
 
+/* Badge stato slot (visibili solo nel backend admin) */
+.fp-slot-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.fp-slot-badge--limited {
+    background: #fef3c7;
+    color: #92400e;
+}
+.fp-slot-badge--full {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.fp-slot-badge--blocked {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Varianti visive per slot non disponibili (staff può comunque selezionarli) */
+.fp-slot-option--full {
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+.fp-slot-option--full:hover {
+    border-color: #ef4444;
+}
+.fp-slot-option--blocked {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+    opacity: 0.75;
+}
+.fp-slot-option--blocked:hover {
+    border-color: #9ca3af;
+    opacity: 1;
+}
+.fp-slot-option--limited {
+    border-color: #fcd34d;
+    background: #fffbeb;
+}
+.fp-slot-option--limited:hover {
+    border-color: #f59e0b;
+}
+
 .fp-modal-loading {
     text-align: center;
     padding: 60px 20px;
