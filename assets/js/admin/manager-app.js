@@ -1994,8 +1994,8 @@ class ReservationManager {
                 </div>
                 <div class="fp-selection-summary">
                     <strong>Tipo:</strong> Evento Privato |
-                    <strong>Data:</strong> ${date} |
-                    <strong>Coperti:</strong> ${party}
+                    <strong>Data:</strong> ${this.escapeHtml(date)} |
+                    <strong>Coperti:</strong> ${this.escapeHtml(String(party))}
                 </div>
                 <form id="fp-new-reservation-form-step2-free">
                     <div class="fp-form-group">

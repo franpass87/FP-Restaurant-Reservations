@@ -1389,7 +1389,8 @@ class ReservationManager {
         if (mealSelect) {
             mealSelect.addEventListener('change', () => {
                 const selectedMeal = mealSelect.value;
-                if (selectedMeal) {
+                // Evento privato: nessuna chiamata availability, tutti i giorni sono validi
+                if (selectedMeal && selectedMeal !== '__private_event__') {
                     this.loadAvailableDaysForManager(selectedMeal);
                 }
             });
@@ -1400,6 +1401,9 @@ class ReservationManager {
             dateInput.addEventListener('change', () => {
                 const selectedDate = dateInput.value;
                 const selectedMeal = mealSelect ? mealSelect.value : '';
+
+                // Evento privato: nessuna validazione disponibilità
+                if (selectedMeal === '__private_event__') return;
                 
                 // Se la cache sta ancora caricando, avvisa l'utente
                 if (selectedDate && selectedMeal && Object.keys(this.state.availableDaysCache).length === 0 && this.state.availableDaysLoading) {
@@ -1446,8 +1450,8 @@ class ReservationManager {
                 return;
             }
 
-            // Valida finale la disponibilità
-            if (this.state.availableDaysCache[date] !== undefined) {
+            // Evento privato: salta la validazione disponibilità
+            if (meal !== '__private_event__' && this.state.availableDaysCache[date] !== undefined) {
                 const dayInfo = this.state.availableDaysCache[date];
                 
                 // Determina se il giorno è disponibile
@@ -1555,8 +1559,8 @@ class ReservationManager {
                 </div>
                 <div class="fp-selection-summary">
                     <strong>Tipo:</strong> Evento Privato |
-                    <strong>Data:</strong> ${date} |
-                    <strong>Coperti:</strong> ${party}
+                    <strong>Data:</strong> ${this.escapeHtml(date)} |
+                    <strong>Coperti:</strong> ${this.escapeHtml(String(party))}
                 </div>
                 <form id="fp-new-reservation-form-step2-free">
                     <div class="fp-form-group">
