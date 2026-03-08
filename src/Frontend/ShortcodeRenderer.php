@@ -238,6 +238,9 @@ final class ShortcodeRenderer
             throw new \RuntimeException('Template non trovato: ' . $template);
         }
         
+        // Fire tracking hook before rendering (form is about to be shown to the user)
+        do_action('fp_resv_form_rendered', $context);
+
         error_log('[FP-RESV] Starting template rendering...');
         ob_start();
         /** @var array<string, mixed> $context */

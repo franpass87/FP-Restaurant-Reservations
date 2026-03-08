@@ -38,7 +38,7 @@ final class BusinessServiceProvider extends ServiceProvider
         $this->registerEvents($container);
         $this->registerReports($container);
         $this->registerDiagnostics($container);
-        $this->registerTracking($container);
+        $this->registerTrackingBridge($container);
         $this->registerQA($container);
     }
     
@@ -63,8 +63,9 @@ final class BusinessServiceProvider extends ServiceProvider
             $container->get(\FP\Resv\Domain\Notifications\Manager::class)->boot();
         }
         
-        if ($container->has(\FP\Resv\Domain\Tracking\Manager::class)) {
-            $container->get(\FP\Resv\Domain\Tracking\Manager::class)->boot();
+        // Boot TrackingBridge explicitly so hooks are always registered
+        if ($container->has(\FP\Resv\Domain\Tracking\TrackingBridge::class)) {
+            $container->get(\FP\Resv\Domain\Tracking\TrackingBridge::class);
         }
     }
     
@@ -1027,103 +1028,20 @@ final class BusinessServiceProvider extends ServiceProvider
     }
     
     /**
-     * Register tracking service
+     * Register tracking bridge — delegates to FP-Marketing-Tracking-Layer.
      */
-    private function registerTracking(Container $container): void
+    private function registerTrackingBridge(Container $container): void
     {
         $container->singleton(
-            \FP\Resv\Domain\Tracking\GA4::class,
-            function (Container $container) {
-                // Tracking GA4 requires FP\Resv\Domain\Settings\Options (final class)
-                $options = new \FP\Resv\Domain\Settings\Options();
-                return new \FP\Resv\Domain\Tracking\GA4($options);
+            \FP\Resv\Domain\Tracking\TrackingBridge::class,
+            function () {
+                $bridge = new \FP\Resv\Domain\Tracking\TrackingBridge();
+                $bridge->boot();
+                return $bridge;
             }
         );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\Ads::class,
-            function (Container $container) {
-                // Tracking Ads requires FP\Resv\Domain\Settings\Options (final class)
-                $options = new \FP\Resv\Domain\Settings\Options();
-                return new \FP\Resv\Domain\Tracking\Ads($options);
-            }
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\Meta::class,
-            function (Container $container) {
-                // Tracking Meta requires FP\Resv\Domain\Settings\Options (final class)
-                $options = new \FP\Resv\Domain\Settings\Options();
-                return new \FP\Resv\Domain\Tracking\Meta($options);
-            }
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\Clarity::class,
-            function (Container $container) {
-                // Tracking Clarity requires FP\Resv\Domain\Settings\Options (final class)
-                $options = new \FP\Resv\Domain\Settings\Options();
-                return new \FP\Resv\Domain\Tracking\Clarity($options);
-            }
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\UTMAttributionHandler::class,
-            \FP\Resv\Domain\Tracking\UTMAttributionHandler::class
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\TrackingScriptGenerator::class,
-            \FP\Resv\Domain\Tracking\TrackingScriptGenerator::class
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\ReservationEventBuilder::class,
-            function (Container $container) {
-                $ads = $container->get(\FP\Resv\Domain\Tracking\Ads::class);
-                $meta = $container->get(\FP\Resv\Domain\Tracking\Meta::class);
-                return new \FP\Resv\Domain\Tracking\ReservationEventBuilder($ads, $meta);
-            }
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\ServerSideEventDispatcher::class,
-            function (Container $container) {
-                $ga4 = $container->get(\FP\Resv\Domain\Tracking\GA4::class);
-                $meta = $container->get(\FP\Resv\Domain\Tracking\Meta::class);
-                return new \FP\Resv\Domain\Tracking\ServerSideEventDispatcher($ga4, $meta);
-            }
-        );
-        
-        $container->singleton(
-            \FP\Resv\Domain\Tracking\Manager::class,
-            function (Container $container) {
-                // Tracking Manager requires FP\Resv\Domain\Settings\Options (final class)
-                $options = new \FP\Resv\Domain\Settings\Options();
-                $ga4 = $container->get(\FP\Resv\Domain\Tracking\GA4::class);
-                $ads = $container->get(\FP\Resv\Domain\Tracking\Ads::class);
-                $meta = $container->get(\FP\Resv\Domain\Tracking\Meta::class);
-                $clarity = $container->get(\FP\Resv\Domain\Tracking\Clarity::class);
-                $utmHandler = $container->get(\FP\Resv\Domain\Tracking\UTMAttributionHandler::class);
-                $scriptGenerator = $container->get(\FP\Resv\Domain\Tracking\TrackingScriptGenerator::class);
-                $eventBuilder = $container->get(\FP\Resv\Domain\Tracking\ReservationEventBuilder::class);
-                $serverSideDispatcher = $container->get(\FP\Resv\Domain\Tracking\ServerSideEventDispatcher::class);
-                
-                return new \FP\Resv\Domain\Tracking\Manager(
-                    $options,
-                    $ga4,
-                    $ads,
-                    $meta,
-                    $clarity,
-                    $utmHandler,
-                    $scriptGenerator,
-                    $eventBuilder,
-                    $serverSideDispatcher
-                );
-            }
-        );
-        
-        $container->alias('tracking.manager', \FP\Resv\Domain\Tracking\Manager::class);
+
+        $container->alias('tracking.bridge', \FP\Resv\Domain\Tracking\TrackingBridge::class);
     }
     
     /**

@@ -1,21 +1,12 @@
-console.log('🚀 JavaScript del form caricato! [VERSIONE AUDIT COMPLETO v2.4 + GTM TRACKING]');
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM caricato, inizializzo form...');
+﻿document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('fp-resv-default') || document.getElementById('fp-resv-simple') || document.querySelector('.fp-resv-simple');
-    console.log('Form trovato:', form);
     
     if (!form) {
-        console.error('Form non trovato!');
         return;
     }
 
     // ─── GTM / DataLayer Tracking Helper ─────────────────────────
-    // Pusha eventi FLAT nel dataLayer per essere letti da GTM come
-    // Data Layer Variables (DLV). Usa fpResvTracking.dispatch() come
-    // fallback per modalità non-GTM (gtag diretto).
-    let _reservationStartFired = false;
-
+    // Pusha eventi flat nel dataLayer per GTM (Data Layer Variables).
     function pushDataLayerEvent(eventName, params) {
         window.dataLayer = window.dataLayer || [];
         var payload = { event: eventName };
@@ -27,30 +18,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         window.dataLayer.push(payload);
-        console.log('[FP-RESV-TRACKING] dataLayer.push:', eventName, payload);
-
-        // Dispatch a fpResvTracking se presente (per modalità non-GTM)
-        if (window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
-            try {
-                window.fpResvTracking.dispatch({
-                    event: eventName,
-                    ga4: { name: eventName, params: params || {} }
-                });
-            } catch (e) {
-                console.warn('[FP-RESV-TRACKING] dispatch error:', e);
-            }
-        }
     }
     // ─── Fine Helper ─────────────────────────────────────────────
+
+    let _reservationStartFired = false;
     
     // Funzione helper per mostrare notice
     function showNotice(type, message, duration = 5000) {
-        console.log('showNotice chiamata:', type, message);
         if (window.fpNoticeManager) {
-            console.log('Usando NoticeManager');
             return window.fpNoticeManager.show(type, message, duration);
         } else {
-            console.log('NoticeManager non disponibile, usando alert');
             // Fallback a alert se il notice manager non è disponibile
             alert(message);
         }
@@ -71,10 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 const data = await response.json();
                 formNonce = data.nonce;
-                console.log('✅ Nonce ottenuto con successo');
             }
         } catch (error) {
-            console.error('⚠️ Errore nel recupero del nonce:', error);
         }
     }
     
@@ -137,38 +112,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupMealButtons() {
         mealBtns = form.querySelectorAll('.fp-meal-btn');
-        console.log('Trovati', mealBtns.length, 'pulsanti pasto');
         
         // Debug: mostra tutti i pasti con i loro messaggi
-        console.log('=== DEBUG PASTI ===');
         mealBtns.forEach((btn, index) => {
-            console.log(`Pasto ${index + 1}:`, {
-                key: btn.dataset.meal,
-                notice: btn.dataset.mealNotice,
-                hint: btn.dataset.mealHint,
-                hasNotice: !!btn.dataset.mealNotice && btn.dataset.mealNotice.trim() !== ''
-            });
         });
-        console.log('===================');
         
         mealBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                console.log('Pulsante pasto cliccato:', this.dataset.meal);
-                console.log('Tutti dataset del bottone:', this.dataset);
                 
                 mealBtns.forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMeal = this.dataset.meal;
 
-                // GTM: reservation_start (solo alla prima interazione)
-                if (!_reservationStartFired) {
-                    _reservationStartFired = true;
-                    var locationVal = (document.querySelector('input[name="fp_resv_location"]') || {}).value || 'default';
-                    pushDataLayerEvent('reservation_start', {
-                        reservation_location: locationVal,
-                        meal_type: selectedMeal
-                    });
-                }
+                // booking_form_start è gestito dal listener focusin globale sul form
                 
                 // Reset selectedTime quando cambi meal
                 selectedTime = null;
@@ -178,22 +134,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const mealNotice = this.dataset.mealNotice;
                 const mealNoticeDiv = document.getElementById('meal-notice');
                 
-                console.log('mealNotice value:', mealNotice);
-                console.log('mealNoticeDiv found:', mealNoticeDiv);
                 
                 if (mealNotice && mealNotice.trim() !== '' && mealNoticeDiv) {
                     // Usa textContent per sicurezza (previene XSS)
                     mealNoticeDiv.textContent = mealNotice;
                     mealNoticeDiv.hidden = false;
-                    console.log('✅ Messaggio pasto mostrato:', mealNotice);
                 } else {
                     if (mealNoticeDiv) {
                         mealNoticeDiv.hidden = true;
                     }
-                    console.log('⚠️ Nessun messaggio per questo pasto o div non trovato');
-                    console.log('  - mealNotice presente?', !!mealNotice);
-                    console.log('  - mealNotice non vuoto?', mealNotice && mealNotice.trim() !== '');
-                    console.log('  - mealNoticeDiv trovato?', !!mealNoticeDiv);
                 }
                 
                 // PRELOAD: Carica date SUBITO (step 1), così sono pronte per step 2
@@ -234,7 +183,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Trigger change event to load time slots
             hiddenInput.dispatchEvent(new Event('change'));
             
-            console.log('Party count updated:', partyCount);
         }
         
         minusBtn.addEventListener('click', function() {
@@ -409,16 +357,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        console.log('Riepilogo popolato');
     }
     
     // Navigation
     function showStep(step) {
-        console.log('showStep chiamata con step:', step);
         
         // Valida che lo step sia valido
         if (step < 1 || step > totalSteps) {
-            console.error('Step non valido:', step);
             return;
         }
         
@@ -447,7 +392,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Mostra solo lo step corrente
         const currentStepEl = form.querySelector(`.fp-step[data-step="${step}"]`);
-        console.log('Elemento step trovato:', currentStepEl);
         if (currentStepEl) {
             currentStepEl.classList.add('active');
             // Mostra lo step corrente rimuovendo display: none
@@ -455,7 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
             currentStepEl.style.setProperty('display', '', 'important');
             currentStepEl.removeAttribute('aria-hidden');
             currentStepEl.setAttribute('aria-hidden', 'false');
-            console.log('Classe active aggiunta al step', step);
             
             // FIX CRITICO: Forza le dimensioni dei checkbox quando lo step 3 o 4 viene mostrato
             // Questo è necessario perché quando uno step è nascosto con display:none, i checkbox non vengono renderizzati
@@ -521,7 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 100);
             }
         } else {
-            console.error('Elemento step non trovato per step:', step);
             // Fallback: mostra il primo step se lo step richiesto non esiste
             const firstStep = form.querySelector('.fp-step[data-step="1"]');
             if (firstStep) {
@@ -529,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstStep.removeAttribute('aria-hidden');
                 firstStep.setAttribute('aria-hidden', 'false');
                 firstStep.classList.add('active');
-                console.warn('Fallback: mostrato step 1');
             }
         }
         
@@ -655,11 +596,61 @@ document.addEventListener('DOMContentLoaded', function() {
             showStep(currentStep);
         }
     });
+
+    // ─── Funnel Tracking ─────────────────────────────────────────────────────
+    // booking_form_start: prima interazione con qualsiasi campo del form
+    var _bookingStartFired = false;
+    form.addEventListener('focusin', function(e) {
+        if (_bookingStartFired) return;
+        var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+        if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') return;
+        _bookingStartFired = true;
+        var locationVal = (form.querySelector('input[name="fp_resv_location"]') || {}).value || 'default';
+        pushDataLayerEvent('booking_form_start', {
+            reservation_location: locationVal
+        });
+    });
+
+    // booking_step_complete: ogni volta che l'utente avanza con successo di step
+    // (si aggancia al nextBtn dopo la sua validazione)
+    var _originalNextClick = nextBtn.onclick;
+    nextBtn.addEventListener('click', function() {
+        // Viene sparato solo se validateStep ha già passato (currentStep è già incrementato)
+        // Usiamo un setTimeout(0) per leggere il nuovo currentStep dopo l'incremento
+        setTimeout(function() {
+            var completedStep = currentStep - 1; // lo step appena completato
+            if (completedStep >= 1 && completedStep <= totalSteps) {
+                var stepNames = { 1: 'meal_selection', 2: 'date_time_party', 3: 'personal_data', 4: 'summary' };
+                pushDataLayerEvent('booking_step_complete', {
+                    step_number: completedStep,
+                    step_name: stepNames[completedStep] || 'step_' + completedStep,
+                    reservation_location: (form.querySelector('input[name="fp_resv_location"]') || {}).value || 'default',
+                    meal_type: selectedMeal || ''
+                });
+            }
+        }, 0);
+    });
+
+    // booking_form_abandon: utente lascia la pagina con form iniziato ma non completato
+    var _bookingSubmitted = false;
+    window.addEventListener('beforeunload', function() {
+        if (_bookingStartFired && !_bookingSubmitted) {
+            var locationVal = (form.querySelector('input[name="fp_resv_location"]') || {}).value || 'default';
+            if (window.dataLayer) {
+                window.dataLayer.push({
+                    event: 'booking_form_abandon',
+                    step_number: currentStep,
+                    reservation_location: locationVal,
+                    meal_type: selectedMeal || ''
+                });
+            }
+        }
+    });
+    // ─── Fine Funnel Tracking ─────────────────────────────────────────────────
     
     submitBtn.addEventListener('click', async function() {
         // Protezione contro doppio submit
         if (isSubmitting) {
-            console.log('⚠️ Submit già in corso, ignoro il click');
             return;
         }
         
@@ -723,17 +714,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 payload.fp_resv_occasion = occasion;
             }
             
-            console.log('📤 Invio prenotazione al server...', payload);
 
-            // GTM: reservation_submit (pre-AJAX, flat per DLV)
-            pushDataLayerEvent('reservation_submit', {
-                reservation_date: payload.fp_resv_date,
-                reservation_time: payload.fp_resv_time,
-                reservation_party: payload.fp_resv_party,
-                reservation_location: payload.fp_resv_location || 'default',
-                meal_type: payload.fp_resv_meal,
-                currency: payload.fp_resv_currency || 'EUR'
-            });
+            // booking_submitted / booking_confirmed sono sparati server-side dal TrackingBridge PHP
+            // e iniettati nel dataLayer da DataLayerManager::output_events() in wp_footer.
 
             // Invia la richiesta al server
             const response = await fetch('/wp-json/fp-resv/v1/reservations', {
@@ -750,59 +733,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 // Successo!
-                console.log('✅ Prenotazione creata con successo:', data);
 
-                // ─── GTM TRACKING (PRIMA di qualsiasi manipolazione DOM/notice) ───
-                // Eseguito prima di showNotice/scrollIntoView/hide per garantire
-                // che il dataLayer.push avvenga PRIMA di qualsiasi side-effect DOM.
-                try {
-                    var res = (data && data.reservation) || {};
-                    var trackingArr = (data && Array.isArray(data.tracking)) ? data.tracking : [];
-                    var firstTrack = trackingArr.length > 0 ? trackingArr[0] : null;
-                    var ga4p = (firstTrack && firstTrack.ga4 && firstTrack.ga4.params) || {};
-                    var resvData = (firstTrack && firstTrack.reservation) || {};
-
-                    pushDataLayerEvent('reservation_confirmed', {
-                        reservation_id: ga4p.reservation_id || resvData.id || res.id,
-                        reservation_status: ga4p.reservation_status || resvData.status || (res.status || 'confirmed').toLowerCase(),
-                        reservation_party: ga4p.reservation_party || resvData.party || res.party || res.guests || payload.fp_resv_party,
-                        reservation_date: ga4p.reservation_date || resvData.date || res.date || payload.fp_resv_date,
-                        reservation_time: ga4p.reservation_time || resvData.time || res.time || payload.fp_resv_time,
-                        reservation_location: ga4p.reservation_location || resvData.location || res.location || payload.fp_resv_location || 'default',
-                        meal_type: ga4p.meal_type || resvData.meal_type || payload.fp_resv_meal,
-                        value: ga4p.value != null ? ga4p.value : (res.value != null ? Number(res.value) : undefined),
-                        currency: ga4p.currency || res.currency || payload.fp_resv_currency || 'EUR',
-                        event_id: (firstTrack && firstTrack.event_id) || undefined
-                    });
-
-                    // purchase (se presente nella risposta server)
-                    var purchaseEntry = trackingArr.find(function(e) { return e && e.event === 'purchase'; });
-                    if (purchaseEntry) {
-                        var pGa4 = (purchaseEntry.ga4 && purchaseEntry.ga4.params) || {};
-                        var pData = purchaseEntry.purchase || {};
-                        pushDataLayerEvent('purchase', {
-                            value: pGa4.value || pData.value,
-                            currency: pGa4.currency || pData.currency || 'EUR',
-                            value_is_estimated: pData.value_is_estimated || true,
-                            reservation_id: pGa4.reservation_id || ga4p.reservation_id || res.id,
-                            reservation_party: pGa4.reservation_party || pData.party_size || payload.fp_resv_party,
-                            meal_type: pGa4.meal_type || pData.meal_type || payload.fp_resv_meal,
-                            event_id: purchaseEntry.event_id || undefined
-                        });
-                    }
-
-                    // Dispatch server-side tracking (per modalità non-GTM)
-                    trackingArr.forEach(function(entry) {
-                        if (entry && window.fpResvTracking && typeof window.fpResvTracking.dispatch === 'function') {
-                            try { window.fpResvTracking.dispatch(entry); } catch(e) {}
-                        }
-                    });
-
-                    console.log('[FP-RESV-TRACKING] ✅ reservation_confirmed + tracking pushati correttamente');
-                } catch (trackingError) {
-                    console.error('[FP-RESV-TRACKING] ❌ Errore nel tracking post-submit:', trackingError);
-                }
-                // ─── Fine GTM ───
+                // booking_confirmed / purchase sono sparati server-side dal TrackingBridge PHP
+                // e iniettati nel dataLayer da DataLayerManager::output_events().
+                // Qui segnaliamo solo il completamento per bloccare booking_form_abandon.
+                _bookingSubmitted = true;
 
                 // UI: notice + nasconde form (DOPO il tracking)
                 showNotice('success', data.message || 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');
@@ -826,10 +761,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Lo scroll è gestito automaticamente dal NoticeManager
             } else {
                 // Errore dal server
-                console.error('❌ Errore dal server:', data);
                 const errorMessage = data.message || 'Si è verificato un errore durante l\'invio della prenotazione. Riprova.';
                 showNotice('error', errorMessage);
-                
+
+                // GTM: booking_submit_error (errore server)
+                pushDataLayerEvent('booking_submit_error', {
+                    error_type: 'server',
+                    error_message: errorMessage,
+                });
+
                 // Riabilita il pulsante in caso di errore
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
@@ -839,9 +779,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             // Errore di rete o JavaScript
-            console.error('❌ Errore durante l\'invio:', error);
             showNotice('error', 'Errore di connessione. Verifica la tua connessione internet e riprova.');
-            
+
+            // GTM: booking_submit_error (errore rete)
+            pushDataLayerEvent('booking_submit_error', {
+                error_type: 'network',
+                error_message: error && error.message ? String(error.message) : 'network_error',
+            });
+
             // Riabilita il pulsante in caso di errore
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
@@ -901,9 +846,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        console.log('✅ Flatpickr inizializzato sul campo data');
     } else {
-        console.log('⚠️ Flatpickr non disponibile, uso calendario nativo');
     }
     
     // Load available dates when meal is selected
@@ -912,12 +855,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // PERFORMANCE TIMING START
         const perfStart = performance.now();
-        console.log(`⏱️ [PERF] Inizio caricamento date per ${meal}`);
         
         // Cancella richiesta precedente se esiste (previene race condition)
         if (availableDatesAbortController) {
             availableDatesAbortController.abort();
-            console.log('🚫 Richiesta precedente cancellata');
         }
         
         // Crea nuovo AbortController per questa richiesta
@@ -945,7 +886,6 @@ document.addEventListener('DOMContentLoaded', function() {
         function tryNextEndpoint() {
             if (currentEndpointIndex >= endpoints.length) {
                 // Tutti gli endpoint hanno fallito, usa fallback locale
-                console.log('Tutti gli endpoint hanno fallito, usando fallback locale');
                 availableDates = generateFallbackDates(from, toDate, meal);
                 availableDatesSet = new Set(availableDates); // Update Set per performance
                 loadingEl.hidden = true;
@@ -962,7 +902,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // NON forzare lo step 2 - l'utente deve cliccare "Avanti"
                 // Questo mantiene il comportamento consistente con il caso di successo API
-                console.log('✅ Date di fallback caricate e PRONTE, puoi cliccare "Avanti"');
                 
                 // Show the date input
                 if (dateInput) {
@@ -971,13 +910,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 updateDateInput();
-                console.log('Usando date di fallback per', meal, ':', availableDates);
                 return;
             }
             
             const endpoint = endpoints[currentEndpointIndex];
             const fetchStart = performance.now();
-            console.log(`⏱️ [PERF] Tentativo endpoint ${currentEndpointIndex + 1}:`, endpoint);
             
             fetch(endpoint, { signal: availableDatesAbortController.signal })
                 .then(response => {
@@ -988,7 +925,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             .then(data => {
                 const fetchTime = performance.now() - fetchStart;
-                console.log(`⏱️ [PERF] Fetch completato in ${fetchTime.toFixed(2)}ms`);
                 
                 // Hide loading indicator
                 loadingEl.hidden = true;
@@ -1003,7 +939,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     availableDatesSet = new Set(availableDates); // Update Set per performance
                     
                     const parseTime = performance.now() - parseStart;
-                    console.log(`⏱️ [PERF] Parsing dati in ${parseTime.toFixed(2)}ms`);
                     
                     // Hide info about available dates (non mostriamo più il conteggio)
                     if (infoEl) {
@@ -1014,11 +949,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update date input with available dates info
                     updateDateInput();
                     const updateTime = performance.now() - updateStart;
-                    console.log(`⏱️ [PERF] Update Flatpickr in ${updateTime.toFixed(2)}ms`);
                     
                     const totalTime = performance.now() - perfStart;
-                    console.log(`⏱️ [PERF] TOTALE caricamento date: ${totalTime.toFixed(2)}ms`);
-                    console.log('Date disponibili per', meal, ':', availableDates);
                     
                     // PRELOAD: Date pronte, abilita "Avanti"
                     areDatesLoading = false;
@@ -1033,11 +965,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                     // Se la richiesta è stata cancellata (AbortError), ignora silenziosamente
                     if (error.name === 'AbortError') {
-                        console.log('🚫 Richiesta cancellata (cambio meal rapido)');
                         return;
                     }
                     
-                    console.error(`Errore endpoint ${currentEndpointIndex + 1}:`, error);
                     if (currentEndpointIndex === 0) {
                         showNotice('warning', 'Problemi di connessione. Riprovo con un server alternativo...');
                     }
@@ -1055,7 +985,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Il fallback deve essere SINCRONO e IMMEDIATO per non bloccare l'UI
         // Se serve configurazione backend, usare endpoint /available-days che ha caching
         
-        console.log('[FALLBACK] Generando date di default per', meal);
         
         // Fallback immediato: usa schedule di default
         return generateDatesFromDefaultSchedule(from, to, meal);
@@ -1119,7 +1048,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Il fallback deve essere SINCRONO e IMMEDIATO per non bloccare l'UI
         // Se serve configurazione backend, usare endpoint /available-slots che ha caching
         
-        console.log('[FALLBACK] Generando orari di default per', meal);
         
         // Fallback immediato: usa orari di default
         return generateTimeSlotsFromDefault(meal);
@@ -1188,7 +1116,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Aggiorna Flatpickr con le date disponibili
             if (flatpickrInstance) {
                 flatpickrInstance.set('enable', availableDates);
-                console.log('✅ Flatpickr aggiornato con', availableDates.length, 'date disponibili');
             }
             
             // Hide info about available dates (non mostriamo più il conteggio)
@@ -1204,7 +1131,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Resetta Flatpickr
             if (flatpickrInstance) {
                 flatpickrInstance.set('enable', []);
-                console.log('⚠️ Flatpickr: nessuna data disponibile');
             }
             
             const infoEl = document.getElementById('date-info');
@@ -1238,12 +1164,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // PERFORMANCE TIMING START
         const perfStart = performance.now();
-        console.log(`⏱️ [PERF] Inizio caricamento slot per ${meal} ${date} ${party} persone`);
         
         // Cancella richiesta precedente se esiste (previene race condition)
         if (availableSlotsAbortController) {
             availableSlotsAbortController.abort();
-            console.log('🚫 Richiesta slot precedente cancellata');
         }
         
         // Crea nuovo AbortController per questa richiesta
@@ -1267,7 +1191,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 const fetchTime = performance.now() - fetchStart;
-                console.log(`⏱️ [PERF] Fetch slot completato in ${fetchTime.toFixed(2)}ms`);
                 
                 loadingEl.hidden = true;
                 
@@ -1314,8 +1237,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const renderTime = performance.now() - renderStart;
                     const totalTime = performance.now() - perfStart;
-                    console.log(`⏱️ [PERF] Rendering ${data.slots.length} slot in ${renderTime.toFixed(2)}ms`);
-                    console.log(`⏱️ [PERF] TOTALE caricamento slot: ${totalTime.toFixed(2)}ms`);
                     
                     infoEl.hidden = false;
                 } else {
@@ -1325,12 +1246,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 // Se la richiesta è stata cancellata (AbortError), ignora silenziosamente
                 if (error.name === 'AbortError') {
-                    console.log('🚫 Richiesta slot cancellata (cambio rapido data/party)');
                     return;
                 }
                 
-                console.error('Errore nel caricamento orari:', error);
-                console.log('Usando orari di fallback per', meal, 'alle', date);
                 showNotice('info', 'Caricamento orari in corso...');
                 
                 // Fallback: genera orari localmente

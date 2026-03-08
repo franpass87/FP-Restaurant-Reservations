@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Frontend;
 
-use FP\Resv\Core\DataLayer;
 use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
@@ -246,40 +245,8 @@ final class FormContext
             $pdfMapKeys = array_keys($pdfSettings['pdf_urls']);
         }
 
-        $viewEvent = DataLayer::push([
-            'event'       => 'reservation_view',
-            'reservation' => [
-                'language' => $config['language'],
-                'locale'   => $config['locale'],
-                'location' => $config['location'],
-            ],
-            'ga4' => [
-                'name'   => 'reservation_view',
-                'params' => [
-                    'reservation_language' => $config['language'],
-                    'reservation_locale'   => $config['locale'],
-                    'reservation_location' => $config['location'],
-                ],
-            ],
-        ]);
-
-        $dataLayer = [
-            'view'   => $viewEvent,
-            'events' => [
-                'start'            => 'reservation_start',
-                'pdf'              => 'pdf_download_click',
-                'submit'           => 'reservation_submit',
-                'confirmed'        => 'reservation_confirmed',
-                'waitlist'         => 'waitlist_joined',
-                'payment_required' => 'reservation_payment_required',
-                'cancelled'        => 'reservation_cancelled',
-                'modified'         => 'reservation_modified',
-                'meal_selected'    => 'meal_selected',
-                'section_unlocked' => 'section_unlocked',
-                'form_valid'       => 'form_valid',
-                'purchase'         => 'purchase',
-            ],
-        ];
+        // booking_form_view è sparato da TrackingBridge via fp_resv_form_rendered.
+        $dataLayer = [];
 
         return [
             'config'      => $config,

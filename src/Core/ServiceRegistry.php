@@ -116,15 +116,7 @@ use FP\Resv\Domain\Tables\RoomTableNormalizer as TablesRoomTableNormalizer;
 use FP\Resv\Domain\Tables\CapacityCalculator as TablesCapacityCalculator;
 use FP\Resv\Domain\Tables\TableSuggestionEngine as TablesTableSuggestionEngine;
 use FP\Resv\Domain\Tables\REST as TablesREST;
-use FP\Resv\Domain\Tracking\Ads as AdsTracking;
-use FP\Resv\Domain\Tracking\Clarity as ClarityTracking;
-use FP\Resv\Domain\Tracking\GA4 as GA4Tracking;
-use FP\Resv\Domain\Tracking\Manager as TrackingManager;
-use FP\Resv\Domain\Tracking\Meta as MetaTracking;
-use FP\Resv\Domain\Tracking\ReservationEventBuilder;
-use FP\Resv\Domain\Tracking\ServerSideEventDispatcher;
-use FP\Resv\Domain\Tracking\TrackingScriptGenerator;
-use FP\Resv\Domain\Tracking\UTMAttributionHandler;
+use FP\Resv\Domain\Tracking\TrackingBridge;
 use FP\Resv\Domain\Reservations\Email\EmailContextBuilder;
 use FP\Resv\Domain\Reservations\Email\EmailHeadersBuilder as ReservationsEmailHeadersBuilder;
 use FP\Resv\Domain\Reservations\Email\FallbackMessageBuilder;
@@ -527,26 +519,11 @@ final class ServiceRegistry
         $this->container->register(EventsService::class, $eventsService);
         $this->container->register('events.service', $eventsService);
 
-        // Tracking
-        $ga4     = new GA4Tracking($this->options);
-        $ads     = new AdsTracking($this->options);
-        $meta    = new MetaTracking($this->options);
-        $clarity = new ClarityTracking($this->options);
-
-        $this->container->register(GA4Tracking::class, $ga4);
-        $this->container->register(AdsTracking::class, $ads);
-        $this->container->register(MetaTracking::class, $meta);
-        $this->container->register(ClarityTracking::class, $clarity);
-
-        $utmHandler = new UTMAttributionHandler();
-        $scriptGenerator = new TrackingScriptGenerator();
-        $eventBuilder = new ReservationEventBuilder($ads, $meta);
-        $serverSideDispatcher = new ServerSideEventDispatcher($ga4, $meta);
-
-        $trackingManager = new TrackingManager($this->options, $ga4, $ads, $meta, $clarity, $utmHandler, $scriptGenerator, $eventBuilder, $serverSideDispatcher);
-        $trackingManager->boot();
-        $this->container->register(TrackingManager::class, $trackingManager);
-        $this->container->register('tracking.manager', $trackingManager);
+        // Tracking — delegated to FP-Marketing-Tracking-Layer via do_action('fp_tracking_event')
+        $trackingBridge = new TrackingBridge();
+        $trackingBridge->boot();
+        $this->container->register(TrackingBridge::class, $trackingBridge);
+        $this->container->register('tracking.bridge', $trackingBridge);
     }
 
     /**

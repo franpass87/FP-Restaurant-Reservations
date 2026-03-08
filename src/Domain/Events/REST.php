@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Events;
 
-use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\RateLimiter;
 use FP\Resv\Core\Roles;
@@ -188,11 +187,6 @@ final class REST
                     'details' => apply_filters('fp_resv_debug_error', null, $exception),
                 ]
             );
-        }
-
-        $tracking = DataLayer::consume();
-        if ($tracking !== []) {
-            $result['tracking'] = $tracking;
         }
 
         $response = rest_ensure_response($result);

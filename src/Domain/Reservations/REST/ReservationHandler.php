@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations\REST;
 
-use FP\Resv\Core\DataLayer;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\RateLimiter;
@@ -263,24 +262,7 @@ final class ReservationHandler
             'message'     => __('Prenotazione inviata con successo.', 'fp-restaurant-reservations'),
         ];
 
-        $tracking = DataLayer::consume();
-        if ($tracking !== []) {
-            $payload['tracking'] = $tracking;
-        }
-        
-        Logging::log('api', '>>> Costruisco risposta', [
-            'payload_keys' => array_keys($payload),
-            'has_reservation' => isset($payload['reservation']),
-            'reservation_id' => $payload['reservation']['id'] ?? null,
-        ]);
-
-        Logging::log('api', '>>> Costruisco WP_REST_Response standard');
-        
-        $response = new WP_REST_Response($payload, 201);
-        
-        Logging::log('api', '>>> RETURN response standard');
-        
-        return $response;
+        return new WP_REST_Response($payload, 201);
     }
 
     private function consentGiven(WP_REST_Request $request): bool
