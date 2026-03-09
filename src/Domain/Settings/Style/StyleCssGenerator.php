@@ -74,7 +74,6 @@ final class StyleCssGenerator
         $radius = (int) ($settings['style_border_radius'] ?? 8);
         $radius = max(0, min(48, $radius));
         $shadow  = $shadowPresets[$settings['style_shadow_level'] ?? 'soft'] ?? $shadowPresets['soft'] ?? '';
-        $shadow  = $shadows[$settings['style_shadow_level'] ?? 'soft'] ?? $shadows['soft'];
         $font    = trim((string) ($settings['style_font_family'] ?? '"Inter", sans-serif'));
         $fontSize = (int) ($settings['style_font_size'] ?? 16);
         $fontSize = max(14, min(20, $fontSize));

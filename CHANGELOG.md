@@ -1,3 +1,7 @@
+## [0.9.0-rc10.11] - 2026-03-09
+### Fixed
+- StyleCssGenerator: rimosso riferimento errato a `$shadows` (typo, doveva essere `$shadowPresets`) — evita PHP Warning su form prenotazioni
+
 ## [0.9.0-rc10.10] - 2026-03-08
 ### Added
 - TrackingBridge: `value` da campo esplicito o `price_per_person`, `transaction_id` e `value` su `booking_confirmed` da `status_changed`

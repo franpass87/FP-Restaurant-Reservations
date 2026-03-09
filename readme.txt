@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 0.9.0-rc10.10
+Stable tag: 0.9.0-rc10.11
 License: GPLv2 or later
 
 == Description ==
@@ -152,6 +152,9 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 * Sistema metriche per monitoring real-time
 * Email asincrone con queue (2-5s→200ms)
 * Service container con dependency injection
+
+= 0.9.0-rc10.11 - 2026-03-09 =
+* Fix: StyleCssGenerator rimosso riferimento errato a variabile $shadows (PHP Warning su form)
 
 = 0.1.0 =
 * Release iniziale del plugin

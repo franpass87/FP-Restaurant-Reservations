@@ -84,8 +84,9 @@ final class AdminServiceProvider extends ServiceProvider
         $container->singleton(
             \FP\Resv\Domain\Tables\AdminController::class,
             function (Container $container) {
-                $options = $container->get(\FP\Resv\Core\Services\OptionsInterface::class);
-                $tablesEnabled = (string) $options->get('fp_resv_general', 'tables_enabled', '0') === '1';
+                $optionsInterface = $container->get(\FP\Resv\Core\Services\OptionsInterface::class);
+                $options = new \FP\Resv\Core\OptionsAdapter($optionsInterface);
+                $tablesEnabled = (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
                 
                 if (!$tablesEnabled) {
                     return null; // Will be handled by has() check
@@ -102,8 +103,9 @@ final class AdminServiceProvider extends ServiceProvider
         
         // Store feature flag
         $container->singleton('feature.tables_enabled', function (Container $container) {
-            $options = $container->get(\FP\Resv\Core\Services\OptionsInterface::class);
-            return (string) $options->get('fp_resv_general', 'tables_enabled', '0') === '1';
+            $optionsInterface = $container->get(\FP\Resv\Core\Services\OptionsInterface::class);
+            $options = new \FP\Resv\Core\OptionsAdapter($optionsInterface);
+            return (string) $options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
         });
         
         // Closures admin controller
