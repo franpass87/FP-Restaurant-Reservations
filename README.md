@@ -349,3 +349,11 @@ Se questo plugin ti è utile:
 
 **Versione:** 0.9.0-rc10.3  
 **Data:** 19 Novembre 2025
+---
+
+## Autore
+
+**Francesco Passeri**
+- Sito: [francescopasseri.com](https://francescopasseri.com)
+- Email: [info@francescopasseri.com](mailto:info@francescopasseri.com)
+- GitHub: [github.com/franpass87](https://github.com/franpass87)
