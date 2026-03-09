@@ -1,4 +1,9 @@
-## 0.9.0-rc10.10 - Evento privato: esclusione dalla disponibilità (2026-03-05)
+## [0.9.0-rc10.10] - 2026-03-08
+### Added
+- TrackingBridge: `value` da campo esplicito o `price_per_person`, `transaction_id` e `value` su `booking_confirmed` da `status_changed`
+- Pulizia form frontend, ServiceRegistry, BusinessServiceProvider e REST — rimozione codice legacy
+
+## [0.9.0-rc10.10] - 2026-03-05 — Evento privato: esclusione dalla disponibilità
 
 ### Added - exclude_from_availability
 - **[NEW]** Nuova colonna `exclude_from_availability TINYINT(1) DEFAULT 0` nella tabella `fp_reservations`
