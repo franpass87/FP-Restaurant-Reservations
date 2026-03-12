@@ -1,3 +1,8 @@
+## [0.9.0-rc10.12] - 2026-03-12
+### Fixed
+- Array to string conversion in AdminServiceProvider: getFieldAsString per tables_enabled (checkbox)
+- Aggiunto getFieldAsString in OptionsAdapter e Domain\Settings\Options
+
 ## [0.9.0-rc10.11] - 2026-03-09
 ### Fixed
 - StyleCssGenerator: rimosso riferimento errato a `$shadows` (typo, doveva essere `$shadowPresets`) — evita PHP Warning su form prenotazioni

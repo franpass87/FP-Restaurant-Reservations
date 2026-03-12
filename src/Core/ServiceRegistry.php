@@ -548,7 +548,7 @@ final class ServiceRegistry
         $this->container->register('reservations.admin_controller', $reservationsAdmin);
 
         // Feature flag: Sale & Tavoli
-        $tablesEnabled = (string) $this->options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+        $tablesEnabled = $this->options->getFieldAsString('fp_resv_general', 'tables_enabled', '0') === '1';
         if ($tablesEnabled) {
             $tablesLayout = $this->container->get(TablesLayoutService::class);
             $tablesAdmin = new TablesAdminController($tablesLayout);
@@ -647,7 +647,7 @@ final class ServiceRegistry
         // Tables REST (solo se abilitato)
         $tablesEnabled = $this->container->has('feature.tables_enabled')
             ? $this->container->get('feature.tables_enabled')
-            : (string) $this->options->getField('fp_resv_general', 'tables_enabled', '0') === '1';
+            : $this->options->getFieldAsString('fp_resv_general', 'tables_enabled', '0') === '1';
             
         if ($tablesEnabled) {
             $tablesRest = new TablesREST($tablesLayout);

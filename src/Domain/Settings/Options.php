@@ -36,4 +36,14 @@ final class Options
 
         return $group[$field] ?? $default;
     }
+
+    /**
+     * Returns field value as string, handling arrays (e.g. checkbox storage).
+     */
+    public function getFieldAsString(string $optionName, string $field, string $default = ''): string
+    {
+        $raw = $this->getField($optionName, $field, $default);
+
+        return is_array($raw) ? (string) ($raw[0] ?? $default) : (string) $raw;
+    }
 }

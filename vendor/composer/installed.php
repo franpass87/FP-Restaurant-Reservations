@@ -3,7 +3,7 @@
         'name' => 'franpass87/fp-restaurant-reservations',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '3161bc736ca77058e6e96d743026758227aff736',
+        'reference' => '400c5bb436adac3993742cdb8ff75b0e797d91b8',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'franpass87/fp-restaurant-reservations' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '3161bc736ca77058e6e96d743026758227aff736',
+            'reference' => '400c5bb436adac3993742cdb8ff75b0e797d91b8',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
