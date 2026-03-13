@@ -33,6 +33,10 @@ class ReservationManager {
                 window.fpResvManagerSettings?.restRoot || '/wp-json/fp-resv/v1'
             ),
             nonce: window.fpResvManagerSettings?.nonce || '',
+            ajaxUrl: this.normalizeAdminAjaxUrl(
+                window.fpResvManagerSettings?.ajaxUrl || '/wp-admin/admin-ajax.php'
+            ),
+            adminNonce: window.fpResvManagerSettings?.adminNonce || '',
             strings: window.fpResvManagerSettings?.strings || {},
             meals: window.fpResvManagerSettings?.meals || [],
             debugMode: window.fpResvManagerSettings?.debugMode || false,
@@ -265,6 +269,10 @@ class ReservationManager {
             btn.addEventListener('click', () => this.openNewReservationModal());
         });
 
+        document.querySelectorAll('[data-action="new-closure"]').forEach(btn => {
+            btn.addEventListener('click', () => this.openNewClosureModal());
+        });
+
         document.querySelectorAll('[data-action="export"]').forEach(btn => {
             btn.addEventListener('click', () => this.exportReservations());
         });
@@ -332,7 +340,7 @@ class ReservationManager {
 
         // Feedback tattile su azioni importanti (se disponibile)
         if ('vibrate' in navigator) {
-            document.querySelectorAll('[data-action="new-reservation"], [data-modal-action="save"]')
+            document.querySelectorAll('[data-action="new-reservation"], [data-action="new-closure"], [data-modal-action="save"]')
                 .forEach(btn => {
                     btn.addEventListener('click', () => {
                         navigator.vibrate(10); // Vibrazione leggera 10ms
@@ -1847,6 +1855,228 @@ class ReservationManager {
         this.bindNewReservationStep1();
     }
 
+    openNewClosureModal() {
+        this.dom.modalTitle.textContent = 'Nuova Chiusura';
+        this.dom.modalBody.innerHTML = this.renderNewClosureForm();
+        this.dom.modal.style.display = 'flex';
+        this.bindNewClosureForm();
+    }
+
+    renderNewClosureForm() {
+        const selectedDate = this.state.currentDate instanceof Date
+            ? this.formatDate(this.state.currentDate)
+            : this.formatDate(new Date());
+
+        return `
+            <div class="fp-manager-closure-form">
+                <form id="fp-new-closure-form">
+                    <div class="fp-form-group">
+                        <label for="closure-title">Descrizione *</label>
+                        <input
+                            type="text"
+                            id="closure-title"
+                            class="fp-form-control"
+                            placeholder="Es. Chiusura straordinaria per manutenzione"
+                            required
+                        />
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="closure-date">Data *</label>
+                        <input
+                            type="date"
+                            id="closure-date"
+                            class="fp-form-control"
+                            value="${selectedDate}"
+                            required
+                        />
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label class="fp-checkbox-label">
+                            <input type="checkbox" id="closure-all-day" checked />
+                            Tutto il giorno
+                        </label>
+                    </div>
+
+                    <div class="fp-form-row fp-manager-closure-times" id="closure-time-fields" style="display:none;">
+                        <div class="fp-form-group">
+                            <label for="closure-start-time">Ora inizio *</label>
+                            <input type="time" id="closure-start-time" class="fp-form-control" />
+                        </div>
+                        <div class="fp-form-group">
+                            <label for="closure-end-time">Ora fine *</label>
+                            <input type="time" id="closure-end-time" class="fp-form-control" />
+                        </div>
+                    </div>
+
+                    <div class="fp-form-group">
+                        <label for="closure-note">Nota</label>
+                        <textarea
+                            id="closure-note"
+                            class="fp-form-control"
+                            rows="3"
+                            placeholder="Motivo o dettagli della chiusura..."
+                        ></textarea>
+                    </div>
+
+                    <div class="fp-form-actions">
+                        <button type="button" class="fp-btn fp-btn--secondary" data-action="cancel-new-closure">
+                            Annulla
+                        </button>
+                        <button type="submit" class="fp-btn fp-btn--primary">
+                            Crea Chiusura
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    bindNewClosureForm() {
+        const form = document.getElementById('fp-new-closure-form');
+        if (!form) {
+            return;
+        }
+
+        const allDayField = document.getElementById('closure-all-day');
+        const timeFields = document.getElementById('closure-time-fields');
+
+        const toggleTimeFields = () => {
+            this.toggleClosureTimeFields(allDayField, timeFields);
+        };
+
+        toggleTimeFields();
+        allDayField?.addEventListener('change', toggleTimeFields);
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                await this.createClosureFromManager();
+            } catch (error) {
+                this.debugError('Error creating closure from manager:', error);
+            }
+        });
+
+        this.dom.modalBody
+            .querySelector('[data-action="cancel-new-closure"]')
+            ?.addEventListener('click', () => this.closeModal());
+    }
+
+    toggleClosureTimeFields(allDayField, timeFields) {
+        if (!allDayField || !timeFields) {
+            return;
+        }
+
+        timeFields.style.display = allDayField.checked ? 'none' : 'grid';
+    }
+
+    async createClosureFromManager() {
+        const titleField = document.getElementById('closure-title');
+        const dateField = document.getElementById('closure-date');
+        const allDayField = document.getElementById('closure-all-day');
+        const startTimeField = document.getElementById('closure-start-time');
+        const endTimeField = document.getElementById('closure-end-time');
+        const noteField = document.getElementById('closure-note');
+
+        const title = titleField?.value?.trim() || '';
+        const date = dateField?.value || '';
+        const isAllDay = !!allDayField?.checked;
+        const startTime = startTimeField?.value || '';
+        const endTime = endTimeField?.value || '';
+        const note = noteField?.value?.trim() || '';
+
+        if (!title || !date) {
+            alert('Descrizione e data sono obbligatorie');
+            return;
+        }
+
+        if (!isAllDay && (!startTime || !endTime)) {
+            alert('Inserisci ora di inizio e fine');
+            return;
+        }
+
+        if (!isAllDay && startTime >= endTime) {
+            alert('L\'ora di fine deve essere successiva all\'ora di inizio');
+            return;
+        }
+
+        const payload = {
+            scope: 'restaurant',
+            type: 'full',
+            start_at: isAllDay ? `${date} 00:00:00` : `${date} ${startTime}:00`,
+            end_at: isAllDay ? `${date} 23:59:59` : `${date} ${endTime}:00`,
+            note: note ? `${title}\n${note}` : title,
+            active: 1,
+        };
+
+        this.dom.modalBody.innerHTML = '<div class="fp-modal-loading"><div class="fp-spinner"></div><p>Creazione chiusura in corso...</p></div>';
+
+        try {
+            const formData = new URLSearchParams();
+            formData.set('action', 'fp_resv_closures_create');
+            formData.set('nonce', this.config.adminNonce || this.config.nonce);
+            formData.set('scope', payload.scope);
+            formData.set('type', payload.type);
+            formData.set('start_at', payload.start_at);
+            formData.set('end_at', payload.end_at);
+            formData.set('note', payload.note);
+            formData.set('active', String(payload.active));
+
+            const response = await fetch(this.config.ajaxUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                },
+                credentials: 'same-origin',
+                body: formData.toString(),
+            });
+
+            if (!response.ok) {
+                let errorMessage = 'Errore nella creazione della chiusura';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = this.extractApiErrorMessage(errorData, errorMessage);
+                } catch (parseError) {
+                    this.debugError('Could not parse closure error response:', parseError);
+                }
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            if (!result || result.success !== true) {
+                const errorMessage = this.extractApiErrorMessage(
+                    result,
+                    'Errore nella creazione della chiusura'
+                );
+                throw new Error(errorMessage);
+            }
+
+            this.dom.modalBody.innerHTML = `
+                <div class="fp-success-state">
+                    <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 48px;"></span>
+                    <h3>Chiusura Creata!</h3>
+                    <p>La chiusura è stata salvata con successo.</p>
+                    <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.closeModal(); window.fpResvManager.loadReservations(); window.fpResvManager.loadOverview();">
+                        Chiudi
+                    </button>
+                </div>
+            `;
+        } catch (error) {
+            this.debugError('Error creating closure:', error);
+            this.dom.modalBody.innerHTML = `
+                <div class="fp-error-state">
+                    <span class="dashicons dashicons-warning"></span>
+                    <h3>Errore</h3>
+                    <p>${error.message}</p>
+                    <button type="button" class="fp-btn fp-btn--primary" onclick="window.fpResvManager.openNewClosureModal()">
+                        ← Riprova
+                    </button>
+                </div>
+            `;
+        }
+    }
+
     renderNewReservationStep1() {
         const today = this.formatDate(new Date()); // Timezone locale!
         
@@ -2699,11 +2929,24 @@ class ReservationManager {
     }
 
     normalizeRestRoot(restRoot) {
-        if (!restRoot) {
+        return this.normalizeToRelativePath(restRoot);
+    }
+
+    normalizeAdminAjaxUrl(ajaxUrl) {
+        const normalized = this.normalizeToRelativePath(ajaxUrl);
+        if (normalized === '') {
+            return '/wp-admin/admin-ajax.php';
+        }
+
+        return normalized;
+    }
+
+    normalizeToRelativePath(urlValue) {
+        if (!urlValue) {
             return '';
         }
 
-        const rawValue = String(restRoot).trim();
+        const rawValue = String(urlValue).trim();
         if (rawValue === '') {
             return '';
         }
@@ -2713,21 +2956,31 @@ class ReservationManager {
         if (typeof URL === 'function' && location) {
             try {
                 const parsed = new URL(rawValue, location.origin);
-
-                parsed.protocol = location.protocol;
-                parsed.host = location.host;
-
-                return parsed.toString().replace(/\/+$/, '');
+                // Forza path relativo per evitare mismatch host/porta con cookie e nonce.
+                return parsed.pathname.replace(/\/+$/, '');
             } catch (error) {
                 // continua sotto per fallback
             }
         }
 
-        if (location && rawValue.startsWith('/')) {
-            return `${location.origin}${rawValue}`.replace(/\/+$/, '');
+        if (rawValue.startsWith('/')) {
+            return rawValue.replace(/\/+$/, '');
         }
 
         return rawValue.replace(/\/+$/, '');
+    }
+
+    extractApiErrorMessage(payload, fallbackMessage) {
+        if (!payload || typeof payload !== 'object') {
+            return fallbackMessage;
+        }
+
+        return (
+            payload?.data?.message ||
+            payload?.message ||
+            payload?.code ||
+            fallbackMessage
+        );
     }
 
     buildRestUrl(path = '') {

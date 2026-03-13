@@ -12,6 +12,7 @@ use function implode;
 use function sprintf;
 use function trim;
 use function __;
+use function wp_timezone_string;
 
 /**
  * Genera contenuto ICS per allegato calendario.
@@ -27,10 +28,15 @@ final class ICSGenerator
      */
     public function generate(array $context): ?string
     {
+        $fallbackTimezone = wp_timezone_string();
+        if ($fallbackTimezone === '') {
+            $fallbackTimezone = 'UTC';
+        }
+
         try {
-            $timezone = new DateTimeZone((string) ($context['restaurant']['timezone'] ?? 'Europe/Rome'));
+            $timezone = new DateTimeZone((string) ($context['restaurant']['timezone'] ?? $fallbackTimezone));
         } catch (\Exception $exception) {
-            $timezone = new DateTimeZone('Europe/Rome');
+            $timezone = new DateTimeZone($fallbackTimezone);
         }
 
         $dateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i', $context['date'] . ' ' . $context['time'], $timezone);

@@ -37,11 +37,13 @@
     };
 
     const defaults = {
-        headline: 'Chiusure e Aperture Speciali',
+        headline: 'Planner operativo: chiusure e aperture',
         description: 'Gestisci chiusure, periodi speciali e aperture straordinarie.',
-        createCta: 'Nuova chiusura/apertura',
+        createCta: 'Nuovo evento operativo',
         empty: 'Nessuna chiusura o apertura programmata nel periodo selezionato.',
-        formTitle: 'Nuova chiusura/apertura',
+        emptyFiltered: 'Nessun risultato con i filtri attuali.',
+        formTitle: 'Configura nuovo evento operativo',
+        searchLabel: 'Cerca evento',
         modeLabel: 'Cosa vuoi fare?',
         modeDay: 'Chiudi giorno intero',
         modeSlot: 'Chiudi fascia oraria',
@@ -70,7 +72,21 @@
         save: 'Salva',
         cancel: 'Annulla',
         delete: 'Elimina',
+        clearFilters: 'Reset filtri',
         confirmDelete: 'Eliminare definitivamente?',
+        searchPlaceholder: 'Cerca per nota, tipo o ambito...',
+        filterLabel: 'Filtro',
+        filterAll: 'Tutte',
+        filterActive: 'Attive',
+        filterUpcoming: 'Future',
+        filterExpired: 'Scadute',
+        filterSpecial: 'Aperture speciali',
+        sortLabel: 'Ordina',
+        sortNearest: 'Più vicine',
+        sortLatest: 'Più lontane',
+        statusActive: 'Attiva',
+        statusUpcoming: 'Futura',
+        statusExpired: 'Scaduta',
     };
 
     const strings = { ...defaults, ...(settings.strings || {}) };
@@ -80,6 +96,9 @@
         loading: false,
         error: '',
         formOpen: false,
+        search: '',
+        filter: 'all',
+        sort: 'nearest',
     };
 
     const ajaxRequest = (action, data = {}) => {
@@ -144,6 +163,39 @@
     toolbar.appendChild(toolbarTitle);
     toolbar.appendChild(toolbarDesc);
     toolbar.appendChild(toggleButton);
+
+    const controls = document.createElement('div');
+    controls.className = 'fp-resv-closures-app__controls';
+    controls.innerHTML = `
+        <label class="fp-resv-closures-app__control fp-resv-closures-app__control--search">
+            <span>${strings.searchLabel}</span>
+            <input type="search" data-role="closures-search" placeholder="${strings.searchPlaceholder}">
+        </label>
+        <label class="fp-resv-closures-app__control">
+            <span>${strings.filterLabel}</span>
+            <select data-role="closures-filter">
+                <option value="all">${strings.filterAll}</option>
+                <option value="active">${strings.filterActive}</option>
+                <option value="upcoming">${strings.filterUpcoming}</option>
+                <option value="expired">${strings.filterExpired}</option>
+                <option value="special_opening">${strings.filterSpecial}</option>
+            </select>
+        </label>
+        <label class="fp-resv-closures-app__control">
+            <span>${strings.sortLabel}</span>
+            <select data-role="closures-sort">
+                <option value="nearest">${strings.sortNearest}</option>
+                <option value="latest">${strings.sortLatest}</option>
+            </select>
+        </label>
+        <button type="button" class="button fp-resv-closures-app__reset" data-role="closures-reset">
+            ${strings.clearFilters}
+        </button>
+    `;
+    const searchInput = controls.querySelector('[data-role="closures-search"]');
+    const filterSelect = controls.querySelector('[data-role="closures-filter"]');
+    const sortSelect = controls.querySelector('[data-role="closures-sort"]');
+    const resetButton = controls.querySelector('[data-role="closures-reset"]');
 
     const form = document.createElement('form');
     form.className = 'fp-resv-closures-form';
@@ -317,6 +369,7 @@
     errorBox.hidden = true;
 
     app.appendChild(toolbar);
+    app.appendChild(controls);
     app.appendChild(form);
     app.appendChild(errorBox);
     app.appendChild(list);
@@ -403,6 +456,59 @@
         }
     };
 
+    const getItemStatus = (item) => {
+        if (!item || !item.active) {
+            return 'expired';
+        }
+        const now = Date.now();
+        const startTs = parseBackendDateTime(item.start_at);
+        const endTs = parseBackendDateTime(item.end_at);
+
+        if (Number.isFinite(endTs) && endTs < now) {
+            return 'expired';
+        }
+        if (Number.isFinite(startTs) && startTs > now) {
+            return 'upcoming';
+        }
+        return 'active';
+    };
+
+    const getVisibleItems = () => {
+        const query = (state.search || '').trim().toLowerCase();
+        let filtered = state.items.filter((item) => item && item.id);
+
+        if (query) {
+            filtered = filtered.filter((item) => {
+                const haystack = [
+                    item.note || '',
+                    item.type || '',
+                    item.scope || '',
+                    item.capacity_override && item.capacity_override.label ? item.capacity_override.label : '',
+                ].join(' ').toLowerCase();
+                return haystack.includes(query);
+            });
+        }
+
+        if (state.filter !== 'all') {
+            filtered = filtered.filter((item) => {
+                if (state.filter === 'special_opening') {
+                    return item.type === 'special_opening';
+                }
+                return getItemStatus(item) === state.filter;
+            });
+        }
+
+        filtered.sort((a, b) => {
+            const aTs = parseBackendDateTime(a.start_at);
+            const bTs = parseBackendDateTime(b.start_at);
+            const aVal = Number.isFinite(aTs) ? aTs : 0;
+            const bVal = Number.isFinite(bTs) ? bTs : 0;
+            return state.sort === 'latest' ? bVal - aVal : aVal - bVal;
+        });
+
+        return filtered;
+    };
+
     const updateStats = () => {
         const activeClosures = state.items.filter((item) => item && item.type === 'full' && item.active);
         const capacityClosures = state.items.filter((item) => item && item.type === 'capacity_reduction' && item.active);
@@ -434,12 +540,15 @@
 
     const renderList = () => {
         list.innerHTML = '';
-        if (state.items.length === 0) {
+        const visibleItems = getVisibleItems();
+        if (visibleItems.length === 0) {
+            const hasActiveFilters = state.search.trim() !== '' || state.filter !== 'all' || state.sort !== 'nearest';
+            emptyState.textContent = hasActiveFilters ? strings.emptyFiltered : strings.empty;
             emptyState.hidden = false;
             return;
         }
         emptyState.hidden = true;
-        state.items.forEach((item, index) => {
+        visibleItems.forEach((item) => {
             if (!item || !item.id) {
                 // Item non valido (manca id) - skip silently in production
                 return;
@@ -456,6 +565,16 @@
             typeBadge.className = 'fp-resv-closure-card__type';
             typeBadge.textContent = formatType(item.type);
             header.appendChild(typeBadge);
+
+            const statusBadge = document.createElement('span');
+            const status = getItemStatus(item);
+            statusBadge.className = `fp-resv-closure-card__status fp-resv-closure-card__status--${status}`;
+            statusBadge.textContent = status === 'active'
+                ? strings.statusActive
+                : status === 'upcoming'
+                    ? strings.statusUpcoming
+                    : strings.statusExpired;
+            header.appendChild(statusBadge);
 
             const actions = document.createElement('div');
             actions.className = 'fp-resv-closure-card__actions';
@@ -792,6 +911,42 @@
                 });
         }
     });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            state.search = searchInput.value || '';
+            renderList();
+        });
+    }
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
+            state.filter = filterSelect.value || 'all';
+            renderList();
+        });
+    }
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            state.sort = sortSelect.value || 'nearest';
+            renderList();
+        });
+    }
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            state.search = '';
+            state.filter = 'all';
+            state.sort = 'nearest';
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            if (filterSelect) {
+                filterSelect.value = 'all';
+            }
+            if (sortSelect) {
+                sortSelect.value = 'nearest';
+            }
+            renderList();
+        });
+    }
 
     render();
     loadClosures();

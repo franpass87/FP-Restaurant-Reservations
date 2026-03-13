@@ -31,6 +31,10 @@ $headingId = 'fp-resv-manager-title';
                     <span class="dashicons dashicons-download"></span>
                     <?php esc_html_e('Esporta', 'fp-restaurant-reservations'); ?>
                 </button>
+                <button type="button" class="fp-btn fp-btn--secondary" data-action="new-closure">
+                    <span class="dashicons dashicons-calendar"></span>
+                    <?php esc_html_e('Nuova Chiusura', 'fp-restaurant-reservations'); ?>
+                </button>
                 <button type="button" class="fp-btn fp-btn--primary" data-action="new-reservation">
                     <span class="dashicons dashicons-plus-alt"></span>
                     <?php esc_html_e('Nuova Prenotazione', 'fp-restaurant-reservations'); ?>

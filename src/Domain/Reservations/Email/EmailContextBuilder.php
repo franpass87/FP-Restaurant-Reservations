@@ -9,6 +9,7 @@ use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
 use FP\Resv\Domain\Settings\Language;
 use function get_bloginfo;
+use function wp_timezone_string;
 use function wp_parse_args;
 
 /**
@@ -44,13 +45,16 @@ final class EmailContextBuilder
     ): array {
         $general = wp_parse_args($general, [
             'restaurant_name'        => get_bloginfo('name'),
-            'restaurant_timezone'    => 'Europe/Rome',
+            'restaurant_timezone'    => wp_timezone_string(),
             'table_turnover_minutes' => '120',
         ]);
 
-        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
+        $timezone = (string) ($general['restaurant_timezone'] ?? wp_timezone_string());
         if ($timezone === '') {
-            $timezone = 'Europe/Rome';
+            $timezone = wp_timezone_string();
+        }
+        if ($timezone === '') {
+            $timezone = 'UTC';
         }
 
         $turnover = (int) ($general['table_turnover_minutes'] ?? 120);

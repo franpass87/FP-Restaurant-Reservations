@@ -29,7 +29,6 @@ final class PagesConfig
             'google-calendar' => self::getGoogleCalendarPage(),
             'style' => self::getStylePage(),
             'language' => self::getLanguagePage(),
-            'closures' => self::getClosuresPage(),
             'tracking' => self::getTrackingPage(),
             'debug' => self::getDebugPage(),
         ];

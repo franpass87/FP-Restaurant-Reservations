@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reservations\Models;
 
 use DateTimeImmutable;
+use DateTimeZone;
+use function function_exists;
+use function wp_timezone;
 
 /**
  * Reservation Model
@@ -197,17 +200,55 @@ final class Reservation
         }
         
         if (isset($data['created_at'])) {
-            $reservation->createdAt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $data['created_at']);
+            $reservation->createdAt = self::parseDateTime((string) $data['created_at']);
         } elseif (isset($data['created'])) {
             $reservation->createdAt = $data['created'] instanceof DateTimeImmutable 
                 ? $data['created'] 
-                : DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $data['created']);
+                : self::parseDateTime((string) $data['created']);
         }
         
         if (isset($data['updated_at'])) {
-            $reservation->updatedAt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $data['updated_at']);
+            $reservation->updatedAt = self::parseDateTime((string) $data['updated_at']);
         }
         
         return $reservation;
+    }
+
+    private static function parseDateTime(string $value): ?DateTimeImmutable
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        $timezone = self::wordPressTimezone();
+        $parsed = $timezone instanceof DateTimeZone
+            ? DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value, $timezone)
+            : DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value);
+
+        if ($parsed instanceof DateTimeImmutable) {
+            return $parsed;
+        }
+
+        try {
+            return $timezone instanceof DateTimeZone
+                ? new DateTimeImmutable($value, $timezone)
+                : new DateTimeImmutable($value);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    private static function wordPressTimezone(): ?DateTimeZone
+    {
+        if (!function_exists('wp_timezone')) {
+            return null;
+        }
+
+        try {
+            return wp_timezone();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

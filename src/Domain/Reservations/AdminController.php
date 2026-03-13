@@ -25,6 +25,8 @@ use function remove_all_actions;
 use function rest_url;
 use function sanitize_key;
 use function wp_create_nonce;
+use function wp_dequeue_script;
+use function wp_dequeue_style;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
@@ -164,6 +166,13 @@ final class AdminController
             return;
         }
 
+        // Evita il popup "Sessione scaduta" (wp-auth-check) nel manager operativo.
+        // In alcuni ambienti locali/proxy il controllo auth genera falsi positivi
+        // e blocca le interazioni con i modali.
+        wp_dequeue_script('wp-auth-check');
+        wp_dequeue_style('wp-auth-check');
+        remove_action('admin_print_footer_scripts', 'wp_auth_check_html', 5);
+
         $scriptHandle = 'fp-resv-admin-manager';
         $styleHandle  = 'fp-resv-admin-manager-style';
 
@@ -230,6 +239,8 @@ final class AdminController
         wp_localize_script($scriptHandle, 'fpResvManagerSettings', [
             'restRoot'  => esc_url_raw(rest_url('fp-resv/v1')),
             'nonce'     => wp_create_nonce('wp_rest'),
+            'ajaxUrl'   => esc_url_raw(admin_url('admin-ajax.php')),
+            'adminNonce'=> wp_create_nonce('fp_resv_admin'),
             'publicNonce' => wp_create_nonce('fp_resv_submit'), // Nonce per l'endpoint pubblico
             'meals'     => $meals,
             'debugMode' => $debugMode, // Attiva/disattiva debug panel

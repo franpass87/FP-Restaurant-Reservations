@@ -4,16 +4,43 @@
     gap: 20px;
 }
 
+.fp-resv-admin--closures .fp-resv-closures__quick-guide {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.fp-resv-admin--closures .fp-resv-closures__quick-step {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.fp-resv-admin--closures .fp-resv-closures__quick-step h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #334155;
+}
+
+.fp-resv-admin--closures .fp-resv-closures__quick-step p {
+    margin: 0;
+    font-size: 13px;
+    color: #475569;
+}
+
 .fp-resv-admin--closures .fp-resv-closures__stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
 }
 
 .fp-resv-admin--closures .fp-resv-closures__stat {
-    background: var(--fp-resv-admin-surface-alt);
-    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
-    padding: 18px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-radius: 12px;
+    padding: 16px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     display: flex;
     flex-direction: column;
@@ -21,56 +48,117 @@
 }
 
 .fp-resv-admin--closures .fp-resv-closures__stat-label {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--fp-resv-admin-muted);
+    letter-spacing: 0.1em;
+    color: #64748b;
 }
 
 .fp-resv-admin--closures .fp-resv-closures__stat-value {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--fp-resv-admin-text);
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.fp-resv-admin--closures .fp-resv-closures__note {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
 }
 
 .fp-resv-closures-app__shell {
     display: grid;
-    gap: 20px;
+    gap: 16px;
 }
 
 .fp-resv-closures-app__toolbar {
     display: grid;
-    gap: 6px;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 12px;
+    background: #fff;
 }
 
 .fp-resv-closures-app__toolbar h2 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: 1.25rem;
+    color: #0f172a;
 }
 
 .fp-resv-closures-app__toolbar p {
     margin: 0;
-    color: var(--fp-resv-admin-muted);
+    color: #475569;
+}
+
+.fp-resv-closures-app__toolbar .button-primary {
+    justify-self: start;
+}
+
+.fp-resv-closures-app__controls {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(160px, 210px)) auto;
+    align-items: end;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.fp-resv-closures-app__control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fp-resv-closures-app__control span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+}
+
+.fp-resv-closures-app__control input,
+.fp-resv-closures-app__control select {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-sizing: border-box;
+    background: #fff;
+    color: #0f172a;
+}
+
+.fp-resv-closures-app__reset {
+    height: 36px;
+    align-self: end;
 }
 
 .fp-resv-closures-form {
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
-    padding: 20px;
-    background: var(--fp-resv-admin-surface-alt);
-    box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.18);
+    border-radius: 12px;
+    padding: 18px;
+    background: #f8fafc;
+    box-shadow: 0 18px 36px -28px rgba(15, 23, 42, 0.22);
     display: grid;
-    gap: 16px;
+    gap: 14px;
+}
+
+.fp-resv-closures-form[hidden] {
+    display: none;
 }
 
 .fp-resv-closures-form header h3 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.06rem;
+    color: #0f172a;
 }
 
 .fp-resv-closures-form__grid {
     display: grid;
-    gap: 14px;
+    gap: 12px;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -85,16 +173,17 @@
 }
 
 .fp-resv-closures-form__field span {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--fp-resv-admin-muted);
+    color: #64748b;
 }
 
 .fp-resv-closures-form__field input,
 .fp-resv-closures-form__field select,
 .fp-resv-closures-form__field textarea {
     width: 100%;
+    min-height: 36px;
     padding: 8px 10px;
     border-radius: 8px;
     border: 1px solid rgba(148, 163, 184, 0.45);
@@ -103,98 +192,27 @@
     color: #0f172a;
 }
 
+.fp-resv-closures-form__field textarea {
+    min-height: 72px;
+}
+
 .fp-resv-closures-form__actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
 }
 
-.fp-resv-closures-list {
-    display: grid;
-    gap: 16px;
-}
-
-.fp-resv-closure-card {
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    border-radius: calc(var(--fp-resv-admin-radius) - 2px);
-    padding: 16px 18px;
-    background: #fff;
-    box-shadow: 0 20px 40px -36px rgba(15, 23, 42, 0.4);
-    display: grid;
-    gap: 10px;
-}
-
-.fp-resv-closure-card.is-inactive {
-    opacity: 0.7;
-}
-
-.fp-resv-closure-card__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-}
-
-.fp-resv-closure-card__type {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(67, 56, 202, 0.12);
-    color: rgba(67, 56, 202, 1);
-    font-weight: 600;
-    font-size: 0.85rem;
-}
-
-.fp-resv-closure-card__range {
-    margin: 0;
-    font-weight: 600;
-    color: #0f172a;
-}
-
-.fp-resv-closure-card__meta {
-    margin: 0;
-    color: #475569;
-    font-size: 0.9rem;
-}
-
-.fp-resv-closure-card__note {
-    margin: 0;
-    padding: 12px;
-    border-radius: 12px;
-    background: rgba(148, 163, 184, 0.12);
-    color: #1f2937;
-}
-
-.fp-resv-closures-empty {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--fp-resv-admin-muted);
-    text-align: center;
-}
-
-.fp-resv-closures-error {
-    padding: 12px 16px;
-    border-radius: 12px;
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.45);
-    color: #b91c1c;
-    font-weight: 600;
-}
-
-/* Mode sections */
 .fp-resv-closures-form__mode-day,
 .fp-resv-closures-form__mode-slot,
 .fp-resv-closures-form__mode-advanced {
     grid-column: 1 / -1;
     display: grid;
-    gap: 14px;
+    gap: 12px;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    padding: 14px 16px;
-    border: 1px dashed rgba(148, 163, 184, 0.35);
+    padding: 12px;
+    border: 1px dashed rgba(148, 163, 184, 0.45);
     border-radius: 10px;
-    background: rgba(248, 250, 252, 0.6);
+    background: #fff;
 }
 
 .fp-resv-closures-form__mode-day[hidden],
@@ -203,7 +221,6 @@
     display: none;
 }
 
-/* Slot row inside special openings */
 .fp-resv-closures-form__slot-row {
     display: flex;
     align-items: flex-end;
@@ -221,7 +238,7 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--fp-resv-admin-muted, #64748b);
+    color: #64748b;
 }
 
 .fp-resv-closures-form__remove-slot {
@@ -231,18 +248,141 @@
     padding: 4px 8px;
 }
 
-.fp-resv-closure-card__meta--highlight {
+.fp-resv-closures-list {
+    display: grid;
+    gap: 12px;
+}
+
+.fp-resv-closure-card {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    box-shadow: 0 18px 36px -32px rgba(15, 23, 42, 0.28);
+    display: grid;
+    gap: 8px;
+}
+
+.fp-resv-closure-card.is-inactive {
+    opacity: 0.68;
+}
+
+.fp-resv-closure-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.fp-resv-closure-card__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
     font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.fp-resv-closure-card__status {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    margin-left: auto;
+}
+
+.fp-resv-closure-card__status--active {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+}
+
+.fp-resv-closure-card__status--upcoming {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.fp-resv-closure-card__status--expired {
+    background: rgba(100, 116, 139, 0.16);
+    color: #475569;
+}
+
+.fp-resv-closure-card__range {
+    margin: 0;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.fp-resv-closure-card__meta {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.fp-resv-closure-card__meta--highlight {
+    font-weight: 700;
     color: #7c3aed;
 }
 
+.fp-resv-closure-card__note {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(148, 163, 184, 0.12);
+    color: #1f2937;
+}
+
+.fp-resv-closures-empty {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #64748b;
+    text-align: center;
+    padding: 14px;
+    border: 1px dashed rgba(148, 163, 184, 0.45);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.fp-resv-closures-error {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+@media (max-width: 980px) {
+    .fp-resv-admin--closures .fp-resv-closures__quick-guide {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 782px) {
+    .fp-resv-closures-app__controls {
+        grid-template-columns: 1fr;
+    }
+
     .fp-resv-closures-form__grid {
         grid-template-columns: 1fr;
     }
+
     .fp-resv-closures-form__mode-day,
     .fp-resv-closures-form__mode-slot,
     .fp-resv-closures-form__mode-advanced {
         grid-template-columns: 1fr;
+    }
+
+    .fp-resv-closures-form__actions {
+        justify-content: stretch;
+    }
+
+    .fp-resv-closures-form__actions .button {
+        flex: 1;
+        text-align: center;
     }
 }

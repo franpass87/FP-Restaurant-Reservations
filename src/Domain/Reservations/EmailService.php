@@ -34,6 +34,7 @@ use function sprintf;
 use function trim;
 use function wp_parse_args;
 use function wp_strip_all_tags;
+use function wp_timezone_string;
 
 /**
  * Servizio centralizzato per gestione email di prenotazioni.
@@ -217,7 +218,7 @@ final class EmailService
 
         $general = $this->options->getGroup('fp_resv_general', [
             'restaurant_name'          => get_bloginfo('name'),
-            'restaurant_timezone'      => 'Europe/Rome',
+            'restaurant_timezone'      => wp_timezone_string(),
             'table_turnover_minutes'   => '120',
         ]);
 

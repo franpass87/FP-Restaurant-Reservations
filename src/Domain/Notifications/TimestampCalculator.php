@@ -11,6 +11,7 @@ use Exception;
 use FP\Resv\Domain\Settings\Options;
 use function substr;
 use function trim;
+use function wp_timezone_string;
 
 /**
  * Calcola i timestamp per reminder e review.
@@ -57,7 +58,7 @@ final class TimestampCalculator
         try {
             $timezone = new DateTimeZone($this->restaurantTimezone());
         } catch (Exception) {
-            $timezone = new DateTimeZone('Europe/Rome');
+            $timezone = new DateTimeZone('UTC');
         }
 
         try {
@@ -83,13 +84,18 @@ final class TimestampCalculator
      */
     private function restaurantTimezone(): string
     {
+        $defaultTimezone = wp_timezone_string();
+        if ($defaultTimezone === '') {
+            $defaultTimezone = 'UTC';
+        }
+
         $general = $this->options->getGroup('fp_resv_general', [
-            'restaurant_timezone' => 'Europe/Rome',
+            'restaurant_timezone' => $defaultTimezone,
         ]);
 
-        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
+        $timezone = (string) ($general['restaurant_timezone'] ?? $defaultTimezone);
         if ($timezone === '') {
-            $timezone = 'Europe/Rome';
+            $timezone = $defaultTimezone;
         }
 
         return $timezone;

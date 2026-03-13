@@ -25,6 +25,7 @@ use function sprintf;
 use function strtolower;
 use function trim;
 use function wp_parse_args;
+use function wp_timezone;
 
 final class Language
 {
@@ -217,14 +218,15 @@ final class Language
         $formats  = $this->getFormats($language);
 
         $normalizedTime = substr(trim($time), 0, 5);
-        
+
         // Crea DateTimeImmutable con il timezone corretto fin dall'inizio
         try {
-            $tz = new DateTimeZone($timezone !== null && $timezone !== '' ? $timezone : 'Europe/Rome');
+            $resolvedTimezone = $timezone !== null && $timezone !== '' ? $timezone : $this->defaultTimezoneName();
+            $tz = new DateTimeZone($resolvedTimezone);
         } catch (\Exception $exception) {
-            $tz = new DateTimeZone('Europe/Rome');
+            $tz = new DateTimeZone('UTC');
         }
-        
+
         $dateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i', trim($date) . ' ' . $normalizedTime, $tz);
 
         if (!$dateTime instanceof DateTimeImmutable) {
@@ -338,6 +340,15 @@ final class Language
             'time'     => 'H:i',
             'datetime' => 'Y-m-d H:i',
         ]);
+    }
+
+    private function defaultTimezoneName(): string
+    {
+        try {
+            return wp_timezone()->getName();
+        } catch (\Throwable) {
+            return 'UTC';
+        }
     }
 
     /**

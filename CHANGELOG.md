@@ -1,3 +1,15 @@
+## [0.9.0-rc10.15] - 2026-03-13
+### Added
+- Manager prenotazioni: nuovo pulsante `Nuova Chiusura` con modal dedicata per creare chiusure operative direttamente dalla dashboard.
+
+### Changed
+- Pagina `Chiusure` rinominata in `Calendario Operativo` con restyle completo UI/UX (gerarchia visiva, guida rapida, microcopy operativa, toolbar/filtri più chiari).
+
+### Fixed
+- Creazione chiusure dal Manager migrata da REST a AJAX admin per evitare errori `rest_cookie_invalid_nonce` in ambienti con host/porta diversi.
+- Normalizzazione URL admin-ajax e parsing errori API lato frontend per feedback utente più affidabile.
+- Corretto rendering del form planner quando è `hidden` (`display: none`) per evitare apertura involontaria all'avvio pagina.
+
 ## [0.9.0-rc10.14] - 2026-03-12
 ### Fixed
 - Uniformata la gestione timezone tra backend e frontend: default range date e parsing datetime ora coerenti con timezone WordPress.

@@ -10,6 +10,7 @@ use function array_filter;
 use function array_key_exists;
 use function strtolower;
 use function trim;
+use function wp_timezone_string;
 
 /**
  * Gestisce il dispatch di eventi Brevo e la costruzione delle proprietà.
@@ -83,11 +84,14 @@ final class EventDispatcher
         }
         
         $general = $this->options->getGroup('fp_resv_general', [
-            'restaurant_timezone' => 'Europe/Rome',
+            'restaurant_timezone' => wp_timezone_string(),
         ]);
-        $timezone = (string) ($general['restaurant_timezone'] ?? 'Europe/Rome');
+        $timezone = (string) ($general['restaurant_timezone'] ?? wp_timezone_string());
         if ($timezone === '') {
-            $timezone = 'Europe/Rome';
+            $timezone = wp_timezone_string();
+        }
+        if ($timezone === '') {
+            $timezone = 'UTC';
         }
 
         if (!empty($reservation['date']) && !empty($reservation['time'])) {
