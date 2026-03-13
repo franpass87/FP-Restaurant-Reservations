@@ -24,7 +24,6 @@ use function set_transient;
 use function strtolower;
 use function wp_cache_get;
 use function wp_cache_set;
-use function wp_date;
 use function wp_json_encode;
 use DateTimeImmutable;
 use function wp_rand;
@@ -177,7 +176,9 @@ final class AvailabilityHandler
         try {
             // Parametri
             $from = $request->get_param('from') ?: current_time('Y-m-d');
-            $to = $request->get_param('to') ?: wp_date('Y-m-d', strtotime('+3 months'));
+            $to = $request->get_param('to') ?: (new DateTimeImmutable('now', wp_timezone()))
+                ->modify('+3 months')
+                ->format('Y-m-d');
             $meal = $request->get_param('meal');
 
             // Usa la configurazione REALE dal meal plan invece di dati hardcoded

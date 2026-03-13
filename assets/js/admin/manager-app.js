@@ -216,7 +216,10 @@ class ReservationManager {
         // Date picker
         if (this.dom.datePicker) {
             this.dom.datePicker.addEventListener('change', (e) => {
-                this.setDate(new Date(e.target.value));
+                const parsedDate = this.parseYmdLocal(e.target.value);
+                if (parsedDate) {
+                    this.setDate(parsedDate);
+                }
             });
         }
 
@@ -521,6 +524,24 @@ class ReservationManager {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Parse YYYY-MM-DD come data locale stabile (no UTC shift).
+     */
+    parseYmdLocal(value) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+        const trimmed = value.trim();
+        const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) {
+            return null;
+        }
+        const year = Number.parseInt(match[1], 10);
+        const month = Number.parseInt(match[2], 10) - 1;
+        const day = Number.parseInt(match[3], 10);
+        return new Date(year, month, day, 12, 0, 0);
     }
 
     // ============================================
@@ -2493,23 +2514,26 @@ class ReservationManager {
         const todayReservations = this.state.reservations.filter(r => r.date === today);
         const todayGuests = todayReservations.reduce((sum, r) => sum + r.party, 0);
         
-        // Settimana corrente
+        // Settimana corrente (confronto stringhe YYYY-MM-DD per evitare parsing UTC impliciti)
         const now = new Date();
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay() + 1); // Lunedì
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6); // Domenica
-        
-        const weekReservations = this.state.reservations.filter(r => {
-            const d = new Date(r.date);
-            return d >= weekStart && d <= weekEnd;
+        const weekStartDate = new Date(now);
+        weekStartDate.setDate(now.getDate() - now.getDay() + 1); // Lunedì
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekStartDate.getDate() + 6); // Domenica
+        const weekStart = this.formatDate(weekStartDate);
+        const weekEnd = this.formatDate(weekEndDate);
+
+        const weekReservations = this.state.reservations.filter((r) => {
+            const date = (r && r.date) ? String(r.date) : '';
+            return date >= weekStart && date <= weekEnd;
         });
         const weekGuests = weekReservations.reduce((sum, r) => sum + r.party, 0);
         
-        // Mese corrente  
-        const monthReservations = this.state.reservations.filter(r => {
-            const d = new Date(r.date);
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        // Mese corrente (prefix match su YYYY-MM)
+        const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const monthReservations = this.state.reservations.filter((r) => {
+            const date = (r && r.date) ? String(r.date) : '';
+            return date.startsWith(monthPrefix);
         });
         const monthGuests = monthReservations.reduce((sum, r) => sum + r.party, 0);
         

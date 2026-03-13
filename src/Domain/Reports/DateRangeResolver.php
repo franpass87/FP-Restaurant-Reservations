@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Reports;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use function preg_match;
 use function trim;
+use function wp_timezone;
 
 /**
  * Risolve e normalizza range di date per i report.
@@ -23,7 +25,7 @@ final class DateRangeResolver
         $endDate   = $end !== null ? $this->createDate($end) : null;
 
         if ($startDate === null) {
-            $startDate = new DateTimeImmutable('today');
+            $startDate = new DateTimeImmutable('today', $this->resolveTimezone());
         }
 
         if ($endDate === null) {
@@ -50,7 +52,7 @@ final class DateRangeResolver
         }
 
         try {
-            return new DateTimeImmutable($normalized);
+            return new DateTimeImmutable($normalized, $this->resolveTimezone());
         } catch (\Exception) {
             return null;
         }
@@ -75,11 +77,20 @@ final class DateRangeResolver
 
         // Prova a parsare come data generica
         try {
-            $date = new DateTimeImmutable($value);
+            $date = new DateTimeImmutable($value, $this->resolveTimezone());
             return $date->format('Y-m-d');
         } catch (\Exception) {
             return null;
         }
+    }
+
+    private function resolveTimezone(): DateTimeZone
+    {
+        if (function_exists('wp_timezone')) {
+            return wp_timezone();
+        }
+
+        return new DateTimeZone('UTC');
     }
 }
 

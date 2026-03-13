@@ -350,6 +350,37 @@
         }).format(date);
     };
 
+    const parseBackendDateTime = (value) => {
+        if (!value || typeof value !== 'string') {
+            return NaN;
+        }
+        const raw = value.trim();
+        if (raw === '') {
+            return NaN;
+        }
+        // Supporta sia ISO 8601 sia formato WP "YYYY-MM-DD HH:mm:ss".
+        const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const ts = Date.parse(normalized);
+        if (Number.isFinite(ts)) {
+            return ts;
+        }
+        return Date.parse(normalized + 'Z');
+    };
+
+    const normalizeDateTimeLocalInput = (value) => {
+        if (!value || typeof value !== 'string') {
+            return '';
+        }
+        const trimmed = value.trim();
+        if (trimmed === '') {
+            return '';
+        }
+        if (trimmed.includes('T')) {
+            return `${trimmed.replace('T', ' ')}:00`;
+        }
+        return trimmed;
+    };
+
     const formatType = (type) => {
         switch (type) {
             case 'capacity_reduction':
@@ -376,7 +407,7 @@
         const activeClosures = state.items.filter((item) => item && item.type === 'full' && item.active);
         const capacityClosures = state.items.filter((item) => item && item.type === 'capacity_reduction' && item.active);
         const upcoming = state.items
-            .map((item) => ({ item, ts: item && item.end_at ? Date.parse(item.end_at) : NaN }))
+            .map((item) => ({ item, ts: item && item.end_at ? parseBackendDateTime(item.end_at) : NaN }))
             .filter((entry) => entry.item && entry.item.active && Number.isFinite(entry.ts) && entry.ts > Date.now())
             .sort((a, b) => a.ts - b.ts);
 
@@ -572,17 +603,6 @@
         toggleForm(!state.formOpen);
     });
 
-    // Invia datetime "naive" (senza offset) e lascia al backend WP il timezone di Roma.
-    const formatLocalDateTime = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
-
     const buildPayloadFromMode = () => {
         const mode = modeField ? modeField.value : 'advanced';
         const debug = window.fpResvClosuresSettings && window.fpResvClosuresSettings.debug;
@@ -597,13 +617,11 @@
                 renderError();
                 return null;
             }
-            const startDate = new Date(dateVal + 'T00:00:00');
-            const end = new Date(endDate + 'T23:59:59');
             return {
                 scope: 'restaurant',
                 type: 'full',
-                start_at: formatLocalDateTime(startDate),
-                end_at: formatLocalDateTime(end),
+                start_at: `${dateVal} 00:00:00`,
+                end_at: `${endDate} 23:59:59`,
                 note: noteField ? noteField.value.trim() : '',
             };
         }
@@ -618,13 +636,11 @@
                 renderError();
                 return null;
             }
-            const startDate = new Date(dateVal + 'T' + timeFrom + ':00');
-            const endDate = new Date(dateVal + 'T' + timeTo + ':00');
             return {
                 scope: 'restaurant',
                 type: 'full',
-                start_at: formatLocalDateTime(startDate),
-                end_at: formatLocalDateTime(endDate),
+                start_at: `${dateVal} ${timeFrom}:00`,
+                end_at: `${dateVal} ${timeTo}:00`,
                 note: noteField ? noteField.value.trim() : '',
             };
         }
@@ -634,9 +650,9 @@
         const startValue = startField.value;
         const endValue = endField.value;
         if (!startValue || !endValue) { form.reportValidity(); return null; }
-        const sDate = new Date(startValue);
-        const eDate = new Date(endValue);
-        if (Number.isNaN(sDate.getTime()) || Number.isNaN(eDate.getTime()) || eDate <= sDate) {
+        const normalizedStart = normalizeDateTimeLocalInput(startValue);
+        const normalizedEnd = normalizeDateTimeLocalInput(endValue);
+        if (!normalizedStart || !normalizedEnd || normalizedEnd <= normalizedStart) {
             endField.setCustomValidity("La fine deve essere successiva all'inizio.");
             form.reportValidity();
             endField.setCustomValidity('');
@@ -646,8 +662,8 @@
         const payload = {
             scope: 'restaurant',
             type: typeField.value,
-            start_at: formatLocalDateTime(sDate),
-            end_at: formatLocalDateTime(eDate),
+            start_at: normalizedStart,
+            end_at: normalizedEnd,
             note: noteField ? noteField.value.trim() : '',
         };
 

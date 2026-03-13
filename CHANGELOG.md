@@ -1,3 +1,9 @@
+## [0.9.0-rc10.14] - 2026-03-12
+### Fixed
+- Uniformata la gestione timezone tra backend e frontend: default range date e parsing datetime ora coerenti con timezone WordPress.
+- Admin manager/agenda/closures: eliminati parsing data ambigui lato browser (`YYYY-MM-DD`/`Date.parse`) per evitare slittamenti di giorno/orario.
+- Event schema, diagnostica log e finestra Google Calendar: parsing/formatting date allineati al timezone configurato del sito.
+
 ## [0.9.0-rc10.13] - 2026-03-12
 ### Fixed
 - Chiusure admin: visualizzazione date/ore forzata su timezone Europe/Rome per evitare slittamenti di giorno/orario.

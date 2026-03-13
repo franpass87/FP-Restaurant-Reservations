@@ -366,7 +366,7 @@ final class AdminREST
 
             // STEP 5: DateTimeImmutable
             $step = 5;
-            $start = new \DateTimeImmutable($date);
+            $start = new \DateTimeImmutable($date, wp_timezone());
             $end = $start;
             
             if ($rangeMode === 'week') {

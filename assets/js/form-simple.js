@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('fp-resv-default') || document.getElementById('fp-resv-simple') || document.querySelector('.fp-resv-simple');
     
     if (!form) {
@@ -804,6 +804,22 @@
         return `${year}-${month}-${day}`;
     }
 
+    function parseYmdLocal(value) {
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim();
+        const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return null;
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1;
+        const day = parseInt(match[3], 10);
+        return new Date(year, month, day, 12, 0, 0);
+    }
+
+    function weekdayKeyFromDate(date) {
+        const keys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        return keys[date.getDay()] || 'sun';
+    }
+
     // Set minimum date to today and load available dates
     let dateInput = document.getElementById('reservation-date');
     const today = formatLocalDate(new Date()); // Timezone locale!
@@ -992,8 +1008,11 @@
     
     // Genera date usando configurazione di default
     function generateDatesFromDefaultSchedule(from, to, meal) {
-        const startDate = new Date(from);
-        const endDate = new Date(to);
+        const startDate = parseYmdLocal(from);
+        const endDate = parseYmdLocal(to);
+        if (!startDate || !endDate) {
+            return [];
+        }
         const fallbackDates = [];
         
         // Schedule di default (basato su configurazione tipica ristorante)
@@ -1021,7 +1040,7 @@
         const current = new Date(startDate);
         while (current <= endDate) {
             const dateKey = formatLocalDate(current); // Timezone locale!
-            const dayKey = current.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+            const dayKey = weekdayKeyFromDate(current);
             
             if (meal && defaultSchedule[meal]) {
                 const isAvailable = defaultSchedule[meal][dayKey] || false;

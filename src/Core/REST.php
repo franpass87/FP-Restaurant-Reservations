@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace FP\Resv\Core;
 
 use DateTimeImmutable;
-use DateTimeZone;
 use FP\Resv\Core\Roles;
 use WP_Error;
 use WP_REST_Request;
@@ -24,6 +23,7 @@ use function rest_ensure_response;
 use function sanitize_email;
 use function sanitize_text_field;
 use function sprintf;
+use function wp_timezone;
 
 final class REST
 {
@@ -106,7 +106,7 @@ final class REST
             ]);
         }
 
-        $timezone = new DateTimeZone('Europe/Rome');
+        $timezone = wp_timezone();
         $start    = new DateTimeImmutable('now', $timezone);
         $end      = $start->modify('+90 minutes');
 

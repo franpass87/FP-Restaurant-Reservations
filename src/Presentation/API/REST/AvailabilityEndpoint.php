@@ -11,6 +11,7 @@ use FP\Resv\Core\Services\SanitizerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use function wp_timezone;
 
 /**
  * Availability REST Endpoint
@@ -101,7 +102,9 @@ final class AvailabilityEndpoint extends BaseEndpoint
             
             // Use 3 months from now as default for 'to'
             if (empty($to)) {
-                $to = date('Y-m-d', strtotime('+3 months'));
+                $to = (new DateTimeImmutable('now', wp_timezone()))
+                    ->modify('+3 months')
+                    ->format('Y-m-d');
             }
             
             // Get availability service from use case (via container)

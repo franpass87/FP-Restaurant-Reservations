@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Diagnostics;
 
+use DateTimeImmutable;
 use function __;
 use function get_option;
 use function sanitize_textarea_field;
 use function str_contains;
-use function strtotime;
 use function strtolower;
 use function trim;
 use function ucfirst;
 use function wp_date;
 use function wp_kses_post;
+use function wp_timezone;
 
 /**
  * Gestisce la formattazione dei log per la visualizzazione.
@@ -56,8 +57,17 @@ final class LogFormatter
             return '';
         }
 
-        $time = strtotime($timestamp);
-        if ($time === false) {
+        $date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $timestamp, wp_timezone());
+        if (!$date instanceof DateTimeImmutable) {
+            try {
+                $date = new DateTimeImmutable($timestamp, wp_timezone());
+            } catch (\Exception) {
+                return $timestamp;
+            }
+        }
+
+        $time = $date->getTimestamp();
+        if ($time <= 0) {
             return $timestamp;
         }
 

@@ -160,7 +160,10 @@ class ReservationManager {
         // Date picker
         if (this.dom.datePicker) {
             this.dom.datePicker.addEventListener('change', (e) => {
-                this.setDate(new Date(e.target.value));
+                const parsedDate = this.parseYmdLocal(e.target.value);
+                if (parsedDate) {
+                    this.setDate(parsedDate);
+                }
             });
         }
 
@@ -268,6 +271,24 @@ class ReservationManager {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Parse YYYY-MM-DD come data locale stabile (no UTC shift).
+     */
+    parseYmdLocal(value) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+        const trimmed = value.trim();
+        const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) {
+            return null;
+        }
+        const year = Number.parseInt(match[1], 10);
+        const month = Number.parseInt(match[2], 10) - 1;
+        const day = Number.parseInt(match[3], 10);
+        return new Date(year, month, day, 12, 0, 0);
     }
 
     // ============================================

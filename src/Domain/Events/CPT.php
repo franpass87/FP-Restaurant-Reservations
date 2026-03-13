@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Events;
 
 use DateTimeImmutable;
-use DateTimeZone;
 use function __;
 use function add_action;
 use function esc_html;
@@ -13,10 +12,12 @@ use function get_post_meta;
 use function get_the_ID;
 use function get_the_title;
 use function is_singular;
+use function preg_match;
 use function register_post_meta;
 use function register_post_type;
 use function register_taxonomy;
-use function strtotime;
+use function trim;
+use function wp_timezone;
 use function wp_json_encode;
 use function wp_strip_all_tags;
 
@@ -178,14 +179,22 @@ final class CPT
             return null;
         }
 
-        $timestamp = strtotime($value);
-        if ($timestamp === false) {
+        $timezone = wp_timezone();
+        $normalized = trim($value);
+        if ($normalized === '') {
             return null;
         }
 
-        $date = new DateTimeImmutable('@' . $timestamp);
-        $date = $date->setTimezone(new DateTimeZone('UTC'));
+        try {
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalized)) {
+                $date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $normalized . ' 00:00:00', $timezone);
+                return $date instanceof DateTimeImmutable ? $date->format('c') : null;
+            }
 
-        return $date->format('c');
+            $date = new DateTimeImmutable($normalized, $timezone);
+            return $date->format('c');
+        } catch (\Exception) {
+            return null;
+        }
     }
 }

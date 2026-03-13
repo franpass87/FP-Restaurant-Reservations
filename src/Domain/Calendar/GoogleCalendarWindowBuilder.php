@@ -7,8 +7,10 @@ namespace FP\Resv\Domain\Calendar;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
+use function is_string;
 use function substr;
 use function trim;
+use function wp_timezone_string;
 
 /**
  * Costruisce le finestre temporali per gli eventi Google Calendar.
@@ -47,7 +49,12 @@ final class GoogleCalendarWindowBuilder
         }
 
         try {
-            $timezone = new DateTimeZone(self::DEFAULT_TIMEZONE);
+            $timezoneName = function_exists('wp_timezone_string') ? wp_timezone_string() : '';
+            if (!is_string($timezoneName) || $timezoneName === '') {
+                $timezoneName = self::DEFAULT_TIMEZONE;
+            }
+
+            $timezone = new DateTimeZone($timezoneName);
             $start = DateTimeImmutable::createFromFormat('Y-m-d H:i', $date . ' ' . $time, $timezone);
             if ($start === false) {
                 return null;
@@ -58,7 +65,7 @@ final class GoogleCalendarWindowBuilder
             return [
                 'start'    => $start,
                 'end'      => $end,
-                'timezone' => self::DEFAULT_TIMEZONE,
+                'timezone' => $timezoneName,
             ];
         } catch (\Exception $exception) {
             return null;

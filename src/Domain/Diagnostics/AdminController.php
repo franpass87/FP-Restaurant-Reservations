@@ -6,6 +6,7 @@ namespace FP\Resv\Domain\Diagnostics;
 
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\Roles;
+use DateTimeImmutable;
 use function __;
 use function add_action;
 use function add_submenu_page;
@@ -16,13 +17,12 @@ use function is_array;
 use function esc_url_raw;
 use function file_exists;
 use function rest_url;
-use function strtotime;
 use function wp_create_nonce;
-use function wp_date;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_localize_script;
 use function wp_strip_all_tags;
+use function wp_timezone;
 
 final class AdminController
 {
@@ -88,8 +88,9 @@ final class AdminController
             true
         );
 
-        $end   = wp_date('Y-m-d');
-        $start = wp_date('Y-m-d', strtotime('-13 days'));
+        $now = new DateTimeImmutable('now', wp_timezone());
+        $end = $now->format('Y-m-d');
+        $start = $now->modify('-13 days')->format('Y-m-d');
 
         $channels = [];
         foreach ($this->service->getChannels() as $key => $channel) {
