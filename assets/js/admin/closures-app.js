@@ -327,6 +327,9 @@
         root.dataset.state = loading ? 'loading' : '';
     };
 
+    const ROME_TIMEZONE = 'Europe/Rome';
+    const DISPLAY_LOCALE = 'it-IT';
+
     const formatDateTime = (iso) => {
         if (!iso) {
             return '';
@@ -335,7 +338,16 @@
         if (Number.isNaN(date.getTime())) {
             return '';
         }
-        return date.toLocaleString();
+        return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
+            timeZone: ROME_TIMEZONE,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).format(date);
     };
 
     const formatType = (type) => {
@@ -560,7 +572,7 @@
         toggleForm(!state.formOpen);
     });
 
-    // Formatta le date mantenendo il timezone locale con offset
+    // Invia datetime "naive" (senza offset) e lascia al backend WP il timezone di Roma.
     const formatLocalDateTime = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -568,11 +580,7 @@
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const seconds = String(date.getSeconds()).padStart(2, '0');
-        const offset = -date.getTimezoneOffset();
-        const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
-        const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
-        const offsetSign = offset >= 0 ? '+' : '-';
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${offsetSign}${offsetHours}:${offsetMinutes}`;
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
     const buildPayloadFromMode = () => {

@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 0.9.0-rc10.3 🚀 |
+| **Versione** | 0.9.0-rc10.13 🚀 |
 | **Status** | Production Ready ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -347,8 +347,8 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 0.9.0-rc10.3  
-**Data:** 19 Novembre 2025
+**Versione:** 0.9.0-rc10.13  
+**Data:** 12 Marzo 2026
 ---
 
 ## Autore

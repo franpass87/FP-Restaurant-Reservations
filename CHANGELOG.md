@@ -1,3 +1,8 @@
+## [0.9.0-rc10.13] - 2026-03-12
+### Fixed
+- Chiusure admin: visualizzazione date/ore forzata su timezone Europe/Rome per evitare slittamenti di giorno/orario.
+- Chiusure admin: payload start/end inviato senza offset client per coerenza con parsing timezone WordPress lato backend.
+
 ## [0.9.0-rc10.12] - 2026-03-12
 ### Fixed
 - Array to string conversion in AdminServiceProvider: getFieldAsString per tables_enabled (checkbox)
