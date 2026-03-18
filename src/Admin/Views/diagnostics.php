@@ -45,6 +45,7 @@ $headingId   = 'fp-resv-diagnostics-title';
                 </label>
                 <button type="button" class="button button-primary" data-action="reload"><?php esc_html_e('Aggiorna', 'fp-restaurant-reservations'); ?></button>
                 <button type="button" class="button" data-action="export"><?php esc_html_e('Esporta CSV', 'fp-restaurant-reservations'); ?></button>
+                <button type="button" class="button" data-action="simulate-integrations"><?php esc_html_e('Simula integrazioni', 'fp-restaurant-reservations'); ?></button>
             </div>
         </section>
         <section class="fp-resv-surface fp-resv-diagnostics__surface" data-role="diagnostics-app">

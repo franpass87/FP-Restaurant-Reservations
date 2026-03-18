@@ -15,6 +15,7 @@ use function __;
 use function absint;
 use function add_action;
 use function current_user_can;
+use function did_action;
 use function register_rest_route;
 use function rest_ensure_response;
 use function rest_sanitize_boolean;
@@ -27,6 +28,12 @@ final class REST
 
     public function register(): void
     {
+        // If rest_api_init already fired, register routes immediately.
+        if (did_action('rest_api_init')) {
+            $this->registerRoutes();
+            return;
+        }
+
         add_action('rest_api_init', [$this, 'registerRoutes']);
     }
 
@@ -45,6 +52,30 @@ final class REST
                         'required' => false,
                     ],
                     'dry_run' => [
+                        'type'     => 'boolean',
+                        'required' => false,
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            'fp-resv/v1',
+            '/qa/simulate-integrations',
+            [
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => [$this, 'handleSimulateIntegrations'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args'                => [
+                    'reservation_id' => [
+                        'type'     => 'integer',
+                        'required' => false,
+                    ],
+                    'dry_run' => [
+                        'type'     => 'boolean',
+                        'required' => false,
+                    ],
+                    'include_failure' => [
                         'type'     => 'boolean',
                         'required' => false,
                     ],
@@ -86,5 +117,30 @@ final class REST
         }
 
         return true;
+    }
+
+    public function handleSimulateIntegrations(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $reservationId = absint((int) $request->get_param('reservation_id'));
+        $dryRun = rest_sanitize_boolean($request->get_param('dry_run'));
+        $includeFailure = $request->has_param('include_failure')
+            ? rest_sanitize_boolean($request->get_param('include_failure'))
+            : true;
+
+        $ip = Helpers::clientIp();
+        if (!RateLimiter::allow('qa_simulate_integrations:' . $ip, 5, 300)) {
+            return new WP_Error(
+                'fp_resv_rate_limited',
+                __('Hai effettuato troppe simulazioni integrazioni. Riprova tra qualche minuto.', 'fp-restaurant-reservations'),
+                ['status' => 429]
+            );
+        }
+
+        $summary = $this->seeder->simulateIntegrations($dryRun, $reservationId, $includeFailure);
+
+        return rest_ensure_response([
+            'simulated' => !$dryRun,
+            'summary' => $summary,
+        ]);
     }
 }

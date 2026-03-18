@@ -35,6 +35,7 @@
         live: root.querySelector('[data-role="live"]'),
         reload: filtersEl ? filtersEl.querySelector('[data-action="reload"]') : null,
         exportBtn: filtersEl ? filtersEl.querySelector('[data-action="export"]') : null,
+        simulateBtn: filtersEl ? filtersEl.querySelector('[data-action="simulate-integrations"]') : null,
         start: filtersEl ? filtersEl.querySelector('[data-role="date-start"]') : null,
         end: filtersEl ? filtersEl.querySelector('[data-role="date-end"]') : null,
         status: filtersEl ? filtersEl.querySelector('[data-role="status"]') : null,
@@ -72,6 +73,7 @@
     };
 
     const previewStrings = settings.i18n && settings.i18n.preview ? settings.i18n.preview : {};
+    const simulateStrings = settings.i18n && settings.i18n.simulate ? settings.i18n.simulate : {};
     const previewLoadingDefault = elements.previewLoading ? elements.previewLoading.textContent : '';
     const previewErrorDefault = elements.previewError ? elements.previewError.textContent : '';
 
@@ -85,6 +87,9 @@
         }
         if (elements.exportBtn) {
             elements.exportBtn.disabled = isLoading;
+        }
+        if (elements.simulateBtn) {
+            elements.simulateBtn.disabled = isLoading;
         }
         if (elements.prev) {
             elements.prev.disabled = isLoading || state.page <= 1;
@@ -562,6 +567,37 @@
             });
     }
 
+    function simulateIntegrations() {
+        if (!apiFetch || state.loading) {
+            return;
+        }
+
+        if (simulateStrings.confirm && !window.confirm(simulateStrings.confirm)) {
+            return;
+        }
+
+        setLoading(true);
+        announce(simulateStrings.running || 'Simulazione integrazioni in corso…');
+
+        apiFetch({
+            path: '/fp-resv/v1/qa/simulate-integrations',
+            method: 'POST',
+            data: {
+                include_failure: true,
+            },
+        })
+            .then(function () {
+                setLoading(false);
+                announce(simulateStrings.success || 'Simulazione completata.');
+                state.page = 1;
+                fetchLogs();
+            })
+            .catch(function () {
+                setLoading(false);
+                announce(simulateStrings.failed || 'Simulazione non riuscita.');
+            });
+    }
+
     if (elements.reload) {
         elements.reload.addEventListener('click', function () {
             state.page = 1;
@@ -571,6 +607,11 @@
 
     if (elements.exportBtn) {
         elements.exportBtn.addEventListener('click', exportCsv);
+    }
+
+    if (elements.simulateBtn) {
+        elements.simulateBtn.textContent = simulateStrings.button || elements.simulateBtn.textContent;
+        elements.simulateBtn.addEventListener('click', simulateIntegrations);
     }
 
     if (elements.prev) {

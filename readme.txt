@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 0.9.0-rc10.15
+Stable tag: 0.9.0-rc10.16
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,11 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 0.9.0-rc10.16 - 2026-03-18 =
+* Added: pulsante "Simula integrazioni" nella dashboard Diagnostica con trigger one-click dei test QA.
+* Added: endpoint REST QA `/qa/simulate-integrations` con simulazione completa senza credenziali (Brevo, Google Calendar, Stripe, email, queue e tracking).
+* Fixed: registrazione route QA anche quando `rest_api_init` è già eseguito, eliminando i 404 durante le simulazioni da admin.
 
 = 0.9.0-rc10.15 - 2026-03-13 =
 * Fix: creazione chiusure da Manager migrata su endpoint AJAX admin per eliminare errori nonce/cookie REST in ambienti local/proxy.

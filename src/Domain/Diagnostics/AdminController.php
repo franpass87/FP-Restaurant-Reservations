@@ -127,6 +127,13 @@ final class AdminController
                 'toLabel'      => __('Al', 'fp-restaurant-reservations'),
                 'applyFilters' => __('Aggiorna', 'fp-restaurant-reservations'),
                 'exportCsv'    => __('Esporta CSV', 'fp-restaurant-reservations'),
+                'simulate'     => [
+                    'button'   => __('Simula integrazioni', 'fp-restaurant-reservations'),
+                    'confirm'  => __('Vuoi simulare Brevo, Google Calendar, Stripe, tracking, email e queue senza credenziali reali?', 'fp-restaurant-reservations'),
+                    'running'  => __('Simulazione integrazioni in corso…', 'fp-restaurant-reservations'),
+                    'success'  => __('Simulazione completata. Log diagnostici aggiornati.', 'fp-restaurant-reservations'),
+                    'failed'   => __('Simulazione non riuscita. Riprova.', 'fp-restaurant-reservations'),
+                ],
                 'pagination'   => [
                     'page'    => __('Pagina %d di %d', 'fp-restaurant-reservations'),
                     'prev'    => __('Pagina precedente', 'fp-restaurant-reservations'),

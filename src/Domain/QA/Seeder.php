@@ -14,6 +14,9 @@ use wpdb;
 use function absint;
 use function array_fill;
 use function array_map;
+use function current_time;
+use function do_action;
+use function has_action;
 use function is_array;
 use function is_numeric;
 use function max;
@@ -240,6 +243,267 @@ final class Seeder
     }
 
     /**
+     * Simula il flusso integrazioni senza chiamate esterne o credenziali.
+     *
+     * @return array<string, mixed>
+     */
+    public function simulateIntegrations(bool $dryRun = false, int $reservationId = 0, bool $includeFailure = true): array
+    {
+        $now = new DateTimeImmutable('now', wp_timezone());
+        $targetReservationId = $reservationId > 0 ? $reservationId : 0;
+        $createdReservation = false;
+
+        if ($targetReservationId > 0 && $this->reservations->find($targetReservationId) === null) {
+            $targetReservationId = 0;
+        }
+
+        if ($targetReservationId <= 0) {
+            $targetReservationId = $this->createSimulationReservation($now);
+            $createdReservation = true;
+        }
+
+        $summary = [
+            'dry_run' => $dryRun,
+            'reservation_id' => $targetReservationId,
+            'reservation_created' => $createdReservation,
+            'include_failure' => $includeFailure,
+            'email_logs' => 1 + ($includeFailure ? 1 : 0),
+            'brevo_logs' => 1 + ($includeFailure ? 1 : 0),
+            'queue_logs' => 1 + ($includeFailure ? 1 : 0),
+            'payments_logged' => 1,
+            'audit_entries_logged' => 4 + ($includeFailure ? 1 : 0),
+            'tracking_events_dispatched' => 2,
+            'tracking_hook_active' => has_action('fp_tracking_event') !== false,
+            'mode' => 'simulated_no_credentials',
+        ];
+
+        if ($dryRun) {
+            return $summary;
+        }
+
+        $timestamp = current_time('mysql');
+        $runAt = $now->add(new DateInterval('PT2H'))->format('Y-m-d H:i:s');
+
+        $this->wpdb->insert(
+            $this->wpdb->prefix . 'fp_mail_log',
+            [
+                'reservation_id' => $targetReservationId,
+                'to_emails'      => sprintf('qa-sim+%d@example.test', $targetReservationId),
+                'subject'        => sprintf('[QA SIM] Conferma prenotazione #%d', $targetReservationId),
+                'first_line'     => 'Invio simulato (nessuna chiamata SMTP/Brevo).',
+                'status'         => 'sent',
+                'error'          => null,
+                'content_type'   => 'text/html',
+                'body'           => '<p>Messaggio simulato per verifica diagnostica integrazioni.</p>',
+                'created_at'     => $timestamp,
+            ]
+        );
+
+        if ($includeFailure) {
+            $this->wpdb->insert(
+                $this->wpdb->prefix . 'fp_mail_log',
+                [
+                    'reservation_id' => $targetReservationId,
+                    'to_emails'      => sprintf('qa-sim+%d@example.test', $targetReservationId),
+                    'subject'        => sprintf('[QA SIM] Errore invio prenotazione #%d', $targetReservationId),
+                    'first_line'     => 'Errore simulato per test dashboard diagnostica.',
+                    'status'         => 'failed',
+                    'error'          => 'simulation_error: provider_unavailable',
+                    'content_type'   => 'text/plain',
+                    'body'           => 'Errore simulato (nessuna chiamata reale).',
+                    'created_at'     => $timestamp,
+                ]
+            );
+        }
+
+        $this->wpdb->insert(
+            $this->wpdb->prefix . 'fp_brevo_log',
+            [
+                'reservation_id' => $targetReservationId,
+                'action'         => 'qa_sim_brevo_event',
+                'payload_snippet'=> wp_json_encode([
+                    'mode' => 'simulation',
+                    'provider' => 'brevo',
+                    'event' => 'reservation.confirmed',
+                    'reservation_id' => $targetReservationId,
+                    'credentials_required' => false,
+                ]),
+                'status'         => 'success',
+                'error'          => null,
+                'created_at'     => $timestamp,
+            ]
+        );
+
+        if ($includeFailure) {
+            $this->wpdb->insert(
+                $this->wpdb->prefix . 'fp_brevo_log',
+                [
+                    'reservation_id' => $targetReservationId,
+                    'action'         => 'qa_sim_brevo_event_failed',
+                    'payload_snippet'=> wp_json_encode([
+                        'mode' => 'simulation',
+                        'provider' => 'brevo',
+                        'event' => 'reservation.reminder',
+                        'reservation_id' => $targetReservationId,
+                        'credentials_required' => false,
+                    ]),
+                    'status'         => 'error',
+                    'error'          => 'simulation_error: network_timeout',
+                    'created_at'     => $timestamp,
+                ]
+            );
+        }
+
+        $this->wpdb->insert(
+            $this->wpdb->prefix . 'fp_postvisit_jobs',
+            [
+                'reservation_id' => $targetReservationId,
+                'run_at'         => $runAt,
+                'status'         => 'completed',
+                'channel'        => 'qa-sim-postvisit',
+                'last_error'     => null,
+                'created_at'     => $timestamp,
+                'updated_at'     => $timestamp,
+            ]
+        );
+
+        if ($includeFailure) {
+            $this->wpdb->insert(
+                $this->wpdb->prefix . 'fp_postvisit_jobs',
+                [
+                    'reservation_id' => $targetReservationId,
+                    'run_at'         => $runAt,
+                    'status'         => 'failed',
+                    'channel'        => 'qa-sim-postvisit',
+                    'last_error'     => 'simulation_error: queue_worker_stopped',
+                    'created_at'     => $timestamp,
+                    'updated_at'     => $timestamp,
+                ]
+            );
+        }
+
+        $this->payments->insert([
+            'reservation_id' => $targetReservationId,
+            'type'           => 'payment_intent',
+            'status'         => 'paid',
+            'amount'         => 90.00,
+            'currency'       => 'EUR',
+            'external_id'    => sprintf('qa_sim_%d', $targetReservationId),
+            'meta_json'      => wp_json_encode([
+                'qa_simulation' => true,
+                'provider' => 'stripe',
+                'credentials_required' => false,
+            ]),
+            'created_at'     => $timestamp,
+            'updated_at'     => $timestamp,
+        ]);
+
+        $this->reservations->logAudit([
+            'action'      => 'rest_simulate_integrations',
+            'entity'      => 'api',
+            'entity_id'   => $targetReservationId,
+            'actor_role'  => 'qa_sim',
+            'after_json'  => wp_json_encode([
+                'mode' => 'simulation',
+                'channels' => ['brevo', 'google_calendar', 'stripe', 'email', 'queue'],
+                'credentials_required' => false,
+            ]),
+            'created_at'  => $timestamp,
+            'ip'          => '127.0.0.1',
+        ]);
+
+        $this->reservations->logAudit([
+            'action'      => 'calendar_sync_simulated',
+            'entity'      => 'calendar',
+            'entity_id'   => $targetReservationId,
+            'actor_role'  => 'qa_sim',
+            'after_json'  => wp_json_encode([
+                'provider' => 'google_calendar',
+                'result' => 'success',
+                'credentials_required' => false,
+            ]),
+            'created_at'  => $timestamp,
+            'ip'          => '127.0.0.1',
+        ]);
+
+        $this->reservations->logAudit([
+            'action'      => 'stripe_webhook_simulated',
+            'entity'      => 'payment',
+            'entity_id'   => $targetReservationId,
+            'actor_role'  => 'qa_sim',
+            'after_json'  => wp_json_encode([
+                'provider' => 'stripe',
+                'event' => 'payment_intent.succeeded',
+                'credentials_required' => false,
+            ]),
+            'created_at'  => $timestamp,
+            'ip'          => '127.0.0.1',
+        ]);
+
+        if ($includeFailure) {
+            $this->reservations->logAudit([
+                'action'      => 'rest_simulation_warning',
+                'entity'      => 'api',
+                'entity_id'   => $targetReservationId,
+                'actor_role'  => 'qa_sim',
+                'after_json'  => wp_json_encode([
+                    'provider' => 'google_calendar',
+                    'warning' => 'rate_limited_simulated',
+                ]),
+                'created_at'  => $timestamp,
+                'ip'          => '127.0.0.1',
+            ]);
+        }
+
+        $trackingBaseParams = [
+            'reservation_id'       => $targetReservationId,
+            'transaction_id'       => 'resv-' . $targetReservationId,
+            'value'                => 90.00,
+            'currency'             => 'EUR',
+            'reservation_party'    => 2,
+            'reservation_date'     => $now->format('Y-m-d'),
+            'reservation_time'     => $now->format('H:i:s'),
+            'meal_type'            => 'dinner',
+            'reservation_location' => 'qa-sim-location',
+            'event_id'             => 'qa_sim_tracking_' . $targetReservationId,
+            'qa_simulation'        => true,
+            'credentials_required' => false,
+            'user_data'            => [
+                'em' => sprintf('qa-sim+%d@example.test', $targetReservationId),
+                'fn' => 'QA',
+                'ln' => 'Simulation',
+                'ph' => '+390200009999',
+            ],
+        ];
+
+        do_action('fp_tracking_event', 'booking_confirmed', $trackingBaseParams);
+        do_action(
+            'fp_tracking_event',
+            'purchase',
+            array_merge($trackingBaseParams, [
+                'event_id' => 'qa_sim_purchase_' . $targetReservationId,
+                'value_is_estimated' => true,
+            ])
+        );
+
+        $this->reservations->logAudit([
+            'action'      => 'rest_tracking_simulated',
+            'entity'      => 'api',
+            'entity_id'   => $targetReservationId,
+            'actor_role'  => 'qa_sim',
+            'after_json'  => wp_json_encode([
+                'tracking_events' => ['booking_confirmed', 'purchase'],
+                'qa_simulation' => true,
+                'credentials_required' => false,
+            ]),
+            'created_at'  => $timestamp,
+            'ip'          => '127.0.0.1',
+        ]);
+
+        return $summary;
+    }
+
+    /**
      * @return array<string, int>
      */
     private function cleanup(): array
@@ -295,6 +559,44 @@ final class Seeder
         }
 
         return $removed;
+    }
+
+    /**
+     * Crea una prenotazione minima per legare i log di simulazione.
+     */
+    private function createSimulationReservation(DateTimeImmutable $now): int
+    {
+        $email = sprintf('qa-sim+%s@example.test', $now->format('YmdHis'));
+        $customerId = $this->customers->upsert($email, [
+            'first_name'        => 'QA',
+            'last_name'         => 'Simulation',
+            'phone'             => '+390200009999',
+            'lang'              => 'it',
+            'marketing_consent' => true,
+            'profiling_consent' => false,
+            'consent_ts'        => $now->format('Y-m-d H:i:s'),
+            'consent_version'   => 'qa-sim',
+        ]);
+
+        $reservationTime = $now->add(new DateInterval('PT1H'));
+
+        return $this->reservations->insert([
+            'status'       => 'pending',
+            'date'         => $reservationTime->format('Y-m-d'),
+            'time'         => $reservationTime->format('H:i:s'),
+            'party'        => 2,
+            'notes'        => 'QA Simulation reservation',
+            'utm_source'   => 'qa-sim',
+            'utm_medium'   => 'simulation',
+            'utm_campaign' => 'integrations',
+            'lang'         => 'it',
+            'location_id'  => 'qa-sim-location',
+            'value'        => 90.00,
+            'currency'     => 'EUR',
+            'customer_id'  => $customerId,
+            'created_at'   => $now->format('Y-m-d H:i:s'),
+            'updated_at'   => $now->format('Y-m-d H:i:s'),
+        ]);
     }
 
     /**

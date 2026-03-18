@@ -393,6 +393,17 @@ final class RESTServiceProvider extends ServiceProvider
         );
         
         $container->alias('diagnostics.rest', \FP\Resv\Domain\Diagnostics\REST::class);
+
+        // QA REST (seed + integrations simulation)
+        $container->singleton(
+            \FP\Resv\Domain\QA\REST::class,
+            function (Container $container) {
+                $seeder = $container->get(\FP\Resv\Domain\QA\Seeder::class);
+                return new \FP\Resv\Domain\QA\REST($seeder);
+            }
+        );
+
+        $container->alias('qa.rest', \FP\Resv\Domain\QA\REST::class);
     }
     
     /**
@@ -640,6 +651,11 @@ final class RESTServiceProvider extends ServiceProvider
             // Ensure Reports REST is instantiated (registers its own routes)
             if ($container->has(\FP\Resv\Domain\Reports\REST::class)) {
                 $container->get(\FP\Resv\Domain\Reports\REST::class);
+            }
+
+            // Ensure QA REST is instantiated (registers QA simulation/seed routes)
+            if ($container->has(\FP\Resv\Domain\QA\REST::class)) {
+                $container->get(\FP\Resv\Domain\QA\REST::class)->register();
             }
             
             // Closures routes

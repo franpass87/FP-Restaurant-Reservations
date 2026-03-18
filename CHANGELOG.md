@@ -1,3 +1,12 @@
+## [0.9.0-rc10.16] - 2026-03-18
+### Added
+- Dashboard Diagnostica: nuovo pulsante `Simula integrazioni` per avviare test QA one-click direttamente da interfaccia admin.
+- QA REST: nuovo endpoint `/qa/simulate-integrations` con simulazione completa senza credenziali reali (Brevo, Google Calendar, Stripe, email, queue e tracking).
+
+### Fixed
+- Registrazione route QA resa compatibile con bootstrap tardivo (`rest_api_init` già eseguito), risolvendo i 404 sulla simulazione da pannello admin.
+- Wiring REST legacy/provider allineato per garantire esposizione stabile degli endpoint QA in runtime.
+
 ## [0.9.0-rc10.15] - 2026-03-13
 ### Added
 - Manager prenotazioni: nuovo pulsante `Nuova Chiusura` con modal dedicata per creare chiusure operative direttamente dalla dashboard.

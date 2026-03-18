@@ -715,6 +715,13 @@ final class ServiceRegistry
         $diagnosticsRest->register();
         $this->container->register(DiagnosticsREST::class, $diagnosticsRest);
         $this->container->register('diagnostics.rest', $diagnosticsRest);
+
+        // QA REST (seed + simulated integrations)
+        $qaSeeder = $this->container->get(QASeeder::class);
+        $qaSeederRest = new QASeederREST($qaSeeder);
+        $qaSeederRest->register();
+        $this->container->register(QASeederREST::class, $qaSeederRest);
+        $this->container->register('qa.rest', $qaSeederRest);
     }
 
     /**
