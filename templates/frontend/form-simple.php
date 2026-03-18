@@ -306,8 +306,8 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-step active" data-step="1">
         <h3>1. Scegli il Servizio</h3>
         
-        <?php if (defined('WP_DEBUG') && WP_DEBUG): ?>
-        <!-- DEBUG: Meals Data -->
+        <?php if (defined('WP_DEBUG') && WP_DEBUG && defined('FP_RESV_DEBUG_MEALS') && FP_RESV_DEBUG_MEALS): ?>
+        <!-- DEBUG: Meals Data (solo se FP_RESV_DEBUG_MEALS è true) -->
         <div class="fp-debug-block">
             <strong>🔍 DEBUG MEALS:</strong>
             <pre class="fp-debug-pre"><?php echo htmlspecialchars(print_r($meals, true)); ?></pre>

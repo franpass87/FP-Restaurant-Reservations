@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 1.0.0 |
+| **Versione** | 1.0.1 |
 | **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -260,6 +260,7 @@ Documenti: [docs/api/TRACKING-MAP.md](docs/api/TRACKING-MAP.md)
 | Slot orari sbagliati | [docs/SLOT-TIMES-SYSTEM.md](docs/SLOT-TIMES-SYSTEM.md) |
 | Cache non aggiornata | [docs/guides/developer/CACHE-REFRESH-GUIDE.md](docs/guides/developer/CACHE-REFRESH-GUIDE.md) |
 | Email non inviate | [docs/TROUBLESHOOTING-MANUAL-BOOKING-NOTIFICATIONS.md](docs/TROUBLESHOOTING-MANUAL-BOOKING-NOTIFICATIONS.md) |
+| Mostrare dump "DEBUG MEALS" nel form | In `wp-config.php` aggiungi `define('FP_RESV_DEBUG_MEALS', true);` (richiede anche `WP_DEBUG`). |
 
 ### Health Check
 
@@ -295,6 +296,7 @@ npm test
 ## 📝 CHANGELOG
 
 **Versioni recenti:**
+- **1.0.1** - Debug MEALS opzionale (FP_RESV_DEBUG_MEALS), a11y calendario
 - **1.0.0** - First stable release (Percorso A - 18 Mar 2026)
 - **0.9.0-rc10.3** - Hotfix slot orari (mock → reali)
 - **0.9.0-rc10** - Security & race conditions
@@ -348,7 +350,7 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 1.0.0  
+**Versione:** 1.0.1  
 **Data:** 18 Marzo 2026
 ---
 

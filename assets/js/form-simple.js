@@ -851,14 +851,15 @@ document.addEventListener('DOMContentLoaded', function() {
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 // OTTIMIZZATO: usa Set per O(1) lookup invece di Array O(n)
                 if (!dayElem || !dayElem.dateObj) return;
-                
+                // A11y + test automation: ruolo e label per snapshot/assistive tech
+                dayElem.setAttribute('role', 'button');
                 const dateStr = formatLocalDate(dayElem.dateObj);
                 if (availableDatesSet.has(dateStr)) {
                     dayElem.title = 'Data disponibile';
-                    dayElem.setAttribute('aria-label', 'Data disponibile');
+                    dayElem.setAttribute('aria-label', 'Scegli data ' + dateStr);
                 } else {
                     dayElem.title = 'Data non disponibile';
-                    dayElem.setAttribute('aria-label', 'Data non disponibile');
+                    dayElem.setAttribute('aria-label', 'Data non disponibile ' + dateStr);
                 }
             }
         });

@@ -1,3 +1,11 @@
+## [1.0.1] - 2026-03-18
+
+### Changed
+- Blocco "DEBUG MEALS" nel form: mostrato solo se `FP_RESV_DEBUG_MEALS` è definita (oltre a `WP_DEBUG`), per evitare dump in sviluppo con WP_DEBUG attivo.
+
+### Fixed
+- A11y e test automation: giorni calendario Flatpickr con `role="button"` e `aria-label` (es. "Scegli data YYYY-MM-DD") per snapshot e assistive tech.
+
 ## [1.0.0] - 2026-03-18
 
 ### Added
