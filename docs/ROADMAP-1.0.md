@@ -73,4 +73,25 @@ Dopo il bump a 1.0.0, il workflow Git obbligatorio (bump, CHANGELOG, README, rea
 
 ---
 
+## Verifica test (18 Marzo 2026)
+
+**Automazione browser (fp-development.local):**
+
+- **Frontend form** — Pagina test-rest caricata; step 1 (servizio) e step 2 (data/persone/orario) verificati. Selezione “Cena” e “Procedi” funzionano. Il datepicker Flatpickr (campo Data) è readonly e i giorni del calendario non sono esposti nello snapshot di accessibilità, quindi l’automazione non ha potuto completare data → slot → contatti → invio.
+- **Manager** — Pagina Manager prenotazioni caricata correttamente (toolbar, filtri, vista calendario, “Nessuna prenotazione”). Il pulsante “Nuova Prenotazione” risulta coperto dalla barra admin nell’ambiente di test (click intercettato), quindi non è stato possibile aprire il modal di creazione da browser automatizzato.
+- **Diagnostica** — Pagina Diagnostica caricata; il pulsante “Simula integrazioni” era disabilitato nello stato osservato.
+
+**Test manuale consigliato (per chiudere il Percorso A):**
+
+1. Vai su **http://fp-development.local:10005/test-rest/** (o il tuo URL con `[fp_reservations]`).
+2. Scegli un servizio (es. Cena) → Procedi.
+3. Scegli una data dal calendario, numero persone e uno slot orario → Procedi.
+4. Compila nome, email, telefono e consensi → Invia prenotazione.
+5. Verifica di aver ricevuto l’email di conferma (se le notifiche sono configurate).
+6. In **WP Admin → FP Reservations → Manager** verifica che la prenotazione compaia in elenco/calendario.
+
+Se tutti i passi vanno a buon fine, il flusso “Prenotazione frontend → Email → Manager” è validato per la 1.0.0.
+
+---
+
 *Ultimo aggiornamento: 18 Marzo 2026*
