@@ -8,8 +8,8 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 0.9.0-rc10.16 🚀 |
-| **Status** | Production Ready ✅ |
+| **Versione** | 1.0.0 |
+| **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
 | **Licenza** | GPL-2.0-or-later |
@@ -295,6 +295,7 @@ npm test
 ## 📝 CHANGELOG
 
 **Versioni recenti:**
+- **1.0.0** - First stable release (Percorso A - 18 Mar 2026)
 - **0.9.0-rc10.3** - Hotfix slot orari (mock → reali)
 - **0.9.0-rc10** - Security & race conditions
 - **0.9.0-rc9** - Bugfix calendario
@@ -347,7 +348,7 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 0.9.0-rc10.16  
+**Versione:** 1.0.0  
 **Data:** 18 Marzo 2026
 ---
 

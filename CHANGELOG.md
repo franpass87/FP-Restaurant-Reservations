@@ -1,3 +1,8 @@
+## [1.0.0] - 2026-03-18
+
+### Added
+- **First stable release.** Plugin dichiarato production-ready; API frozen per la serie 1.x. Percorso A (pragmatico) completato.
+
 ## [0.9.0-rc10.16] - 2026-03-18
 ### Added
 - Dashboard Diagnostica: nuovo pulsante `Simula integrazioni` per avviare test QA one-click direttamente da interfaccia admin.
