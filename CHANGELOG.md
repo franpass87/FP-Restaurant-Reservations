@@ -1,3 +1,9 @@
+## [1.0.2] - 2026-03-19
+
+### Changed
+- Admin: gerarchia titoli allineata al design system FP (`h1.screen-reader-text` nel `.wrap`, titolo visibile in `h2` con `aria-hidden="true"`) su impostazioni, personalizzazione stile, diagnostica e manager; contenuto avvolto in `.wrap.fp-resv-admin-outer`; `role="region"` `aria-labelledby` punta all’`h1` accessibile.
+- CSS: `margin-top` su `#wpbody-content > .wrap.fp-resv-admin-outer`; stili header manager estesi a `h2`.
+
 ## [1.0.1] - 2026-03-18
 
 ### Changed

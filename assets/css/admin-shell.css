@@ -4,6 +4,10 @@ body[class*="fp-resv"] .wrap > hr.wp-header-end {
     display: none;
 }
 
+#wpbody-content > .wrap.fp-resv-admin-outer {
+    margin-top: 12px;
+}
+
 :root {
     --fp-resv-admin-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --fp-resv-admin-bg: #f5f6f8;

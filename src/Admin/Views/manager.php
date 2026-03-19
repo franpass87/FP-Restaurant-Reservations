@@ -10,15 +10,17 @@ $settingsUrl = admin_url('admin.php?page=fp-resv-settings');
 $headingId = 'fp-resv-manager-title';
 ?>
 
+<div class="wrap fp-resv-admin-outer">
+    <h1 class="screen-reader-text" id="<?php echo esc_attr($headingId); ?>"><?php esc_html_e('Manager Prenotazioni', 'fp-restaurant-reservations'); ?></h1>
 <div id="fp-resv-manager" class="fp-resv-manager">
     <!-- Header del Manager -->
     <header class="fp-manager-header">
         <div class="fp-manager-header__top">
             <div class="fp-manager-header__branding">
-                <h1 id="<?php echo esc_attr($headingId); ?>">
+                <h2 aria-hidden="true">
                     <span class="dashicons dashicons-calendar-alt"></span>
                     <?php esc_html_e('Manager Prenotazioni', 'fp-restaurant-reservations'); ?>
-                </h1>
+                </h2>
                 <nav class="fp-manager-breadcrumbs">
                     <a href="<?php echo esc_url($settingsUrl); ?>"><?php esc_html_e('Impostazioni', 'fp-restaurant-reservations'); ?></a>
                     <span>/</span>
@@ -210,6 +212,7 @@ $headingId = 'fp-resv-manager-title';
             </div>
         </div>
     </main>
+</div>
 </div>
 
 <!-- Modal per dettagli/modifica prenotazione -->

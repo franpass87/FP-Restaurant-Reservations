@@ -5,6 +5,8 @@ $settingsUrl = admin_url('admin.php?page=fp-resv-settings');
 $reportsUrl  = admin_url('admin.php?page=fp-resv-analytics');
 $headingId   = 'fp-resv-diagnostics-title';
 ?>
+<div class="wrap fp-resv-admin-outer">
+    <h1 class="screen-reader-text" id="<?php echo esc_attr($headingId); ?>"><?php esc_html_e('Diagnostica', 'fp-restaurant-reservations'); ?></h1>
 <div class="fp-resv-admin fp-resv-admin--diagnostics" role="region" aria-labelledby="<?php echo esc_attr($headingId); ?>">
     <header class="fp-resv-admin__topbar">
         <div class="fp-resv-admin__identity">
@@ -14,7 +16,7 @@ $headingId   = 'fp-resv-diagnostics-title';
                 <span class="fp-resv-admin__breadcrumb-current"><?php esc_html_e('Diagnostica', 'fp-restaurant-reservations'); ?></span>
             </nav>
             <div>
-                <h1 class="fp-resv-admin__title" id="<?php echo esc_attr($headingId); ?>"><?php esc_html_e('Diagnostica', 'fp-restaurant-reservations'); ?></h1>
+                <h2 class="fp-resv-admin__title" aria-hidden="true"><?php esc_html_e('Diagnostica', 'fp-restaurant-reservations'); ?></h2>
                 <p class="fp-resv-admin__subtitle"><?php esc_html_e('Monitora email, webhook, pagamenti e code per individuare rapidamente anomalie operative.', 'fp-restaurant-reservations'); ?></p>
             </div>
         </div>
@@ -97,4 +99,5 @@ $headingId   = 'fp-resv-diagnostics-title';
             </div>
         </div>
     </div>
+</div>
 </div>

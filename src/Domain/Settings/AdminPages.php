@@ -776,6 +776,8 @@ final class AdminPages
             $notices = $resetNotice . $notices;
         }
 
+        echo '<div class="wrap fp-resv-admin-outer">';
+        echo '<h1 class="screen-reader-text" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
         echo '<div class="fp-resv-admin fp-resv-admin--settings" role="region" aria-labelledby="' . esc_attr($headingId) . '">';
         echo '<header class="fp-resv-admin__topbar">';
         echo '<div class="fp-resv-admin__identity">';
@@ -785,7 +787,7 @@ final class AdminPages
         echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($breadcrumbLabel) . '</span>';
         echo '</nav>';
         echo '<div>';
-        echo '<h1 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
+        echo '<h2 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '" aria-hidden="true">' . esc_html((string) $page['page_title']) . '</h2>';
         if ($subtitle !== '') {
             echo '<p class="fp-resv-admin__subtitle">' . esc_html($subtitle) . '</p>';
         }
@@ -816,6 +818,7 @@ final class AdminPages
         echo '</section>';
         echo '</main>';
         echo '</div>';
+        echo '</div>';
     }
 
     /**
@@ -844,6 +847,8 @@ final class AdminPages
         settings_errors($optionGroup);
         $notices = trim((string) ob_get_clean());
 
+        echo '<div class="wrap fp-resv-admin-outer">';
+        echo '<h1 class="screen-reader-text">' . esc_html((string) $page['page_title']) . '</h1>';
         echo '<div class="fp-resv-admin fp-resv-admin--style" role="region" aria-labelledby="' . esc_attr($headingId) . '">';
         echo '<header class="fp-resv-admin__topbar">';
         echo '<div class="fp-resv-admin__identity">';
@@ -853,7 +858,7 @@ final class AdminPages
         echo '<span class="fp-resv-admin__breadcrumb-current">' . esc_html($page['menu_title'] ?? $page['page_title']) . '</span>';
         echo '</nav>';
         echo '<div>';
-        echo '<h1 class="fp-resv-admin__title" id="' . esc_attr($headingId) . '">' . esc_html((string) $page['page_title']) . '</h1>';
+        echo '<h2 class="fp-resv-admin__title" aria-hidden="true">' . esc_html((string) $page['page_title']) . '</h2>';
         echo '<p class="fp-resv-admin__subtitle">' . esc_html__('Personalizza palette, tipografia e focus ring con anteprima live del form.', 'fp-restaurant-reservations') . '</p>';
         echo '</div>';
         echo '</div>';
@@ -893,6 +898,7 @@ final class AdminPages
         echo '</section>';
         echo '</div>';
         echo '</main>';
+        echo '</div>';
         echo '</div>';
     }
 

@@ -65,6 +65,9 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
+= 1.0.2 - 2026-03-19 =
+* Changed: admin heading hierarchy (h1 screen reader + h2 titolo visibile) su impostazioni, stile, diagnostica e manager; wrap `.fp-resv-admin-outer` e margine sotto le notice; `aria-labelledby` region legato all'h1 accessibile.
+
 = 1.0.1 - 2026-03-18 =
 * Changed: blocco DEBUG MEALS nel form visibile solo con costante FP_RESV_DEBUG_MEALS (vedi README).
 * Fixed: giorni calendario con role="button" e aria-label per accessibilità e test automation.

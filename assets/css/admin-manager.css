@@ -62,7 +62,8 @@
     margin-bottom: 32px;
 }
 
-.fp-manager-header__branding h1 {
+.fp-manager-header__branding h1,
+.fp-manager-header__branding h2 {
     font-size: 28px;
     font-weight: 700;
     color: var(--fp-gray-900);
@@ -72,7 +73,8 @@
     gap: 12px;
 }
 
-.fp-manager-header__branding h1 .dashicons {
+.fp-manager-header__branding h1 .dashicons,
+.fp-manager-header__branding h2 .dashicons {
     color: var(--fp-primary);
 }
 
