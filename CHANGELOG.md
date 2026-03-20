@@ -1,3 +1,8 @@
+## [1.0.6] - 2026-03-20
+
+### Fixed
+- Admin meal plan: definiti `dateFromField` / `dateToField` in `renderMealCard` (prima solo `appendChild` senza `const`) — `ReferenceError` bloccava tutto l’editor Turni & disponibilità.
+
 ## [1.0.5] - 2026-03-20
 
 ### Fixed

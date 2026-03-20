@@ -1085,6 +1085,26 @@ const MAX_MINUTES = (23 * 60) + 59;
                 });
             }));
 
+            const dateFromField = createField(
+                strings.dateFromLabel || 'Data inizio',
+                createDateInput(meal.date_from || '', (value) => {
+                    updateMeal(index, (target) => {
+                        target.date_from = value;
+                    });
+                }),
+                { optional: true, tooltip: strings.dateRangeHint || '' }
+            );
+
+            const dateToField = createField(
+                strings.dateToLabel || 'Data fine',
+                createDateInput(meal.date_to || '', (value) => {
+                    updateMeal(index, (target) => {
+                        target.date_to = value;
+                    });
+                }),
+                { optional: true, tooltip: strings.dateRangeHint || '' }
+            );
+
             grid.appendChild(keyField);
             grid.appendChild(labelField);
             grid.appendChild(hintField);
