@@ -1,3 +1,8 @@
+## [1.0.4] - 2026-03-20
+
+### Fixed
+- `MealPlan::normalizeMeal()`: ripristinata la normalizzazione di `date_from` / `date_to` (e alias) nel pasto; senza questo passaggio le date salvate nel JSON non venivano lette e il filtro data non aveva effetto.
+
 ## [1.0.3] - 2026-03-20
 
 ### Added

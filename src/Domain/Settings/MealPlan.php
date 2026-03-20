@@ -264,6 +264,28 @@ final class MealPlan
             $meal['active'] = true;
         }
 
+        $dateFrom = self::normalizeMealDate(
+            $entry['date_from']
+                ?? $entry['active_from']
+                ?? $entry['date_start']
+                ?? ''
+        );
+        $dateTo = self::normalizeMealDate(
+            $entry['date_to']
+                ?? $entry['active_until']
+                ?? $entry['date_end']
+                ?? ''
+        );
+        if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+            [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+        }
+        if ($dateFrom !== '') {
+            $meal['date_from'] = $dateFrom;
+        }
+        if ($dateTo !== '') {
+            $meal['date_to'] = $dateTo;
+        }
+
         $availability = self::normalizeAvailability($entry);
         if ($availability !== []) {
             $meal = array_merge($meal, $availability);
