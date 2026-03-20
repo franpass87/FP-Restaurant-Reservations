@@ -132,11 +132,8 @@ final class AdminPages
         if ($page === 'fp-resv-settings') {
             wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], $version);
             wp_enqueue_script('fp-resv-service-hours', Plugin::$url . 'assets/js/admin/service-hours.js', [], $version, true);
-            
-            // Meal plan editor usa ES6 modules - registra il filtro prima dell'enqueue
-            if (!has_filter('script_loader_tag', [$this, 'addModuleTypeToMealPlanScript'])) {
-                add_filter('script_loader_tag', [$this, 'addModuleTypeToMealPlanScript'], 10, 2);
-            }
+            // meal-plan.js: script classico (costanti inline) — evita import ES module verso meal-plan-config.js
+            // che su alcuni hosting/CDN non viene risolto e lascia l'editor vuoto.
             wp_enqueue_script('fp-resv-meal-plan', Plugin::$url . 'assets/js/admin/meal-plan.js', [], $version, true);
         }
 
@@ -1122,14 +1119,4 @@ final class AdminPages
         return null;
     }
 
-    /**
-     * Aggiunge type="module" allo script meal-plan.js
-     */
-    public function addModuleTypeToMealPlanScript(string $tag, string $handle): string
-    {
-        if ($handle === 'fp-resv-meal-plan') {
-            return str_replace(' src=', ' type="module" src=', $tag);
-        }
-        return $tag;
-    }
 }

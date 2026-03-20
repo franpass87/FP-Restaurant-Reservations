@@ -1,3 +1,8 @@
+## [1.0.5] - 2026-03-20
+
+### Fixed
+- Admin **Turni & disponibilità**: `meal-plan.js` non usa più `import` da `meal-plan-config.js` né `type="module"`; le costanti sono inline. Su alcuni hosting/CDN l’import relativo del secondo file falliva e l’editor restava vuoto.
+
 ## [1.0.4] - 2026-03-20
 
 ### Fixed

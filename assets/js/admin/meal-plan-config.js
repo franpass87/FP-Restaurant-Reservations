@@ -1,5 +1,7 @@
 /**
- * Configurazioni e costanti per il meal plan editor
+ * Configurazioni e costanti per il meal plan editor.
+ * Nota: `meal-plan.js` duplica queste costanti inline (script classico, senza import ES module)
+ * per compatibilità hosting. Se modifichi qui, aggiorna anche l’inizio di `meal-plan.js`.
  */
 
 export const defaultStrings = {
