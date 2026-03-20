@@ -510,6 +510,11 @@ class Availability
 
             // Controlla ogni meal per questo giorno
             foreach ($mealsToCheck as $mealKey => $mealData) {
+                if ($mealKey !== 'default' && !MealPlan::isMealActiveOnDate($mealData, $dateKey)) {
+                    $mealAvailability[$mealKey] = false;
+                    continue;
+                }
+
                 $mealSettings = $this->resolveMealSettings($mealKey);
                 $schedule = $this->scheduleParser->resolveScheduleForDay($current, $mealSettings['schedule']);
                 
@@ -612,6 +617,24 @@ class Availability
         }
 
         $mealKey      = isset($criteria['meal']) ? sanitize_key((string) $criteria['meal']) : '';
+        if ($mealKey !== '') {
+            $plan = $this->getMealPlan();
+            if (isset($plan[$mealKey]) && !MealPlan::isMealActiveOnDate($plan[$mealKey], $dateString)) {
+                $stopTimer();
+
+                return [
+                    'date'     => $dateString,
+                    'timezone' => $timezone->getName(),
+                    'criteria' => $this->normalizeCriteria($party, $roomId, $criteria),
+                    'slots'    => [],
+                    'meta'     => [
+                        'has_availability' => false,
+                        'reason'           => __('Questo servizio non è disponibile per la data selezionata.', 'fp-restaurant-reservations'),
+                    ],
+                ];
+            }
+        }
+
         $mealSettings = $this->resolveMealSettings($mealKey);
         $schedule     = $this->scheduleParser->resolveScheduleForDay($dayStart, $mealSettings['schedule']);
         

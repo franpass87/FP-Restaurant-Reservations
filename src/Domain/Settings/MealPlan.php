@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Settings;
 
+use DateTimeImmutable;
+
 use function array_key_exists;
 use function array_merge;
 use function explode;
@@ -268,6 +270,75 @@ final class MealPlan
         }
 
         return $meal;
+    }
+
+    /**
+     * Verifica se il pasto è attivo in una data di calendario (solo vincolo date, non orari settimanali).
+     *
+     * @param array<string, mixed> $meal Pasto normalizzato
+     */
+    public static function isMealActiveOnDate(array $meal, string $dateYmd): bool
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return false;
+        }
+
+        $from = isset($meal['date_from']) ? trim((string) $meal['date_from']) : '';
+        $to   = isset($meal['date_to']) ? trim((string) $meal['date_to']) : '';
+
+        if ($from === '' && $to === '') {
+            return true;
+        }
+
+        if ($from !== '' && $dateYmd < $from) {
+            return false;
+        }
+
+        if ($to !== '' && $dateYmd > $to) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * True se l'intervallo date del pasto (se presente) interseca la finestra di prenotazione.
+     *
+     * @param array<string, mixed> $meal Pasto normalizzato
+     */
+    public static function mealOverlapsBookingWindow(array $meal, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd): bool
+    {
+        $from = isset($meal['date_from']) ? trim((string) $meal['date_from']) : '';
+        $to   = isset($meal['date_to']) ? trim((string) $meal['date_to']) : '';
+
+        if ($from === '' && $to === '') {
+            return true;
+        }
+
+        $ws = $windowStart->format('Y-m-d');
+        $we = $windowEnd->format('Y-m-d');
+        $rangeStart = $from !== '' ? $from : '0000-01-01';
+        $rangeEnd   = $to !== '' ? $to : '9999-12-31';
+
+        if ($rangeStart > $rangeEnd) {
+            return true;
+        }
+
+        return !($rangeEnd < $ws || $rangeStart > $we);
+    }
+
+    private static function normalizeMealDate(mixed $value): string
+    {
+        if (!is_string($value)) {
+            return '';
+        }
+
+        $trim = trim($value);
+        if ($trim === '') {
+            return '';
+        }
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $trim) ? $trim : '';
     }
 
     private static function normalizePrice(mixed $value): ?string

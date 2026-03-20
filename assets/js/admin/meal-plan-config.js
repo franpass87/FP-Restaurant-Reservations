@@ -23,6 +23,9 @@ export const defaultStrings = {
     parallelLabel: 'Parallel reservations',
     parallelTooltip: 'How many reservations can start at the same time slot.',
     capacityLabel: 'Maximum capacity',
+    dateFromLabel: 'Start date (optional)',
+    dateToLabel: 'End date (optional)',
+    dateRangeHint: 'If set, this meal is bookable only between these dates (inclusive). Leave empty for no limit.',
     removeMeal: 'Remove meal',
     emptyState: 'No meals configured yet. Add one to get started.',
     applyToAll: 'Apply to all days',
@@ -55,6 +58,12 @@ export const knownMealKeys = new Set([
     'max_parallel',
     'maxParallel',
     'capacity',
+    'date_from',
+    'date_to',
+    'active_from',
+    'active_until',
+    'date_start',
+    'date_end',
 ]);
 
 export const knownAvailabilityKeys = new Set([

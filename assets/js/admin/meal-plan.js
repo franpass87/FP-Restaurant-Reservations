@@ -315,6 +315,8 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
             buffer: '',
             parallel: '',
             capacity: '',
+            date_from: '',
+            date_to: '',
             extras: {},
             availabilityExtras: {},
         };
@@ -351,6 +353,15 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
         }
         if (source.active) {
             meal.active = true;
+        }
+
+        const dateFromRaw = source.date_from ?? source.active_from ?? source.date_start;
+        const dateToRaw = source.date_to ?? source.active_until ?? source.date_end;
+        if (typeof dateFromRaw === 'string' && dateFromRaw.trim() !== '') {
+            meal.date_from = dateFromRaw.trim();
+        }
+        if (typeof dateToRaw === 'string' && dateToRaw.trim() !== '') {
+            meal.date_to = dateToRaw.trim();
         }
 
         const availability = {};
@@ -420,6 +431,8 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
         buffer: '',
         parallel: '',
         capacity: '',
+        date_from: '',
+        date_to: '',
         extras: {},
         availabilityExtras: {},
     });
@@ -456,6 +469,15 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
         }
         if (meal.active) {
             payload.active = true;
+        }
+
+        const dateFrom = typeof meal.date_from === 'string' ? meal.date_from.trim() : '';
+        const dateTo = typeof meal.date_to === 'string' ? meal.date_to.trim() : '';
+        if (dateFrom !== '') {
+            payload.date_from = dateFrom;
+        }
+        if (dateTo !== '') {
+            payload.date_to = dateTo;
         }
 
         const availability = { ...meal.availabilityExtras };
@@ -621,6 +643,20 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
             inputEl.value = value;
             inputEl.addEventListener('input', (event) => {
                 onChange(event.target.value);
+            });
+            return inputEl;
+        };
+
+        const createDateInput = (value, onChange) => {
+            const inputEl = document.createElement('input');
+            inputEl.type = 'date';
+            inputEl.value = typeof value === 'string' ? value.trim() : '';
+            inputEl.addEventListener('input', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement)) {
+                    return;
+                }
+                onChange(target.value);
             });
             return inputEl;
         };
@@ -949,6 +985,8 @@ import { defaultStrings, knownMealKeys, knownAvailabilityKeys, defaultHoursConfi
             grid.appendChild(priceField);
             grid.appendChild(badgeField);
             grid.appendChild(badgeIconField);
+            grid.appendChild(dateFromField);
+            grid.appendChild(dateToField);
 
             const advanced = document.createElement('div');
             advanced.className = 'fp-resv-meal-plan__advanced';

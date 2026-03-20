@@ -77,6 +77,12 @@ final class MealPlanService
      */
     public function isMealAvailableOnDay(string $mealKey, \DateTimeImmutable $day): bool
     {
+        $settings = $this->getMealSettings($mealKey);
+        $dateStr  = $day->format('Y-m-d');
+        if (!MealPlan::isMealActiveOnDate($settings, $dateStr)) {
+            return false;
+        }
+
         $schedule = $this->getMealSchedule($mealKey);
         $dayKey = strtolower($day->format('D')); // mon, tue, wed, etc.
         

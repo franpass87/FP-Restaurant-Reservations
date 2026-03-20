@@ -16,6 +16,9 @@ use FP\Resv\Frontend\AvailableDaysExtractor;
 use FP\Resv\Frontend\PhonePrefixes;
 use FP\Resv\Frontend\PhonePrefixProcessor;
 use FP\Resv\Kernel\LegacyBridge;
+use DateInterval;
+use DateTimeImmutable;
+use DateTimeZone;
 use function apply_filters;
 use function array_key_exists;
 use function array_keys;
@@ -156,6 +159,7 @@ final class FormContext
         }
 
         $meals = MealPlan::normalizeList(apply_filters('fp_resv_form_meals', $rawMeals, $config));
+        $meals = $this->filterMealsForBookingWindow($meals, $generalSettings);
         if ($meals !== []) {
             $defaultMeal = MealPlan::getDefaultKey($meals);
             if ($defaultMeal !== '') {
@@ -293,6 +297,47 @@ final class FormContext
         $timezone = trim($timezone);
 
         return $timezone === '' ? 'Europe/Rome' : $timezone;
+    }
+
+    /**
+     * Esclude dal form i pasti la cui finestra date non interseca l'intervallo di prenotazione (min/max advance).
+     *
+     * @param array<int, array<string, mixed>> $meals
+     * @param array<string, mixed> $generalSettings
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterMealsForBookingWindow(array $meals, array $generalSettings): array
+    {
+        if ($meals === []) {
+            return [];
+        }
+
+        $tzName = $this->normalizeTimezone((string) ($generalSettings['restaurant_timezone'] ?? 'Europe/Rome'));
+        try {
+            $tz = new DateTimeZone($tzName);
+        } catch (\Exception $e) {
+            $tz = new DateTimeZone('Europe/Rome');
+        }
+
+        $minAdvance = max(0, (int) ($generalSettings['min_advance_days'] ?? 0));
+        $maxAdvance = max(1, (int) ($generalSettings['max_advance_days'] ?? 365));
+
+        $today = (new DateTimeImmutable('now', $tz))->setTime(0, 0, 0);
+        $windowStart = $today->add(new DateInterval('P' . $minAdvance . 'D'));
+        $windowEnd   = $today->add(new DateInterval('P' . $maxAdvance . 'D'));
+
+        $filtered = [];
+        foreach ($meals as $meal) {
+            if (!is_array($meal)) {
+                continue;
+            }
+            if (MealPlan::mealOverlapsBookingWindow($meal, $windowStart, $windowEnd)) {
+                $filtered[] = $meal;
+            }
+        }
+
+        return $filtered;
     }
 
     private function toInt(mixed $value, int $fallback): int

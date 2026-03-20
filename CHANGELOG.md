@@ -1,3 +1,8 @@
+## [1.0.3] - 2026-03-20
+
+### Added
+- Piano pasti: campi opzionali **Data inizio** / **Data fine** (`date_from` / `date_to`, formato YYYY-MM-DD) per limitare la prenotabilità di un pasto a un intervallo di calendario (inclusivo). Admin: editor pasti con input data; backend: filtro su disponibilità, slot e `MealPlanService::isMealAvailableOnDay`. Frontend: pasti nascosti se la finestra non interseca l’intervallo min/max giorni di anticipo.
+
 ## [1.0.2] - 2026-03-19
 
 ### Changed

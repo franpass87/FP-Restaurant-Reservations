@@ -694,6 +694,52 @@ final class SettingsSanitizer
                 continue;
             }
 
+            $label = isset($meal['label']) ? (string) $meal['label'] : '';
+            $key   = isset($meal['key']) ? sanitize_key((string) $meal['key']) : '';
+
+            foreach (
+                [
+                    'date_from' => __('Data inizio', 'fp-restaurant-reservations'),
+                    'date_to'   => __('Data fine', 'fp-restaurant-reservations'),
+                ] as $field => $fieldLabel
+            ) {
+                if (!isset($meal[$field])) {
+                    continue;
+                }
+
+                $v = trim((string) $meal[$field]);
+                if ($v === '') {
+                    continue;
+                }
+
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) {
+                    $this->addError(
+                        'general',
+                        'invalid_meal_' . $field . '_' . ($key !== '' ? $key : md5($v)),
+                        sprintf(
+                            /* translators: 1: field label, 2: meal label or key */
+                            __('Il campo %1$s per %2$s non è una data valida (YYYY-MM-DD).', 'fp-restaurant-reservations'),
+                            $fieldLabel,
+                            $label !== '' ? $label : ($key !== '' ? strtoupper($key) : __('Servizio', 'fp-restaurant-reservations'))
+                        )
+                    );
+                }
+            }
+
+            $df = isset($meal['date_from']) ? trim((string) $meal['date_from']) : '';
+            $dt = isset($meal['date_to']) ? trim((string) $meal['date_to']) : '';
+            if ($df !== '' && $dt !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $df) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dt) && $df > $dt) {
+                $this->addError(
+                    'general',
+                    'invalid_meal_date_range_' . ($key !== '' ? $key : md5($df . $dt)),
+                    sprintf(
+                        /* translators: %s: meal label or key */
+                        __('La data inizio deve precedere o coincidere con la data fine per %s.', 'fp-restaurant-reservations'),
+                        $label !== '' ? $label : ($key !== '' ? strtoupper($key) : __('Servizio', 'fp-restaurant-reservations'))
+                    )
+                );
+            }
+
             $hoursDefinition = isset($meal['hours_definition']) ? (string) $meal['hours_definition'] : '';
             if ($hoursDefinition === '') {
                 continue;
@@ -703,9 +749,6 @@ final class SettingsSanitizer
             if ($invalid === []) {
                 continue;
             }
-
-            $label = isset($meal['label']) ? (string) $meal['label'] : '';
-            $key   = isset($meal['key']) ? sanitize_key((string) $meal['key']) : '';
 
             $this->addError(
                 'general',
