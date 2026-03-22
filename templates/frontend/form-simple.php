@@ -137,6 +137,9 @@ input[type="checkbox"].fp-checkbox {
 
 </style>
 
+<script>
+window.fpResvDebug = <?php echo ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? 'true' : 'false'; ?>;
+</script>
 <?php 
 // Inietta CSS con JavaScript per bypassare WPBakery/Salient
 $cssPath = dirname(dirname(__DIR__)) . '/assets/css/form-simple-inline.css';
@@ -221,12 +224,12 @@ input[type="checkbox"].fp-checkbox {
         criticalStyle.appendChild(document.createTextNode(criticalCss));
     }
         document.head.appendChild(criticalStyle);
-        console.log('[FP-RESV] ✅ CSS CRITICO caricato (asterischi + checkbox)');
+        if (window.fpResvDebug) console.log('[FP-RESV] ✅ CSS CRITICO caricato (asterischi + checkbox)');
     }
     
     // === STEP 2: CSS COMPLETO (solo se non già caricato) ===
     if (document.getElementById('fp-resv-simple-inline-style')) {
-        console.log('[FP-RESV] ℹ️ CSS completo già caricato, skip');
+        if (window.fpResvDebug) console.log('[FP-RESV] ℹ️ CSS completo già caricato, skip');
         return;
     }
     
@@ -240,7 +243,7 @@ input[type="checkbox"].fp-checkbox {
         style.appendChild(document.createTextNode(css));
     }
     document.head.appendChild(style);
-    console.log('[FP-RESV] ✅ CSS completo iniettato (' + css.length + ' caratteri)');
+    if (window.fpResvDebug) console.log('[FP-RESV] ✅ CSS completo iniettato (' + css.length + ' caratteri)');
 })();
 </script>
 <?php } ?>
@@ -891,23 +894,25 @@ class NoticeManager {
 // Inizializza il sistema di notice immediatamente
 window.fpNoticeManager = new NoticeManager();
 
-// Verifica inizializzazione (solo log console)
+// Verifica inizializzazione (solo log console in debug)
 setTimeout(() => {
-    if (window.fpNoticeManager) {
-        console.log('✅ Notice Manager inizializzato correttamente con auto-scroll');
-    } else {
-        console.error('❌ Notice Manager non inizializzato');
+    if (window.fpResvDebug) {
+        if (window.fpNoticeManager) {
+            console.log('✅ Notice Manager inizializzato correttamente con auto-scroll');
+        } else {
+            console.error('❌ Notice Manager non inizializzato');
+        }
     }
 }, 100);
 
 // Fallback SICURO: assicuriamo che il form sia sempre visibile (SOLO il form, non tocchiamo niente altro)
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Form fallback: inizializzazione');
+    if (window.fpResvDebug) console.log('Form fallback: inizializzazione');
     
     // Trova il form
     const form = document.getElementById('fp-resv-default') || document.querySelector('.fp-resv-simple');
     if (!form) {
-        console.error('Form non trovato');
+        if (window.fpResvDebug) console.error('Form non trovato');
         return;
     }
     
@@ -925,7 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
         firstStep.classList.add('active');
     }
     
-    console.log('Form fallback: completato');
+    if (window.fpResvDebug) console.log('Form fallback: completato');
 });
 
 // Esempi di utilizzo (da rimuovere in produzione)
@@ -939,7 +944,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // JAVASCRIPT FALLBACK: Forza pointer-events su tutti i bottoni (per sicurezza)
 (function() {
     function forcePointerEvents() {
-        console.log('FP-Resv: Forzando pointer-events su tutti i bottoni...');
+        if (window.fpResvDebug) console.log('FP-Resv: Forzando pointer-events su tutti i bottoni...');
         
         // Seleziona tutti i bottoni del form E dell'header
         const selectors = [
@@ -1002,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        console.log('FP-Resv: pointer-events forzato su ' + document.querySelectorAll(selectors.join(', ')).length + ' elementi');
+        if (window.fpResvDebug) console.log('FP-Resv: pointer-events forzato su ' + document.querySelectorAll(selectors.join(', ')).length + ' elementi');
     }
     
     // Esegui immediatamente

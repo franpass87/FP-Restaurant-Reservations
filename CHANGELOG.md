@@ -1,3 +1,8 @@
+## [1.0.8] - 2026-03-22
+
+### Fixed
+- Form frontend: tutti i console.log/warn/error condizionati a WP_DEBUG tramite `window.fpResvDebug` per evitare output in produzione.
+
 ## [1.0.7] - 2026-03-22
 
 ### Changed

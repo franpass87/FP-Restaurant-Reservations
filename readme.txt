@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,9 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 1.0.8 - 2026-03-22 =
+* Fix: console log nel form frontend condizionati a WP_DEBUG (window.fpResvDebug).
 
 = 1.0.7 - 2026-03-22 =
 * Changed: allineamento admin UI al design system FP con badge versione nei principali header.
