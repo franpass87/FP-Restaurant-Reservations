@@ -66,7 +66,8 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 == Changelog ==
 
 = 1.0.9 - 2026-03-22 =
-* DiagnosticShortcode: error_log condizionati a WP_DEBUG
+* Fix: error_log in DiagnosticShortcode condizionati a WP_DEBUG.
+* Fix: console.error nel Manager admin (back-step2) condizionato a debugMode.
 
 = 1.0.8 - 2026-03-22 =
 * Fix: console log nel form frontend condizionati a WP_DEBUG (window.fpResvDebug).

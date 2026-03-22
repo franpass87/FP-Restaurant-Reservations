@@ -2519,7 +2519,7 @@ class ReservationManager {
             try {
                 await this.showNewReservationStep2();
             } catch (error) {
-                console.error('[Manager] Error going back to step 2:', error);
+                this.debugError('Error going back to step 2:', error);
             }
         });
     }

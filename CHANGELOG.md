@@ -2,6 +2,7 @@
 
 ### Fixed
 - DiagnosticShortcode: tutti gli `error_log` condizionati a `WP_DEBUG` per evitare output nei log in produzione.
+- Manager admin: `console.error` nel gestore back-step2 condizionato a `debugMode` tramite `debugError()`.
 
 ## [1.0.8] - 2026-03-22
 
