@@ -1,3 +1,8 @@
+## [1.0.11] - 2026-03-23
+
+### Changed
+- Brevo: notice centralizzazione sempre visibile nella pagina Brevo (anche quando non abilitato), con messaggio contestuale e link a FP Tracking.
+
 ## [1.0.10] - 2026-03-23
 
 ### Changed

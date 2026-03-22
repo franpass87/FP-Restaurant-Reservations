@@ -811,10 +811,16 @@ final class AdminPages
         if ($notices !== '') {
             echo '<div class="fp-resv-settings__notices">' . $notices . '</div>';
         }
-        if ($pageKey === 'brevo' && \function_exists('fp_tracking_get_brevo_settings') && !empty(fp_tracking_get_brevo_settings()['enabled'])) {
+        if ($pageKey === 'brevo' && \function_exists('fp_tracking_get_brevo_settings')) {
+            $brevo_central = fp_tracking_get_brevo_settings();
+            $brevo_enabled = ! empty($brevo_central['enabled']);
             echo '<div class="notice notice-info inline" style="margin: 0 0 16px; padding: 10px 12px;">';
             echo '<p style="margin: 0;">';
-            echo esc_html__('API Key e liste ITA/ENG sono configurate in FP Tracking.', 'fp-restaurant-reservations');
+            if ($brevo_enabled) {
+                echo esc_html__('API Key e liste ITA/ENG sono configurate in FP Tracking.', 'fp-restaurant-reservations');
+            } else {
+                echo esc_html__('Per usare Brevo, configura API Key e liste ITA/ENG in FP Tracking.', 'fp-restaurant-reservations');
+            }
             echo ' <a href="' . esc_url(admin_url('admin.php?page=fp-tracking')) . '">' . esc_html__('Configura in FP Tracking', 'fp-restaurant-reservations') . '</a>';
             echo '</p>';
             echo '</div>';
