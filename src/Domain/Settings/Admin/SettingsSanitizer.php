@@ -107,6 +107,17 @@ final class SettingsSanitizer
             $sanitized['stripe_currency'] = strtoupper(substr((string) $sanitized['stripe_currency'], 0, 3));
         }
 
+        // Quando FP-Tracking è attivo, api_key e liste Brevo sono centralizzate: preservale nel save.
+        if ($pageKey === 'brevo' && \function_exists('fp_tracking_get_brevo_settings')) {
+            $central = fp_tracking_get_brevo_settings();
+            if (!empty($central['enabled']) && !empty($central['api_key'])) {
+                $sanitized['brevo_api_key']    = $central['api_key'];
+                $sanitized['brevo_list_id_it'] = $central['list_id_it'] ?: ($sanitized['brevo_list_id_it'] ?? '');
+                $sanitized['brevo_list_id_en'] = $central['list_id_en'] ?: ($sanitized['brevo_list_id_en'] ?? '');
+                $sanitized['brevo_list_id']    = $central['list_id_it'] ?: $central['list_id_en'] ?: ($sanitized['brevo_list_id'] ?? '');
+            }
+        }
+
         return $sanitized;
     }
 

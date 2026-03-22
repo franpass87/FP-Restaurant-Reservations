@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 License: GPLv2 or later
 
 == Description ==
@@ -65,9 +65,11 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
+= 1.0.10 - 2026-03-23 =
+* Brevo: API key e liste da FP Tracking quando attivo
+
 = 1.0.9 - 2026-03-22 =
-* Fix: error_log in DiagnosticShortcode condizionati a WP_DEBUG.
-* Fix: console.error nel Manager admin (back-step2) condizionato a debugMode.
+* DiagnosticShortcode: error_log condizionati a WP_DEBUG
 
 = 1.0.8 - 2026-03-22 =
 * Fix: console log nel form frontend condizionati a WP_DEBUG (window.fpResvDebug).

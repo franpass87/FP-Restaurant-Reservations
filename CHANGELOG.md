@@ -1,8 +1,12 @@
+## [1.0.10] - 2026-03-23
+
+### Changed
+- Brevo: API key e liste ITA/ENG ora lette da FP Marketing Tracking Layer quando attivo. Filtro `option_fp_resv_brevo` e sanitizer preservano i valori centralizzati. Notice in pagina Brevo con link a FP Tracking.
+
 ## [1.0.9] - 2026-03-22
 
 ### Fixed
 - DiagnosticShortcode: tutti gli `error_log` condizionati a `WP_DEBUG` per evitare output nei log in produzione.
-- Manager admin: `console.error` nel gestore back-step2 condizionato a `debugMode` tramite `debugError()`.
 
 ## [1.0.8] - 2026-03-22
 

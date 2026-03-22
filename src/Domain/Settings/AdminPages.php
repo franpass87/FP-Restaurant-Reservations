@@ -102,7 +102,9 @@ final class AdminPages
 
     public function register(): void
     {
-        error_log('[FP Resv] AdminPages register called');
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FP Resv] AdminPages register called');
+        }
         // Priorità 5: crea il menu principale per primo
         add_action('admin_menu', [$this, 'registerMainMenu'], 5);
         // Priorità 20: aggiunge i submenu delle impostazioni dopo i menu operativi (Agenda, Tables, ecc.)
@@ -363,8 +365,10 @@ final class AdminPages
     {
         // Assicura che gli amministratori abbiano sempre la capability necessaria
         Roles::ensureAdminCapabilities();
-        error_log('[FP Resv] registerMainMenu invoked');
-        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FP Resv] registerMainMenu invoked');
+        }
+
         if ($this->pages === []) {
             return;
         }
@@ -806,6 +810,14 @@ final class AdminPages
         echo '<section class="fp-resv-surface">';
         if ($notices !== '') {
             echo '<div class="fp-resv-settings__notices">' . $notices . '</div>';
+        }
+        if ($pageKey === 'brevo' && \function_exists('fp_tracking_get_brevo_settings') && !empty(fp_tracking_get_brevo_settings()['enabled'])) {
+            echo '<div class="notice notice-info inline" style="margin: 0 0 16px; padding: 10px 12px;">';
+            echo '<p style="margin: 0;">';
+            echo esc_html__('API Key e liste ITA/ENG sono configurate in FP Tracking.', 'fp-restaurant-reservations');
+            echo ' <a href="' . esc_url(admin_url('admin.php?page=fp-tracking')) . '">' . esc_html__('Configura in FP Tracking', 'fp-restaurant-reservations') . '</a>';
+            echo '</p>';
+            echo '</div>';
         }
         echo '<form method="post" action="options.php" id="' . esc_attr($formId) . '" class="fp-resv-settings__form">';
         settings_fields($optionGroup);

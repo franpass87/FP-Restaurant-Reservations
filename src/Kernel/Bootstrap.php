@@ -31,7 +31,10 @@ final class Bootstrap
     public static function boot(string $pluginFile): void
     {
         self::$pluginFile = $pluginFile;
-        
+
+        // Integrazione FP-Tracking: API key e liste Brevo centralizzate
+        add_filter('option_fp_resv_brevo', [self::class, 'mergeBrevoFromTracking'], 10, 3);
+
         // 1. Check requirements - ensure class is loaded
         if (!class_exists('\FP\Resv\Core\Requirements')) {
             // Try to load the class explicitly if autoloader hasn't loaded it yet
@@ -196,6 +199,32 @@ final class Bootstrap
         return self::$container;
     }
     
+    /**
+     * Filtra fp_resv_brevo per iniettare api_key e liste da FP-Tracking quando attivo.
+     *
+     * @param mixed $value   Valore attuale dell'opzione
+     * @param string $option Nome opzione
+     * @param mixed $default Valore default
+     * @return mixed
+     */
+    public static function mergeBrevoFromTracking(mixed $value, string $option, mixed $default): mixed
+    {
+        if (!\function_exists('fp_tracking_get_brevo_settings')) {
+            return $value;
+        }
+        $central = fp_tracking_get_brevo_settings();
+        if (empty($central['enabled']) || empty($central['api_key'])) {
+            return $value;
+        }
+        $local = \is_array($value) ? $value : [];
+        return \array_merge($local, [
+            'brevo_api_key'    => $central['api_key'],
+            'brevo_list_id_it' => $central['list_id_it'] ?: ($local['brevo_list_id_it'] ?? ''),
+            'brevo_list_id_en' => $central['list_id_en'] ?: ($local['brevo_list_id_en'] ?? ''),
+            'brevo_list_id'    => $central['list_id_it'] ?: $central['list_id_en'] ?: ($local['brevo_list_id'] ?? ''),
+        ]);
+    }
+
     /**
      * Get the plugin file path
      * 

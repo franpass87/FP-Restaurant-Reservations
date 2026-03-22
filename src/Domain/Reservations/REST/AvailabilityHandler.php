@@ -207,10 +207,11 @@ final class AvailabilityHandler
             ], 200);
 
         } catch (\Exception $e) {
-            // Log dell'errore per debug
-            error_log('FP Resv REST API Error: ' . $e->getMessage());
-            error_log('Stack trace: ' . $e->getTraceAsString());
-            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('FP Resv REST API Error: ' . $e->getMessage());
+                error_log('Stack trace: ' . $e->getTraceAsString());
+            }
+
             return new WP_Error(
                 'fp_resv_availability_days_error',
                 __('Errore nel recupero dei giorni disponibili.', 'fp-restaurant-reservations'),
