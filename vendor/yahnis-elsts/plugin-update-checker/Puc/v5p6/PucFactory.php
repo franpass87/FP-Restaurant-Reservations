@@ -153,6 +153,10 @@ if ( !class_exists(PucFactory::class, false) ):
 		 * @return string Normalized path.
 		 */
 		public static function normalizePath($path) {
+			if ( !is_string($path) ) {
+				return '';
+			}
+
 			if ( function_exists('wp_normalize_path') ) {
 				return wp_normalize_path($path);
 			}

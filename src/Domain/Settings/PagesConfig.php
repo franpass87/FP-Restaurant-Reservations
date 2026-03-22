@@ -986,7 +986,7 @@ final class PagesConfig
             'sections'     => [
                 'tracking-integrations' => [
                     'title'       => __('Integrazioni marketing', 'fp-restaurant-reservations'),
-                    'description' => __('Configura GA4, Google Ads, Meta Pixel, Clarity e preferenze di consenso.', 'fp-restaurant-reservations'),
+                    'description' => __('Gli ID marketing sono gestiti dal plugin FP Marketing Tracking Layer. In questa sezione puoi definire solo preferenze locali di consenso e cookie.', 'fp-restaurant-reservations'),
                     'fields'      => self::getTrackingIntegrationFields(),
                 ],
                 'privacy-controls' => [
@@ -1004,45 +1004,6 @@ final class PagesConfig
     private static function getTrackingIntegrationFields(): array
     {
         return [
-            'ga4_measurement_id' => [
-                'label'       => __('GA4 Measurement ID', 'fp-restaurant-reservations'),
-                'type'        => 'text',
-                'default'     => '',
-            ],
-            'ga4_api_secret' => [
-                'label'       => __('GA4 API Secret (per invii server-side)', 'fp-restaurant-reservations'),
-                'type'        => 'text',
-                'default'     => '',
-                'description' => __('Necessario per inviare eventi tramite Measurement Protocol API', 'fp-restaurant-reservations'),
-            ],
-            'google_ads_conversion_id' => [
-                'label'   => __('ID conversione Google Ads', 'fp-restaurant-reservations'),
-                'type'    => 'text',
-                'default' => '',
-            ],
-            'meta_pixel_id' => [
-                'label'   => __('Meta Pixel ID', 'fp-restaurant-reservations'),
-                'type'    => 'text',
-                'default' => '',
-            ],
-            'meta_access_token' => [
-                'label'       => __('Meta Access Token (per invii server-side)', 'fp-restaurant-reservations'),
-                'type'        => 'text',
-                'default'     => '',
-                'description' => __('Necessario per inviare eventi tramite Conversions API', 'fp-restaurant-reservations'),
-            ],
-            'clarity_project_id' => [
-                'label'   => __('Microsoft Clarity Project ID', 'fp-restaurant-reservations'),
-                'type'    => 'text',
-                'default' => '',
-            ],
-            'tracking_use_gtm' => [
-                'label'          => __('Usa Google Tag Manager', 'fp-restaurant-reservations'),
-                'type'           => 'checkbox',
-                'checkbox_label' => __('Gestisci GA4, Ads, Meta e Clarity da GTM: il plugin invia solo eventi al dataLayer.', 'fp-restaurant-reservations'),
-                'default'        => '0',
-                'description'     => __('Attiva se carichi i tag da GTM. Non inserire ID sopra (GA4, Ads, Meta, Clarity) per evitare doppio invio.', 'fp-restaurant-reservations'),
-            ],
             'consent_mode_default' => [
                 'label'       => __('Stato Consent Mode predefinito', 'fp-restaurant-reservations'),
                 'type'        => 'select',

@@ -128,8 +128,6 @@ final class AdminController
         global $wp_filter;
         
         if (isset($wp_filter['admin_notices'])) {
-            $ourPluginPath = plugin_basename(Plugin::$dir);
-            
             foreach ($wp_filter['admin_notices']->callbacks as $priority => $callbacks) {
                 foreach ($callbacks as $key => $callback) {
                     // Mantieni solo i notice del nostro plugin (Requirements e BootstrapGuard)

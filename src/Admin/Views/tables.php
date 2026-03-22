@@ -30,6 +30,7 @@ $headingId   = 'fp-resv-tables-title';
             <button type="button" class="button" data-action="refresh">
                 <?php esc_html_e('Aggiorna', 'fp-restaurant-reservations'); ?>
             </button>
+            <span class="fpresv-page-header-badge">v<?php echo esc_html(\FP\Resv\Core\Plugin::VERSION); ?></span>
         </div>
     </header>
 

@@ -249,9 +249,8 @@ final class BootstrapGuard
         $displayed = false;
 
         if (function_exists('is_admin') && is_admin() && function_exists('add_action')) {
-            $notice = self::formatFailureNotice($failure);
-
-            add_action('admin_notices', static function () use ($notice): void {
+            add_action('admin_notices', static function () use ($failure): void {
+                $notice = self::formatFailureNotice($failure);
                 echo '<div class="notice notice-error"><p>' . esc_html($notice['headline']) . '</p>';
 
                 if ($notice['details'] !== []) {

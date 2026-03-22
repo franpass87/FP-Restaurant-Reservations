@@ -1,3 +1,13 @@
+## [1.0.7] - 2026-03-22
+
+### Changed
+- Admin UI allineata al design system FP su pagine operative/impostazioni con badge versione in header e coerenza visuale cross-page.
+- Tracking settings: rimossi i campi credenziali marketing locali (GA4/Ads/Meta/Clarity) in favore della configurazione centralizzata su FP Marketing Tracking Layer.
+
+### Fixed
+- Bootstrap tracking legacy disattivato automaticamente quando FP Marketing Tracking Layer è attivo, prevenendo doppi invii eventi.
+- Hardening runtime minori su bootstrap/logging/provider e aggiornamenti di supporto in vendor e diagnostica.
+
 ## [1.0.6] - 2026-03-20
 
 ### Fixed

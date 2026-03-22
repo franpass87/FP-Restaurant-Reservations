@@ -798,6 +798,7 @@ final class AdminPages
         echo '<button type="submit" class="button button-primary" form="' . esc_attr($formId) . '">';
         esc_html_e('Salva impostazioni', 'fp-restaurant-reservations');
         echo '</button>';
+        echo '<span class="fpresv-page-header-badge">v' . esc_html(Plugin::VERSION) . '</span>';
         echo '</div>';
         echo '</header>';
 
@@ -866,6 +867,7 @@ final class AdminPages
         echo '<button type="submit" class="button button-primary" form="fp-resv-style-form">';
         esc_html_e('Salva stile', 'fp-restaurant-reservations');
         echo '</button>';
+        echo '<span class="fpresv-page-header-badge">v' . esc_html(Plugin::VERSION) . '</span>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="fp-resv-admin__reset-form" data-style-reset-form>';
         wp_nonce_field('fp_resv_style_reset');
         echo '<input type="hidden" name="action" value="fp_resv_style_reset">';

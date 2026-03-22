@@ -23,6 +23,7 @@ $headingId   = 'fp-resv-diagnostics-title';
         <div class="fp-resv-admin__actions">
             <a class="button" href="<?php echo esc_url($reportsUrl); ?>"><?php esc_html_e('Vai ai report', 'fp-restaurant-reservations'); ?></a>
             <a class="button" href="<?php echo esc_url($settingsUrl); ?>"><?php esc_html_e('Impostazioni', 'fp-restaurant-reservations'); ?></a>
+            <span class="fpresv-page-header-badge">v<?php echo esc_html(\FP\Resv\Core\Plugin::VERSION); ?></span>
         </div>
     </header>
     <main class="fp-resv-admin__main">

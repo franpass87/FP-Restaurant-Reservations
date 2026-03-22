@@ -41,6 +41,7 @@ $headingId = 'fp-resv-manager-title';
                     <span class="dashicons dashicons-plus-alt"></span>
                     <?php esc_html_e('Nuova Prenotazione', 'fp-restaurant-reservations'); ?>
                 </button>
+                <span class="fpresv-page-header-badge">v<?php echo esc_html(\FP\Resv\Core\Plugin::VERSION); ?></span>
             </div>
         </div>
 

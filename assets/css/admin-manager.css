@@ -47,12 +47,25 @@
 }
 
 /* ============================================
-   HEADER
+   HEADER - FP Design System (grafica unificata)
    ============================================ */
 .fp-manager-header {
-    background: white;
-    border-bottom: 1px solid var(--fp-gray-200);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: none;
     padding: 24px 32px;
+    color: #fff;
+}
+
+.fp-manager-header .fp-manager-breadcrumbs {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.fp-manager-header .fp-manager-breadcrumbs a {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.fp-manager-header .fp-manager-breadcrumbs a:hover {
+    color: #fff;
 }
 
 .fp-manager-header__top {
@@ -66,16 +79,39 @@
 .fp-manager-header__branding h2 {
     font-size: 28px;
     font-weight: 700;
-    color: var(--fp-gray-900);
+    color: #fff !important;
     margin: 0 0 8px 0;
     display: flex;
     align-items: center;
     gap: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .fp-manager-header__branding h1 .dashicons,
 .fp-manager-header__branding h2 .dashicons {
-    color: var(--fp-primary);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.fp-manager-header__actions .fp-btn--secondary {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.fp-manager-header__actions .fp-btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+
+.fp-manager-header__actions .fp-btn--primary {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.fp-manager-header__actions .fp-btn--primary:hover {
+    background: rgba(255, 255, 255, 0.4);
+    color: #fff;
 }
 
 .fp-manager-breadcrumbs {

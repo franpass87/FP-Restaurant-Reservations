@@ -34,6 +34,9 @@ $version = Plugin::assetVersion();
                 <?php esc_html_e('Scegli i colori per il form di prenotazione con anteprima in tempo reale', 'fp-restaurant-reservations'); ?>
             </p>
         </div>
+        <div class="fp-resv-admin__actions">
+            <span class="fpresv-page-header-badge">v<?php echo esc_html(Plugin::VERSION); ?></span>
+        </div>
     </div>
 
     <?php if (isset($_GET['fp_resv_colors_saved'])) : ?>

@@ -21,6 +21,8 @@ body[class*="fp-resv"] .wrap > hr.wp-header-end {
     --fp-resv-admin-radius: 10px;
     --fp-resv-admin-shadow: 0 24px 40px -28px rgba(15, 23, 42, 0.45);
     --fp-resv-admin-gap: clamp(16px, 2vw, 28px);
+    /* FP Design System - grafica unificata */
+    --fpdms-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .fp-resv-admin {
@@ -46,7 +48,7 @@ body[class*="fp-resv"] .wrap > hr.wp-header-end {
 }
 
 .fp-resv-admin__topbar {
-    background: var(--fp-resv-admin-surface);
+    background: var(--fpdms-gradient-primary);
     border-radius: var(--fp-resv-admin-radius);
     box-shadow: var(--fp-resv-admin-shadow);
     padding: clamp(18px, 2vw, 26px);
@@ -55,6 +57,71 @@ body[class*="fp-resv"] .wrap > hr.wp-header-end {
     align-items: center;
     gap: clamp(16px, 2vw, 32px);
     flex-wrap: wrap;
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__breadcrumbs,
+.fp-resv-admin__topbar .fp-resv-admin__breadcrumb-separator,
+.fp-resv-admin__topbar .fp-resv-admin__breadcrumb-current {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__breadcrumbs a {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__breadcrumbs a:hover {
+    color: #fff;
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__title {
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__subtitle {
+    color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__actions .button {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__actions .button:hover {
+    background: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__actions .button.button-primary {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__actions .button.button-primary:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__reset,
+.fp-resv-admin__topbar .button-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.fp-resv-admin__topbar .fp-resv-admin__reset:hover,
+.fp-resv-admin__topbar .button-link:hover {
+    color: #fff !important;
+}
+
+.fpresv-page-header-badge {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .fp-resv-admin__identity {

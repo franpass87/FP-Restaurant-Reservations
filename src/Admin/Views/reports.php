@@ -28,6 +28,7 @@ $headingId   = 'fp-resv-analytics-title';
             <a class="button button-primary" href="#fp-resv-analytics-app">
                 <?php esc_html_e('Vai alla dashboard', 'fp-restaurant-reservations'); ?>
             </a>
+            <span class="fpresv-page-header-badge">v<?php echo esc_html(\FP\Resv\Core\Plugin::VERSION); ?></span>
         </div>
     </header>
 

@@ -83,6 +83,11 @@ final class Manager
 
     public function boot(): void
     {
+        // Tracking legacy disattivato quando il layer centralizzato è attivo.
+        if (defined('FP_TRACKING_VERSION')) {
+            return;
+        }
+
         add_action('init', [$this, 'captureAttribution']);
         add_action('wp_head', [$this, 'renderDataLayerInit'], 0);
         add_action('wp_head', [$this, 'renderHead'], 1);

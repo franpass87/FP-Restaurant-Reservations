@@ -13,10 +13,15 @@ final class I18n
 
     public static function loadTextDomain(): void
     {
+        $pluginFile = is_string(Plugin::$file) && Plugin::$file !== '' ? Plugin::$file : null;
+        if ($pluginFile === null) {
+            return;
+        }
+
         load_plugin_textdomain(
             'fp-restaurant-reservations',
             false,
-            dirname(plugin_basename(Plugin::$file)) . '/languages'
+            dirname(plugin_basename($pluginFile)) . '/languages'
         );
     }
 }

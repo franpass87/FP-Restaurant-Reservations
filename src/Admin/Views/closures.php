@@ -31,6 +31,7 @@ $headingId   = 'fp-resv-closures-title';
             <a class="button button-primary" href="#fp-resv-closures-app">
                 <?php esc_html_e('Apri planner operativo', 'fp-restaurant-reservations'); ?>
             </a>
+            <span class="fpresv-page-header-badge">v<?php echo esc_html(\FP\Resv\Core\Plugin::VERSION); ?></span>
         </div>
     </header>
 
