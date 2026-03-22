@@ -34,15 +34,21 @@ final class DiagnosticShortcode
      */
     public function render(): string
     {
-        error_log('[FP-RESV-DEBUG] renderDebug() called');
-        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FP-RESV-DEBUG] renderDebug() called');
+        }
+
         if (!current_user_can('manage_options')) {
-            error_log('[FP-RESV-DEBUG] User does not have manage_options capability');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP-RESV-DEBUG] User does not have manage_options capability');
+            }
             return $this->renderPermissionError();
         }
 
-        error_log('[FP-RESV-DEBUG] User has permissions, proceeding with debug');
-        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FP-RESV-DEBUG] User has permissions, proceeding with debug');
+        }
+
         try {
             global $wpdb;
             $table = $wpdb->prefix . 'fp_reservations';
@@ -53,12 +59,16 @@ final class DiagnosticShortcode
             $this->renderPanel($wpdb, $table, $customersTable);
             
             $output = ob_get_clean();
-            error_log('[FP-RESV-DEBUG] Generated output length: ' . strlen($output));
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP-RESV-DEBUG] Generated output length: ' . strlen($output));
+            }
             return $output;
         } catch (Throwable $e) {
-            error_log('[FP-RESV-DEBUG] ERROR: ' . $e->getMessage());
-            error_log('[FP-RESV-DEBUG] Stack trace: ' . $e->getTraceAsString());
-            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[FP-RESV-DEBUG] ERROR: ' . $e->getMessage());
+                error_log('[FP-RESV-DEBUG] Stack trace: ' . $e->getTraceAsString());
+            }
+
             return $this->renderException($e);
         }
     }

@@ -1,3 +1,8 @@
+## [1.0.9] - 2026-03-22
+
+### Fixed
+- DiagnosticShortcode: tutti gli `error_log` condizionati a `WP_DEBUG` per evitare output nei log in produzione.
+
 ## [1.0.8] - 2026-03-22
 
 ### Fixed
