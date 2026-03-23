@@ -74,7 +74,7 @@ final class AdminController
                 self::PAGE_SLUG,
                 [$this, 'renderPage'],
                 'dashicons-clipboard',
-                56
+                '56.10'
             ) ?: null;
         } else {
             // Aggiungi come submenu per gli utenti con accesso completo

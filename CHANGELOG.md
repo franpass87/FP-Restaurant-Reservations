@@ -1,3 +1,8 @@
+## [1.0.12] - 2026-03-23
+
+### Changed
+- Menu position 56.10 per ordine alfabetico FP.
+
 ## [1.0.11] - 2026-03-23
 
 ### Changed

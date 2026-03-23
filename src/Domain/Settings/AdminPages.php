@@ -394,7 +394,7 @@ final class AdminPages
                 $this->renderSettingsPage($firstKey);
             },
             'dashicons-clipboard',
-            56
+            '56.10'
         );
     }
 
