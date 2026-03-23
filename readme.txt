@@ -67,7 +67,6 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 = 1.0.11 - 2026-03-23 =
 * Brevo: notice centralizzazione sempre visibile nella pagina Brevo con link a FP Tracking.
-* Menu admin: ordine voci, separatori visivi e link rapidi admin bar (pattern FP-Experiences).
 
 = 1.0.10 - 2026-03-23 =
 * Brevo: API key e liste da FP Tracking quando attivo

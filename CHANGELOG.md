@@ -2,7 +2,6 @@
 
 ### Changed
 - Brevo: notice centralizzazione sempre visibile nella pagina Brevo (anche quando non abilitato), con messaggio contestuale e link a FP Tracking.
-- Menu admin: ordine voci, separatori visivi (Operatività, Gestione, Sistema) e link rapidi admin bar (pattern FP-Experiences).
 
 ## [1.0.10] - 2026-03-23
 
