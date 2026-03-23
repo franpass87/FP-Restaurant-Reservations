@@ -56,7 +56,7 @@ final class WidgetController
         
         $hasShortcode = strpos($post->post_content, '[fp_reservations') !== false;
         
-        if ($hasShortcode) {
+        if ($hasShortcode && defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('[FP-RESV] DEBUG: Page "' . $post->post_title . '" (ID: ' . $post->ID . ') contains shortcode');
             error_log('[FP-RESV] DEBUG: Post type: ' . $post->post_type);
             error_log('[FP-RESV] DEBUG: Checking if form was rendered...');

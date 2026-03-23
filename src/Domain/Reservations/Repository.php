@@ -139,8 +139,10 @@ final class Repository
             . 'AND (r.status IS NULL OR r.status != %s) '
             . 'ORDER BY r.date ASC, r.time ASC';
 
-        error_log('[FP Repository findAgendaRange] 📅 Range richiesto: ' . $startDate . ' -> ' . $endDate);
-        error_log('[FP Repository findAgendaRange] 🔍 Query SQL: ' . $sql);
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP Repository findAgendaRange] 📅 Range richiesto: ' . $startDate . ' -> ' . $endDate);
+            error_log('[FP Repository findAgendaRange] 🔍 Query SQL: ' . $sql);
+        }
         
         // #region agent log
         $logFile = (defined('ABSPATH') ? ABSPATH : dirname(dirname(dirname(dirname(dirname(dirname(__DIR__))))))) . '.cursor/debug.log';
@@ -187,38 +189,52 @@ final class Repository
         
         // Check errori SQL
         if ($this->wpdb->last_error) {
-            error_log('[FP Repository findAgendaRange] ❌ ERRORE SQL: ' . $this->wpdb->last_error);
-            error_log('[FP Repository findAgendaRange] Query eseguita: ' . $this->wpdb->last_query);
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Repository findAgendaRange] ❌ ERRORE SQL: ' . $this->wpdb->last_error);
+                error_log('[FP Repository findAgendaRange] Query eseguita: ' . $this->wpdb->last_query);
+            }
             return [];
         }
         
-        error_log('[FP Repository findAgendaRange] 📊 Query eseguita: ' . $this->wpdb->last_query);
-        error_log('[FP Repository findAgendaRange] 📦 Risultati trovati: ' . (is_array($reservations) ? count($reservations) : 'NULL'));
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP Repository findAgendaRange] 📊 Query eseguita: ' . $this->wpdb->last_query);
+            error_log('[FP Repository findAgendaRange] 📦 Risultati trovati: ' . (is_array($reservations) ? count($reservations) : 'NULL'));
+        }
 
         // Se la query fallisce completamente, restituisci array vuoto
         if (!is_array($reservations)) {
-            error_log('[FP Repository findAgendaRange] ⚠️ get_results() ha restituito NULL/FALSE');
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Repository findAgendaRange] ⚠️ get_results() ha restituito NULL/FALSE');
+            }
             return [];
         }
 
         // Se non ci sono prenotazioni, restituisci array vuoto
         if (count($reservations) === 0) {
-            error_log('[FP Repository findAgendaRange] ⚠️ Nessuna prenotazione trovata nel range specificato');
+            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+                error_log('[FP Repository findAgendaRange] ⚠️ Nessuna prenotazione trovata nel range specificato');
+            }
             
             // TEST DIAGNOSTICO EXTRA: Conta prenotazioni nel range SENZA filtro status
-            $testCount = $this->wpdb->get_var(
-                $this->wpdb->prepare(
-                    'SELECT COUNT(*) FROM ' . $this->tableName() . ' WHERE date >= %s AND date <= %s',
-                    $startDate,
-                    $endDate
-                )
-            );
-            error_log('[FP Repository findAgendaRange] 🧪 Prenotazioni nel range (TUTTI gli status): ' . $testCount);
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                $testCount = $this->wpdb->get_var(
+                    $this->wpdb->prepare(
+                        'SELECT COUNT(*) FROM ' . $this->tableName() . ' WHERE date >= %s AND date <= %s',
+                        $startDate,
+                        $endDate
+                    )
+                );
+                if (function_exists('error_log')) {
+                    error_log('[FP Repository findAgendaRange] 🧪 Prenotazioni nel range (TUTTI gli status): ' . $testCount);
+                }
+            }
             
             return [];
         }
         
-        error_log('[FP Repository findAgendaRange] ✅ Trovate ' . count($reservations) . ' prenotazioni valide');
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP Repository findAgendaRange] ✅ Trovate ' . count($reservations) . ' prenotazioni valide');
+        }
 
         // STEP 2: Arricchisci con dati customers SOLO se ci sono prenotazioni
         // Ottieni tutti i customer_id unici (compatibile PHP 7.0+)

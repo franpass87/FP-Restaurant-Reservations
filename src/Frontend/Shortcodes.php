@@ -30,18 +30,24 @@ final class Shortcodes
 
     public static function register(): void
     {
-        error_log('[FP-RESV-SHORTCODE] register() method called');
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP-RESV-SHORTCODE] register() method called');
+        }
         add_shortcode('fp_reservations', [self::class, 'render']);
         add_shortcode('fp_resv_debug', [self::class, 'renderDebug']);
         add_shortcode('fp_resv_test', [self::class, 'renderTest']);
-        error_log('[FP-RESV-SHORTCODE] Shortcodes registered');
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP-RESV-SHORTCODE] Shortcodes registered');
+        }
         
         // Verifica che lo shortcode sia effettivamente registrato
         global $shortcode_tags;
-        if (isset($shortcode_tags['fp_reservations'])) {
-            error_log('[FP-RESV-SHORTCODE] ✅ Shortcode fp_reservations VERIFICATO registrato');
-        } else {
-            error_log('[FP-RESV-SHORTCODE] ❌ ERRORE: Shortcode fp_reservations NON registrato!');
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            if (isset($shortcode_tags['fp_reservations'])) {
+                error_log('[FP-RESV-SHORTCODE] ✅ Shortcode fp_reservations VERIFICATO registrato');
+            } else {
+                error_log('[FP-RESV-SHORTCODE] ❌ ERRORE: Shortcode fp_reservations NON registrato!');
+            }
         }
     }
 
@@ -83,7 +89,9 @@ final class Shortcodes
      */
     public static function renderTest(): string
     {
-        error_log('[FP-RESV-TEST] Test shortcode called!');
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
+            error_log('[FP-RESV-TEST] Test shortcode called!');
+        }
         
         $timestamp = wp_date('Y-m-d H:i:s');
         $user = wp_get_current_user();
