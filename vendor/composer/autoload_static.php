@@ -233,6 +233,7 @@ class ComposerStaticInitf3c4ca4e72b2274ed7be5afa947d700c
         'FP\\Resv\\Domain\\Reservations\\Services\\ReservationService' => __DIR__ . '/../..' . '/src/Domain/Reservations/Services/ReservationService.php',
         'FP\\Resv\\Domain\\Reservations\\Services\\ReservationServiceInterface' => __DIR__ . '/../..' . '/src/Domain/Reservations/Services/ReservationServiceInterface.php',
         'FP\\Resv\\Domain\\Reservations\\SettingsResolver' => __DIR__ . '/../..' . '/src/Domain/Reservations/SettingsResolver.php',
+        'FP\\Resv\\Domain\\Settings\\AdminMenuEnhancer' => __DIR__ . '/../..' . '/src/Domain/Settings/AdminMenuEnhancer.php',
         'FP\\Resv\\Domain\\Settings\\AdminPages' => __DIR__ . '/../..' . '/src/Domain/Settings/AdminPages.php',
         'FP\\Resv\\Domain\\Settings\\Admin\\SettingsSanitizer' => __DIR__ . '/../..' . '/src/Domain/Settings/Admin/SettingsSanitizer.php',
         'FP\\Resv\\Domain\\Settings\\Admin\\SettingsValidator' => __DIR__ . '/../..' . '/src/Domain/Settings/Admin/SettingsValidator.php',

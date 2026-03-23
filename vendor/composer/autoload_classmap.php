@@ -206,6 +206,7 @@ return array(
     'FP\\Resv\\Domain\\Reservations\\Services\\ReservationService' => $baseDir . '/src/Domain/Reservations/Services/ReservationService.php',
     'FP\\Resv\\Domain\\Reservations\\Services\\ReservationServiceInterface' => $baseDir . '/src/Domain/Reservations/Services/ReservationServiceInterface.php',
     'FP\\Resv\\Domain\\Reservations\\SettingsResolver' => $baseDir . '/src/Domain/Reservations/SettingsResolver.php',
+    'FP\\Resv\\Domain\\Settings\\AdminMenuEnhancer' => $baseDir . '/src/Domain/Settings/AdminMenuEnhancer.php',
     'FP\\Resv\\Domain\\Settings\\AdminPages' => $baseDir . '/src/Domain/Settings/AdminPages.php',
     'FP\\Resv\\Domain\\Settings\\Admin\\SettingsSanitizer' => $baseDir . '/src/Domain/Settings/Admin/SettingsSanitizer.php',
     'FP\\Resv\\Domain\\Settings\\Admin\\SettingsValidator' => $baseDir . '/src/Domain/Settings/Admin/SettingsValidator.php',

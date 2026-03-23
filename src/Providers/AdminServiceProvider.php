@@ -61,6 +61,15 @@ final class AdminServiceProvider extends ServiceProvider
         );
         
         $container->alias('settings.admin_pages', \FP\Resv\Domain\Settings\AdminPages::class);
+
+        $container->singleton(
+            \FP\Resv\Domain\Settings\AdminMenuEnhancer::class,
+            function () {
+                $enhancer = new \FP\Resv\Domain\Settings\AdminMenuEnhancer();
+                $enhancer->register();
+                return $enhancer;
+            }
+        );
     }
     
     /**
@@ -166,6 +175,11 @@ final class AdminServiceProvider extends ServiceProvider
         // This ensures hooks are registered before admin_menu fires
         if ($container->has(\FP\Resv\Domain\Settings\AdminPages::class)) {
             $container->get(\FP\Resv\Domain\Settings\AdminPages::class);
+        }
+
+        // Ensure AdminMenuEnhancer is instantiated (reorder, separators, admin bar)
+        if ($container->has(\FP\Resv\Domain\Settings\AdminMenuEnhancer::class)) {
+            $container->get(\FP\Resv\Domain\Settings\AdminMenuEnhancer::class);
         }
         
         // Ensure AdminController is instantiated to register the Manager menu
