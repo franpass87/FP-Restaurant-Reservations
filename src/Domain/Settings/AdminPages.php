@@ -28,6 +28,8 @@ use function check_admin_referer;
 use function do_settings_sections;
 use function esc_attr;
 use function esc_html;
+use function esc_html__;
+use function esc_url;
 use function esc_textarea;
 use function esc_url_raw;
 use function explode;
@@ -438,6 +440,62 @@ final class AdminPages
         }
     }
 
+    /**
+     * Box guida: canale wp_mail vs Brevo e significato degli eventi Automation (tab Brevo).
+     */
+    private function renderBrevoCustomerMessagesLegend(): void
+    {
+        $notifications_url = admin_url('admin.php?page=fp-resv-notifications');
+        $notifications_link = '<a href="' . esc_url($notifications_url) . '">' . esc_html__('Notifiche', 'fp-restaurant-reservations') . '</a>';
+
+        echo '<div class="notice notice-info fp-resv-brevo-legend" style="margin:0 0 14px;padding:12px 14px;max-width:920px;">';
+        echo '<p style="margin-top:0;"><strong>' . esc_html__('Legenda: email al cliente e Brevo Automation', 'fp-restaurant-reservations') . '</strong></p>';
+
+        echo '<p style="margin:0.5em 0;"><strong>' . esc_html__('1. Menu «Canale messaggi al cliente»', 'fp-restaurant-reservations') . '</strong></p>';
+        echo '<ul style="margin:0.25em 0 0.75em 1.25em;list-style:disc;">';
+        echo '<li><strong>' . esc_html__('WordPress (predefinito)', 'fp-restaurant-reservations') . '</strong> — ';
+        echo esc_html__(
+            'conferma, reminder e richiesta recensione al cliente sono inviate dal plugin con wp_mail (template in Impostazioni → Notifiche). In questa modalità non si usano gli eventi Brevo per sostituire quelle mail.',
+            'fp-restaurant-reservations'
+        );
+        echo '</li>';
+        echo '<li><strong>' . esc_html__('Brevo (opt-in)', 'fp-restaurant-reservations') . '</strong> — ';
+        echo wp_kses_post(
+            sprintf(
+                /* translators: %s: link to Notifications settings page */
+                __(
+                    'tornano valide le scelte per canale in Impostazioni → %s: dove imposti «Brevo», il plugin non invia quella email con wp_mail ma manda un evento a Brevo (es. email_confirmation); in Brevo configuri l’Automation che invia l’email al cliente.',
+                    'fp-restaurant-reservations'
+                ),
+                $notifications_link
+            )
+        );
+        echo '</li>';
+        echo '</ul>';
+
+        echo '<p style="margin:0.5em 0;"><strong>' . esc_html__('2. Checklist «Eventi inviati a Brevo»', 'fp-restaurant-reservations') . '</strong></p>';
+        echo '<ul style="margin:0.25em 0 0.75em 1.25em;list-style:disc;">';
+        echo '<li>' . esc_html__(
+            'Scegli quali nomi di evento il plugin può inviare a Brevo (trackEvent) per le tue Automation: promemoria, follow-up, stato prenotazione, survey, ecc.',
+            'fp-restaurant-reservations'
+        ) . '</li>';
+        echo '<li>' . esc_html__(
+            'È indipendente dal menu sopra: con «WordPress» come canale messaggi, le email conferma/reminder/recensione restano su wp_mail; possono comunque partire altri eventi verso Brevo (es. reservation_confirmed, post_visit_24h, survey) se li lasci spuntati e Brevo è abilitato.',
+            'fp-restaurant-reservations'
+        ) . '</li>';
+        echo '<li>' . esc_html__(
+            'Dopo il primo salvataggio di questa pagina la checklist è attiva: solo gli eventi selezionati vengono inviati.',
+            'fp-restaurant-reservations'
+        ) . '</li>';
+        echo '</ul>';
+
+        echo '<p style="margin-bottom:0;" class="description">' . esc_html__(
+            '«Brevo Automation» = scenari che crei in Brevo e che partono quando arriva uno di questi eventi dal sito.',
+            'fp-restaurant-reservations'
+        ) . '</p>';
+        echo '</div>';
+    }
+
     public function registerSettings(): void
     {
         if ($this->settingsRegistered) {
@@ -465,7 +523,10 @@ final class AdminPages
                 add_settings_section(
                     $sectionKey,
                     (string) $section['title'],
-                    function () use ($section): void {
+                    function () use ($section, $sectionKey): void {
+                        if ($sectionKey === 'brevo-customer-messages') {
+                            $this->renderBrevoCustomerMessagesLegend();
+                        }
                         if (!empty($section['description'])) {
                             echo '<p class="description">' . esc_html((string) $section['description']) . '</p>';
                         }

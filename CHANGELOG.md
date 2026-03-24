@@ -1,3 +1,8 @@
+## [1.0.17] - 2026-03-24
+
+### Added
+- Tab Brevo, sezione «Messaggi al cliente»: box **Legenda** (wp_mail vs Brevo, link a Notifiche, spiegazione checklist eventi Automation).
+
 ## [1.0.16] - 2026-03-24
 
 ### Added
