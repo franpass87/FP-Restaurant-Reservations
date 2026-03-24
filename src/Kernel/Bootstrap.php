@@ -33,7 +33,10 @@ final class Bootstrap
         self::$pluginFile = $pluginFile;
 
         // Integrazione FP-Tracking: API key e liste Brevo centralizzate
-        add_filter('option_fp_resv_brevo', [self::class, 'mergeBrevoFromTracking'], 10, 3);
+        // WordPress passa normalmente 2 argomenti a `option_{$option}`:
+        // valore opzione e nome opzione. Manteniamo compatibilita' accettando
+        // anche un eventuale terzo argomento opzionale.
+        add_filter('option_fp_resv_brevo', [self::class, 'mergeBrevoFromTracking'], 10, 2);
 
         // 1. Check requirements - ensure class is loaded
         if (!class_exists('\FP\Resv\Core\Requirements')) {
@@ -207,7 +210,7 @@ final class Bootstrap
      * @param mixed $default Valore default
      * @return mixed
      */
-    public static function mergeBrevoFromTracking(mixed $value, string $option, mixed $default): mixed
+    public static function mergeBrevoFromTracking(mixed $value, string $option = '', mixed $default = null): mixed
     {
         if (!\function_exists('fp_tracking_get_brevo_settings')) {
             return $value;

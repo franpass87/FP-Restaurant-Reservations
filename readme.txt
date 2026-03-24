@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 
 == Description ==
@@ -65,6 +65,9 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
+
+= 1.0.15 - 2026-03-24 =
+* Fix: ripristinato rendering del form frontend correggendo la callback del filtro `option_fp_resv_brevo` (compatibile con gli argomenti passati da WordPress).
 
 = 1.0.14 - 2026-03-24 =
 * Payload tracking prenotazione: meal_label, items GA4, attribution, page_url, filtro fp_resv_tracking_reservation_created_params.

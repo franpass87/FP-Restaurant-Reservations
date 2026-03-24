@@ -1,3 +1,8 @@
+## [1.0.15] - 2026-03-24
+
+### Fixed
+- Form frontend: risolto il mancato rendering su produzione correggendo la signature di `mergeBrevoFromTracking()` e l'hook `option_fp_resv_brevo` (WordPress passa 2 argomenti al filtro opzione).
+
 ## [1.0.14] - 2026-03-24
 
 ### Added
