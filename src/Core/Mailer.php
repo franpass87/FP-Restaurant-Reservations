@@ -47,6 +47,8 @@ class Mailer
 
         $headers = $this->normalizeHeaders($headers, $context);
 
+        $message = $this->maybeApplyFpMailBranding($message, $context);
+
         $success = wp_mail($to, $subject, $message, $headers, $preparedAttachments);
 
         $this->logEmail($to, $subject, $message, $context, $success);
@@ -117,6 +119,32 @@ class Mailer
         }
 
         return $normalized;
+    }
+
+    /**
+     * Applica il wrapper HTML centralizzato di FP Mail SMTP (se attivo) solo per corpi HTML.
+     *
+     * @param array<string, mixed> $context
+     */
+    private function maybeApplyFpMailBranding(string $message, array $context): string
+    {
+        if (! function_exists('fp_fpmail_brand_html')) {
+            return $message;
+        }
+
+        if (! empty($context['skip_fp_mail_branding'])) {
+            return $message;
+        }
+
+        if ($this->detectContentType($context) !== 'text/html') {
+            return $message;
+        }
+
+        if (trim($message) === '') {
+            return $message;
+        }
+
+        return fp_fpmail_brand_html($message);
     }
 
     /**

@@ -15,20 +15,20 @@ $baseDir = dirname(__DIR__);
 // 1. Verifica versione plugin allineata
 echo "1️⃣ VERSIONE PLUGIN\n";
 $mainFile = $baseDir . '/fp-restaurant-reservations.php';
-$pluginFile = $baseDir . '/src/Core/Plugin.php';
+$kernelPluginFile = $baseDir . '/src/Kernel/Plugin.php';
 
-if (file_exists($mainFile) && file_exists($pluginFile)) {
+if (file_exists($mainFile) && file_exists($kernelPluginFile)) {
     $mainContent = file_get_contents($mainFile);
-    $pluginContent = file_get_contents($pluginFile);
+    $kernelContent = file_get_contents($kernelPluginFile);
     
     if (preg_match('/ \* Version: (.+)/', $mainContent, $mainMatches)) {
         $mainVersion = trim($mainMatches[1]);
         echo "   File principale: $mainVersion\n";
     }
     
-    if (preg_match('/const VERSION = \'(.+)\';/', $pluginContent, $pluginMatches)) {
+    if (preg_match('/public const VERSION = \'(.+)\';/', $kernelContent, $pluginMatches)) {
         $pluginVersion = trim($pluginMatches[1]);
-        echo "   Plugin.php: $pluginVersion\n";
+        echo "   Kernel\\Plugin.php: $pluginVersion\n";
     }
     
     if (isset($mainVersion) && isset($pluginVersion) && $mainVersion === $pluginVersion) {

@@ -123,12 +123,11 @@ use function did_action;
 final class Plugin
 {
     /**
-     * Current plugin semantic version.
-     *
-     * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
+     * Versione mostrata in badge admin e cache asset: delegata a {@see \FP\Resv\Kernel\Plugin::VERSION}.
+     * L’header in fp-restaurant-reservations.php e Kernel\Plugin restano l’unica coppia da aggiornare al bump.
      */
     // Intentionally omit visibility for compatibility with PHP < 7.1 (which does not support constant visibility).
-    const VERSION = '1.0.11';
+    const VERSION = \FP\Resv\Kernel\Plugin::VERSION;
 
     /**
      * @var string|null

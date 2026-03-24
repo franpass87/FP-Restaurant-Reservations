@@ -1,3 +1,11 @@
+## [1.0.20] - 2026-03-24
+
+### Changed
+- `Mailer::send`: per corpi **text/html**, applicazione opzionale di `fp_fpmail_brand_html()` quando **FP Mail SMTP** è attivo (grafica centralizzata senza cambiare i template). Plain text invariato; contesto `skip_fp_mail_branding` per eccezioni.
+
+### Fixed
+- Badge versione nell’header admin (es. tab Brevo): `Core\Plugin::VERSION` era fermo a 1.0.11; ora è uguale a `Kernel\Plugin::VERSION` e all’header del plugin. Script `tools/bump-version.php` aggiorna `src/Kernel/Plugin.php`.
+
 ## [1.0.19] - 2026-03-24
 
 ### Changed

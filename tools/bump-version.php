@@ -97,38 +97,39 @@ if (file_put_contents($pluginFile, $updated) === false) {
     exit(1);
 }
 
-$pluginClass = __DIR__ . '/../src/Core/Plugin.php';
-if (is_file($pluginClass)) {
-    if (!is_readable($pluginClass) || !is_writable($pluginClass)) {
-        fwrite(STDERR, "Plugin class file is not readable or writable: {$pluginClass}\n");
+// Fonte di verità versione: Kernel\Plugin (Core\Plugin::VERSION la referenzia).
+$kernelPluginClass = __DIR__ . '/../src/Kernel/Plugin.php';
+if (is_file($kernelPluginClass)) {
+    if (!is_readable($kernelPluginClass) || !is_writable($kernelPluginClass)) {
+        fwrite(STDERR, "Kernel Plugin class file is not readable or writable: {$kernelPluginClass}\n");
         exit(1);
     }
 
-    $pluginClassContents = file_get_contents($pluginClass);
-    if ($pluginClassContents === false) {
-        fwrite(STDERR, "Unable to read plugin class file: {$pluginClass}\n");
+    $kernelContents = file_get_contents($kernelPluginClass);
+    if ($kernelContents === false) {
+        fwrite(STDERR, "Unable to read kernel plugin class file: {$kernelPluginClass}\n");
         exit(1);
     }
 
-    $versionConstPattern = '/((?:(?:public|protected|private)\s+)?const\s+VERSION\s*=\s*)([\'\"])(?:[^\'"\n\r]+)(\2)(\s*;)/m';
+    $versionConstPattern = '/(public const VERSION = )([\'\"])(?:[^\'"\n\r]+)(\2)(\s*;)/m';
 
     $versionUpdated = preg_replace_callback(
         $versionConstPattern,
         static function (array $match) use ($newVersion): string {
             return $match[1] . $match[2] . $newVersion . $match[3] . $match[4];
         },
-        $pluginClassContents,
+        $kernelContents,
         1,
         $constCount
     );
 
     if ($versionUpdated === null || $constCount === 0) {
-        fwrite(STDERR, "Failed to update Plugin::VERSION constant.\n");
+        fwrite(STDERR, "Failed to update Kernel\\Plugin::VERSION constant.\n");
         exit(1);
     }
 
-    if (file_put_contents($pluginClass, $versionUpdated) === false) {
-        fwrite(STDERR, "Failed to write updated plugin class file.\n");
+    if (file_put_contents($kernelPluginClass, $versionUpdated) === false) {
+        fwrite(STDERR, "Failed to write updated kernel plugin class file.\n");
         exit(1);
     }
 }
