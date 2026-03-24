@@ -7,6 +7,7 @@ namespace FP\Resv\Domain\Reservations;
 use FP\Resv\Core\PhoneHelper;
 use FP\Resv\Core\Sanitizer;
 use FP\Resv\Domain\Settings\Language;
+use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use function absint;
 use function array_merge;
@@ -183,7 +184,68 @@ final class ReservationPayloadSanitizer
         }
         $payload['locale'] = $this->language->normalizeLocale($locale);
 
+        $payload = $this->enrichMealPricing($payload);
+
         unset($payload['phone_country']);
+
+        return $payload;
+    }
+
+    /**
+     * Imposta price_per_person e value dal piano pasti (frontend_meals) quando il client non li invia.
+     * Necessario per tracking GA4 / FP Marketing Tracking Layer (prezzo × coperti).
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function enrichMealPricing(array $payload): array
+    {
+        $party = max(1, (int) ($payload['party'] ?? 1));
+
+        if (
+            ($payload['value'] === null || (float) $payload['value'] <= 0.0)
+            && $payload['price_per_person'] !== null
+            && (float) $payload['price_per_person'] > 0.0
+        ) {
+            $payload['value'] = round((float) $payload['price_per_person'] * $party, 2);
+        }
+
+        if ($payload['value'] !== null && (float) $payload['value'] > 0.0) {
+            return $payload;
+        }
+
+        $mealKey = trim((string) ($payload['meal'] ?? ''));
+        if ($mealKey === '') {
+            return $payload;
+        }
+
+        $definition = (string) $this->options->getField('fp_resv_general', 'frontend_meals', '');
+        if ($definition === '') {
+            return $payload;
+        }
+
+        $meals = MealPlan::parse($definition);
+        if ($meals === []) {
+            return $payload;
+        }
+
+        $byKey = MealPlan::indexByKey($meals);
+        if (!isset($byKey[$mealKey])) {
+            return $payload;
+        }
+
+        $mealDef = $byKey[$mealKey];
+        if (!isset($mealDef['price'])) {
+            return $payload;
+        }
+
+        $price = (float) $mealDef['price'];
+        if ($price <= 0.0) {
+            return $payload;
+        }
+
+        $payload['price_per_person'] = round($price, 2);
+        $payload['value']            = round($price * $party, 2);
 
         return $payload;
     }

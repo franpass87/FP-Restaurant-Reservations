@@ -1,3 +1,11 @@
+## [1.0.13] - 2026-03-24
+
+### Added
+- Sanitizer: `value` e `price_per_person` derivati dal piano pasti (`frontend_meals`) quando il form non li invia, così GA4 / FP Marketing Tracking Layer ricevono `prezzo × coperti` (es. Brunch 45 € × 2 = 90 €).
+
+### Changed
+- Tracking: evento `purchase` anche per prenotazioni in stato `pending` (con `value_is_estimated`), non solo `confirmed`; esclusi `pending_payment` e `waitlist`.
+
 ## [1.0.12] - 2026-03-23
 
 ### Changed

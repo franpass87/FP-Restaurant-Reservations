@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 1.0.11 |
+| **Versione** | 1.0.13 |
 | **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
