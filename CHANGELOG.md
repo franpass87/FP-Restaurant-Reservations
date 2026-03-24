@@ -1,3 +1,8 @@
+## [1.0.19] - 2026-03-24
+
+### Changed
+- Pagina **Notifiche**: sezione dedicata **«Canali: wp_mail (plugin) o Brevo»** con i tre menu (conferma, promemoria, follow-up) separata dai template; etichette opzioni esplicite (wp_mail vs Brevo). I template cliente sono nella sezione successiva.
+
 ## [1.0.18] - 2026-03-24
 
 ### Changed

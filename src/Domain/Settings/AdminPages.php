@@ -457,7 +457,7 @@ final class AdminPages
             sprintf(
                 /* translators: %s: link to Notifications settings page */
                 __(
-                    'In Impostazioni → %s → Email cliente trovi tre menu: canale conferma, canale promemoria, canale follow-up recensione. Per ciascuno puoi scegliere «Invia dal plugin» (wp_mail e template nella stessa pagina) oppure «Usa Brevo» (il plugin invia l’evento; l’email al cliente la gestisci nelle Automation Brevo). Puoi mescolare: ad esempio conferma dal plugin e promemoria via Brevo.',
+                    'In Impostazioni → %s, sezione «Canali: wp_mail (plugin) o Brevo», trovi tre menu (conferma, promemoria, follow-up recensione). Sotto, «Template email cliente» contiene oggetto e corpo usati solo quando scegli wp_mail per quel tipo. Con Brevo il plugin invia l’evento; l’email la gestisci nelle Automation. Puoi mescolare i canali.',
                     'fp-restaurant-reservations'
                 ),
                 $notifications_link
@@ -1007,7 +1007,7 @@ final class AdminPages
             case 'general':
                 return __('Preferenze globali e dati anagrafici del ristorante.', 'fp-restaurant-reservations');
             case 'notifications':
-                return __('Configura mittenti, destinatari e frequenza delle notifiche.', 'fp-restaurant-reservations');
+                return __('Destinatari, canali wp_mail/Brevo per tipo di email cliente e template del plugin.', 'fp-restaurant-reservations');
             case 'payments':
                 return __('Imposta Stripe e le politiche di incasso per il form.', 'fp-restaurant-reservations');
             case 'brevo':

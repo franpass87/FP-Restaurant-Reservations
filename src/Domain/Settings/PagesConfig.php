@@ -281,13 +281,21 @@ final class PagesConfig
                     'title'  => __('Preferenze di invio', 'fp-restaurant-reservations'),
                     'fields' => self::getNotificationPreferencesFields(),
                 ],
-                'notifications-customer' => [
-                    'title'       => __('Email cliente', 'fp-restaurant-reservations'),
+                'notifications-customer-channels' => [
+                    'title'       => __('Canali: wp_mail (plugin) o Brevo', 'fp-restaurant-reservations'),
                     'description' => __(
-                        'Per conferma, promemoria e richiesta recensione scegli singolarmente: invio dal plugin (wp_mail e template qui sotto) oppure Brevo (evento verso le Automation; l’email la invii tu da Brevo). Gli altri eventi Brevo (es. post-visita) si abilitano in Impostazioni → Brevo.',
+                        'Qui scegli, per ogni tipo di messaggio, se l’invio al cliente passa da wp_mail con i template della sezione sotto oppure da Brevo (evento verso le Automation; il testo della mail lo gestisci in Brevo). Abilita Brevo e la chiave API in Impostazioni → Brevo. Gli altri eventi (es. post-visita) restano nella checklist in quella pagina.',
                         'fp-restaurant-reservations'
                     ),
-                    'fields'      => self::getCustomerEmailFields(),
+                    'fields'      => self::getCustomerEmailChannelFields(),
+                ],
+                'notifications-customer-templates' => [
+                    'title'       => __('Template email cliente (solo per invio dal plugin)', 'fp-restaurant-reservations'),
+                    'description' => __(
+                        'Oggetto e corpo si usano quando il canale corrispondente è «Invia dal plugin». Se scegli «Usa Brevo» per un tipo, il plugin non invia quella mail con questi testi: ricevi l’evento in Brevo e configuri l’Automation.',
+                        'fp-restaurant-reservations'
+                    ),
+                    'fields'      => self::getCustomerEmailTemplateFields(),
                 ],
             ],
         ];
@@ -351,24 +359,61 @@ final class PagesConfig
     }
 
     /**
+     * Selettori canale wp_mail vs Brevo (sezione dedicata in pagina Notifiche).
+     *
      * @return array<string, array<string, mixed>>
      */
-    private static function getCustomerEmailFields(): array
+    private static function getCustomerEmailChannelFields(): array
     {
         return [
             'customer_confirmation_channel' => [
-                'label'       => __('Canale conferma', 'fp-restaurant-reservations'),
+                'label'       => __('Conferma prenotazione', 'fp-restaurant-reservations'),
                 'type'        => 'select',
                 'options'     => [
-                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
-                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
+                    'plugin' => __('wp_mail — dal plugin (template sotto)', 'fp-restaurant-reservations'),
+                    'brevo'  => __('Brevo — evento Automation (es. email_confirmation)', 'fp-restaurant-reservations'),
                 ],
                 'default'     => 'plugin',
                 'description' => __(
-                    'Plugin: email con wp_mail e template qui sotto. Brevo: invio evento (es. email_confirmation); configuri l’Automation in Brevo che manda la mail al cliente.',
+                    'Prima email di conferma al cliente dopo la prenotazione.',
                     'fp-restaurant-reservations'
                 ),
             ],
+            'customer_reminder_channel' => [
+                'label'       => __('Promemoria prima della visita', 'fp-restaurant-reservations'),
+                'type'        => 'select',
+                'options'     => [
+                    'plugin' => __('wp_mail — dal plugin (template sotto)', 'fp-restaurant-reservations'),
+                    'brevo'  => __('Brevo — evento Automation (es. email_reminder)', 'fp-restaurant-reservations'),
+                ],
+                'default'     => 'plugin',
+                'description' => __(
+                    'Promemoria automatico (es. poche ore prima). Indipendente dalla conferma: puoi mescolare i canali.',
+                    'fp-restaurant-reservations'
+                ),
+            ],
+            'customer_review_channel' => [
+                'label'       => __('Follow-up recensione dopo la visita', 'fp-restaurant-reservations'),
+                'type'        => 'select',
+                'options'     => [
+                    'plugin' => __('wp_mail — dal plugin (template sotto)', 'fp-restaurant-reservations'),
+                    'brevo'  => __('Brevo — evento Automation (es. email_review)', 'fp-restaurant-reservations'),
+                ],
+                'default'     => 'plugin',
+                'description' => __(
+                    'Richiesta recensione o ringraziamento dopo la data prenotazione.',
+                    'fp-restaurant-reservations'
+                ),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private static function getCustomerEmailTemplateFields(): array
+    {
+        return [
             'customer_confirmation_subject' => [
                 'label'       => __('Oggetto conferma', 'fp-restaurant-reservations'),
                 'type'        => 'text',
@@ -388,19 +433,6 @@ final class PagesConfig
                 'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
             ],
             // Reminder fields
-            'customer_reminder_channel' => [
-                'label'       => __('Canale promemoria', 'fp-restaurant-reservations'),
-                'type'        => 'select',
-                'options'     => [
-                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
-                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
-                ],
-                'default'     => 'plugin',
-                'description' => __(
-                    'Plugin: promemoria con wp_mail. Brevo: evento email_reminder verso Automation Brevo.',
-                    'fp-restaurant-reservations'
-                ),
-            ],
             'customer_reminder_enabled' => [
                 'label'          => __('Invia promemoria', 'fp-restaurant-reservations'),
                 'type'           => 'checkbox',
@@ -432,19 +464,6 @@ final class PagesConfig
                 'description' => __('Segnaposto disponibili: {{customer.first_name}}, {{customer.last_name}}, {{reservation.formatted_date}}, {{reservation.formatted_time}}, {{reservation.party}}, {{reservation.manage_link}}.', 'fp-restaurant-reservations'),
             ],
             // Review fields
-            'customer_review_channel' => [
-                'label'       => __('Canale follow-up recensione', 'fp-restaurant-reservations'),
-                'type'        => 'select',
-                'options'     => [
-                    'plugin' => __('Invia dal plugin', 'fp-restaurant-reservations'),
-                    'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
-                ],
-                'default'     => 'plugin',
-                'description' => __(
-                    'Plugin: follow-up recensione con wp_mail. Brevo: evento email_review verso Automation Brevo.',
-                    'fp-restaurant-reservations'
-                ),
-            ],
             'customer_review_enabled' => [
                 'label'          => __('Chiedi una recensione', 'fp-restaurant-reservations'),
                 'type'           => 'checkbox',
