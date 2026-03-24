@@ -1,3 +1,12 @@
+## [1.0.16] - 2026-03-24
+
+### Added
+- Brevo: sezione «Messaggi al cliente e eventi Automation» — canale predefinito WordPress (`customer_messages_channel`), checklist eventi Track con flag `brevo_track_events_submitted` (retrocompatibile se mai salvata).
+- `TrackEventPolicy` per abilitare/disabilitare singoli eventi prima di `sendEvent` / dispatcher.
+
+### Changed
+- Notifiche cliente: con canale master WordPress i canali conferma/reminder/recensione restano su template plugin (`wp_mail`) indipendentemente dai select in Notifiche.
+
 ## [1.0.15] - 2026-03-24
 
 ### Fixed

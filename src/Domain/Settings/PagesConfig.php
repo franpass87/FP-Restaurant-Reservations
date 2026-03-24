@@ -639,6 +639,42 @@ final class PagesConfig
                         ],
                     ],
                 ],
+                'brevo-customer-messages' => [
+                    'title'       => __('Messaggi al cliente e eventi Automation', 'fp-restaurant-reservations'),
+                    'description' => __('Allineato a FP Experiences: il canale predefinito è WordPress; Brevo è opt-in. Gli eventi Track verso Brevo si gestiscono con la checklist sotto.', 'fp-restaurant-reservations'),
+                    'fields'      => [
+                        'brevo_track_events_submitted' => [
+                            'label'   => '',
+                            'type'    => 'hidden',
+                            'default' => '1',
+                        ],
+                        'customer_messages_channel'      => [
+                            'label'       => __('Canale messaggi al cliente', 'fp-restaurant-reservations'),
+                            'type'        => 'select',
+                            'default'     => 'wordpress',
+                            'description' => __('Con «WordPress» conferme, reminder e richiesta recensione usano i template del plugin (wp_mail). Con «Brevo» si applicano le scelte per canale in Impostazioni → Notifiche (eventi Automation).', 'fp-restaurant-reservations'),
+                            'options'     => [
+                                'wordpress' => __('WordPress (predefinito)', 'fp-restaurant-reservations'),
+                                'brevo'     => __('Brevo (opt-in)', 'fp-restaurant-reservations'),
+                            ],
+                        ],
+                        'brevo_track_events'             => [
+                            'label'       => __('Eventi inviati a Brevo', 'fp-restaurant-reservations'),
+                            'type'        => 'track_event_map',
+                            'description' => __('Dopo il primo salvataggio di questa pagina la checklist è attiva. Deseleziona gli eventi che non devono essere inviati.', 'fp-restaurant-reservations'),
+                            'event_labels' => [
+                                'email_confirmation'  => __('Conferma (email_confirmation)', 'fp-restaurant-reservations'),
+                                'email_reminder'      => __('Reminder (email_reminder)', 'fp-restaurant-reservations'),
+                                'email_review'        => __('Richiesta recensione (email_review)', 'fp-restaurant-reservations'),
+                                'reservation_confirmed' => __('Prenotazione confermata (reservation_confirmed)', 'fp-restaurant-reservations'),
+                                'reservation_visited' => __('Visita completata (reservation_visited)', 'fp-restaurant-reservations'),
+                                'survey_completed'    => __('Survey positivo (survey_completed)', 'fp-restaurant-reservations'),
+                                'survey_negative'     => __('Survey negativo (survey_negative)', 'fp-restaurant-reservations'),
+                                'post_visit_24h'      => __('Follow-up post-visita (post_visit_24h)', 'fp-restaurant-reservations'),
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ];
     }

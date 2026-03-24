@@ -7,6 +7,8 @@ namespace FP\Resv\Domain\Reservations;
 use FP\Resv\Core\Logging;
 use FP\Resv\Domain\Brevo\Client as BrevoClient;
 use FP\Resv\Domain\Brevo\Repository as BrevoRepository;
+use FP\Resv\Domain\Brevo\TrackEventPolicy;
+use FP\Resv\Domain\Settings\Options;
 use function array_filter;
 use function strtolower;
 use function substr;
@@ -20,7 +22,8 @@ final class BrevoConfirmationEventSender
 {
     public function __construct(
         private readonly ?BrevoClient $brevoClient,
-        private readonly ?BrevoRepository $brevoRepository
+        private readonly ?BrevoRepository $brevoRepository,
+        private readonly Options $options
     ) {
     }
 
@@ -31,6 +34,10 @@ final class BrevoConfirmationEventSender
      */
     public function send(array $payload, int $reservationId, string $manageUrl, string $status): void
     {
+        if (!TrackEventPolicy::isEventEnabled($this->options, 'email_confirmation')) {
+            return;
+        }
+
         if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
             Logging::log('brevo', 'Brevo client non disponibile per invio evento confirmation', [
                 'reservation_id' => $reservationId,

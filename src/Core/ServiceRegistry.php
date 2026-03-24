@@ -416,7 +416,7 @@ final class ServiceRegistry
         // Reservations Service
         $reservationPayloadSanitizer = new ReservationPayloadSanitizer($this->options, $languageSettings);
         $settingsResolver = new SettingsResolver($this->options);
-        $brevoConfirmationEventSender = new BrevoConfirmationEventSender($brevoClient, $this->container->get(BrevoRepository::class));
+        $brevoConfirmationEventSender = new BrevoConfirmationEventSender($brevoClient, $this->container->get(BrevoRepository::class), $this->options);
         $manageUrlGenerator = new ManageUrlGenerator();
 
         $reservationsService = new ReservationsService(

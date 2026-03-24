@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Settings\Admin;
 
+use FP\Resv\Domain\Brevo\TrackEventPolicy;
 use FP\Resv\Domain\Settings\PagesConfig;
 use function __;
 use function add_settings_error;
@@ -215,6 +216,23 @@ final class SettingsSanitizer
                 }
 
                 return (string) ($field['default'] ?? (array_key_first($allowed) ?? ''));
+            case 'hidden':
+                return (!empty($value) && $value !== '0') ? '1' : '0';
+            case 'track_event_map':
+                $out = [];
+                foreach (TrackEventPolicy::EVENT_IDS as $id) {
+                    $out[$id] = '0';
+                }
+                if (!is_array($value)) {
+                    return $out;
+                }
+                foreach (TrackEventPolicy::EVENT_IDS as $id) {
+                    if (!empty($value[$id])) {
+                        $out[$id] = '1';
+                    }
+                }
+
+                return $out;
             case 'color':
                 $raw = is_scalar($value) ? trim((string) $value) : '';
                 if ($raw === '') {

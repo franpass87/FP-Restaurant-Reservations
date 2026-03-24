@@ -31,6 +31,10 @@ final class BrevoEventSender
      */
     public function sendReminderEvent(int $reservationId, array $reservation): void
     {
+        if (!$this->settings->isBrevoTrackEventEnabled('email_reminder')) {
+            return;
+        }
+
         if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
             Logging::log('brevo', 'Brevo client non disponibile per invio evento reminder', [
                 'reservation_id' => $reservationId,
@@ -86,6 +90,10 @@ final class BrevoEventSender
      */
     public function sendReviewEvent(int $reservationId, array $reservation): void
     {
+        if (!$this->settings->isBrevoTrackEventEnabled('email_review')) {
+            return;
+        }
+
         if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
             Logging::log('brevo', 'Brevo client non disponibile per invio evento review', [
                 'reservation_id' => $reservationId,

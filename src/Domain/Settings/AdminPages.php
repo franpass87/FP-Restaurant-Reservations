@@ -707,6 +707,32 @@ final class AdminPages
                 }
                 echo '</select>';
                 break;
+            case 'hidden':
+                $hiddenVal = $value !== '' && $value !== null ? (string) $value : (string) ($field['default'] ?? '1');
+                echo '<input type="hidden" name="' . esc_attr($inputName) . '" value="' . esc_attr($hiddenVal) . '">';
+                break;
+            case 'track_event_map':
+                $labels = $field['event_labels'] ?? [];
+                if (!is_array($labels)) {
+                    $labels = [];
+                }
+                $map        = is_array($value) ? $value : [];
+                $submitted = isset($options['brevo_track_events_submitted'])
+                    && ($options['brevo_track_events_submitted'] === '1' || $options['brevo_track_events_submitted'] === 1);
+                echo '<fieldset class="fp-resv-brevo-track-events" style="margin:0;padding:0;border:0;">';
+                foreach ($labels as $evId => $label) {
+                    $evIdStr = (string) $evId;
+                    $checked = $submitted
+                        ? (!empty($map[$evIdStr]) && $map[$evIdStr] !== '0' && $map[$evIdStr] !== false)
+                        : true;
+                    $nestedName = $optionKey . '[' . $fieldKey . '][' . $evIdStr . ']';
+                    echo '<label style="display:block;margin:0.35em 0;">';
+                    echo '<input type="checkbox" name="' . esc_attr($nestedName) . '" value="1"' . ($checked ? ' checked="checked"' : '') . '> ';
+                    echo esc_html((string) $label);
+                    echo '</label>';
+                }
+                echo '</fieldset>';
+                break;
             case 'color':
                 echo '<input type="text" class="regular-text" name="' . esc_attr($inputName) . '" value="' . esc_attr((string) $value) . '" placeholder="#bb2649" pattern="#?[0-9a-fA-F]{3,6}">';
                 break;

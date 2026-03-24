@@ -287,7 +287,11 @@ final class BusinessServiceProvider extends ServiceProvider
             function (Container $container) {
                 $brevoClient = $container->get(\FP\Resv\Domain\Brevo\Client::class);
                 $brevoRepository = $container->get(\FP\Resv\Domain\Brevo\Repository::class);
-                return new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender($brevoClient, $brevoRepository);
+                return new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender(
+                    $brevoClient,
+                    $brevoRepository,
+                    new \FP\Resv\Domain\Settings\Options()
+                );
             }
         );
         

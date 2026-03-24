@@ -143,7 +143,7 @@ if (!empty($admin_users)) {
                 new \FP\Resv\Domain\Notifications\Settings(),
                 new \FP\Resv\Domain\Reservations\ReservationPayloadSanitizer(),
                 new \FP\Resv\Domain\Reservations\SettingsResolver(),
-                new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender()
+                new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender(null, null, new \FP\Resv\Domain\Settings\Options())
             );
             
             $validator = new \FP\Resv\Core\Services\Validator();
@@ -220,7 +220,7 @@ if (!empty($admin_users)) {
                 new \FP\Resv\Domain\Notifications\Settings(),
                 new \FP\Resv\Domain\Reservations\ReservationPayloadSanitizer(),
                 new \FP\Resv\Domain\Reservations\SettingsResolver(),
-                new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender()
+                new \FP\Resv\Domain\Reservations\BrevoConfirmationEventSender(null, null, new \FP\Resv\Domain\Settings\Options())
             );
             
             $validator = new \FP\Resv\Core\Services\Validator();

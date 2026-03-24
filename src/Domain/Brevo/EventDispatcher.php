@@ -35,6 +35,10 @@ final class EventDispatcher
             return;
         }
 
+        if (!TrackEventPolicy::isEventEnabled($this->options, $event)) {
+            return;
+        }
+
         if ($this->repository->hasSuccessfulLog($reservationId, $event)) {
             return;
         }
