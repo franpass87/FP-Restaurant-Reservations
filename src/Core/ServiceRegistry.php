@@ -520,7 +520,7 @@ final class ServiceRegistry
         $this->container->register('events.service', $eventsService);
 
         // Tracking — delegated to FP-Marketing-Tracking-Layer via do_action('fp_tracking_event')
-        $trackingBridge = new TrackingBridge();
+        $trackingBridge = new TrackingBridge($this->options);
         $trackingBridge->boot();
         $this->container->register(TrackingBridge::class, $trackingBridge);
         $this->container->register('tracking.bridge', $trackingBridge);

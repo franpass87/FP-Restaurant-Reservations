@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace FP\Resv\Domain\Tracking;
 
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
+use FP\Resv\Domain\Settings\MealPlan;
+use FP\Resv\Domain\Settings\Options;
 
 use function add_action;
+use function apply_filters;
 use function array_merge;
 use function do_action;
+use function get_bloginfo;
+use function home_url;
+use function is_bool;
 use function is_string;
 use function uniqid;
+use function wp_get_referer;
 
 /**
  * Bridges FP-Restaurant-Reservations internal booking hooks to the
@@ -22,6 +29,11 @@ final class TrackingBridge
 {
     /** Prevents double hook registration if boot() is called more than once. */
     private static bool $booted = false;
+
+    public function __construct(
+        private readonly Options $options
+    ) {
+    }
 
     public function boot(): void
     {
@@ -89,7 +101,7 @@ final class TrackingBridge
             'reservation_party'    => (int) ($payload['party'] ?? 1),
             'reservation_date'     => (string) ($payload['date'] ?? ''),
             'reservation_time'     => (string) ($payload['time'] ?? ''),
-            'meal_type'            => (string) ($payload['meal_type'] ?? ''),
+            'meal_type'            => '',
             'reservation_location' => $location,
             'event_id'             => uniqid('resv_' . $reservation_id . '_', true),
             'user_data'            => [
@@ -99,6 +111,8 @@ final class TrackingBridge
                 'ph' => $reservation->getPhone(),
             ],
         ];
+
+        $params = $this->enrichReservationCreatedParams($params, $payload, $reservation_id, $status);
 
         do_action('fp_tracking_event', $event_name, $params);
 
@@ -216,6 +230,16 @@ final class TrackingBridge
         if (in_array($event_name, ['booking_confirmed', 'booking_payment_completed'], true) && $entry_value > 0) {
             $base_params['value']    = $entry_value;
             $base_params['currency'] = $entry_currency;
+            $mealKey                 = trim((string) ($entry['meal'] ?? ''));
+            $party                   = (int) ($entry['party'] ?? 1);
+            $items                   = $this->buildEcommerceItemsForMeal($mealKey, $party, $entry_value);
+            if ($items !== null) {
+                $base_params['items'] = $items;
+            }
+            $mealLabel = $this->resolveMealLabel($mealKey);
+            if ($mealLabel !== '') {
+                $base_params['meal_label'] = $mealLabel;
+            }
         }
 
         do_action('fp_tracking_event', $event_name, $base_params);
@@ -259,5 +283,160 @@ final class TrackingBridge
             'reservation_id' => $reservation_id,
             'rating'         => (int) ($result['rating'] ?? 0),
         ]);
+    }
+
+    /**
+     * Arricchisce i parametri di tracking alla creazione prenotazione (GA4 / GTM / Meta CAPI).
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function enrichReservationCreatedParams(array $params, array $payload, int $reservation_id, string $status): array
+    {
+        $mealKey = trim((string) ($payload['meal'] ?? ''));
+        $party   = max(1, (int) ($payload['party'] ?? 1));
+        $value   = (float) ($params['value'] ?? 0.0);
+
+        $params['meal_type'] = $mealKey;
+
+        $mealLabel = $this->resolveMealLabel($mealKey);
+        if ($mealLabel !== '') {
+            $params['meal_label'] = $mealLabel;
+        }
+
+        $params['booking_status']         = $status;
+        $params['reservation_language']   = (string) ($payload['language'] ?? '');
+        $params['affiliation']            = (string) get_bloginfo('name');
+
+        $pricePerPerson = $this->resolvePricePerPerson($payload, $value, $party);
+        if ($pricePerPerson !== null) {
+            $params['price_per_person'] = $pricePerPerson;
+        }
+
+        $params['high_chair_count']    = max(0, (int) ($payload['high_chair_count'] ?? 0));
+        $params['wheelchair_table']    = $this->boolToTrackingInt($payload['wheelchair_table'] ?? false);
+        $params['pets']                = $this->boolToTrackingInt($payload['pets'] ?? false);
+        $params['marketing_consent']   = $this->boolToTrackingInt($payload['marketing_consent'] ?? false);
+
+        foreach (
+            [
+                'utm_source',
+                'utm_medium',
+                'utm_campaign',
+                'gclid',
+                'fbclid',
+                'msclkid',
+                'ttclid',
+            ] as $attributionKey
+        ) {
+            if (!isset($payload[$attributionKey])) {
+                continue;
+            }
+            $raw = (string) $payload[$attributionKey];
+            if ($raw !== '') {
+                $params[$attributionKey] = $raw;
+            }
+        }
+
+        $referer = wp_get_referer();
+        if (is_string($referer) && $referer !== '') {
+            $params['page_url'] = $referer;
+        } else {
+            $params['page_url'] = home_url('/');
+        }
+
+        $items = $this->buildEcommerceItemsForMeal($mealKey, $party, $value);
+        if ($items !== null) {
+            $params['items'] = $items;
+        }
+
+        /** @var array<string, mixed> $filtered */
+        $filtered = apply_filters('fp_resv_tracking_reservation_created_params', $params, $payload, $reservation_id, $status);
+
+        return $filtered;
+    }
+
+    /**
+     * Etichetta display del pasto dal piano frontend (se configurato).
+     */
+    private function resolveMealLabel(string $mealKey): string
+    {
+        if ($mealKey === '') {
+            return '';
+        }
+
+        $definition = (string) $this->options->getField('fp_resv_general', 'frontend_meals', '');
+        if ($definition === '') {
+            return '';
+        }
+
+        $meals = MealPlan::parse($definition);
+        $byKey = MealPlan::indexByKey($meals);
+        if (!isset($byKey[$mealKey]['label'])) {
+            return '';
+        }
+
+        return (string) $byKey[$mealKey]['label'];
+    }
+
+    /**
+     * Prezzo a persona per item ecommerce: da payload o da value / party.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function resolvePricePerPerson(array $payload, float $value, int $party): ?float
+    {
+        if (isset($payload['price_per_person']) && (float) $payload['price_per_person'] > 0) {
+            return round((float) $payload['price_per_person'], 2);
+        }
+
+        if ($value > 0.0 && $party > 0) {
+            return round($value / $party, 2);
+        }
+
+        return null;
+    }
+
+    /**
+     * Righe `items` GA4 / Meta per una prenotazione pasto (prezzo × coperti).
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function buildEcommerceItemsForMeal(string $mealKey, int $party, float $value): ?array
+    {
+        if ($value <= 0.0 || $party <= 0) {
+            return null;
+        }
+
+        $ppp = $value / $party;
+        if ($ppp <= 0.0) {
+            return null;
+        }
+
+        $pppRounded = round($ppp, 2);
+        $label      = $this->resolveMealLabel(trim($mealKey));
+        $name       = $label !== '' ? $label : ($mealKey !== '' ? $mealKey : 'restaurant_reservation');
+        $id         = $mealKey !== '' ? $mealKey : 'reservation';
+
+        return [[
+            'item_id'       => $id,
+            'item_name'     => $name,
+            'item_category' => 'restaurant_reservation',
+            'price'         => $pppRounded,
+            'quantity'      => $party,
+        ]];
+    }
+
+    private function boolToTrackingInt(mixed $value): int
+    {
+        if (is_bool($value)) {
+            return $value ? 1 : 0;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+
+        return in_array($normalized, ['1', 'true', 'yes', 'on'], true) ? 1 : 0;
     }
 }

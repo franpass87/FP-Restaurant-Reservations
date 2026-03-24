@@ -1034,9 +1034,11 @@ final class BusinessServiceProvider extends ServiceProvider
     {
         $container->singleton(
             \FP\Resv\Domain\Tracking\TrackingBridge::class,
-            function () {
-                $bridge = new \FP\Resv\Domain\Tracking\TrackingBridge();
+            function (Container $container) {
+                $options = $container->get(\FP\Resv\Domain\Settings\Options::class);
+                $bridge  = new \FP\Resv\Domain\Tracking\TrackingBridge($options);
                 $bridge->boot();
+
                 return $bridge;
             }
         );

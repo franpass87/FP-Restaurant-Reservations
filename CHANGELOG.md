@@ -1,3 +1,11 @@
+## [1.0.14] - 2026-03-24
+
+### Added
+- TrackingBridge: payload prenotazione arricchito per GA4/GTM/Meta — `meal_type` da chiave pasto (fix), `meal_label` da piano pasti, `booking_status`, `reservation_language`, `affiliation` (nome sito), `price_per_person`, seggioloni/accessibilità/animali/marketing consent (0/1), UTM e click ID se presenti nel payload, `page_url` (referrer o home), array `items` ecommerce (pasto × coperti). Filtro `fp_resv_tracking_reservation_created_params`. Stessi `items` / `meal_label` su eventi admin `booking_confirmed` / `booking_payment_completed` con valore.
+
+### Changed
+- `TrackingBridge` richiede `Options` in costruttore (ServiceRegistry + DI container).
+
 ## [1.0.13] - 2026-03-24
 
 ### Added
