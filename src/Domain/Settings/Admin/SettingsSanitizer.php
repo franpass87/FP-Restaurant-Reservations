@@ -111,10 +111,28 @@ final class SettingsSanitizer
         if ($pageKey === 'brevo' && \function_exists('fp_tracking_get_brevo_settings')) {
             $central = fp_tracking_get_brevo_settings();
             if (!empty($central['enabled']) && !empty($central['api_key'])) {
+                $restaurantListIt = 0;
+                $restaurantListEn = 0;
+                if (\function_exists('fp_tracking_get_brevo_list_id')) {
+                    $restaurantListIt = (int) fp_tracking_get_brevo_list_id('restaurant', 'it');
+                    $restaurantListEn = (int) fp_tracking_get_brevo_list_id('restaurant', 'en');
+                } else {
+                    $sourceLists = $central['source_lists']['restaurant'] ?? null;
+                    if (is_array($sourceLists)) {
+                        $restaurantListIt = (int) ($sourceLists['it'] ?? 0);
+                        $restaurantListEn = (int) ($sourceLists['en'] ?? 0);
+                    }
+                }
+                if ($restaurantListIt <= 0) {
+                    $restaurantListIt = (int) ($central['list_id_it'] ?? 0);
+                }
+                if ($restaurantListEn <= 0) {
+                    $restaurantListEn = (int) ($central['list_id_en'] ?? 0);
+                }
                 $sanitized['brevo_api_key']    = $central['api_key'];
-                $sanitized['brevo_list_id_it'] = $central['list_id_it'] ?: ($sanitized['brevo_list_id_it'] ?? '');
-                $sanitized['brevo_list_id_en'] = $central['list_id_en'] ?: ($sanitized['brevo_list_id_en'] ?? '');
-                $sanitized['brevo_list_id']    = $central['list_id_it'] ?: $central['list_id_en'] ?: ($sanitized['brevo_list_id'] ?? '');
+                $sanitized['brevo_list_id_it'] = $restaurantListIt ?: ($sanitized['brevo_list_id_it'] ?? '');
+                $sanitized['brevo_list_id_en'] = $restaurantListEn ?: ($sanitized['brevo_list_id_en'] ?? '');
+                $sanitized['brevo_list_id']    = $restaurantListIt ?: $restaurantListEn ?: ($sanitized['brevo_list_id'] ?? '');
             }
         }
 

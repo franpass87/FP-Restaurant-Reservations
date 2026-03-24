@@ -216,12 +216,30 @@ final class Bootstrap
         if (empty($central['enabled']) || empty($central['api_key'])) {
             return $value;
         }
+        $restaurantListIt = 0;
+        $restaurantListEn = 0;
+        if (\function_exists('fp_tracking_get_brevo_list_id')) {
+            $restaurantListIt = (int) fp_tracking_get_brevo_list_id('restaurant', 'it');
+            $restaurantListEn = (int) fp_tracking_get_brevo_list_id('restaurant', 'en');
+        } else {
+            $sourceLists = $central['source_lists']['restaurant'] ?? null;
+            if (\is_array($sourceLists)) {
+                $restaurantListIt = (int) ($sourceLists['it'] ?? 0);
+                $restaurantListEn = (int) ($sourceLists['en'] ?? 0);
+            }
+        }
+        if ($restaurantListIt <= 0) {
+            $restaurantListIt = (int) ($central['list_id_it'] ?? 0);
+        }
+        if ($restaurantListEn <= 0) {
+            $restaurantListEn = (int) ($central['list_id_en'] ?? 0);
+        }
         $local = \is_array($value) ? $value : [];
         return \array_merge($local, [
             'brevo_api_key'    => $central['api_key'],
-            'brevo_list_id_it' => $central['list_id_it'] ?: ($local['brevo_list_id_it'] ?? ''),
-            'brevo_list_id_en' => $central['list_id_en'] ?: ($local['brevo_list_id_en'] ?? ''),
-            'brevo_list_id'    => $central['list_id_it'] ?: $central['list_id_en'] ?: ($local['brevo_list_id'] ?? ''),
+            'brevo_list_id_it' => $restaurantListIt ?: ($local['brevo_list_id_it'] ?? ''),
+            'brevo_list_id_en' => $restaurantListEn ?: ($local['brevo_list_id_en'] ?? ''),
+            'brevo_list_id'    => $restaurantListIt ?: $restaurantListEn ?: ($local['brevo_list_id'] ?? ''),
         ]);
     }
 
