@@ -6,7 +6,6 @@ namespace FP\Resv\Domain\Notifications;
 
 use FP\Resv\Domain\Brevo\TrackEventPolicy;
 use FP\Resv\Domain\Settings\Options;
-use function sanitize_key;
 
 final class Settings
 {
@@ -60,26 +59,11 @@ final class Settings
 
     public function channelValue(string $channel): string
     {
-        if ($this->isWordPressCustomerMessagesMaster()) {
-            return 'plugin';
-        }
-
         $options = $this->all();
         $key     = self::CHANNEL_KEYS[$channel] ?? '';
         $value   = isset($options[$key]) ? (string) $options[$key] : 'plugin';
 
         return in_array($value, ['plugin', 'brevo'], true) ? $value : 'plugin';
-    }
-
-    /**
-     * Canale globale messaggi cliente: default WordPress (allineato FP Experiences / regola Brevo-Tracking).
-     */
-    private function isWordPressCustomerMessagesMaster(): bool
-    {
-        $brevo = $this->options->getGroup('fp_resv_brevo', []);
-        $ch    = isset($brevo['customer_messages_channel']) ? sanitize_key((string) $brevo['customer_messages_channel']) : 'wordpress';
-
-        return $ch !== 'brevo';
     }
 
     public function isBrevoTrackEventEnabled(string $event): bool

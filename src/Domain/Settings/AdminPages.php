@@ -451,26 +451,18 @@ final class AdminPages
         echo '<div class="notice notice-info fp-resv-brevo-legend" style="margin:0 0 14px;padding:12px 14px;max-width:920px;">';
         echo '<p style="margin-top:0;"><strong>' . esc_html__('Legenda: email al cliente e Brevo Automation', 'fp-restaurant-reservations') . '</strong></p>';
 
-        echo '<p style="margin:0.5em 0;"><strong>' . esc_html__('1. Menu «Canale messaggi al cliente»', 'fp-restaurant-reservations') . '</strong></p>';
+        echo '<p style="margin:0.5em 0;"><strong>' . esc_html__('1. Canale per tipo di email (Notifiche)', 'fp-restaurant-reservations') . '</strong></p>';
         echo '<ul style="margin:0.25em 0 0.75em 1.25em;list-style:disc;">';
-        echo '<li><strong>' . esc_html__('WordPress (predefinito)', 'fp-restaurant-reservations') . '</strong> — ';
-        echo esc_html__(
-            'conferma, reminder e richiesta recensione al cliente sono inviate dal plugin con wp_mail (template in Impostazioni → Notifiche). In questa modalità non si usano gli eventi Brevo per sostituire quelle mail.',
-            'fp-restaurant-reservations'
-        );
-        echo '</li>';
-        echo '<li><strong>' . esc_html__('Brevo (opt-in)', 'fp-restaurant-reservations') . '</strong> — ';
-        echo wp_kses_post(
+        echo '<li>' . wp_kses_post(
             sprintf(
                 /* translators: %s: link to Notifications settings page */
                 __(
-                    'tornano valide le scelte per canale in Impostazioni → %s: dove imposti «Brevo», il plugin non invia quella email con wp_mail ma manda un evento a Brevo (es. email_confirmation); in Brevo configuri l’Automation che invia l’email al cliente.',
+                    'In Impostazioni → %s → Email cliente trovi tre menu: canale conferma, canale promemoria, canale follow-up recensione. Per ciascuno puoi scegliere «Invia dal plugin» (wp_mail e template nella stessa pagina) oppure «Usa Brevo» (il plugin invia l’evento; l’email al cliente la gestisci nelle Automation Brevo). Puoi mescolare: ad esempio conferma dal plugin e promemoria via Brevo.',
                     'fp-restaurant-reservations'
                 ),
                 $notifications_link
             )
-        );
-        echo '</li>';
+        ) . '</li>';
         echo '</ul>';
 
         echo '<p style="margin:0.5em 0;"><strong>' . esc_html__('2. Checklist «Eventi inviati a Brevo»', 'fp-restaurant-reservations') . '</strong></p>';
@@ -480,7 +472,7 @@ final class AdminPages
             'fp-restaurant-reservations'
         ) . '</li>';
         echo '<li>' . esc_html__(
-            'È indipendente dal menu sopra: con «WordPress» come canale messaggi, le email conferma/reminder/recensione restano su wp_mail; possono comunque partire altri eventi verso Brevo (es. reservation_confirmed, post_visit_24h, survey) se li lasci spuntati e Brevo è abilitato.',
+            'È aggiuntiva rispetto ai tre canali sopra: anche se una conferma o un promemoria va in wp_mail, puoi comunque far partire altri eventi verso Brevo (es. reservation_confirmed, post_visit_24h) se li lasci spuntati e Brevo è abilitato.',
             'fp-restaurant-reservations'
         ) . '</li>';
         echo '<li>' . esc_html__(

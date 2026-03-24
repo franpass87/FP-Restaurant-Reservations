@@ -1,3 +1,9 @@
+## [1.0.18] - 2026-03-24
+
+### Changed
+- Email cliente: i tre canali in **Impostazioni → Notifiche** (conferma, promemoria, follow-up recensione) valgono sempre; niente più blocco globale da tab Brevo (`customer_messages_channel` rimosso dall’UI). Puoi mescolare wp_mail e Brevo per tipo.
+- Tab Brevo: sezione «Messaggi al cliente» aggiornata (descrizione + legenda) per puntare a Notifiche e alla checklist eventi Automation.
+
 ## [1.0.17] - 2026-03-24
 
 ### Added

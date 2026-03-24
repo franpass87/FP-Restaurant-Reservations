@@ -283,7 +283,10 @@ final class PagesConfig
                 ],
                 'notifications-customer' => [
                     'title'       => __('Email cliente', 'fp-restaurant-reservations'),
-                    'description' => __('Configura conferme, promemoria e follow-up gestiti direttamente dal plugin.', 'fp-restaurant-reservations'),
+                    'description' => __(
+                        'Per conferma, promemoria e richiesta recensione scegli singolarmente: invio dal plugin (wp_mail e template qui sotto) oppure Brevo (evento verso le Automation; l’email la invii tu da Brevo). Gli altri eventi Brevo (es. post-visita) si abilitano in Impostazioni → Brevo.',
+                        'fp-restaurant-reservations'
+                    ),
                     'fields'      => self::getCustomerEmailFields(),
                 ],
             ],
@@ -361,7 +364,10 @@ final class PagesConfig
                     'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
                 ],
                 'default'     => 'plugin',
-                'description' => __('Scegli se inviare la conferma interna o delegarla a Brevo.', 'fp-restaurant-reservations'),
+                'description' => __(
+                    'Plugin: email con wp_mail e template qui sotto. Brevo: invio evento (es. email_confirmation); configuri l’Automation in Brevo che manda la mail al cliente.',
+                    'fp-restaurant-reservations'
+                ),
             ],
             'customer_confirmation_subject' => [
                 'label'       => __('Oggetto conferma', 'fp-restaurant-reservations'),
@@ -390,6 +396,10 @@ final class PagesConfig
                     'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
                 ],
                 'default'     => 'plugin',
+                'description' => __(
+                    'Plugin: promemoria con wp_mail. Brevo: evento email_reminder verso Automation Brevo.',
+                    'fp-restaurant-reservations'
+                ),
             ],
             'customer_reminder_enabled' => [
                 'label'          => __('Invia promemoria', 'fp-restaurant-reservations'),
@@ -430,6 +440,10 @@ final class PagesConfig
                     'brevo'  => __('Usa Brevo (se configurato)', 'fp-restaurant-reservations'),
                 ],
                 'default'     => 'plugin',
+                'description' => __(
+                    'Plugin: follow-up recensione con wp_mail. Brevo: evento email_review verso Automation Brevo.',
+                    'fp-restaurant-reservations'
+                ),
             ],
             'customer_review_enabled' => [
                 'label'          => __('Chiedi una recensione', 'fp-restaurant-reservations'),
@@ -641,22 +655,15 @@ final class PagesConfig
                 ],
                 'brevo-customer-messages' => [
                     'title'       => __('Messaggi al cliente e eventi Automation', 'fp-restaurant-reservations'),
-                    'description' => __('Allineato a FP Experiences: il canale predefinito è WordPress; Brevo è opt-in. Gli eventi Track verso Brevo si gestiscono con la checklist sotto.', 'fp-restaurant-reservations'),
+                    'description' => __(
+                        'Per scegliere wp_mail o Brevo per conferma, promemoria e recensione vai in Impostazioni → Notifiche → Email cliente (tre menu «Canale»). Qui configuri solo quali eventi aggiuntivi inviare a Brevo Automation.',
+                        'fp-restaurant-reservations'
+                    ),
                     'fields'      => [
                         'brevo_track_events_submitted' => [
                             'label'   => '',
                             'type'    => 'hidden',
                             'default' => '1',
-                        ],
-                        'customer_messages_channel'      => [
-                            'label'       => __('Canale messaggi al cliente', 'fp-restaurant-reservations'),
-                            'type'        => 'select',
-                            'default'     => 'wordpress',
-                            'description' => __('Con «WordPress» conferme, reminder e richiesta recensione usano i template del plugin (wp_mail). Con «Brevo» si applicano le scelte per canale in Impostazioni → Notifiche (eventi Automation).', 'fp-restaurant-reservations'),
-                            'options'     => [
-                                'wordpress' => __('WordPress (predefinito)', 'fp-restaurant-reservations'),
-                                'brevo'     => __('Brevo (opt-in)', 'fp-restaurant-reservations'),
-                            ],
                         ],
                         'brevo_track_events'             => [
                             'label'       => __('Eventi inviati a Brevo', 'fp-restaurant-reservations'),
