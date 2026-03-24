@@ -746,9 +746,7 @@ class NoticeManager {
     
     overrideExistingNotifications() {
         // Override per alert/notify esistenti
-        const originalAlert = window.alert;
-        const originalNotify = window.notify;
-        
+
         // Intercetta alert
         window.alert = (message) => {
             this.show('info', message, 5000);
@@ -760,16 +758,11 @@ class NoticeManager {
                 this.show(level, message, 5000);
             };
         }
-        
-        // Intercetta console.error per errori JavaScript
-        const originalConsoleError = console.error;
-        console.error = (...args) => {
-            originalConsoleError.apply(console, args);
-            const message = args.join(' ');
-            if (message.includes('Error') || message.includes('error')) {
-                this.show('error', 'Si è verificato un errore. Riprova.', 5000);
-            }
-        };
+
+        // Non intercettare console.error globalmente:
+        // su siti in produzione può catturare errori di terze parti
+        // (es. service worker / websocket / plugin esterni) e mostrare
+        // falsi errori duplicati nel form prenotazioni.
     }
     
     show(type, message, duration = 5000) {
