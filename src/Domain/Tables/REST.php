@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Tables;
 
+use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Core\Roles;
 use InvalidArgumentException;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use function __;
 use function add_action;
 use function count;
 use function current_user_can;
@@ -344,17 +346,29 @@ final class REST
     {
         try {
             $result = $operation();
-            
-            // Log per debug: verifica che il risultato sia valido
+
             if (!is_array($result)) {
-                error_log('[FP-Resv] Tables REST: Invalid result type from operation: ' . gettype($result));
+                ErrorLogger::log('Tables REST: risultato operazione non è un array', [
+                    'type' => gettype($result),
+                ]);
+
+                return new WP_Error(
+                    'fp_resv_tables_error',
+                    __('Risposta interna non valida.', 'fp-restaurant-reservations'),
+                    ['status' => 500]
+                );
             }
-            
         } catch (InvalidArgumentException $exception) {
-            error_log('[FP-Resv] Tables REST: Invalid argument - ' . $exception->getMessage());
+            ErrorLogger::log('Tables REST: argomento non valido', [
+                'message' => $exception->getMessage(),
+            ]);
+
             return new WP_Error('fp_resv_tables_invalid', $exception->getMessage(), ['status' => 400]);
         } catch (\Throwable $exception) {
-            error_log('[FP-Resv] Tables REST: Unexpected error - ' . $exception->getMessage());
+            ErrorLogger::log('Tables REST: errore imprevisto', [
+                'message' => $exception->getMessage(),
+            ]);
+
             return new WP_Error('fp_resv_tables_error', $exception->getMessage(), ['status' => 500]);
         }
 

@@ -26,12 +26,6 @@ final class ReservationPayloadExtractor
      */
     public function extract(WP_REST_Request $request): array
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] extractReservationPayload() START');
-            error_log('[FP Resv Admin] Request has body params: ' . ($request->get_body_params() ? 'YES' : 'NO'));
-            error_log('[FP Resv Admin] Request has JSON params: ' . ($request->get_json_params() ? 'YES' : 'NO'));
-        }
-        
         $payload = [
             'date'       => $request->get_param('date') ?? '',
             'time'       => $request->get_param('time') ?? '',
@@ -59,26 +53,16 @@ final class ReservationPayloadExtractor
             'exclude_from_availability'  => $request->get_param('exclude_from_availability') ?? false,
         ];
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] Payload base costruito, email: ' . ($payload['email'] ?? 'EMPTY'));
-        }
-
         if ($request->offsetExists('visited') && in_array(strtolower((string) $request->get_param('visited')), ['1', 'true', 'yes', 'on'], true)) {
             $payload['status'] = 'visited';
         }
         
         // Validazione opzionale email (solo se fornita)
         if (!empty($payload['email']) && !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] ERRORE: Email non valida: ' . $payload['email']);
-            }
             throw new InvalidArgumentException(__('Email non valida', 'fp-restaurant-reservations'));
         }
-        
+
         // NOTA: Nome, cognome, email e telefono sono opzionali per prenotazioni da backend
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] extractReservationPayload() OK - payload valido (campi cliente opzionali)');
-        }
         return $payload;
     }
 }

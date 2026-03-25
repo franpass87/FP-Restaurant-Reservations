@@ -681,10 +681,9 @@ final class ServiceRegistry
             $closuresAjax->register();
             $this->container->register(ClosuresAjaxHandler::class, $closuresAjax);
         } catch (\Throwable $e) {
-            // Log error but don't break plugin initialization
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Restaurant Reservations] Errore registrazione ClosuresAjaxHandler: ' . $e->getMessage());
-            }
+            ErrorLogger::log('Errore registrazione ClosuresAjaxHandler', [
+                'message' => $e->getMessage(),
+            ]);
         }
         
         // Debug hook per AJAX requests
@@ -692,10 +691,9 @@ final class ServiceRegistry
             $ajaxDebug = new \FP\Resv\Domain\Closures\AjaxDebug();
             $ajaxDebug->register();
         } catch (\Throwable $e) {
-            // Log error but don't break plugin initialization
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Restaurant Reservations] Errore registrazione AjaxDebug: ' . $e->getMessage());
-            }
+            ErrorLogger::log('Errore registrazione AjaxDebug', [
+                'message' => $e->getMessage(),
+            ]);
         }
 
         // Surveys REST

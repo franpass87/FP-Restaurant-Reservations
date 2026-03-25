@@ -196,9 +196,6 @@ final class FormContext
                 }
             } catch (\Throwable $e) {
                 // Ignore errors loading special openings
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('[FP-RESV] Error loading special openings: ' . $e->getMessage());
-                }
             }
         }
 

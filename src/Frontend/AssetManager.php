@@ -7,7 +7,6 @@ namespace FP\Resv\Frontend;
 use FP\Resv\Core\Plugin;
 use WP_Post;
 use function apply_filters;
-use function error_log;
 use function file_exists;
 use function file_get_contents;
 use function function_exists;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Kernel;
 
+use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Providers\CoreServiceProvider;
 use FP\Resv\Providers\ServiceProvider;
 
@@ -127,9 +128,9 @@ final class Bootstrap
                     try {
                         self::$container->get(\FP\Resv\Domain\Reservations\AdminREST::class);
                     } catch (\Throwable $e) {
-                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                            error_log('[FP Resv Bootstrap] ❌ Errore istanziazione AdminREST: ' . $e->getMessage());
-                        }
+                        ErrorLogger::log('Istanza AdminREST non disponibile in bootstrap REST', [
+                            'message' => $e->getMessage(),
+                        ]);
                     }
                 }
             }, 1); // Priority 1 to register very early

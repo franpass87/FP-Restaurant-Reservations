@@ -13,7 +13,6 @@ use WP_REST_Request;
 use WP_REST_Response;
 use function array_map;
 use function array_values;
-use function error_log;
 use function implode;
 use function in_array;
 use function is_string;
@@ -84,9 +83,6 @@ final class ArrivalsHandler
             
             return rest_ensure_response($responseData);
         } catch (Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Arrivals] Errore critico: ' . $e->getMessage());
-            }
             return new WP_Error(
                 'fp_resv_arrivals_error',
                 sprintf(__('Errore nel caricamento degli arrivi: %s', 'fp-restaurant-reservations'), $e->getMessage()),

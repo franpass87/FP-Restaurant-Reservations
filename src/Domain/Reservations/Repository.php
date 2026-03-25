@@ -126,117 +126,28 @@ final class Repository
      */
     public function findAgendaRange(string $startDate, string $endDate): array
     {
-        // Diagnostico solo in WP_DEBUG
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            $totalInDb = $this->wpdb->get_var('SELECT COUNT(*) FROM ' . $this->tableName());
-            error_log('[FP Repository findAgendaRange] 🔢 Totale prenotazioni nel database: ' . $totalInDb);
-        }
-        
-        // STEP 1: Query semplificata - prima prendiamo solo le prenotazioni
-        // Questo elimina il rischio che il JOIN con customers fallisca
         $sql = 'SELECT r.* FROM ' . $this->tableName() . ' r '
             . 'WHERE r.date >= %s AND r.date <= %s '
             . 'AND (r.status IS NULL OR r.status != %s) '
             . 'ORDER BY r.date ASC, r.time ASC';
 
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP Repository findAgendaRange] 📅 Range richiesto: ' . $startDate . ' -> ' . $endDate);
-            error_log('[FP Repository findAgendaRange] 🔍 Query SQL: ' . $sql);
-        }
-        
-        // #region agent log
-        $logFile = (defined('ABSPATH') ? ABSPATH : dirname(dirname(dirname(dirname(dirname(dirname(__DIR__))))))) . '.cursor/debug.log';
-        $queryStartTime = microtime(true);
-        $logData = json_encode([
-            'id' => 'log_' . time() . '_' . uniqid(),
-            'timestamp' => time() * 1000,
-            'location' => __FILE__ . ':' . __LINE__,
-            'message' => 'Before SQL query execution',
-            'data' => ['sql_preview' => substr($sql, 0, 100)],
-            'sessionId' => 'debug-session',
-            'runId' => 'run1',
-            'hypothesisId' => 'B'
-        ]) . "\n";
-        @file_put_contents($logFile, $logData, FILE_APPEND);
-        // #endregion
-        
         $reservations = $this->wpdb->get_results(
             $this->wpdb->prepare($sql, $startDate, $endDate, 'cancelled'),
             ARRAY_A
         );
-        
-        // #region agent log
-        $queryEndTime = microtime(true);
-        $queryDuration = ($queryEndTime - $queryStartTime) * 1000;
-        $logData = json_encode([
-            'id' => 'log_' . time() . '_' . uniqid(),
-            'timestamp' => time() * 1000,
-            'location' => __FILE__ . ':' . __LINE__,
-            'message' => 'After SQL query execution',
-            'data' => [
-                'last_error' => $this->wpdb->last_error ?: null,
-                'last_query' => $this->wpdb->last_query,
-                'results_count' => is_array($reservations) ? count($reservations) : 0,
-                'results_is_array' => is_array($reservations),
-                'query_duration_ms' => round($queryDuration, 2)
-            ],
-            'sessionId' => 'debug-session',
-            'runId' => 'run1',
-            'hypothesisId' => 'B'
-        ]) . "\n";
-        @file_put_contents($logFile, $logData, FILE_APPEND);
-        // #endregion
-        
-        // Check errori SQL
-        if ($this->wpdb->last_error) {
-            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-                error_log('[FP Repository findAgendaRange] ❌ ERRORE SQL: ' . $this->wpdb->last_error);
-                error_log('[FP Repository findAgendaRange] Query eseguita: ' . $this->wpdb->last_query);
-            }
-            return [];
-        }
-        
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP Repository findAgendaRange] 📊 Query eseguita: ' . $this->wpdb->last_query);
-            error_log('[FP Repository findAgendaRange] 📦 Risultati trovati: ' . (is_array($reservations) ? count($reservations) : 'NULL'));
-        }
 
-        // Se la query fallisce completamente, restituisci array vuoto
-        if (!is_array($reservations)) {
+        if ($this->wpdb->last_error !== '') {
             if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-                error_log('[FP Repository findAgendaRange] ⚠️ get_results() ha restituito NULL/FALSE');
+                error_log('[FP-RESV] findAgendaRange SQL error: ' . $this->wpdb->last_error);
             }
             return [];
         }
 
-        // Se non ci sono prenotazioni, restituisci array vuoto
-        if (count($reservations) === 0) {
-            if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-                error_log('[FP Repository findAgendaRange] ⚠️ Nessuna prenotazione trovata nel range specificato');
-            }
-            
-            // TEST DIAGNOSTICO EXTRA: Conta prenotazioni nel range SENZA filtro status
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                $testCount = $this->wpdb->get_var(
-                    $this->wpdb->prepare(
-                        'SELECT COUNT(*) FROM ' . $this->tableName() . ' WHERE date >= %s AND date <= %s',
-                        $startDate,
-                        $endDate
-                    )
-                );
-                if (function_exists('error_log')) {
-                    error_log('[FP Repository findAgendaRange] 🧪 Prenotazioni nel range (TUTTI gli status): ' . $testCount);
-                }
-            }
-            
+        if (!is_array($reservations) || $reservations === []) {
             return [];
         }
-        
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP Repository findAgendaRange] ✅ Trovate ' . count($reservations) . ' prenotazioni valide');
-        }
 
-        // STEP 2: Arricchisci con dati customers SOLO se ci sono prenotazioni
+        // Arricchisci con dati customers SOLO se ci sono prenotazioni
         // Ottieni tutti i customer_id unici (compatibile PHP 7.0+)
         $customerIds = [];
         foreach ($reservations as $reservation) {
@@ -249,22 +160,6 @@ final class Repository
         // Carica tutti i customers in un'unica query
         $customers = [];
         if (!empty($customerIds)) {
-            // #region agent log
-            $logFile = __DIR__ . '/../../../../../../.cursor/debug.log';
-            $logData = json_encode([
-                'id' => 'log_' . time() . '_' . uniqid(),
-                'timestamp' => time() * 1000,
-                'location' => __FILE__ . ':' . __LINE__,
-                'message' => 'Before customers query',
-                'data' => ['customer_ids_count' => count($customerIds)],
-                'sessionId' => 'debug-session',
-                'runId' => 'run1',
-                'hypothesisId' => 'B'
-            ]) . "\n";
-            @file_put_contents($logFile, $logData, FILE_APPEND);
-            $customersQueryStartTime = microtime(true);
-            // #endregion
-            
             // Sanitizza manualmente gli ID (sono già int da sopra, ma doppia sicurezza)
             $safeIds = array_map('intval', $customerIds);
             $placeholders = implode(',', array_fill(0, count($safeIds), '%d'));
@@ -275,27 +170,7 @@ final class Repository
                 . 'WHERE id IN (' . $placeholders . ')';
             
             $customersRows = $this->wpdb->get_results($this->wpdb->prepare($customersSql, ...$safeIds), ARRAY_A);
-            
-            // #region agent log
-            $customersQueryEndTime = microtime(true);
-            $customersQueryDuration = ($customersQueryEndTime - $customersQueryStartTime) * 1000;
-            $logData = json_encode([
-                'id' => 'log_' . time() . '_' . uniqid(),
-                'timestamp' => time() * 1000,
-                'location' => __FILE__ . ':' . __LINE__,
-                'message' => 'After customers query',
-                'data' => [
-                    'customers_count' => is_array($customersRows) ? count($customersRows) : 0,
-                    'customers_query_duration_ms' => round($customersQueryDuration, 2),
-                    'last_error' => $this->wpdb->last_error ?: null
-                ],
-                'sessionId' => 'debug-session',
-                'runId' => 'run1',
-                'hypothesisId' => 'B'
-            ]) . "\n";
-            @file_put_contents($logFile, $logData, FILE_APPEND);
-            // #endregion
-            
+
             if (is_array($customersRows)) {
                 // Indicizza per customer_id per lookup veloce
                 foreach ($customersRows as $customer) {

@@ -192,21 +192,13 @@ final class Roles
      */
     public static function ensureAdminCapabilities(): void
     {
-        $debug = defined('WP_DEBUG') && WP_DEBUG;
-
         $adminRole = get_role('administrator');
         if ($adminRole !== null) {
             if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
                 $adminRole->add_cap(self::MANAGE_RESERVATIONS);
-                if ($debug) {
-                    error_log('[FP Resv] added manage_fp_reservations to administrator role');
-                }
             }
             if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
                 $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
-                if ($debug) {
-                    error_log('[FP Resv] added view_fp_reservations_manager to administrator role');
-                }
             }
         }
 
@@ -237,9 +229,6 @@ final class Roles
                         foreach ($restaurant_caps as $cap) {
                             if (! $role->has_cap($cap)) {
                                 $role->add_cap($cap);
-                                if ($debug) {
-                                    error_log("[FP Resv] Added cap '{$cap}' to experiences role '{$role_name}'");
-                                }
                             }
                         }
                     }

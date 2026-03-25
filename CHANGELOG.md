@@ -1,3 +1,10 @@
+## [1.0.24] - 2026-03-25
+
+### Fixed
+
+- Secondo passaggio su log rumorosi: `AdminREST` (registrazione route, permessi, delete/update/move), `ClosuresResponseBuilder`, frontend (`PageBuilderCompatibility`, `CriticalCssManager`, `ContentFilter`), `SpecialOpeningsProvider`, `FormContext`, `Roles::ensureAdminCapabilities`, persistenza (`ReservationRepository`, `ReservationService`), handler REST overview/arrivi, `AvailabilityHandler` e `Tables\REST` — rimossi o sostituiti con `ErrorLogger` dove serve traccia in admin senza riempire `debug.log` a ogni richiesta.
+- `AssetManager`: rimosso `use function error_log` non utilizzato.
+
 ## [1.0.23] - 2026-03-25
 
 ### Fixed

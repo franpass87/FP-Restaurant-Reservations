@@ -6,9 +6,7 @@ namespace FP\Resv\Frontend;
 
 use function add_action;
 use function add_filter;
-use function error_log;
 use function is_singular;
-use function strpos;
 
 final class WidgetController
 {
@@ -54,12 +52,6 @@ final class WidgetController
             return;
         }
         
-        $hasShortcode = strpos($post->post_content, '[fp_reservations') !== false;
-        
-        if ($hasShortcode && defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP-RESV] DEBUG: Page "' . $post->post_title . '" (ID: ' . $post->ID . ') contains shortcode');
-            error_log('[FP-RESV] DEBUG: Post type: ' . $post->post_type);
-            error_log('[FP-RESV] DEBUG: Checking if form was rendered...');
-        }
+        // Hook lasciato per compatibilità: nessun log (evita rumore su debug.log).
     }
 }

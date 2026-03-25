@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace FP\Resv\Frontend;
 
 use function do_shortcode;
-use function error_log;
 use function in_the_loop;
 use function is_admin;
 use function is_main_query;
@@ -28,7 +27,6 @@ final class ContentFilter
         
         // Se il contenuto contiene lo shortcode ma non è stato processato, forzalo
         if (strpos($content, '[fp_reservations') !== false && strpos($content, 'fp-resv-widget') === false) {
-            error_log('[FP-RESV] Forcing shortcode execution in content filter');
             $content = do_shortcode($content);
         }
         

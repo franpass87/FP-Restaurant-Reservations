@@ -89,9 +89,6 @@ final class SpecialOpeningsProvider
             global $wpdb;
             
             if (!$wpdb instanceof \wpdb) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('[FP-RESV] SpecialOpeningsProvider: wpdb non disponibile');
-                }
                 return [];
             }
             
@@ -114,17 +111,9 @@ final class SpecialOpeningsProvider
                 self::TYPE_SPECIAL_OPENING,
                 $now->format('Y-m-d H:i:s')
             );
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] SpecialOpeningsProvider SQL: ' . $sql);
-            }
-            
+
             $rows = $wpdb->get_results($sql, ARRAY_A);
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] SpecialOpeningsProvider: trovate ' . (is_array($rows) ? count($rows) : 0) . ' aperture speciali');
-            }
-            
+
             if (!is_array($rows) || $rows === []) {
                 return [];
             }
@@ -139,10 +128,6 @@ final class SpecialOpeningsProvider
             
             return $meals;
         } catch (\Throwable $e) {
-            // Log error but don't break the form
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] SpecialOpeningsProvider error: ' . $e->getMessage());
-            }
             return [];
         }
     }
@@ -165,9 +150,6 @@ final class SpecialOpeningsProvider
         $slots = $capacityOverride['slots'] ?? [];
         
         if ($label === '' || $mealKey === '' || empty($slots)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV] SpecialOpeningsProvider: apertura id=' . ($row['id'] ?? '?') . ' scartata - label=' . $label . ', mealKey=' . $mealKey . ', slots=' . count($slots));
-            }
             return null;
         }
         

@@ -14,7 +14,6 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use function array_map;
-use function error_log;
 use function is_array;
 use function rest_ensure_response;
 use function sprintf;
@@ -90,9 +89,6 @@ final class OverviewHandler
             
             return rest_ensure_response($responseData);
         } catch (Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Overview] Errore critico: ' . $e->getMessage());
-            }
             return new WP_Error(
                 'fp_resv_overview_error',
                 sprintf(__('Errore nel caricamento della panoramica: %s', 'fp-restaurant-reservations'), $e->getMessage()),

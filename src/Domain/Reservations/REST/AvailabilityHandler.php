@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations\REST;
 
+use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\Metrics;
 use FP\Resv\Core\RateLimiter;
@@ -207,10 +208,9 @@ final class AvailabilityHandler
             ], 200);
 
         } catch (\Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('FP Resv REST API Error: ' . $e->getMessage());
-                error_log('Stack trace: ' . $e->getTraceAsString());
-            }
+            ErrorLogger::log('REST availability days error', [
+                'message' => $e->getMessage(),
+            ]);
 
             return new WP_Error(
                 'fp_resv_availability_days_error',

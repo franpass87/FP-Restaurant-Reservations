@@ -10,7 +10,6 @@ use function ob_get_clean;
 use function ob_get_level;
 use function ob_start;
 use function strpos;
-use function wp_json_encode;
 
 /**
  * Costruisce risposte REST pulite per le chiusure.
@@ -29,25 +28,15 @@ final class ClosuresResponseBuilder
             return $response;
         }
 
-        error_log('[FP Closures REST] forceCleanJsonResponse attivato per route: ' . $route);
-
         // Pulisci TUTTI gli output buffer aperti
         while (ob_get_level() > 0) {
-            $captured = ob_get_clean();
-            if ($captured && $captured !== '') {
-                error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO CATTURATO E RIMOSSO: "' . $captured . '"');
-            }
+            ob_get_clean();
         }
 
         // Verifica che la risposta sia valida
         if (!$response instanceof \WP_REST_Response) {
-            error_log('[FP Closures REST] Response non è WP_REST_Response: ' . gettype($response));
             return $response;
         }
-
-        $data = $response->get_data();
-        error_log('[FP Closures REST] Response data type: ' . gettype($data));
-        error_log('[FP Closures REST] Response data: ' . json_encode($data));
 
         return $response;
     }
@@ -57,10 +46,7 @@ final class ClosuresResponseBuilder
      */
     public function captureAndCleanOutput(): void
     {
-        $captured = ob_get_clean();
-        if ($captured !== '' && $captured !== false) {
-            error_log('[FP Closures REST] ⚠️ OUTPUT SPURIO CATTURATO: "' . $captured . '"');
-        }
+        ob_get_clean();
     }
 
     /**

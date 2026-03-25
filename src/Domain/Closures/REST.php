@@ -15,13 +15,10 @@ use WP_REST_Server;
 use function add_action;
 use function add_filter;
 use function current_user_can;
-use function get_current_user_id;
 use function is_array;
 use function is_string;
-use function is_user_logged_in;
 use function rest_ensure_response;
 use function sanitize_key;
-use function wp_json_encode;
 
 final class REST
 {
@@ -45,11 +42,7 @@ final class REST
 
     public function registerRoutes(): void
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] registerRoutes() chiamato!');
-        }
-        
-        $result = register_rest_route(
+        register_rest_route(
             'fp-resv/v1',
             '/closures',
             [
@@ -65,10 +58,6 @@ final class REST
                 ],
             ]
         );
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Endpoint /closures registrato: ' . ($result ? 'SUCCESS' : 'FAILED'));
-        }
 
         register_rest_route(
             'fp-resv/v1',
@@ -100,10 +89,6 @@ final class REST
 
     public function handleList(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] handleList() chiamato');
-        }
-        
         // Cattura eventuali output indesiderati da hook o snippet
         $this->responseBuilder->startOutputCapture();
         
@@ -114,10 +99,6 @@ final class REST
             'range_end'        => $range['end'],
             'include_inactive' => (bool) $request->get_param('include_inactive'),
         ];
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Filters: ' . wp_json_encode($filters));
-        }
 
         $scope = $request->get_param('scope');
         if (is_string($scope) && sanitize_key($scope) !== '') {
@@ -134,13 +115,7 @@ final class REST
             $filters['table_id'] = (int) $tableId;
         }
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Chiamata service->list()');
-        }
         $items = $this->service->list($filters);
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Items ricevuti: ' . count($items));
-        }
 
         $expand = $request->get_param('expand');
         if ($expand === 'occurrences') {
@@ -164,12 +139,7 @@ final class REST
             'range' => $this->responseBuilder->formatRange($range),
             'items' => $items,
         ];
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Response preparata con ' . count($items) . ' items');
-            error_log('[FP Closures REST] Response JSON: ' . wp_json_encode($response));
-        }
-        
+
         // Cattura e scarta eventuali output indesiderati
         $this->responseBuilder->captureAndCleanOutput();
         
@@ -178,44 +148,24 @@ final class REST
 
     public function handleCreate(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] handleCreate() chiamato');
-        }
-        
         // Cattura eventuali output indesiderati
         $this->responseBuilder->startOutputCapture();
         
         $payload = $this->payloadCollector->collect($request);
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Payload: ' . wp_json_encode($payload));
-        }
 
         try {
             $model = $this->service->create($payload);
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Closures REST] Chiusura creata con ID: ' . $model->id);
-            }
         } catch (InvalidArgumentException $exception) {
             $this->responseBuilder->captureAndCleanOutput();
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Closures REST] InvalidArgumentException: ' . $exception->getMessage());
-            }
             return new WP_Error('fp_resv_closure_invalid', $exception->getMessage(), ['status' => 400]);
         } catch (RuntimeException $exception) {
             $this->responseBuilder->captureAndCleanOutput();
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Closures REST] RuntimeException: ' . $exception->getMessage());
-            }
             return new WP_Error('fp_resv_closure_error', $exception->getMessage(), ['status' => 500]);
         }
 
         // Usa direttamente il model creato invece di richiamarlo
         $response = $this->modelExporter->export($model);
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] Response finale: ' . wp_json_encode($response));
-        }
-        
+
         // Cattura e scarta eventuali output indesiderati
         $this->responseBuilder->captureAndCleanOutput();
 
@@ -289,24 +239,13 @@ final class REST
 
     private function permissionCallback(): bool
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] permissionCallback() chiamato');
-        }
         $can = Security::currentUserCanManage();
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Closures REST] permissionCallback result: ' . ($can ? 'TRUE' : 'FALSE'));
-            error_log('[FP Closures REST] User ID: ' . get_current_user_id());
-            error_log('[FP Closures REST] Is user logged in: ' . (is_user_logged_in() ? 'YES' : 'NO'));
-        }
-        
-        // TEMPORANEO: Permetti accesso anche a admin WordPress standard
+
+        // Permetti accesso anche a admin WordPress standard
         if (current_user_can('manage_options')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Closures REST] Permesso via manage_options (admin)');
-            }
             return true;
         }
-        
+
         return $can;
     }
 

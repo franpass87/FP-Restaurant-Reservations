@@ -104,9 +104,6 @@ final class AdminPages
 
     public function register(): void
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv] AdminPages register called');
-        }
         // Priorità 5: crea il menu principale per primo
         add_action('admin_menu', [$this, 'registerMainMenu'], 5);
         // Priorità 20: aggiunge i submenu delle impostazioni dopo i menu operativi (Agenda, Tables, ecc.)
@@ -367,9 +364,6 @@ final class AdminPages
     {
         // Assicura che gli amministratori abbiano sempre la capability necessaria
         Roles::ensureAdminCapabilities();
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv] registerMainMenu invoked');
-        }
 
         if ($this->pages === []) {
             return;

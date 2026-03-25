@@ -6,7 +6,6 @@ namespace FP\Resv\Frontend;
 
 use function class_exists;
 use function do_shortcode;
-use function error_log;
 use function function_exists;
 use function strpos;
 
@@ -29,9 +28,7 @@ final class PageBuilderCompatibility
         if (strpos($content, '[fp_reservations') === false) {
             return $content;
         }
-        
-        error_log('[FP-RESV] WPBakery content filter - processing shortcode');
-        
+
         return do_shortcode($content);
     }
 
@@ -41,7 +38,6 @@ final class PageBuilderCompatibility
     public function preventWPBakeryEscape(string $content, string $shortcodeTag): string
     {
         if (strpos($content, '[fp_reservations') !== false || strpos($content, 'fp-resv-widget') !== false) {
-            error_log('[FP-RESV] WPBakery escape prevention - processing content');
             // WPBakery text blocks sometimes wrap content in esc_html, we prevent that
             return do_shortcode($content);
         }

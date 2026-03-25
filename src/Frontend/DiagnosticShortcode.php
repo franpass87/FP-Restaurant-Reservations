@@ -11,7 +11,6 @@ use function count;
 use function current_time;
 use function current_user_can;
 use function esc_html;
-use function error_log;
 use function is_array;
 use function is_wp_error;
 use function ob_get_clean;
@@ -34,19 +33,8 @@ final class DiagnosticShortcode
      */
     public function render(): string
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP-RESV-DEBUG] renderDebug() called');
-        }
-
         if (!current_user_can('manage_options')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV-DEBUG] User does not have manage_options capability');
-            }
             return $this->renderPermissionError();
-        }
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP-RESV-DEBUG] User has permissions, proceeding with debug');
         }
 
         try {
@@ -59,16 +47,8 @@ final class DiagnosticShortcode
             $this->renderPanel($wpdb, $table, $customersTable);
             
             $output = ob_get_clean();
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV-DEBUG] Generated output length: ' . strlen($output));
-            }
             return $output;
         } catch (Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP-RESV-DEBUG] ERROR: ' . $e->getMessage());
-                error_log('[FP-RESV-DEBUG] Stack trace: ' . $e->getTraceAsString());
-            }
-
             return $this->renderException($e);
         }
     }

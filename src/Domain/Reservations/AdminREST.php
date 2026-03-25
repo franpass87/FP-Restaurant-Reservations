@@ -109,29 +109,29 @@ final class AdminREST
     {
         
         try {
-            $result = register_rest_route(
-            'fp-resv/v1',
-            '/agenda',
-            [
-                'methods'             => WP_REST_Server::READABLE,
+            register_rest_route(
+                'fp-resv/v1',
+                '/agenda',
+                [
+                    'methods'             => WP_REST_Server::READABLE,
                     'callback'            => [$this, 'handleAgendaV2'],
                     'permission_callback' => [$this, 'checkPermissions'],
-                'args'                => [
-                    'date' => [
-                        'type'     => 'string',
-                        'required' => false,
+                    'args'                => [
+                        'date' => [
+                            'type'     => 'string',
+                            'required' => false,
+                        ],
+                        'range' => [
+                            'type'     => 'string',
+                            'required' => false,
+                        ],
                     ],
-                    'range' => [
-                        'type'     => 'string',
-                        'required' => false,
-                    ],
-                ],
                 ]
             );
         } catch (\Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv AdminREST] ❌ ERRORE registrazione /agenda: ' . $e->getMessage());
-            }
+            ErrorLogger::log('Registrazione REST /agenda fallita', [
+                'message' => $e->getMessage(),
+            ]);
         }
 
         // DEBUG endpoint - solo se WP_DEBUG è attivo e utente ha permessi
@@ -298,9 +298,6 @@ final class AdminREST
                 try {
                     $reservations[] = $this->agendaHandler->mapAgendaReservation($row);
                 } catch (Throwable $e) {
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('[FP Resv Stats] Errore mapping prenotazione: ' . $e->getMessage());
-                    }
                     continue;
                 }
             }
@@ -321,9 +318,6 @@ final class AdminREST
             
             return $response;
         } catch (Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Stats] Errore critico: ' . $e->getMessage());
-            }
             return new WP_Error(
                 'fp_resv_stats_error',
                 sprintf(__('Errore nel caricamento delle statistiche: %s', 'fp-restaurant-reservations'), $e->getMessage()),
@@ -335,12 +329,6 @@ final class AdminREST
 
     public function handleAgendaV2(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        // 🚨 LOG IMMEDIATO
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('=== HANDLEAGENDAV2 CHIAMATO! Timestamp: ' . time() . ' ===');
-        }
-        
-        // LOGICA VERA - BYPASS RIMOSSO
         try {
             // STEP 1: Test base
             $step = 1;
@@ -390,23 +378,9 @@ final class AdminREST
             $step = 7;
             $startDate = $start->format('Y-m-d');
             $endDate = $end->format('Y-m-d');
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Admin handleAgendaV2] Chiamata findAgendaRange con startDate=' . $startDate . ' endDate=' . $endDate);
-            }
-            
+
             $rows = $this->reservations->findAgendaRange($startDate, $endDate);
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Admin handleAgendaV2] findAgendaRange ha restituito: ' . (is_array($rows) ? count($rows) : 'NULL') . ' righe');
-                
-                if (is_array($rows) && count($rows) > 0) {
-                    error_log('[FP Admin handleAgendaV2] Prima riga: ' . wp_json_encode($rows[0]));
-                } else {
-                    error_log('[FP Admin handleAgendaV2] ⚠️ NESSUNA RIGA RESTITUITA DA findAgendaRange!');
-                }
-            }
-            
+
             // STEP 8: Mappa prenotazioni
             $step = 8;
             $reservations = [];
@@ -456,11 +430,7 @@ final class AdminREST
             
             // STEP 10: Risposta
             $step = 10;
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("=== TROVATE {$totalReservations} PRENOTAZIONI ===");
-            }
-            
+
             return new WP_REST_Response([
                 'meta' => [
                     'range' => $rangeMode,
@@ -495,56 +465,20 @@ final class AdminREST
 
     public function handleCreateReservation(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE DAL MANAGER START ===');
-            error_log('[FP Resv Admin] Request method: ' . $request->get_method());
-            error_log('[FP Resv Admin] Request route: ' . $request->get_route());
-            error_log('[FP Resv Admin] Request params: ' . wp_json_encode($request->get_params()));
-        }
-        
         try {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 1: Estrazione payload...');
-            }
-            
             $payload = $this->payloadExtractor->extract($request);
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 2: Payload estratto con successo: ' . wp_json_encode([
-                    'date' => $payload['date'] ?? 'N/A',
-                    'time' => $payload['time'] ?? 'N/A',
-                    'party' => $payload['party'] ?? 'N/A',
-                    'meal' => $payload['meal'] ?? 'N/A',
-                    'first_name' => $payload['first_name'] ?? 'N/A',
-                    'email' => $payload['email'] ?? 'N/A',
-                ]));
-                error_log('[FP Resv Admin] STEP 3: Chiamata service->create()...');
-            }
-            
+
             // Use Application layer Use Case instead of direct service call
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 3: Chiamata CreateReservationUseCase->execute()...');
-            }
-            
             $reservation = $this->createUseCase->execute($payload);
             $reservationId = $reservation->getId();
-            
+
             // Convert model to array for compatibility
             $result = $reservation->toArray();
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 4: CreateReservationUseCase->execute() completato con successo');
-                error_log('[FP Resv Admin] Reservation ID: ' . $reservationId);
-            }
-            
+
             if ($reservationId <= 0) {
                 throw new RuntimeException('Prenotazione creata ma ID non valido');
             }
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] Prenotazione creata con ID: ' . $reservationId);
-            }
-            
+
             // Tenta di recuperare la prenotazione appena creata con retry
             $entry = null;
             $maxRetries = 3;
@@ -556,18 +490,10 @@ final class AdminREST
                 // Piccolo delay prima di riprovare (WordPress potrebbe avere cache)
                 if ($i < $maxRetries - 1) {
                     usleep(50000); // 50ms
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('[FP Resv Admin] Retry ' . ($i + 1) . ' per trovare prenotazione #' . $reservationId);
-                    }
                 }
             }
-            
+
             if ($entry === null) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('[FP Resv Admin] ERRORE: Prenotazione #' . $reservationId . ' creata ma NON trovata dopo ' . $maxRetries . ' tentativi');
-                    error_log('[FP Resv Admin] Dettagli result: ' . json_encode($result));
-                }
-                
                 // La prenotazione esiste ma non riusciamo a recuperarla - restituiamo comunque successo
                 // con i dati minimi necessari
                 $responseData = [
@@ -594,18 +520,7 @@ final class AdminREST
                     'result'      => $result,
                 ];
             }
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 6: Costruzione risposta...');
-                error_log('[FP Resv Admin] Response data: ' . wp_json_encode([
-                'has_reservation' => isset($responseData['reservation']),
-                'reservation_id' => $responseData['reservation']['id'] ?? null,
-            ]));
-            }
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 7: Chiamata rest_ensure_response()...');
-            }
+
             $response = rest_ensure_response($responseData);
             
             // Aggiungi header personalizzati per il debug
@@ -616,33 +531,16 @@ final class AdminREST
                     'X-FP-Resv-Timestamp' => (string) time(),
                 ]);
             }
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] STEP 8: Response creata: ' . get_class($response));
-                error_log('[FP Resv Admin] Response status: ' . ($response instanceof WP_REST_Response ? $response->get_status() : 'N/A'));
-                error_log('[FP Resv Admin] Response data size: ' . strlen(wp_json_encode($response->get_data())));
-                error_log('[FP Resv Admin] === CREAZIONE PRENOTAZIONE COMPLETATA - RITORNO RESPONSE ===');
-            }
-            
+
             return $response;
-            
+
         } catch (InvalidArgumentException|RuntimeException $exception) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] Errore validazione: ' . $exception->getMessage());
-                error_log('[FP Resv Admin] Stack trace: ' . $exception->getTraceAsString());
-            }
-            
             return new WP_Error(
                 'fp_resv_admin_reservation_invalid',
                 $exception->getMessage(),
                 ['status' => 400]
             );
         } catch (ValidationException $exception) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] ValidationException: ' . $exception->getMessage());
-                error_log('[FP Resv Admin] Context: ' . wp_json_encode($exception->getContext()));
-            }
-
             return new WP_Error(
                 'fp_resv_admin_reservation_validation_error',
                 $exception->getMessage(),
@@ -652,11 +550,6 @@ final class AdminREST
                 ]
             );
         } catch (Throwable $exception) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv Admin] Errore critico: ' . $exception->getMessage());
-                error_log('[FP Resv Admin] Stack trace: ' . $exception->getTraceAsString());
-            }
-            
             return new WP_Error(
                 'fp_resv_admin_reservation_error',
                 __('Impossibile creare la prenotazione.', 'fp-restaurant-reservations'),
@@ -808,12 +701,8 @@ final class AdminREST
         }
 
         do_action('fp_resv_reservation_updated', $id, $entry, $updates, $original);
-        
-        $hookOutput = ob_get_clean();
-        
-        if ($hookOutput && defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante update: ' . $hookOutput);
-        }
+
+        ob_get_clean();
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->agendaHandler->mapAgendaReservation($entry) : null,
@@ -877,11 +766,7 @@ final class AdminREST
         // Cattura eventuali output indesiderati da hook durante il move
         ob_start();
         do_action('fp_resv_reservation_moved', $id, $entry, $updates);
-        $hookOutput = ob_get_clean();
-        
-        if ($hookOutput && defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Admin] ATTENZIONE: Hook ha generato output durante move: ' . $hookOutput);
-        }
+        ob_get_clean();
 
         return rest_ensure_response([
             'reservation' => $entry !== null ? $this->agendaHandler->mapAgendaReservation($entry) : null,
@@ -899,58 +784,36 @@ final class AdminREST
 
         // Verifica che la prenotazione esista usando GetReservationUseCase
         try {
-            $reservationModel = $this->getReservationUseCase->execute($id);
+            $this->getReservationUseCase->execute($id);
             // Still need array format for hooks
             $entry = $this->reservations->findAgendaEntry($id);
         } catch (ValidationException $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Prenotazione non trovata: ' . $e->getMessage());
-            }
             return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
         }
-        
+
         if ($entry === null) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Prenotazione non trovata nel database');
-            }
             return new WP_Error('fp_resv_not_found', __('Prenotazione non trovata.', 'fp-restaurant-reservations'), ['status' => 404]);
         }
 
         try {
             // Use Application layer Use Case instead of direct repository call
             $deleted = $this->deleteUseCase->execute($id);
-            
+
             if (!$deleted) {
                 throw new RuntimeException('Impossibile eliminare la prenotazione.');
             }
 
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Prenotazione eliminata dal DB, triggering action...');
-            }
-            
             // Trigger action per eventuali integrazioni - cattura output indesiderato
             ob_start();
             do_action('fp_resv_reservation_deleted', $id, $entry);
-            $hookOutput = ob_get_clean();
-            
-            if ($hookOutput && defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] ATTENZIONE: Hook ha generato output: ' . $hookOutput);
-            }
+            ob_get_clean();
 
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Eliminazione prenotazione ID ' . $id . ' completata');
-            }
-            
             $responseData = [
                 'success' => true,
                 'id'      => $id,
                 'message' => __('Prenotazione eliminata con successo.', 'fp-restaurant-reservations'),
             ];
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Restituisco risposta: ' . json_encode($responseData));
-            }
-            
+
             // Crea risposta REST esplicita
             $response = new WP_REST_Response($responseData, 200);
             $response->set_headers([
@@ -958,21 +821,10 @@ final class AdminREST
                 'X-FP-Delete-Success' => 'true',
                 'X-FP-Reservation-ID' => (string) $id,
             ]);
-            
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] Headers impostati, returnando response object');
-                error_log('[FP Resv] Response data type: ' . gettype($response));
-                error_log('[FP Resv] Response data class: ' . get_class($response));
-                error_log('[FP Resv] Response status: ' . $response->get_status());
-                error_log('[FP Resv] Response data: ' . json_encode($response->get_data()));
-            }
-            
-            // Verifica se ci sono filter attivi
+
             $filters = $GLOBALS['wp_filter']['rest_pre_serve_request'] ?? null;
-            if ($filters && defined('WP_DEBUG') && WP_DEBUG) {
+            if ($filters) {
                 $filterCount = count($filters->callbacks ?? []);
-                error_log('[FP Resv] ATTENZIONE: Ci sono ' . $filterCount . ' filter su rest_pre_serve_request');
-                
                 ErrorLogger::log('REST filters potrebbero interferire con DELETE response', [
                     'endpoint' => 'DELETE /agenda/reservations/' . $id,
                     'filter_count' => $filterCount,
@@ -980,14 +832,9 @@ final class AdminREST
                     'response_has_data' => !empty($response->get_data()),
                 ]);
             }
-            
+
             return $response;
         } catch (Throwable $exception) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[FP Resv] ERRORE ELIMINAZIONE: ' . $exception->getMessage());
-                error_log('[FP Resv] Stack trace: ' . $exception->getTraceAsString());
-            }
-            
             ErrorLogger::log('Errore eliminazione prenotazione', [
                 'reservation_id' => $id,
                 'error' => $exception->getMessage(),
@@ -1009,25 +856,11 @@ final class AdminREST
      */
     public function checkPermissions(): bool
     {
-        $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
         $canManageOptions = current_user_can('manage_options');
-        $result = $canManage || $canView || $canManageOptions;
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[FP Resv Permissions] User ID: ' . $userId);
-            error_log('[FP Resv Permissions] Can manage: ' . ($canManage ? 'YES' : 'NO'));
-            error_log('[FP Resv Permissions] Can view: ' . ($canView ? 'YES' : 'NO'));
-            error_log('[FP Resv Permissions] Can manage options: ' . ($canManageOptions ? 'YES' : 'NO'));
-            error_log('[FP Resv Permissions] Result: ' . ($result ? 'ALLOWED' : 'DENIED'));
-            
-            if (!$result) {
-                error_log('[FP Resv Permissions] ❌ ACCESSO NEGATO!');
-            }
-        }
-        
-        return $result;
+
+        return $canManage || $canView || $canManageOptions;
     }
 
     /**
@@ -1037,17 +870,11 @@ final class AdminREST
      */
     public function checkManagePermissions(): bool
     {
-        $userId = get_current_user_id();
         $canManage = current_user_can(Roles::MANAGE_RESERVATIONS);
         $canView = current_user_can(Roles::VIEW_RESERVATIONS_MANAGER);
         $canManageOptions = current_user_can('manage_options');
-        $result = $canManage || $canView || $canManageOptions;
-        
-        if (defined('WP_DEBUG') && WP_DEBUG && !$result) {
-            error_log('[FP Resv Manage Permissions] ❌ ACCESSO NEGATO per user ' . $userId);
-        }
-        
-        return $result;
+
+        return $canManage || $canView || $canManageOptions;
     }
 
     private function sanitizeDate(mixed $value): ?string

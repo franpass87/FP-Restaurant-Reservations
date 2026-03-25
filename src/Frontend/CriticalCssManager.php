@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace FP\Resv\Frontend;
 
-use function error_log;
-
 /**
  * Gestisce il CSS critico inline per override del tema.
  * Estratto da WidgetController per migliorare la manutenibilità.
@@ -17,8 +15,6 @@ final class CriticalCssManager
      */
     public function render(): void
     {
-        error_log('[FP-RESV] CriticalCssManager - Caricando CSS critico inline');
-        
         echo '<style id="fp-resv-critical-css" type="text/css">' . "\n";
         echo $this->getCriticalCss();
         echo '</style>' . "\n";
