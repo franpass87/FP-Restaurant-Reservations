@@ -1,3 +1,9 @@
+## [1.0.23] - 2026-03-25
+
+### Fixed
+
+- Shortcode prenotazioni: rimossi `error_log` ricorrenti da `Shortcodes::register`, `ShortcodeRenderer` e shortcode di test — con `WP_DEBUG` + `WP_DEBUG_LOG` non si riempie più `debug.log` a ogni richiesta/registrazione.
+
 ## [1.0.22] - 2026-03-24
 
 ### Changed

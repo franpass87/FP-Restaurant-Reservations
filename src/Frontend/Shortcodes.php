@@ -7,7 +7,6 @@ namespace FP\Resv\Frontend;
 use function add_shortcode;
 use function current_user_can;
 use function esc_html;
-use function error_log;
 use function wp_date;
 use function wp_get_current_user;
 
@@ -30,25 +29,9 @@ final class Shortcodes
 
     public static function register(): void
     {
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP-RESV-SHORTCODE] register() method called');
-        }
         add_shortcode('fp_reservations', [self::class, 'render']);
         add_shortcode('fp_resv_debug', [self::class, 'renderDebug']);
         add_shortcode('fp_resv_test', [self::class, 'renderTest']);
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP-RESV-SHORTCODE] Shortcodes registered');
-        }
-        
-        // Verifica che lo shortcode sia effettivamente registrato
-        global $shortcode_tags;
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            if (isset($shortcode_tags['fp_reservations'])) {
-                error_log('[FP-RESV-SHORTCODE] ✅ Shortcode fp_reservations VERIFICATO registrato');
-            } else {
-                error_log('[FP-RESV-SHORTCODE] ❌ ERRORE: Shortcode fp_reservations NON registrato!');
-            }
-        }
     }
 
     private static function getRenderer(): ShortcodeRenderer
@@ -89,10 +72,6 @@ final class Shortcodes
      */
     public static function renderTest(): string
     {
-        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
-            error_log('[FP-RESV-TEST] Test shortcode called!');
-        }
-        
         $timestamp = wp_date('Y-m-d H:i:s');
         $user = wp_get_current_user();
         $isAdmin = current_user_can('manage_options') ? 'SÌ' : 'NO';
