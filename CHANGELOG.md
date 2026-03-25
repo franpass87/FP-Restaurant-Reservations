@@ -1,3 +1,8 @@
+## [1.0.21] - 2026-03-24
+
+### Changed
+- Brevo contatti: con **FP Marketing Tracking Layer** e Brevo abilitato lì, l’upsert usa `fp_tracking_brevo_upsert_contact()` (stessa API key del layer). `isEnabled()` resta true anche senza chiave API nel tab Brevo del ristorante se il layer è configurato.
+
 ## [1.0.20] - 2026-03-24
 
 ### Changed

@@ -522,7 +522,15 @@ final class AutomationService
             }
         }
 
-        $response = $this->client->upsertContact($payload);
+        $useTrackingContacts = function_exists('fp_tracking_brevo_upsert_contact')
+            && function_exists('fp_tracking_get_brevo_settings')
+            && !empty(fp_tracking_get_brevo_settings()['enabled']);
+
+        if ($useTrackingContacts) {
+            $response = fp_tracking_brevo_upsert_contact($payload, 'restaurant', 'it');
+        } else {
+            $response = $this->client->upsertContact($payload);
+        }
         $status   = !empty($response['success']) ? 'success' : 'error';
 
         $this->repository->log($reservationId, 'contact_upsert', [
@@ -688,7 +696,16 @@ final class AutomationService
     {
         $settings = $this->options->getGroup('fp_resv_brevo', []);
 
-        return ($settings['brevo_enabled'] ?? '0') === '1' && $this->client->isConnected();
+        if (($settings['brevo_enabled'] ?? '0') !== '1') {
+            return false;
+        }
+
+        if ($this->client->isConnected()) {
+            return true;
+        }
+
+        return function_exists('fp_tracking_get_brevo_settings')
+            && !empty(fp_tracking_get_brevo_settings()['enabled']);
     }
 
     /**
