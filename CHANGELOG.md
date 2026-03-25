@@ -1,3 +1,9 @@
+## [1.0.22] - 2026-03-24
+
+### Changed
+
+- Brevo transactional: in `send` e `sendBulk` il payload verso `/v3/smtp/email` passa da `fp_tracking_brevo_merge_transactional_tags()` se disponibile (tag sito da FP Marketing Tracking Layer).
+
 ## [1.0.21] - 2026-03-24
 
 ### Changed

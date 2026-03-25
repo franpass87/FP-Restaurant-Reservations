@@ -54,7 +54,11 @@ final class BrevoEmailProvider implements EmailProviderInterface
             'subject' => $subject,
             'htmlContent' => $body,
         ];
-        
+
+        if (function_exists('fp_tracking_brevo_merge_transactional_tags')) {
+            $payload = fp_tracking_brevo_merge_transactional_tags($payload);
+        }
+
         $response = $this->httpClient->post(
             self::API_BASE_URL . '/smtp/email',
             $payload,
@@ -65,7 +69,7 @@ final class BrevoEmailProvider implements EmailProviderInterface
                 ],
             ]
         );
-        
+
         if (isset($response['error']) || ($response['response']['code'] ?? 0) !== 201) {
             $this->logger->error('Brevo email send failed', [
                 'to' => $to,
@@ -105,7 +109,11 @@ final class BrevoEmailProvider implements EmailProviderInterface
             'subject' => $subject,
             'htmlContent' => $body,
         ];
-        
+
+        if (function_exists('fp_tracking_brevo_merge_transactional_tags')) {
+            $payload = fp_tracking_brevo_merge_transactional_tags($payload);
+        }
+
         $response = $this->httpClient->post(
             self::API_BASE_URL . '/smtp/email',
             $payload,
@@ -116,7 +124,7 @@ final class BrevoEmailProvider implements EmailProviderInterface
                 ],
             ]
         );
-        
+
         if (isset($response['error']) || ($response['response']['code'] ?? 0) !== 201) {
             $this->logger->error('Brevo bulk email send failed', [
                 'recipients_count' => count($to),
