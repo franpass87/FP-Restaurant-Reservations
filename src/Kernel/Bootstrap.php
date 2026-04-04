@@ -82,6 +82,8 @@ final class Bootstrap
         if (!\FP\Resv\Core\Requirements::validate()) {
             return;
         }
+
+        \FP\Resv\Core\TrackingLayerAdminNotice::register();
         
         // 2. Verify PSR Container interface exists before creating container
         if (!interface_exists('Psr\Container\ContainerInterface')) {

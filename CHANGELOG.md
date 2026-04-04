@@ -1,3 +1,8 @@
+## [1.0.25] - 2026-04-04
+
+### Added
+- Notice admin (warning) se **FP Marketing Tracking Layer** non è attivo: promemoria per evitare deploy in produzione senza layer e percorsi legacy su tracking/Brevo centralizzato.
+
 ## [1.0.24] - 2026-03-25
 
 ### Fixed
