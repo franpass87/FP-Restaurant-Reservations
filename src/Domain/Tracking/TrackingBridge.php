@@ -15,6 +15,7 @@ use function do_action;
 use function get_bloginfo;
 use function home_url;
 use function is_bool;
+use function is_scalar;
 use function is_string;
 use function uniqid;
 use function wp_get_referer;
@@ -159,7 +160,7 @@ final class TrackingBridge
             : 'EUR';
 
         $reservation_id = (int) ($reservation['id'] ?? 0);
-        $location       = is_string($reservation['location'] ?? null) ? (string) $reservation['location'] : '';
+        $location       = $this->resolveReservationLocationFromEntry($reservation);
 
         $params = [
             'reservation_id'       => $reservation_id,
@@ -191,7 +192,7 @@ final class TrackingBridge
      */
     public function on_status_changed(int $reservation_id, string $previous_status, string $current_status, array $entry): void
     {
-        $location = is_string($entry['location'] ?? null) ? (string) $entry['location'] : '';
+        $location = $this->resolveReservationLocationFromEntry($entry);
 
         [$entry_value, $entry_currency] = $this->resolveMonetaryFromReservationEntry($entry);
 
@@ -200,6 +201,7 @@ final class TrackingBridge
             'transaction_id'       => 'resv-' . $reservation_id,
             'reservation_party'    => (int) ($entry['party'] ?? 1),
             'reservation_date'     => (string) ($entry['date'] ?? ''),
+            'reservation_time'     => $this->resolveReservationTimeFromEntry($entry),
             'meal_type'            => (string) ($entry['meal_type'] ?? $entry['meal'] ?? ''),
             'reservation_location' => $location,
         ];
@@ -249,12 +251,13 @@ final class TrackingBridge
      */
     public function on_reservation_moved(int $reservation_id, array $entry, array $updates): void
     {
-        $location = is_string($entry['location'] ?? null) ? (string) $entry['location'] : '';
+        $location = $this->resolveReservationLocationFromEntry($entry);
 
         do_action('fp_tracking_event', 'booking_moved', [
             'reservation_id'       => $reservation_id,
             'reservation_party'    => (int) ($entry['party'] ?? 1),
             'reservation_date'     => (string) ($entry['date'] ?? ''),
+            'reservation_time'     => $this->resolveReservationTimeFromEntry($entry),
             'meal_type'            => (string) ($entry['meal_type'] ?? $entry['meal'] ?? ''),
             'reservation_location' => $location,
             'new_date'             => (string) ($updates['date'] ?? ''),
@@ -420,6 +423,40 @@ final class TrackingBridge
             'price'         => $pppRounded,
             'quantity'      => $party,
         ]];
+    }
+
+    /**
+     * Location per dataLayer: stringa `location` (form) oppure `location_id` dalla tabella prenotazioni.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function resolveReservationLocationFromEntry(array $entry): string
+    {
+        $loc = $entry['location'] ?? null;
+        if (is_string($loc) && $loc !== '') {
+            return $loc;
+        }
+        $lid = $entry['location_id'] ?? null;
+        if ($lid === null || $lid === '') {
+            return '';
+        }
+
+        return is_scalar($lid) ? (string) $lid : '';
+    }
+
+    /**
+     * Orario prenotazione in formato HH:mm dalla colonna `time` (TIME MySQL).
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function resolveReservationTimeFromEntry(array $entry): string
+    {
+        $t = trim((string) ($entry['time'] ?? ''));
+        if ($t === '') {
+            return '';
+        }
+
+        return strlen($t) >= 5 ? substr($t, 0, 5) : $t;
     }
 
     /**

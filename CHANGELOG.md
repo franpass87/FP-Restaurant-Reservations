@@ -1,3 +1,8 @@
+## [1.0.27] - 2026-04-04
+
+### Fixed
+- `TrackingBridge`: `reservation_location` usa anche **`location_id`** dal DB (prima solo chiave testo `location`, quasi sempre assente). Aggiunto **`reservation_time`** (HH:mm) su cambio stato e su `booking_moved`; stesso fallback location per `event_ticket_purchase`.
+
 ## [1.0.26] - 2026-04-04
 
 ### Fixed

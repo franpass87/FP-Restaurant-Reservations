@@ -18,7 +18,7 @@ final class Plugin
      * Current plugin semantic version.
      * Keep this in sync with the plugin header in fp-restaurant-reservations.php.
      */
-    public const VERSION = '1.0.26';
+    public const VERSION = '1.0.27';
     
     /** @var Container Service container */
     private Container $container;
