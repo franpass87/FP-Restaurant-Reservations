@@ -715,8 +715,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
 
-            // booking_submitted / booking_confirmed sono sparati server-side dal TrackingBridge PHP
-            // e iniettati nel dataLayer da DataLayerManager::output_events() in wp_footer.
+            // Con FP Marketing Tracking Layer: `fp_tracking_event` (booking_submitted / booking_confirmed, ecc.).
+            // Senza layer: `Tracking\\Manager` inietta in footer gli stessi nomi evento (allineati al catalogo).
 
             // Invia la richiesta al server
             const response = await fetch('/wp-json/fp-resv/v1/reservations', {
@@ -734,8 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 // Successo!
 
-                // booking_confirmed / purchase sono sparati server-side dal TrackingBridge PHP
-                // e iniettati nel dataLayer da DataLayerManager::output_events().
+                // Nessun secondo evento `purchase` nel dataLayer: value stimato è in `ga4.params` dell'evento prenotazione.
                 // Qui segnaliamo solo il completamento per bloccare booking_form_abandon.
                 _bookingSubmitted = true;
 

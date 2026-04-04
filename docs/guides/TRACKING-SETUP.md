@@ -17,7 +17,7 @@ Guida alla configurazione di **GA4**, **Google Ads**, **Meta Pixel** e **Microso
 
 1. **Nel plugin**: **Prenotazioni → Impostazioni → Tracking** → attiva **«Usa Google Tag Manager»**. Lascia vuoti GA4 Measurement ID, ID conversione Google Ads, Meta Pixel ID e Clarity (il plugin non caricherà più quei tag).
 2. **Nel sito**: installa il **contenitore GTM** (snippet in head + body), ad esempio dal tema, da un plugin “Insert Headers and Footers” o da un modulo GTM del tema.
-3. **In GTM**: crea i tag (GA4, Google Ads Conversion, Meta Pixel, Clarity) e i trigger basati sugli **eventi del dataLayer** che il plugin già invia (es. `reservation_view`, `reservation_confirmed`, `meal_selected`, `purchase`). La struttura degli eventi è descritta in [TRACKING-MAP.md](../api/TRACKING-MAP.md).
+3. **In GTM**: crea i tag (GA4, Google Ads Conversion, Meta Pixel, Clarity) e i trigger basati sugli **eventi del dataLayer** che il plugin già invia (es. `reservation_view`, `booking_confirmed`, `booking_submitted`, `meal_selected`; valore stimato in `ga4.params`, senza evento `purchase` duplicato). La struttura è in [TRACKING-MAP.md](../api/TRACKING-MAP.md).
 
 Con **«Usa Google Tag Manager»** attivo il plugin:
 
@@ -125,7 +125,7 @@ Nella sezione **Privacy & GDPR** puoi impostare:
 
 ## Verifica
 
-- **GA4**: Report → Realtime; fai una prenotazione di test e controlla gli eventi (es. `reservation_view`, `reservation_confirmed`).
+- **GA4**: Report → Realtime; fai una prenotazione di test e controlla gli eventi (es. `reservation_view`, `booking_confirmed` / `booking_submitted`).
 - **Meta**: Events Manager → Test Events; verifica che gli eventi (es. Purchase) arrivino e, se usi CAPI, che non siano duplicati.
 - **Clarity**: dashboard progetto; verifica che le sessioni vengano registrate dopo aver accettato Analytics e Clarity.
 - **Debug**: in Tracking abilita **Modalità debug** per log in console (solo in sviluppo); per errori server-side controlla i log PHP (`[FP Resv GA4]`, `[FP Resv Meta]`).

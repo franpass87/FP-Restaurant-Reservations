@@ -5,8 +5,8 @@ Questa mappa riassume il flusso end-to-end degli eventi di tracciamento tra data
 ## Panoramica pipeline
 
 1. Il contesto del form (`FormContext`) effettua un push iniziale `reservation_view` nel `DataLayer` server-side, includendo lingua, locale e sede. Il payload viene serializzato nelle variabili di pagina e sarà consumato nel footer per popolare `window.dataLayer` e invocare `fpResvTracking.dispatch`.
-2. Lo script frontend `assets/js/fe/onepage.js` orchestra gli eventi di interazione (`reservation_start`, `meal_selected`, `section_unlocked`, `form_valid`, `reservation_submit`, `reservation_confirmed`, `purchase`) e ascolta i trigger delegati `data-fp-resv-event`.
-3. Il bootstrap tracking (`Tracking\Manager::generateBootstrapScript`) inizializza `fpResvTracking`, imposta lo stato consenso e, quando consentito, carica GA4/Ads/Meta/Clarity propagando gli eventi verso le rispettive API (`gtag`, `fbq`, `clarity`).
+2. Il frontend (es. `assets/js/form-simple.js`) orchestra funnel `booking_form_start`, `booking_step_complete`, `booking_form_abandon`, `booking_submit_error`. Dopo il submit REST, gli eventi prenotazione arrivano dal server (**FP Marketing Tracking Layer** via `fp_tracking_event`, oppure `Tracking\Manager` legacy senza layer) con nomi `booking_submitted` / `booking_confirmed` / `booking_payment_required` / `waitlist_joined`.
+3. Il bootstrap tracking (`Tracking\Manager`) inizializza `fpResvTracking`, imposta lo stato consenso e, quando consentito, carica GA4/Ads/Meta/Clarity propagando gli eventi verso le rispettive API (`gtag`, `fbq`, `clarity`). Con il layer FP attivo questo bootstrap non gira: il layer gestisce GTM/MP/CAPI.
 
 ## Gating dei consensi
 
@@ -28,13 +28,12 @@ Questa mappa riassume il flusso end-to-end degli eventi di tracciamento tra data
 | `meal_selected` | `meal_selected` | Click su pill pasto | `meal_type`, `meal_label` | Analytics |
 | `section_unlocked` | `section_unlocked` | Sblocco sezione progressiva | `section` | Analytics |
 | `form_valid` | `form_valid` | Tutto il form valido | `timestamp` | Analytics |
-| `reservation_submit` | `reservation_submit` (o `reservation_confirmed`/`waitlist_joined`/`reservation_payment_required`) | Submit lato server (hook `fp_resv_reservation_created`) | `reservation_id`, `reservation_status`, `reservation_party`, `reservation_date`, `reservation_time`, `reservation_location`, `value`, `currency` | Analytics |
-| `reservation_confirmed` | `reservation_confirmed` | Dispatch JS `fp-resv:reservation:confirmed` o risposta server | `reservation_id`, `party_size`, `meal_type` | Analytics |
-| `purchase` | `purchase` | Stimato lato server quando Stripe è OFF | `value`, `currency`, `value_is_estimated`, `meal_type`, `party_size` | Analytics |
+| `booking_submitted` | `booking_submitted` | Submit lato server (`fp_resv_reservation_created`, stato pending/default) | In `ga4.params`: `reservation_id`, `reservation_status`, `reservation_party`, date/time/location, `value`, `currency`, opz. `value_is_estimated` | Analytics |
+| `booking_confirmed` | `booking_confirmed` | Stesso hook, stato confirmed | Come sopra + Ads/Meta su conferma | Analytics |
+| `waitlist_joined` | `waitlist_joined` | Stato waitlist | Stessi parametri di `booking_submitted` | Analytics |
+| `booking_payment_required` | `booking_payment_required` | Stato `pending_payment` | Stessi parametri di `booking_submitted` | Analytics |
 | `event_ticket_purchase` | `event_ticket_purchase` | Vendita biglietti evento (`fp_resv_event_booked`) | `items[]`, `value`, `currency` | Analytics |
 | `pdf_download_click` | `pdf_download_click` | Click su link PDF (`data-fp-resv-event`) | `trigger`, `href`, `label` | Analytics |
-| `waitlist_joined` | `waitlist_joined` | Stato prenotazione in waitlist (backend) | Stessi parametri di `reservation_submit` | Analytics |
-| `reservation_payment_required` | `reservation_payment_required` | Prenotazione con pagamento richiesto | Stessi parametri di `reservation_submit` | Analytics |
 | `reservation_cancelled` / `reservation_modified` | (solo dataLayer) | Da emettere manualmente con `fp-resv:tracking:push` o custom JS | Dipende dall'implementazione custom | Analytics |
 
 ### UI instrumentation (dataLayer only)
@@ -52,7 +51,7 @@ Questa mappa riassume il flusso end-to-end degli eventi di tracciamento tra data
 
 | Evento | Trigger | Parametri | Consent |
 |--------|---------|-----------|---------|
-| `conversion` (`ads.name`) per `reservation_confirmed` | Prenotazione confermata lato server | Conversion payload (`value`, `currency`, `transaction_id`) generato da `Ads::conversionPayload` | Ads = granted |
+| `conversion` (`ads.name`) per `booking_confirmed` | Prenotazione confermata lato server | Conversion payload (`value`, `currency`, `transaction_id`) generato da `Ads::conversionPayload` | Ads = granted |
 | `conversion` per `event_ticket_purchase` | Vendita biglietti evento | Conversion payload con valore totale | Ads = granted |
 
 ### Meta Pixel
@@ -116,34 +115,31 @@ window.dataLayer.push({
 ```
 
 ```js
-// Click su CTA Prenota ora
+// Esempio payload server → dataLayer (oggetto completo; GTM spesso legge evt.event e evt.ga4)
 window.dataLayer.push({
-  event: 'reservation_submit',
-  trigger: 'click',
-  party_size: 4,
-  meal_type: 'dinner'
+  event: 'booking_submitted',
+  event_id: 'evt_…',
+  reservation: { id: 1234, status: 'pending', date: '2026-04-04', time: '20:00', party: 4, location: 'default' },
+  ga4: {
+    name: 'booking_submitted',
+    params: {
+      reservation_id: 1234,
+      reservation_party: 4,
+      value: 112,
+      currency: 'EUR',
+      value_is_estimated: true,
+      event_id: 'evt_…'
+    }
+  }
 });
 ```
 
 ```js
-// Conferma ricevuta via evento custom dispatch
+// Confermata (legacy Manager senza FP Tracking; con layer usa fp_tracking_event)
 window.dataLayer.push({
-  event: 'reservation_confirmed',
-  reservation_id: 1234,
-  party_size: 4,
-  meal_type: 'dinner'
-});
-```
-
-```js
-// Purchase stimato se Stripe è disattivo
-window.dataLayer.push({
-  event: 'purchase',
-  value: 112,
-  currency: 'EUR',
-  value_is_estimated: true,
-  meal_type: 'dinner',
-  party_size: 4
+  event: 'booking_confirmed',
+  event_id: 'evt_…',
+  ga4: { name: 'booking_confirmed', params: { reservation_id: 1234, value: 112, currency: 'EUR', event_id: 'evt_…' } }
 });
 ```
 

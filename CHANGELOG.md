@@ -1,3 +1,8 @@
+## [1.0.29] - 2026-04-04
+
+### Changed
+- **Tracking legacy** (plugin senza FP Marketing Tracking Layer): `ReservationEventBuilder` usa gli stessi nomi evento del catalogo centralizzato (`booking_submitted`, `booking_confirmed`, `booking_payment_required`, `waitlist_joined`); valore stimato da `price_per_person` in `ga4.params` con `value_is_estimated`, senza secondo evento `purchase` nel dataLayer. Aggiornati commenti REST/form, `docs/api/TRACKING-MAP.md`, `SERVER-SIDE-TRACKING.md`, guida GTM.
+
 ## [1.0.28] - 2026-04-04
 
 ### Changed

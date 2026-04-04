@@ -97,17 +97,17 @@ I log mostreranno:
 
 Gli eventi seguenti vengono inviati sia lato client che server-side:
 
-### Prenotazioni
-- `reservation_submit` - Prenotazione inviata
-- `reservation_confirmed` - Prenotazione confermata (con Purchase per Meta)
+### Prenotazioni (nomi allineati al catalogo FP Tracking)
+- `booking_submitted` - Prenotazione inviata (pending / default)
+- `booking_confirmed` - Prenotazione confermata (con Purchase per Meta)
 - `waitlist_joined` - Iscrizione alla lista d'attesa
-- `reservation_payment_required` - Pagamento richiesto
+- `booking_payment_required` - Pagamento richiesto
 
 ### Eventi con Biglietti
 - `event_ticket_purchase` - Acquisto biglietto evento (con Purchase per Meta)
 
-### Purchase Stimato
-- `purchase` - Acquisto stimato basato sul prezzo a persona
+### Valore stimato
+- Se il totale deriva da `price_per_person`, è in `ga4.params` con `value_is_estimated: true` (niente secondo evento `purchase` nel dataLayer).
 
 ## Verifica Funzionamento
 

@@ -456,7 +456,7 @@ final class RESTServiceProvider extends ServiceProvider
             // - Nonce verification, rate limiting, honeypot, captcha
             // - Consent check, idempotency
             // - Email invio cliente/staff, Brevo integration
-            // - DataLayer tracking (reservation_confirmed/submit)
+            // - DataLayer tracking (booking_confirmed / booking_submitted, ecc.)
             // NON sovrascrivere qui per evitare la perdita di tutti questi side-effects.
             
             register_rest_route('fp-resv/v1', '/reservations/(?P<id>\d+)', [

@@ -174,13 +174,6 @@ final class Manager
 
         // Invia eventi server-side
         $this->serverSideDispatcher->dispatch($event, $reservation, $payload);
-
-        // Dispatch acquisto stimato se applicabile
-        $currency = is_string($payload['currency'] ?? null) && $payload['currency'] !== '' ? (string) $payload['currency'] : 'EUR';
-        $estimatedEvent = $this->eventBuilder->buildEstimatedPurchaseEvent($payload, $reservation, $currency);
-        if ($estimatedEvent !== null) {
-            DataLayer::push($estimatedEvent);
-        }
     }
 
     /**

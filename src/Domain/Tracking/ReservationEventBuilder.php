@@ -27,7 +27,10 @@ final class ReservationEventBuilder
     }
 
     /**
-     * Costruisce l'evento per una prenotazione creata.
+     * Costruisce l'evento per una prenotazione creata (tracking legacy senza FP Marketing Tracking Layer).
+     *
+     * Nomi `event` / `ga4.name` allineati al catalogo centralizzato: `booking_submitted`, `booking_confirmed`,
+     * `booking_payment_required`, `waitlist_joined`. Valore da `price_per_person` → `ga4.params.value_is_estimated`.
      *
      * @param int $reservationId
      * @param array<string, mixed> $payload
@@ -46,7 +49,9 @@ final class ReservationEventBuilder
         $currency = is_string($payload['currency'] ?? null) && $payload['currency'] !== '' ? (string) $payload['currency'] : 'EUR';
         $location = is_string($payload['location'] ?? null) && $payload['location'] !== '' ? (string) $payload['location'] : 'default';
 
-        // Se value non è inviato ma c'è prezzo a persona, usa value stimato (per tracking conversioni/Purchase)
+        $valueIsEstimated = false;
+
+        // Se value non è inviato ma c'è prezzo a persona, usa value stimato (stesso modello del catalogo FP Tracking / `booking_*`).
         if ($value <= 0.0 && isset($payload['price_per_person']) && is_numeric($payload['price_per_person'])) {
             $pricePerPerson = (float) $payload['price_per_person'];
             if ($pricePerPerson > 0.0) {
@@ -54,11 +59,12 @@ final class ReservationEventBuilder
                     ? max(1, (int) $payload['party'])
                     : max(1, $reservation->getParty());
                 $value = round($pricePerPerson * $party, 2);
+                $valueIsEstimated = true;
             }
         }
 
         $event = [
-            'event'       => 'reservation_submit',
+            'event'       => 'booking_submitted',
             'event_id'    => $eventId,
             'reservation' => [
                 'id'       => $reservationId,
@@ -69,24 +75,25 @@ final class ReservationEventBuilder
                 'location' => $location,
             ],
             'ga4' => [
-                'name'   => 'reservation_submit',
+                'name'   => 'booking_submitted',
                 'params' => array_filter([
-                    'reservation_id'     => $reservationId,
-                    'reservation_status' => $status,
-                    'reservation_party'  => $reservation->getParty(),
-                    'reservation_date'   => $reservation->getDate(),
-                    'reservation_time'   => substr($reservation->getTime(), 0, 5),
+                    'reservation_id'       => $reservationId,
+                    'reservation_status'   => $status,
+                    'reservation_party'    => $reservation->getParty(),
+                    'reservation_date'     => $reservation->getDate(),
+                    'reservation_time'     => substr($reservation->getTime(), 0, 5),
                     'reservation_location' => $location,
-                    'value'              => $value > 0 ? $value : null,
-                    'currency'           => $currency,
-                    'event_id'           => $eventId,
-                ], static fn ($val) => $val !== null && $val !== ''), 
+                    'value'                => $value > 0 ? $value : null,
+                    'currency'             => $currency,
+                    'value_is_estimated'   => $valueIsEstimated ? true : null,
+                    'event_id'             => $eventId,
+                ], static fn ($val) => $val !== null && $val !== ''),
             ],
         ];
 
         if ($status === 'confirmed') {
-            $event['event']                   = 'reservation_confirmed';
-            $event['ga4']['name']             = 'reservation_confirmed';
+            $event['event']                   = 'booking_confirmed';
+            $event['ga4']['name']             = 'booking_confirmed';
             $event['reservation']['status']   = 'confirmed';
             $adsPayload                       = $this->ads->conversionPayload($reservationId, $value, $currency);
             $metaPayload                      = $this->meta->eventPayload('Purchase', $value, $currency, $reservationId);
@@ -101,8 +108,8 @@ final class ReservationEventBuilder
             $event['event']       = 'waitlist_joined';
             $event['ga4']['name'] = 'waitlist_joined';
         } elseif ($status === 'pending_payment') {
-            $event['event']       = 'reservation_payment_required';
-            $event['ga4']['name'] = 'reservation_payment_required';
+            $event['event']       = 'booking_payment_required';
+            $event['ga4']['name'] = 'booking_payment_required';
         }
 
         return $event;
@@ -168,86 +175,7 @@ final class ReservationEventBuilder
 
         return $event;
     }
-
-    /**
-     * Costruisce l'evento per un acquisto stimato (basato su prezzo per persona).
-     *
-     * @param array<string, mixed> $payload
-     * @param ReservationModel $reservation
-     * @param string $currency
-     * @return array<string, mixed>|null
-     */
-    public function buildEstimatedPurchaseEvent(
-        array $payload,
-        ReservationModel $reservation,
-        string $currency
-    ): ?array {
-        if (isset($payload['value']) && is_numeric($payload['value']) && (float) $payload['value'] > 0) {
-            return null;
-        }
-
-        if (!isset($payload['price_per_person']) || !is_numeric($payload['price_per_person'])) {
-            return null;
-        }
-
-        $price = (float) $payload['price_per_person'];
-        if ($price <= 0.0) {
-            return null;
-        }
-
-        $party = isset($payload['party']) && is_numeric($payload['party'])
-            ? max(1, (int) $payload['party'])
-            : max(1, $reservation->getParty());
-
-        $estimated = round($price * $party, 2);
-        if ($estimated <= 0.0) {
-            return null;
-        }
-
-        $currency = $currency !== '' ? $currency : 'EUR';
-        $mealType = isset($payload['meal']) && is_string($payload['meal']) ? (string) $payload['meal'] : '';
-
-        return [
-            'event'    => 'purchase',
-            'purchase' => [
-                'value'              => $estimated,
-                'currency'           => $currency,
-                'value_is_estimated' => true,
-                'meal_type'          => $mealType,
-                'party_size'         => $party,
-            ],
-            'reservation' => [
-                'id'        => $reservation->getId(),
-                'status'    => strtolower($reservation->getStatus()),
-                'party'     => $party,
-                'meal_type' => $mealType,
-            ],
-            'ga4' => [
-                'name'   => 'purchase',
-                'params' => array_filter([
-                    'reservation_id'     => $reservation->getId(),
-                    'reservation_party'  => $party,
-                    'meal_type'          => $mealType !== '' ? $mealType : null,
-                    'value'              => $estimated,
-                    'currency'           => $currency,
-                    'value_is_estimated' => true,
-                ], static fn ($val) => $val !== null && $val !== ''),
-            ],
-        ];
-    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
