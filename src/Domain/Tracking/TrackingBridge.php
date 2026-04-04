@@ -193,14 +193,7 @@ final class TrackingBridge
     {
         $location = is_string($entry['location'] ?? null) ? (string) $entry['location'] : '';
 
-        // Ricostruisce value dal DB: campo value esplicito oppure price_per_person × party
-        $entry_value = 0.0;
-        if (isset($entry['value']) && (float) $entry['value'] > 0) {
-            $entry_value = (float) $entry['value'];
-        } elseif (isset($entry['price_per_person'], $entry['party']) && (float) $entry['price_per_person'] > 0) {
-            $entry_value = (float) $entry['price_per_person'] * (int) $entry['party'];
-        }
-        $entry_currency = (string) ($entry['currency'] ?? 'EUR');
+        [$entry_value, $entry_currency] = $this->resolveMonetaryFromReservationEntry($entry);
 
         $base_params = [
             'reservation_id'       => $reservation_id,
@@ -427,6 +420,63 @@ final class TrackingBridge
             'price'         => $pppRounded,
             'quantity'      => $party,
         ]];
+    }
+
+    /**
+     * Ricava value e currency da una riga prenotazione (es. dopo update stato in admin).
+     * Se `value` in DB è assente/zero, ricostruisce dal prezzo nel piano pasti × coperti (come al submit).
+     *
+     * @param array<string, mixed> $entry Record agenda / DB join customer.
+     * @return array{0: float, 1: string}
+     */
+    private function resolveMonetaryFromReservationEntry(array $entry): array
+    {
+        $currency = trim((string) ($entry['currency'] ?? ''));
+        if ($currency === '' || !preg_match('/^[A-Z]{3}$/i', $currency)) {
+            $general = $this->options->getGroup('fp_resv_general', ['default_currency' => 'EUR']);
+            $currency = strtoupper((string) ($general['default_currency'] ?? 'EUR'));
+            if (!preg_match('/^[A-Z]{3}$/', $currency)) {
+                $currency = 'EUR';
+            }
+        } else {
+            $currency = strtoupper($currency);
+        }
+
+        if (isset($entry['value']) && (float) $entry['value'] > 0) {
+            return [(float) $entry['value'], $currency];
+        }
+
+        $party = max(1, (int) ($entry['party'] ?? 1));
+        if (isset($entry['price_per_person']) && (float) $entry['price_per_person'] > 0) {
+            return [round((float) $entry['price_per_person'] * $party, 2), $currency];
+        }
+
+        $mealKey = trim((string) ($entry['meal'] ?? ''));
+        if ($mealKey === '') {
+            return [0.0, $currency];
+        }
+
+        $definition = (string) $this->options->getField('fp_resv_general', 'frontend_meals', '');
+        if ($definition === '') {
+            return [0.0, $currency];
+        }
+
+        $meals = MealPlan::parse($definition);
+        if ($meals === []) {
+            return [0.0, $currency];
+        }
+
+        $byKey = MealPlan::indexByKey($meals);
+        if (!isset($byKey[$mealKey]['price'])) {
+            return [0.0, $currency];
+        }
+
+        $price = (float) $byKey[$mealKey]['price'];
+        if ($price <= 0.0) {
+            return [0.0, $currency];
+        }
+
+        return [round($price * $party, 2), $currency];
     }
 
     private function boolToTrackingInt(mixed $value): int

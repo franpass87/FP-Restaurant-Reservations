@@ -1,3 +1,8 @@
+## [1.0.26] - 2026-04-04
+
+### Fixed
+- `TrackingBridge::on_status_changed`: se `value` non è valorizzato nel record DB ma il pasto ha prezzo nel piano **frontend_meals**, il totale viene ricostruito per `booking_confirmed` / `booking_payment_completed` (allineato a `enrichMealPricing` al submit), così GA4/Meta ricevono **value** / **items** anche su conferme da pannello.
+
 ## [1.0.25] - 2026-04-04
 
 ### Added
