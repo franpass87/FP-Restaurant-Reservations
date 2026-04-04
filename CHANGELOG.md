@@ -1,3 +1,8 @@
+## [1.0.28] - 2026-04-04
+
+### Changed
+- **Tracking**: alla creazione prenotazione non viene più emesso un secondo evento generico `purchase` insieme a `booking_confirmed` / `booking_submitted` (il catalogo FP Tracking mappa già `booking_confirmed` a Purchase; pending resta su InitiateCheckout). Allineata la simulazione QA nel `Seeder`.
+
 ## [1.0.27] - 2026-04-04
 
 ### Fixed

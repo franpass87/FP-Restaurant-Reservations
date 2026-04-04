@@ -477,14 +477,6 @@ final class Seeder
         ];
 
         do_action('fp_tracking_event', 'booking_confirmed', $trackingBaseParams);
-        do_action(
-            'fp_tracking_event',
-            'purchase',
-            array_merge($trackingBaseParams, [
-                'event_id' => 'qa_sim_purchase_' . $targetReservationId,
-                'value_is_estimated' => true,
-            ])
-        );
 
         $this->reservations->logAudit([
             'action'      => 'rest_tracking_simulated',
@@ -492,7 +484,7 @@ final class Seeder
             'entity_id'   => $targetReservationId,
             'actor_role'  => 'qa_sim',
             'after_json'  => wp_json_encode([
-                'tracking_events' => ['booking_confirmed', 'purchase'],
+                'tracking_events' => ['booking_confirmed'],
                 'qa_simulation' => true,
                 'credentials_required' => false,
             ]),

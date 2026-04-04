@@ -117,16 +117,8 @@ final class TrackingBridge
 
         do_action('fp_tracking_event', $event_name, $params);
 
-        // purchase: confermato o in attesa (stima), così GA4 riceve value anche con default "pending".
-        // Esclusi pending_payment / waitlist dove il valore non è ancora definitivo.
-        $purchaseStatuses = ['confirmed', 'pending'];
-        if ($value > 0 && in_array($status, $purchaseStatuses, true)) {
-            $purchase_params = array_merge($params, [
-                'event_id'           => uniqid('resv_purchase_' . $reservation_id . '_', true),
-                'value_is_estimated' => $status !== 'confirmed',
-            ]);
-            do_action('fp_tracking_event', 'purchase', $purchase_params);
-        }
+        // Niente secondo evento `purchase`: `booking_confirmed` è già mappato a Purchase (Meta/GA4) nel catalogo FP Tracking;
+        // `booking_submitted` → InitiateCheckout con value nel payload (stima su pending).
     }
 
     /**
