@@ -15,6 +15,7 @@ use FP\Resv\Domain\Settings\Style\StyleTokenBuilder;
 use FP\Resv\Frontend\AvailableDaysExtractor;
 use FP\Resv\Frontend\PhonePrefixes;
 use FP\Resv\Frontend\PhonePrefixProcessor;
+use FP\Resv\Integrations\FpPrivacyPolicyUrl;
 use FP\Resv\Kernel\LegacyBridge;
 use DateInterval;
 use DateTimeImmutable;
@@ -207,8 +208,15 @@ final class FormContext
             (string) ($generalSettings['restaurant_name'] ?? '')
         );
 
+        $policyUrl = trim((string) ($trackingSettings['privacy_policy_url'] ?? ''));
+        if ($policyUrl === '') {
+            $policyUrl = FpPrivacyPolicyUrl::resolveUrl(
+                isset($languageData['locale']) ? (string) $languageData['locale'] : null
+            );
+        }
+
         $privacy = [
-            'policy_url'        => esc_url_raw((string) ($trackingSettings['privacy_policy_url'] ?? '')),
+            'policy_url'        => esc_url_raw($policyUrl),
             'policy_version'    => trim((string) ($trackingSettings['privacy_policy_version'] ?? '1.0')),
             'marketing_enabled' => ($trackingSettings['privacy_enable_marketing_consent'] ?? '0') === '1',
             'profiling_enabled' => ($trackingSettings['privacy_enable_profiling_consent'] ?? '0') === '1',

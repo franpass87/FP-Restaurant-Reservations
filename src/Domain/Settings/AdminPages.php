@@ -10,6 +10,7 @@ use FP\Resv\Kernel\LegacyBridge;
 use FP\Resv\Domain\Settings\Admin\SettingsSanitizer;
 use FP\Resv\Domain\Settings\Admin\SettingsValidator;
 use FP\Resv\Domain\Settings\FormColors;
+use FP\Resv\Integrations\FpPrivacyPolicyUrl;
 use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\PagesConfig;
 use FP\Resv\Frontend\SpecialOpeningsProvider;
@@ -36,6 +37,7 @@ use function explode;
 use function filter_input;
 use function filter_var;
 use function file_exists;
+use function get_locale;
 use function get_option;
 use function implode;
 use function in_array;
@@ -794,7 +796,14 @@ final class AdminPages
                 echo '<input type="number" class="small-text" step="1" name="' . esc_attr($inputName) . '" value="' . esc_attr((string) $value) . '"' . $min . $max . '>';
                 break;
             case 'url':
-                echo '<input type="url" class="regular-text" name="' . esc_attr($inputName) . '" value="' . esc_attr((string) $value) . '" placeholder="https://">';
+                $placeholder = 'https://';
+                if ($fieldKey === 'privacy_policy_url' && $optionKey === 'fp_resv_tracking') {
+                    $fpPrivacyUrl = FpPrivacyPolicyUrl::resolveUrl(get_locale());
+                    if ($fpPrivacyUrl !== '') {
+                        $placeholder = $fpPrivacyUrl;
+                    }
+                }
+                echo '<input type="url" class="regular-text" name="' . esc_attr($inputName) . '" value="' . esc_attr((string) $value) . '" placeholder="' . esc_attr($placeholder) . '">';
                 break;
             case 'password':
                 echo '<input type="password" class="regular-text" name="' . esc_attr($inputName) . '" value="' . esc_attr((string) $value) . '">';

@@ -1109,6 +1109,7 @@ final class PagesConfig
                 'label'       => __('URL informativa privacy', 'fp-restaurant-reservations'),
                 'type'        => 'url',
                 'default'     => '',
+                'description' => __('Lascia vuoto per collegarti automaticamente alla pagina impostata in FP Privacy & Cookie Policy (se il plugin è attivo). In alternativa inserisci qui un URL personalizzato.', 'fp-restaurant-reservations'),
             ],
             'privacy_policy_version' => [
                 'label'       => __('Versione informativa', 'fp-restaurant-reservations'),

@@ -1,3 +1,9 @@
+## [1.0.33] - 2026-04-05
+
+### Added
+
+- **Tracking → Privacy & GDPR**: se **FP Privacy & Cookie Policy** è attivo, con **URL informativa** vuoto il form prenotazioni usa automaticamente il permalink della privacy per la lingua del visitatore (stessa logica del plugin privacy: pagina per lingua → fallback pagina privacy WordPress). Testo di aiuto e placeholder in admin aggiornati.
+
 ## [1.0.32] - 2026-04-05
 
 ### Fixed
