@@ -1,27 +1,13 @@
-## [1.0.29] - 2026-04-04
-
-### Changed
-- **Tracking legacy** (plugin senza FP Marketing Tracking Layer): `ReservationEventBuilder` usa gli stessi nomi evento del catalogo centralizzato (`booking_submitted`, `booking_confirmed`, `booking_payment_required`, `waitlist_joined`); valore stimato da `price_per_person` in `ga4.params` con `value_is_estimated`, senza secondo evento `purchase` nel dataLayer. Aggiornati commenti REST/form, `docs/api/TRACKING-MAP.md`, `SERVER-SIDE-TRACKING.md`, guida GTM.
-
-## [1.0.28] - 2026-04-04
-
-### Changed
-- **Tracking**: alla creazione prenotazione non viene più emesso un secondo evento generico `purchase` insieme a `booking_confirmed` / `booking_submitted` (il catalogo FP Tracking mappa già `booking_confirmed` a Purchase; pending resta su InitiateCheckout). Allineata la simulazione QA nel `Seeder`.
-
-## [1.0.27] - 2026-04-04
+## [1.0.30] - 2026-04-05
 
 ### Fixed
-- `TrackingBridge`: `reservation_location` usa anche **`location_id`** dal DB (prima solo chiave testo `location`, quasi sempre assente). Aggiunto **`reservation_time`** (HH:mm) su cambio stato e su `booking_moved`; stesso fallback location per `event_ticket_purchase`.
 
-## [1.0.26] - 2026-04-04
+- Pagina admin **Colori Form** (`fp-resv-form-colors`): layout a griglia e shell `.wrap` / `.fp-resv-admin` allineata alle altre schermate; titolo accessibile (`h1` screen-reader + `h2` nel banner); notice nel blocco `fp-resv-settings__notices`; rimosso blocco `:root` inline che applicava variabili colore a tutto il backend; `confirm` reset con `esc_js`; iframe anteprima con titolo e stili dedicati.
+- `form-colors.js`: applicazione subito delle variabili CSS nell’iframe dopo `document.write` (l’evento `load` poteva essere già occorso e l’anteprima restava neutra); guard su `fpResvFormColors`; rimossi `console.error` in produzione.
 
-### Fixed
-- `TrackingBridge::on_status_changed`: se `value` non è valorizzato nel record DB ma il pasto ha prezzo nel piano **frontend_meals**, il totale viene ricostruito per `booking_confirmed` / `booking_payment_completed` (allineato a `enrichMealPricing` al submit), così GA4/Meta ricevono **value** / **items** anche su conferme da pannello.
+### Changed
 
-## [1.0.25] - 2026-04-04
-
-### Added
-- Notice admin (warning) se **FP Marketing Tracking Layer** non è attivo: promemoria per evitare deploy in produzione senza layer e percorsi legacy su tracking/Brevo centralizzato.
+- `admin-settings.css`: regole layout **Colori Form**; escluso `h1.screen-reader-text` dalla regola che nascondeva tutti gli `h1` nel `.wrap` delle pagine FP Reservations.
 
 ## [1.0.24] - 2026-03-25
 

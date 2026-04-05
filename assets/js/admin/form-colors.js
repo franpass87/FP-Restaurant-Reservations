@@ -12,11 +12,14 @@
         iframe: null,
         iframeDoc: null,
         colorPickers: {},
-        
+
         init() {
             this.iframe = document.getElementById('fp-resv-preview-iframe');
             if (!this.iframe) {
-                console.error('Preview iframe not found');
+                return;
+            }
+
+            if (typeof fpResvFormColors === 'undefined' || !fpResvFormColors || !fpResvFormColors.cssUrl) {
                 return;
             }
 
@@ -132,10 +135,9 @@
             iframeDoc.write(html);
             iframeDoc.close();
 
-            // Wait for iframe to load
-            this.iframe.addEventListener('load', () => {
-                this.updatePreviewColors();
-            });
+            // document.write/close() fires "load" synchronously in many browsers:
+            // a listener registered here would miss it, so apply colors immediately.
+            this.updatePreviewColors();
         },
 
         setupColorPickers() {
@@ -170,13 +172,12 @@
                     try {
                         const colorsAttr = btn.getAttribute('data-colors');
                         if (!colorsAttr) {
-                            console.error('Missing data-colors attribute');
                             return;
                         }
                         const colors = JSON.parse(colorsAttr);
                         this.applyPreset(colors);
-                    } catch (error) {
-                        console.error('Error parsing preset colors:', error);
+                    } catch {
+                        return;
                     }
                 });
             });

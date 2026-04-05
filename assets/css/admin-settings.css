@@ -463,7 +463,129 @@
     }
 }
 
-body[class*="fp-resv-"] .wrap > h1,
+body[class*="fp-resv-"] .wrap > h1:not(.screen-reader-text),
 body[class*="fp-resv-"] .wrap > hr.wp-header-end {
     display: none;
+}
+
+/* —— Pagina admin Colori Form —— */
+.fp-resv-admin--form-colors .fp-resv-admin__main {
+    margin-top: var(--fp-resv-admin-gap, 24px);
+}
+
+.fp-resv-form-colors-container {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
+    gap: var(--fp-resv-admin-gap, 24px);
+    align-items: start;
+}
+
+.fp-resv-form-colors-controls,
+.fp-resv-form-colors-preview {
+    padding: clamp(16px, 2vw, 24px);
+}
+
+.fp-resv-form-colors-section-title {
+    margin: 0 0 8px 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--fp-resv-admin-text, #1d1f24);
+}
+
+.fp-resv-color-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--fp-resv-admin-border, #d6dae3);
+}
+
+.fp-resv-color-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.fp-resv-color-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 1rem;
+}
+
+.fp-resv-color-field label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.fp-resv-color-field__inputs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.fp-resv-color-field .fp-color-picker {
+    width: 48px;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid var(--fp-resv-admin-border, #d6dae3);
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+}
+
+.fp-resv-color-field .fp-color-text {
+    max-width: 120px;
+}
+
+.fp-resv-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fp-resv-preset-btn.button {
+    margin: 0;
+}
+
+.fp-resv-form-colors-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--fp-resv-admin-border, #d6dae3);
+}
+
+.fp-resv-preview-header {
+    margin-bottom: 12px;
+}
+
+.fp-resv-preview-header .description {
+    margin: 4px 0 0 0;
+}
+
+.fp-resv-preview-wrapper {
+    border-radius: var(--fp-resv-admin-radius, 10px);
+    overflow: hidden;
+    border: 1px solid var(--fp-resv-admin-border, #d6dae3);
+    background: var(--fp-resv-admin-surface-alt, #f9fafb);
+    min-height: 420px;
+}
+
+#fp-resv-preview-iframe {
+    display: block;
+    width: 100%;
+    min-height: 560px;
+    border: 0;
+    background: #fff;
+}
+
+@media (max-width: 1100px) {
+    .fp-resv-form-colors-container {
+        grid-template-columns: 1fr;
+    }
+
+    #fp-resv-preview-iframe {
+        min-height: 480px;
+    }
 }

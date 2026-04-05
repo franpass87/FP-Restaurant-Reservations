@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.29
+Stable tag: 1.0.30
 License: GPLv2 or later
 
 == Description ==
@@ -65,20 +65,8 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
-= 1.0.29 - 2026-04-04 =
-* Changed: tracking legacy (senza FP Marketing Tracking Layer) — eventi dataLayer `booking_submitted` / `booking_confirmed` / `booking_payment_required`, `value_is_estimated` in `ga4.params`, rimosso secondo push `purchase`. Documentazione TRACKING-MAP aggiornata.
-
-= 1.0.28 - 2026-04-04 =
-* Changed: tracking — niente doppio `purchase` su nuova prenotazione; solo `booking_confirmed` / `booking_submitted` verso FP Marketing Tracking Layer; Seeder QA allineato.
-
-= 1.0.27 - 2026-04-04 =
-* Fixed: tracking — reservation_location da location_id; reservation_time su stato/moved; event ticket location.
-
-= 1.0.26 - 2026-04-04 =
-* Fixed: tracking su cambio stato — ricostruzione value da piano pasti se assente nel DB.
-
-= 1.0.25 - 2026-04-04 =
-* Admin: avviso se FP Marketing Tracking Layer non è attivo (checklist produzione stack FP).
+= 1.0.30 - 2026-04-05 =
+* Fixed: pagina admin Colori Form — layout, accessibilità titolo, anteprima live nell’iframe (variabili CSS applicate subito), niente più `:root` globale nel backend; CSS dedicato.
 
 = 1.0.24 - 2026-03-25 =
 * Fixed: ulteriore riduzione rumore log — REST admin, closures, tavoli, frontend (shortcode/CSS), aperture speciali e bootstrap; errori rilevanti tramite `ErrorLogger` invece di `error_log` diretto dove applicabile.
