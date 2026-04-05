@@ -1,3 +1,9 @@
+## [1.0.31] - 2026-04-05
+
+### Fixed
+
+- **Anteprima live Colori Form**: caricamento di `form-simple-inline.css` (stesso dello shortcode) al posto di `form.css` / TheFork; markup allineato a `form-simple.php` (`.fp-resv-simple`, `fp-meal-btn`, griglia `fp-time-slots` / `fp-time-slot`, `fp-btn-primary`, selettore persone); CSS dinamico con `!important` mirato al contenitore `#fp-resv-preview-widget` così i colori scelti si vedono sul widget; rimosso il finto messaggio di conferma prenotazione dall’anteprima.
+
 ## [1.0.30] - 2026-04-05
 
 ### Fixed

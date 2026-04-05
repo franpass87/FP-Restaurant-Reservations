@@ -142,11 +142,10 @@ final class AdminPages
             wp_enqueue_style('fp-resv-admin-settings', Plugin::$url . 'assets/css/admin-settings.css', [$baseHandle], $version);
             wp_enqueue_script('fp-resv-form-colors', Plugin::$url . 'assets/js/admin/form-colors.js', [], $version, true);
 
-            $formTheForkPath = Plugin::$dir . 'assets/css/form-thefork.css';
-            $formCssPath      = Plugin::$dir . 'assets/css/form.css';
-            $cssUrl           = Plugin::$url . 'assets/css/form-thefork.css?v=' . $version;
-
-            if (!file_exists($formTheForkPath) && file_exists($formCssPath)) {
+            // Stessi stili del form pubblico (form-simple.php → form-simple-inline.css).
+            $formPreviewCss = Plugin::$dir . 'assets/css/form-simple-inline.css';
+            $cssUrl           = Plugin::$url . 'assets/css/form-simple-inline.css?v=' . $version;
+            if (!file_exists($formPreviewCss)) {
                 $cssUrl = Plugin::$url . 'assets/css/form.css?v=' . $version;
             }
 

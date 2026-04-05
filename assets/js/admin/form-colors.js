@@ -1,12 +1,14 @@
 /**
  * FP Restaurant Reservations - Form Colors Admin
- * Live preview and color picker functionality
+ * Live preview: markup allineato a form-simple.php + CSS form-simple-inline.css
  */
 
 /* global fpResvFormColors */
 
 (function() {
     'use strict';
+
+    const PREVIEW_ROOT = '#fp-resv-preview-widget';
 
     const FormColors = {
         iframe: null,
@@ -23,16 +25,9 @@
                 return;
             }
 
-            // Setup iframe
             this.setupIframe();
-
-            // Setup color pickers
             this.setupColorPickers();
-
-            // Setup presets
             this.setupPresets();
-
-            // Setup text inputs sync
             this.setupTextInputs();
         },
 
@@ -40,7 +35,6 @@
             const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
             this.iframeDoc = iframeDoc;
 
-            // Create basic HTML structure
             const html = `
 <!DOCTYPE html>
 <html lang="it">
@@ -50,81 +44,57 @@
     <title>Preview</title>
     <link rel="stylesheet" href="${fpResvFormColors.cssUrl}">
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .preview-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        body { margin: 0; padding: 16px; background: #eef2f7; font-family: system-ui, sans-serif; }
     </style>
 </head>
 <body>
-    <div class="preview-container">
-        <div class="fp-resv-widget fp-resv fp-card">
-            <div class="fp-topbar">
-                <div>
-                    <h2 class="fp-resv-widget__headline">Prenota un Tavolo</h2>
-                    <p class="fp-resv-widget__subheadline">Scegli data, orario e completa i tuoi dati</p>
-                </div>
+    <div id="fp-resv-preview-widget" class="fp-resv-simple">
+        <div class="fp-resv-header">
+            <div class="fp-resv-header__titles">
+                <h2>Prenota un tavolo</h2>
             </div>
-            
-            <div class="fp-section">
+        </div>
+        <div class="fp-steps-container">
+            <div class="fp-step active" data-step="preview">
                 <div class="fp-field">
-                    <label>
-                        <span class="fp-field__label">Data Prenotazione</span>
-                        <input type="date" class="fp-input" value="2025-10-15">
-                    </label>
+                    <label for="fp-preview-date">Data prenotazione</label>
+                    <input type="date" id="fp-preview-date" class="fp-input" value="2026-04-15">
                 </div>
-
                 <div class="fp-field">
-                    <label>
-                        <span class="fp-field__label">Numero Persone</span>
-                        <div class="fp-resv-party-input-wrapper">
-                            <button type="button" class="fp-resv-party-btn">−</button>
-                            <input type="number" class="fp-input fp-resv-party-input" value="2">
-                            <button type="button" class="fp-resv-party-btn">+</button>
+                    <label id="party-size-label">Numero persone</label>
+                    <div class="fp-party-selector" role="group" aria-labelledby="party-size-label">
+                        <button type="button" class="fp-btn-minus" tabindex="-1" aria-hidden="true">−</button>
+                        <div class="fp-party-display">
+                            <span id="party-count">2</span>
+                            <span id="party-label">persone</span>
                         </div>
-                    </label>
-                </div>
-
-                <div class="fp-meals">
-                    <div class="fp-meals__header">
-                        <h3 class="fp-meals__title">Scegli il Servizio</h3>
+                        <button type="button" class="fp-btn-plus" tabindex="-1" aria-hidden="true">+</button>
                     </div>
-                    <div class="fp-meals__list">
-                        <button type="button" class="fp-pill fp-meal-pill" data-active="true">
-                            <span class="fp-pill__label">🍽️ Pranzo</span>
-                        </button>
-                        <button type="button" class="fp-pill fp-meal-pill">
-                            <span class="fp-pill__label">🌙 Cena</span>
-                        </button>
+                    <small class="fp-hint">Anteprima statica — i controlli non sono collegati al salvataggio.</small>
+                </div>
+                <div class="fp-field">
+                    <label>Servizio</label>
+                    <div class="fp-meals">
+                        <button type="button" class="fp-meal-btn selected">🍽️ Pranzo</button>
+                        <button type="button" class="fp-meal-btn">🌙 Cena</button>
                     </div>
                 </div>
-
-                <div class="fp-slots fp-resv-slots">
-                    <h4>Orari Disponibili</h4>
-                    <ul class="fp-slots__list fp-resv-slots__list">
-                        <li><button type="button" class="fp-slot-pill">19:00</button></li>
-                        <li><button type="button" class="fp-slot-pill" aria-pressed="true">19:30</button></li>
-                        <li><button type="button" class="fp-slot-pill">20:00</button></li>
-                        <li><button type="button" class="fp-slot-pill">20:30</button></li>
-                        <li><button type="button" class="fp-slot-pill">21:00</button></li>
-                        <li><button type="button" class="fp-slot-pill">21:30</button></li>
-                    </ul>
+                <div class="fp-field">
+                    <label>Orari disponibili</label>
+                    <div class="fp-time-slots" role="radiogroup" aria-label="Orari">
+                        <button type="button" class="fp-time-slot">19:00</button>
+                        <button type="button" class="fp-time-slot selected">19:30</button>
+                        <button type="button" class="fp-time-slot">20:00</button>
+                        <button type="button" class="fp-time-slot">20:30</button>
+                        <button type="button" class="fp-time-slot">21:00</button>
+                        <button type="button" class="fp-time-slot">21:30</button>
+                    </div>
                 </div>
             </div>
-
-            <div class="fp-sticky">
-                <button type="button" class="fp-btn fp-btn--primary">Prosegui</button>
-            </div>
-
-            <div class="fp-alert fp-alert--success" style="margin-top: 1rem;">
-                <p>✓ Prenotazione confermata con successo!</p>
-            </div>
+        </div>
+        <div class="fp-buttons">
+            <span></span>
+            <button type="button" class="fp-btn fp-btn-primary">Prosegui</button>
         </div>
     </div>
 </body>
@@ -135,25 +105,21 @@
             iframeDoc.write(html);
             iframeDoc.close();
 
-            // document.write/close() fires "load" synchronously in many browsers:
-            // a listener registered here would miss it, so apply colors immediately.
             this.updatePreviewColors();
         },
 
         setupColorPickers() {
-            const pickers = document.querySelectorAll('.fp-color-picker');
-            pickers.forEach(picker => {
+            document.querySelectorAll('.fp-color-picker').forEach((picker) => {
                 this.colorPickers[picker.id] = picker;
-                picker.addEventListener('input', (e) => {
+                picker.addEventListener('input', () => {
                     this.onColorChange(picker);
                 });
             });
         },
 
         setupTextInputs() {
-            const textInputs = document.querySelectorAll('.fp-color-text');
-            textInputs.forEach(input => {
-                input.addEventListener('input', (e) => {
+            document.querySelectorAll('.fp-color-text').forEach((input) => {
+                input.addEventListener('input', () => {
                     const pickerId = input.getAttribute('data-for');
                     const picker = document.getElementById(pickerId);
                     if (picker && /^#[0-9A-Fa-f]{6}$/.test(input.value)) {
@@ -165,8 +131,7 @@
         },
 
         setupPresets() {
-            const presetBtns = document.querySelectorAll('.fp-resv-preset-btn');
-            presetBtns.forEach(btn => {
+            document.querySelectorAll('.fp-resv-preset-btn').forEach((btn) => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     try {
@@ -184,10 +149,9 @@
         },
 
         applyPreset(colors) {
-            Object.keys(colors).forEach(key => {
+            Object.keys(colors).forEach((key) => {
                 const picker = document.getElementById('fp_color_' + key);
                 const textInput = document.querySelector(`[data-for="fp_color_${key}"]`);
-                
                 if (picker) {
                     picker.value = colors[key];
                     if (textInput) {
@@ -195,34 +159,30 @@
                     }
                 }
             });
-
             this.updatePreviewColors();
         },
 
         onColorChange(picker) {
-            // Update text input
             const textInput = document.querySelector(`[data-for="${picker.id}"]`);
             if (textInput) {
                 textInput.value = picker.value;
             }
-
-            // Update preview
             this.updatePreviewColors();
         },
 
         updatePreviewColors() {
-            if (!this.iframeDoc) return;
+            if (!this.iframeDoc) {
+                return;
+            }
 
             const colors = this.getCurrentColors();
             const css = this.generateCSSVariables(colors);
 
-            // Remove old style
             const oldStyle = this.iframeDoc.getElementById('fp-custom-colors');
             if (oldStyle) {
                 oldStyle.remove();
             }
 
-            // Add new style
             const style = this.iframeDoc.createElement('style');
             style.id = 'fp-custom-colors';
             style.textContent = css;
@@ -231,54 +191,168 @@
 
         getCurrentColors() {
             const colors = {};
-            Object.keys(this.colorPickers).forEach(id => {
+            Object.keys(this.colorPickers).forEach((id) => {
                 const key = id.replace('fp_color_', '');
                 colors[key] = this.colorPickers[id].value;
             });
             return colors;
         },
 
+        /**
+         * Variabili + override ad alta specificità sull’anteprima (form-simple-inline usa colori fissi).
+         *
+         * @param {Record<string, string>} colors
+         * @return {string}
+         */
         generateCSSVariables(colors) {
             const hexToRgba = (hex, alpha) => {
-                hex = hex.replace('#', '');
-                const r = parseInt(hex.substring(0, 2), 16);
-                const g = parseInt(hex.substring(2, 4), 16);
-                const b = parseInt(hex.substring(4, 6), 16);
+                let h = hex.replace('#', '');
+                if (h.length === 3) {
+                    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                }
+                const r = parseInt(h.substring(0, 2), 16);
+                const g = parseInt(h.substring(2, 4), 16);
+                const b = parseInt(h.substring(4, 6), 16);
                 return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             };
 
             const hexToRgb = (hex) => {
-                hex = hex.replace('#', '');
-                const r = parseInt(hex.substring(0, 2), 16);
-                const g = parseInt(hex.substring(2, 4), 16);
-                const b = parseInt(hex.substring(4, 6), 16);
+                let h = hex.replace('#', '');
+                if (h.length === 3) {
+                    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                }
+                const r = parseInt(h.substring(0, 2), 16);
+                const g = parseInt(h.substring(2, 4), 16);
+                const b = parseInt(h.substring(4, 6), 16);
                 return `${r}, ${g}, ${b}`;
             };
 
+            const p = colors.primary || '#000000';
+            const ph = colors.primary_hover || '#1a1a1a';
+            const surf = colors.surface || '#ffffff';
+            const surfAlt = colors.surface_alt || '#fafafa';
+            const txt = colors.text || '#111827';
+            const txtMuted = colors.text_muted || '#6b7280';
+            const brd = colors.border || '#e5e7eb';
+            const btnBg = colors.button_bg || p;
+            const btnTx = colors.button_text || '#ffffff';
+            const root = PREVIEW_ROOT;
+
             return `
 :root {
-    --fp-color-primary: ${colors.primary || '#000000'};
-    --fp-color-primary-hover: ${colors.primary_hover || '#1a1a1a'};
-    --fp-color-primary-light: ${hexToRgba(colors.primary || '#000000', 0.05)};
-    --fp-color-primary-rgb: ${hexToRgb(colors.primary || '#000000')};
-    --fp-color-surface: ${colors.surface || '#ffffff'};
-    --fp-color-surface-alt: ${colors.surface_alt || '#fafafa'};
-    --fp-color-text: ${colors.text || '#000000'};
-    --fp-color-text-muted: ${colors.text_muted || '#666666'};
-    --fp-color-border: ${colors.border || '#e0e0e0'};
-    --fp-resv-button-bg: ${colors.button_bg || '#000000'};
-    --fp-resv-button-text: ${colors.button_text || '#ffffff'};
-    --fp-gradient-primary: linear-gradient(135deg, ${colors.primary || '#000000'} 0%, ${colors.primary_hover || '#1a1a1a'} 100%);
+    --fp-color-primary: ${p};
+    --fp-color-primary-hover: ${ph};
+    --fp-color-primary-light: ${hexToRgba(p, 0.08)};
+    --fp-color-primary-rgb: ${hexToRgb(p)};
+    --fp-color-surface: ${surf};
+    --fp-color-surface-alt: ${surfAlt};
+    --fp-color-text: ${txt};
+    --fp-color-text-muted: ${txtMuted};
+    --fp-color-border: ${brd};
+    --fp-resv-button-bg: ${btnBg};
+    --fp-resv-button-text: ${btnTx};
+    --fp-gradient-primary: linear-gradient(135deg, ${p} 0%, ${ph} 100%);
 }
-            `;
+${root}.fp-resv-simple {
+    background: ${surf} !important;
+    border-color: ${hexToRgba(brd, 0.35)} !important;
+}
+${root}.fp-resv-simple::before {
+    background: var(--fp-gradient-primary) !important;
+}
+${root}.fp-resv-simple h2 {
+    color: ${txt} !important;
+}
+${root}.fp-resv-simple h2::after {
+    background: var(--fp-gradient-primary) !important;
+}
+${root} .fp-field {
+    background: ${hexToRgba(surfAlt, 0.85)} !important;
+    border-color: ${hexToRgba(brd, 0.25)} !important;
+}
+${root} .fp-field label {
+    color: ${txt} !important;
+}
+${root} .fp-hint {
+    color: ${txtMuted} !important;
+}
+${root} .fp-field input:not([type="checkbox"]):not([type="radio"]),
+${root} .fp-field select,
+${root} .fp-field textarea {
+    border-color: ${brd} !important;
+    color: ${txt} !important;
+    background: ${surf} !important;
+}
+${root} .fp-party-selector {
+    border-color: ${brd} !important;
+    background: ${hexToRgba(surfAlt, 0.9)} !important;
+}
+${root} .fp-party-display #party-count,
+${root} .fp-party-display #party-label {
+    color: ${txt} !important;
+}
+${root} .fp-meal-btn {
+    color: ${txt} !important;
+    border-color: ${brd} !important;
+    background: ${surf} !important;
+}
+${root} .fp-meal-btn:hover {
+    border-color: ${p} !important;
+    background: ${hexToRgba(surfAlt, 1)} !important;
+}
+${root} .fp-meal-btn.selected {
+    background: ${btnBg} !important;
+    color: ${btnTx} !important;
+    border-color: ${btnBg} !important;
+    box-shadow: 0 4px 12px ${hexToRgba(btnBg, 0.25)} !important;
+}
+${root} .fp-time-slot {
+    color: ${txt} !important;
+    border-color: ${brd} !important;
+    background: ${surf} !important;
+}
+${root} .fp-time-slot:hover {
+    border-color: ${p} !important;
+    background: ${hexToRgba(surfAlt, 1)} !important;
+}
+${root} .fp-time-slot.selected {
+    background: ${btnBg} !important;
+    color: ${btnTx} !important;
+    border-color: ${btnBg} !important;
+    box-shadow: 0 4px 12px ${hexToRgba(btnBg, 0.2)} !important;
+}
+${root} .fp-btn-minus,
+${root} .fp-btn-plus {
+    border-color: ${brd} !important;
+    color: ${txt} !important;
+    background: ${surf} !important;
+}
+${root} .fp-btn-minus:hover,
+${root} .fp-btn-plus:hover {
+    border-color: ${p} !important;
+    color: ${p} !important;
+}
+${root} .fp-buttons {
+    border-color: ${brd} !important;
+    background: ${surf} !important;
+}
+${root} .fp-btn-primary {
+    background: ${btnBg} !important;
+    color: ${btnTx} !important;
+    border-color: ${btnBg} !important;
+    box-shadow: 0 2px 8px ${hexToRgba(btnBg, 0.2)} !important;
+}
+${root} .fp-btn-primary:hover {
+    background: ${ph} !important;
+    border-color: ${ph} !important;
+}
+`;
         }
     };
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => FormColors.init());
     } else {
         FormColors.init();
     }
 })();
-
