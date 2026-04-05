@@ -101,7 +101,9 @@ $headingId   = 'fp-resv-analytics-title';
                     <p><?php esc_html_e('Distribuzione delle prenotazioni per canale di acquisizione.', 'fp-restaurant-reservations'); ?></p>
                 </header>
                 <div class="fp-resv-card__body">
-                    <canvas data-role="channels-chart" aria-label="<?php esc_attr_e('Distribuzione prenotazioni per canale', 'fp-restaurant-reservations'); ?>" role="img"></canvas>
+                    <div class="fp-resv-analytics__channels-chart-wrap">
+                        <canvas data-role="channels-chart" aria-label="<?php esc_attr_e('Distribuzione prenotazioni per canale', 'fp-restaurant-reservations'); ?>" role="img"></canvas>
+                    </div>
                 </div>
             </section>
 

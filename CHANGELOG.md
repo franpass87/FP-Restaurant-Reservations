@@ -1,3 +1,9 @@
+## [1.0.32] - 2026-04-05
+
+### Fixed
+
+- **Report & Analytics**: grafico a ciambella «Canali principali» limitato a un contenitore centrato (max 360×300px) con `maintainAspectRatio: false`, così non occupa più tutta la larghezza della card come quadrato enorme.
+
 ## [1.0.31] - 2026-04-05
 
 ### Fixed

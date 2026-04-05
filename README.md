@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 1.0.29 |
+| **Versione** | 1.0.32 |
 | **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -242,9 +242,6 @@ Configura OAuth in: **Restaurant Manager → Impostazioni → Google Calendar**
 Configura chiavi in: **Restaurant Manager → Impostazioni → Pagamenti**
 
 ### Tracking
-Con **FP Marketing Tracking Layer** attivo, gli eventi prenotazione passano da `do_action('fp_tracking_event')` (`TrackingBridge`): includono **`value`**, **`currency`**, **`transaction_id`** (`resv-{id}`), **`items`** (oggetto ecommerce GA4 quando c’è un importo positivo), dati tavolo/data/pasto, **UTM**, **`price_per_person`** e **`meal_label`** ove disponibili. Il prezzo in submit viene arricchito da `ReservationPayloadSanitizer::enrichMealPricing` (piano pasti); su cambio stato in admin il bridge ricostruisce il totale dal DB o, se mancante, dal piano pasti moltiplicato per i coperti.
-
-Senza layer resta lo stack legacy documentato sotto.
 - **GA4** - Google Analytics 4
 - **Google Ads** - Conversion tracking
 - **Meta Pixel** - Facebook/Instagram tracking
@@ -353,8 +350,8 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 1.0.27  
-**Data:** 18 Marzo 2026
+**Versione:** 1.0.32  
+**Data:** 5 Aprile 2026
 ---
 
 ## Autore

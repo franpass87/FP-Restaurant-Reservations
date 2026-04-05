@@ -81,6 +81,19 @@
     gap: 16px;
 }
 
+/* Contenitore doughnut: senza max-width il canvas al 100% della card diventa quadrato enorme (Chart.js aspect 1:1). */
+.fp-resv-admin--analytics .fp-resv-analytics__channels-chart-wrap {
+    width: 100%;
+    max-width: 360px;
+    height: 300px;
+    margin-inline: auto;
+    position: relative;
+}
+
+.fp-resv-admin--analytics .fp-resv-analytics__channels-chart-wrap canvas {
+    min-height: 0;
+}
+
 .fp-resv-admin--analytics canvas {
     width: 100%;
     min-height: 260px;
