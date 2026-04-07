@@ -62,6 +62,10 @@ final class BusinessServiceProvider extends ServiceProvider
         if ($container->has(\FP\Resv\Domain\Notifications\Manager::class)) {
             $container->get(\FP\Resv\Domain\Notifications\Manager::class)->boot();
         }
+
+        if ($container->has(\FP\Resv\Domain\Reservations\EmailService::class)) {
+            $container->get(\FP\Resv\Domain\Reservations\EmailService::class)->registerHooks();
+        }
         
         // Boot TrackingBridge explicitly so hooks are always registered
         if ($container->has(\FP\Resv\Domain\Tracking\TrackingBridge::class)) {

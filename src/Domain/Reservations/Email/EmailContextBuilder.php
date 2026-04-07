@@ -86,7 +86,7 @@ final class EmailContextBuilder
             'currency'      => $payload['currency'],
             'room_id'       => $payload['room_id'],
             'table_id'      => $payload['table_id'],
-            'created_at'    => $reservation->created,
+            'created_at'    => $reservation->getCreatedAt(),
             'utm'           => [
                 'source'   => $payload['utm_source'],
                 'medium'   => $payload['utm_medium'],
@@ -115,9 +115,10 @@ final class EmailContextBuilder
             $timezone
         );
 
-        if ($reservation->created instanceof DateTimeImmutable) {
+        $createdAt = $reservation->getCreatedAt();
+        if ($createdAt instanceof DateTimeImmutable) {
             $context['created_at_formatted'] = $this->language->formatDateTimeObject(
-                $reservation->created,
+                $createdAt,
                 $languageCode,
                 $timezone
             );

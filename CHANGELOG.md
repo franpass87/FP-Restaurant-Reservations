@@ -1,3 +1,14 @@
+## [1.0.34] - 2026-04-07
+
+### Fixed
+
+- **Email staff (Notifiche)**: `EmailContextBuilder` usava la proprietà inesistente `$reservation->created` invece di `getCreatedAt()`, causando errore fatale e blocco dell’invio delle notifiche a ristorante/webmaster alla creazione prenotazione.
+- **Salvataggio destinatari Notifiche**: in `SettingsSanitizer`, se un campo `email_list` non è presente nel POST (es. richiesta troncata per `max_input_vars`), si preservano i valori già memorizzati nell’opzione anziché salvare liste vuote.
+
+### Added
+
+- **Avvisa sugli annullamenti** (`notify_on_cancel`): collegato al flusso reale — su transizione a stato `cancelled` viene inviata email ai destinatari configurati (stesso schema ristorante + webmaster delle nuove prenotazioni). Filtri: `fp_resv_staff_cancel_email_subject`, `fp_resv_staff_cancel_email_message`.
+
 ## [1.0.33] - 2026-04-05
 
 ### Added

@@ -34,6 +34,7 @@ use function strtoupper;
 use function substr;
 use function timezone_identifiers_list;
 use function update_option;
+use function get_option;
 use function wp_kses_post;
 use FP\Resv\Domain\Settings\MealPlan;
 use function array_fill_keys;
@@ -82,10 +83,28 @@ final class SettingsSanitizer
             return $input;
         }
 
+        $optionName = (string) ($page['option_name'] ?? '');
+        $existing   = [];
+        if ($optionName !== '') {
+            $rawExisting = get_option($optionName, []);
+            if (is_array($rawExisting)) {
+                $existing = $rawExisting;
+            }
+        }
+
         $sanitized = [];
         foreach ($page['sections'] as $section) {
             foreach ($section['fields'] as $fieldKey => $field) {
-                $value = $input[$fieldKey] ?? null;
+                $type = (string) ($field['type'] ?? 'text');
+                if ($type === 'checkbox') {
+                    $value = $input[$fieldKey] ?? null;
+                } elseif ($type === 'email_list' && !array_key_exists($fieldKey, $input) && array_key_exists($fieldKey, $existing)) {
+                    // Evita di azzerare i destinatari se il POST è troncato (es. max_input_vars).
+                    $value = $existing[$fieldKey];
+                } else {
+                    $value = $input[$fieldKey] ?? null;
+                }
+
                 $sanitized[$fieldKey] = $this->sanitizeField($pageKey, $fieldKey, $field, $value);
             }
         }

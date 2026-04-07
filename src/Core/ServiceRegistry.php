@@ -397,6 +397,7 @@ final class ServiceRegistry
             $icsGenerator,
             $fallbackBuilder
         );
+        $emailService->registerHooks();
         $this->container->register(EmailService::class, $emailService);
         $this->container->register('reservations.email', $emailService);
 

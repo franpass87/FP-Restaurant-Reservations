@@ -8,6 +8,7 @@ use FP\Resv\Core\EmailList;
 use FP\Resv\Core\Helpers;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\Mailer;
+use FP\Resv\Domain\Notifications\ManageUrlGenerator;
 use FP\Resv\Domain\Notifications\Settings as NotificationSettings;
 use FP\Resv\Domain\Notifications\TemplateRenderer as NotificationTemplateRenderer;
 use FP\Resv\Domain\Reservations\Email\EmailContextBuilder;
@@ -17,7 +18,9 @@ use FP\Resv\Domain\Reservations\Email\ICSGenerator;
 use FP\Resv\Domain\Reservations\Models\Reservation as ReservationModel;
 use FP\Resv\Domain\Settings\Language;
 use FP\Resv\Domain\Settings\Options;
+use Throwable;
 use function __;
+use function add_action;
 use function apply_filters;
 use function array_diff;
 use function array_map;
@@ -42,6 +45,8 @@ use function wp_timezone_string;
  */
 final class EmailService
 {
+    private bool $hooksRegistered = false;
+
     public function __construct(
         private readonly Mailer $mailer,
         private readonly Options $options,
@@ -53,6 +58,188 @@ final class EmailService
         private readonly ICSGenerator $icsGenerator,
         private readonly FallbackMessageBuilder $fallbackBuilder
     ) {
+    }
+
+    /**
+     * Registra hook WordPress per email operative (es. annullamento → staff).
+     */
+    public function registerHooks(): void
+    {
+        if ($this->hooksRegistered) {
+            return;
+        }
+
+        $this->hooksRegistered = true;
+        add_action('fp_resv_reservation_status_changed', [$this, 'handleReservationCancelledStaffAlert'], 25, 4);
+    }
+
+    /**
+     * Se l'opzione è attiva, notifica ristorante e webmaster quando lo stato diventa «annullata».
+     *
+     * @param array<string, mixed> $entry Riga prenotazione (formato agenda) dopo l'aggiornamento
+     */
+    public function handleReservationCancelledStaffAlert(
+        int $reservationId,
+        string $previousStatus,
+        string $currentStatus,
+        array $entry = []
+    ): void {
+        if ($currentStatus !== 'cancelled' || $previousStatus === 'cancelled') {
+            return;
+        }
+
+        $notifications = $this->options->getGroup('fp_resv_notifications', []);
+        if (($notifications['notify_on_cancel'] ?? '0') !== '1') {
+            return;
+        }
+
+        if ($entry === []) {
+            return;
+        }
+
+        try {
+            $this->sendStaffCancellationNotifications($reservationId, $entry, $previousStatus);
+        } catch (Throwable $exception) {
+            Logging::log('mail', 'ERRORE invio email staff annullamento', [
+                'reservation_id' => $reservationId,
+                'error'          => $exception->getMessage(),
+                'file'           => $exception->getFile(),
+                'line'           => $exception->getLine(),
+            ]);
+        }
+    }
+
+    /**
+     * Invia email di annullamento a destinatari configurati in Notifiche.
+     *
+     * @param array<string, mixed> $entry Riga agenda / DB join customers
+     */
+    public function sendStaffCancellationNotifications(int $reservationId, array $entry, string $previousStatus): void
+    {
+        $notifications = $this->options->getGroup('fp_resv_notifications', [
+            'restaurant_emails' => [],
+            'webmaster_emails'  => [],
+            'sender_name'       => get_bloginfo('name'),
+            'sender_email'      => get_bloginfo('admin_email'),
+            'reply_to_email'    => '',
+        ]);
+
+        $restaurantRecipients = EmailList::parse($notifications['restaurant_emails'] ?? []);
+        $webmasterRecipients  = EmailList::parse($notifications['webmaster_emails'] ?? []);
+        $webmasterRecipients  = array_values(array_diff($webmasterRecipients, $restaurantRecipients));
+
+        if ($restaurantRecipients === [] && $webmasterRecipients === []) {
+            return;
+        }
+
+        $general = $this->options->getGroup('fp_resv_general', [
+            'restaurant_name'        => get_bloginfo('name'),
+            'restaurant_timezone'    => wp_timezone_string(),
+            'table_turnover_minutes' => '120',
+        ]);
+
+        $payload    = $this->agendaEntryToPayload($entry);
+        $customerEmail = $payload['email'] !== '' ? $payload['email'] : (string) ($entry['email'] ?? '');
+        $manageUrl  = $customerEmail !== ''
+            ? (new ManageUrlGenerator())->generate($reservationId, $customerEmail)
+            : '';
+        $reservation = ReservationModel::fromArray($entry);
+
+        $context = $this->contextBuilder->build(
+            $payload,
+            $reservationId,
+            $manageUrl,
+            'cancelled',
+            $reservation,
+            $general
+        );
+
+        $headers      = $this->headersBuilder->build($notifications);
+        $languageCode = $context['language'] !== '' ? (string) $context['language'] : $this->language->getDefaultLanguage();
+        $emailStrings = $this->language->getStrings($languageCode);
+        $staffCopy    = is_array($emailStrings['emails']['staff'] ?? null) ? $emailStrings['emails']['staff'] : [];
+
+        $restaurantName = (string) ($context['restaurant']['name'] ?? get_bloginfo('name'));
+        $prevLabel      = $this->language->statusLabel($previousStatus, $languageCode);
+
+        $subject = sprintf(
+            __('Prenotazione #%1$d annullata - %2$s', 'fp-restaurant-reservations'),
+            $reservationId,
+            $restaurantName
+        );
+        $subject = apply_filters('fp_resv_staff_cancel_email_subject', $subject, $context, $previousStatus);
+
+        $lead = sprintf(
+            __('La prenotazione #%1$d è stata annullata (stato precedente: %2$s).', 'fp-restaurant-reservations'),
+            $reservationId,
+            $prevLabel
+        );
+        $body  = '<p style="font-family:Arial,sans-serif;font-size:15px;"><strong>' . esc_html($lead) . '</strong></p>';
+        $body .= $this->fallbackBuilder->build($context, $staffCopy);
+        $body  = apply_filters('fp_resv_staff_cancel_email_message', $body, $context, $previousStatus);
+
+        if ($restaurantRecipients !== []) {
+            $this->mailer->send(
+                implode(',', $restaurantRecipients),
+                $subject,
+                $body,
+                $headers,
+                [],
+                [
+                    'reservation_id' => $reservationId,
+                    'channel'        => 'restaurant_cancel_notification',
+                    'content_type'   => 'text/html',
+                ]
+            );
+        }
+
+        if ($webmasterRecipients !== []) {
+            $this->mailer->send(
+                implode(',', $webmasterRecipients),
+                $subject,
+                $body,
+                $headers,
+                [],
+                [
+                    'reservation_id' => $reservationId,
+                    'channel'        => 'webmaster_cancel_notification',
+                    'content_type'   => 'text/html',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $entry
+     *
+     * @return array<string, mixed>
+     */
+    private function agendaEntryToPayload(array $entry): array
+    {
+        return [
+            'date'             => (string) ($entry['date'] ?? ''),
+            'time'             => (string) ($entry['time'] ?? ''),
+            'party'            => (int) ($entry['party'] ?? 0),
+            'meal'             => (string) ($entry['meal'] ?? ''),
+            'first_name'       => (string) ($entry['first_name'] ?? ''),
+            'last_name'        => (string) ($entry['last_name'] ?? ''),
+            'email'            => (string) ($entry['email'] ?? ''),
+            'phone'            => (string) ($entry['phone'] ?? ''),
+            'notes'            => (string) ($entry['notes'] ?? ''),
+            'allergies'        => (string) ($entry['allergies'] ?? ''),
+            'language'         => (string) ($entry['customer_lang'] ?? $entry['lang'] ?? ''),
+            'locale'           => '',
+            'location'         => (string) ($entry['location'] ?? ''),
+            'currency'         => (string) ($entry['currency'] ?? ''),
+            'utm_source'       => (string) ($entry['utm_source'] ?? ''),
+            'utm_medium'       => (string) ($entry['utm_medium'] ?? ''),
+            'utm_campaign'     => (string) ($entry['utm_campaign'] ?? ''),
+            'room_id'          => $entry['room_id'] ?? null,
+            'table_id'         => $entry['table_id'] ?? null,
+            'high_chair_count' => (int) ($entry['high_chair_count'] ?? 0),
+            'wheelchair_table' => (bool) ($entry['wheelchair_table'] ?? false),
+            'pets'             => (bool) ($entry['pets'] ?? false),
+        ];
     }
 
     /**
