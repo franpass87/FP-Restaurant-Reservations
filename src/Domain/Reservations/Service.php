@@ -498,7 +498,23 @@ class Service
         try {
             // Gestisce Brevo se configurato, altrimenti usa EmailService
             if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
-                $this->brevoEventSender->send($sanitized, $reservationId, $manageUrl, $status);
+                $brevoResult = $this->brevoEventSender->send($sanitized, $reservationId, $manageUrl, $status);
+                $fallback    = in_array(
+                    $brevoResult,
+                    [
+                        BrevoConfirmationEventSender::RESULT_SKIPPED_DISABLED,
+                        BrevoConfirmationEventSender::RESULT_SKIPPED_NO_CLIENT,
+                        BrevoConfirmationEventSender::RESULT_FAILED,
+                    ],
+                    true
+                );
+                if ($fallback) {
+                    Logging::log('mail', 'Fallback wp_mail conferma cliente (Brevo non ha inviato l\'evento)', [
+                        'reservation_id' => $reservationId,
+                        'brevo_result'   => $brevoResult,
+                    ]);
+                    $this->emailService->sendCustomerEmail($sanitized, $reservationId, $manageUrl, $status, true);
+                }
             } else {
                 $this->emailService->sendCustomerEmail($sanitized, $reservationId, $manageUrl, $status);
             }

@@ -20,6 +20,18 @@ use function trim;
  */
 final class BrevoConfirmationEventSender
 {
+    public const RESULT_SENT = 'sent';
+
+    public const RESULT_SKIPPED_DUPLICATE = 'skipped_duplicate';
+
+    public const RESULT_SKIPPED_NO_EMAIL = 'skipped_no_email';
+
+    public const RESULT_SKIPPED_DISABLED = 'skipped_disabled';
+
+    public const RESULT_SKIPPED_NO_CLIENT = 'skipped_no_client';
+
+    public const RESULT_FAILED = 'failed';
+
     public function __construct(
         private readonly ?BrevoClient $brevoClient,
         private readonly ?BrevoRepository $brevoRepository,
@@ -31,11 +43,13 @@ final class BrevoConfirmationEventSender
      * Invia un evento a Brevo per far partire l'automazione di conferma.
      *
      * @param array<string, mixed> $payload
+     *
+     * @return self::RESULT_* Esito: inviato, saltato (duplicato / senza email) o da coprire con fallback wp_mail
      */
-    public function send(array $payload, int $reservationId, string $manageUrl, string $status): void
+    public function send(array $payload, int $reservationId, string $manageUrl, string $status): string
     {
         if (!TrackEventPolicy::isEventEnabled($this->options, 'email_confirmation')) {
-            return;
+            return self::RESULT_SKIPPED_DISABLED;
         }
 
         if ($this->brevoClient === null || !$this->brevoClient->isConnected()) {
@@ -43,12 +57,13 @@ final class BrevoConfirmationEventSender
                 'reservation_id' => $reservationId,
                 'email'          => $payload['email'] ?? '',
             ]);
-            return;
+
+            return self::RESULT_SKIPPED_NO_CLIENT;
         }
 
         $email = (string) ($payload['email'] ?? '');
         if ($email === '') {
-            return;
+            return self::RESULT_SKIPPED_NO_EMAIL;
         }
 
         // Controlla se l'evento è già stato inviato con successo per evitare duplicati
@@ -57,7 +72,8 @@ final class BrevoConfirmationEventSender
                 'reservation_id' => $reservationId,
                 'email'          => $email,
             ]);
-            return;
+
+            return self::RESULT_SKIPPED_DUPLICATE;
         }
 
         $eventProperties = [
@@ -118,6 +134,8 @@ final class BrevoConfirmationEventSender
             'success'        => $success,
             'response'       => $response,
         ]);
+
+        return $success ? self::RESULT_SENT : self::RESULT_FAILED;
     }
 }
 

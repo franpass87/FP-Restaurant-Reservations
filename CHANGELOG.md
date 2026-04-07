@@ -1,3 +1,9 @@
+## [1.0.35] - 2026-04-07
+
+### Fixed
+
+- **Conferma cliente + canale Brevo**: se in Notifiche la conferma è su Brevo ma l’evento `email_confirmation` non viene inviato (evento disabilitato nella checklist Brevo, client non connesso, risposta API in errore), il plugin invia la conferma al cliente in **fallback** tramite `wp_mail` usando i template del plugin. Evita prenotazioni senza alcuna email al cliente. Non si applica fallback se Brevo ha già registrato un invio con successo (anti-duplicato).
+
 ## [1.0.34] - 2026-04-07
 
 ### Fixed

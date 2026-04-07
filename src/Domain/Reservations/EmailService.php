@@ -249,22 +249,30 @@ final class EmailService
      * @param int $reservationId ID prenotazione
      * @param string $manageUrl URL gestione prenotazione
      * @param string $status Stato prenotazione
+     * @param bool $forceViaPlugin Se true, invia sempre con wp_mail e template plugin (fallback se Brevo non ha inviato l'evento)
      */
-    public function sendCustomerEmail(array $payload, int $reservationId, string $manageUrl, string $status): void
-    {
+    public function sendCustomerEmail(
+        array $payload,
+        int $reservationId,
+        string $manageUrl,
+        string $status,
+        bool $forceViaPlugin = false
+    ): void {
         $notifications = $this->options->getGroup('fp_resv_notifications', [
             'sender_name'    => get_bloginfo('name'),
             'sender_email'   => get_bloginfo('admin_email'),
             'reply_to_email' => '',
         ]);
 
-        if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
-            // Brevo viene gestito dal Service principale
-            return;
-        }
+        if (!$forceViaPlugin) {
+            if ($this->notificationSettings->shouldUseBrevo(NotificationSettings::CHANNEL_CONFIRMATION)) {
+                // Brevo viene gestito dal Service principale
+                return;
+            }
 
-        if (!$this->notificationSettings->shouldUsePlugin(NotificationSettings::CHANNEL_CONFIRMATION)) {
-            return;
+            if (!$this->notificationSettings->shouldUsePlugin(NotificationSettings::CHANNEL_CONFIRMATION)) {
+                return;
+            }
         }
 
         $headers = $this->headersBuilder->build($notifications);
