@@ -355,14 +355,40 @@ final class FormContext
     }
 
     /**
+     * Normalizza le chiavi PDF (es. IT/EN da salvataggio admin → it/en come nel form).
+     *
+     * @param array<mixed, mixed> $map
+     *
+     * @return array<string, string>
+     */
+    private function normalizePdfUrlMapKeys(array $map): array
+    {
+        $out = [];
+        foreach ($map as $langKey => $url) {
+            if (!is_string($langKey) && !is_int($langKey)) {
+                continue;
+            }
+            $k = sanitize_key((string) $langKey);
+            if ($k === '') {
+                continue;
+            }
+            $out[$k] = is_scalar($url) ? (string) $url : '';
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<int, string> $supportedLocales
      */
     private function resolvePdfUrl(string $languageSlug, array $languageSettings, array $supportedLocales, string $fallbackLocale): string
     {
-        $map = $languageSettings['pdf_urls'] ?? [];
-        if (!is_array($map)) {
+        $raw = $languageSettings['pdf_urls'] ?? [];
+        if (!is_array($raw)) {
             return '';
         }
+
+        $map = $this->normalizePdfUrlMapKeys($raw);
 
         $languageSlug = sanitize_key($languageSlug);
         if ($languageSlug !== '' && array_key_exists($languageSlug, $map)) {

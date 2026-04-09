@@ -1,3 +1,9 @@
+## [1.0.36] - 2026-04-09
+
+### Fixed
+
+- **Bottone menu PDF nel form**: la mappa «Menu PDF per lingua» in Impostazioni → Generali salva le chiavi come `IT`/`EN`, mentre il form risolve la lingua come `it`/`en`; il mismatch impediva di trovare l’URL e il link in header non veniva renderizzato. Le chiavi vengono ora normalizzate in `FormContext::resolvePdfUrl()`.
+
 ## [1.0.35] - 2026-04-07
 
 ### Fixed
