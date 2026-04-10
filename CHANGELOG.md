@@ -1,3 +1,9 @@
+## [1.0.37] - 2026-04-10
+
+### Fixed
+
+- **Brevo / liste IT+EN**: rimosso un doppio `POST /v3/contacts` su creazione prenotazione e su cambio stato. Prima `syncContact()` senza `listIds` (con FP Tracking) risolveva sempre la lista **IT**; subito dopo `subscribeContact()` aggiungeva la lista corretta (es. **EN** da lingua pagina / prefisso) → lo stesso contatto finiva su due liste. Ora resta un solo upsert tramite `subscribeContact()`.
+
 ## [1.0.36] - 2026-04-09
 
 ### Fixed

@@ -110,8 +110,10 @@ final class AutomationService
             'ttclid'             => $payload['ttclid'] ?? '',
         ]);
 
-        $this->syncContact($reservationId, $contact);
-
+        // Un solo upsert verso Brevo: subscribeContact risolve lista IT/EN (lingua pagina + prefisso)
+        // ed invia attributi. Evitare syncContact prima: con FP Tracking senza listIds nel body
+        // fp_tracking_brevo_upsert_contact(..., 'it') iscriveva sempre alla lista IT, poi la seconda
+        // chiamata aggiungeva anche EN → doppia iscrizione (es. prenotazione da /en/ con telefono US).
         $subscriptionContext = [
             'forced_language' => $payload['language_forced'] ?? '',
             'page_language'   => $payload['language'] ?? '',
@@ -205,8 +207,7 @@ final class AutomationService
             'ttclid'             => $context['ttclid'] ?? '',
         ]);
 
-        $this->syncContact($reservationId, $contact);
-
+        // Stesso flusso di onReservationCreated: un solo upsert via subscribeContact (vedi nota sopra).
         $subscriptionContext = [
             'forced_language' => $context['customer']['language'] ?? '',
             'page_language'   => $context['customer_lang'] ?? '',
