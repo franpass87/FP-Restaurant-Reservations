@@ -1,14 +1,18 @@
-## [1.0.37] - 2026-04-10
+## [1.0.38] - 2026-04-10
+
+### Added
+
+- **GA4 / GTM dopo submit REST**: la risposta `POST /fp-resv/v1/reservations` include `reservation.tracking` (`event_name`, `event_id`, `value`, `currency`, `transaction_id`, parametri prenotazione e opzionale `items`). Il form `form-simple.js` esegue `dataLayer.push` sul browser con lo stesso `event_id` generato lato server, così il prezzo dal piano pasti arriva a GA4 anche quando non c’è `wp_footer` sulla richiesta API (deduplica con GA4 Measurement Protocol se attivo).
+
+### Changed
+
+- **TrackingBridge**: se presente `fp_tracking_event_id` nel payload di creazione, viene riusato come `event_id` dell’evento `fp_tracking_event`.
+
+## [1.0.36] - 2026-04-10
 
 ### Fixed
 
 - **Brevo / liste IT+EN**: rimosso un doppio `POST /v3/contacts` su creazione prenotazione e su cambio stato. Prima `syncContact()` senza `listIds` (con FP Tracking) risolveva sempre la lista **IT**; subito dopo `subscribeContact()` aggiungeva la lista corretta (es. **EN** da lingua pagina / prefisso) → lo stesso contatto finiva su due liste. Ora resta un solo upsert tramite `subscribeContact()`.
-
-## [1.0.36] - 2026-04-09
-
-### Fixed
-
-- **Bottone menu PDF nel form**: la mappa «Menu PDF per lingua» in Impostazioni → Generali salva le chiavi come `IT`/`EN`, mentre il form risolve la lingua come `it`/`en`; il mismatch impediva di trovare l’URL e il link in header non veniva renderizzato. Le chiavi vengono ora normalizzate in `FormContext::resolvePdfUrl()`.
 
 ## [1.0.35] - 2026-04-07
 

@@ -62,8 +62,11 @@ final class TrackingBridge
     /**
      * Fired when a reservation is created/confirmed.
      *
+     * Se `$payload['fp_tracking_event_id']` è una stringa non vuota (impostata da Service prima dell'hook),
+     * viene usata come `event_id` verso FP Tracking per allineare browser (dataLayer) e server (GA4 MP / deduplica).
+     *
      * @param int              $reservation_id
-     * @param array            $payload         Raw booking payload from the form
+     * @param array            $payload         Payload sanitizzato dalla creazione prenotazione
      * @param ReservationModel $reservation
      */
     public function on_reservation_created(int $reservation_id, array $payload, ReservationModel $reservation): void
@@ -94,6 +97,11 @@ final class TrackingBridge
             default           => 'booking_submitted',
         };
 
+        $presetEventId = $payload['fp_tracking_event_id'] ?? null;
+        $eventId       = is_string($presetEventId) && $presetEventId !== ''
+            ? $presetEventId
+            : uniqid('resv_' . $reservation_id . '_', true);
+
         $params = [
             'reservation_id'       => $reservation_id,
             'transaction_id'       => 'resv-' . $reservation_id,
@@ -104,7 +112,7 @@ final class TrackingBridge
             'reservation_time'     => (string) ($payload['time'] ?? ''),
             'meal_type'            => '',
             'reservation_location' => $location,
-            'event_id'             => uniqid('resv_' . $reservation_id . '_', true),
+            'event_id'             => $eventId,
             'user_data'            => [
                 'em' => $reservation->getEmail(),
                 'fn' => $reservation->getFirstName(),

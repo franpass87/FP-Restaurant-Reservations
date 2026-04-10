@@ -734,9 +734,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 // Successo!
 
-                // Nessun secondo evento `purchase` nel dataLayer: value stimato è in `ga4.params` dell'evento prenotazione.
-                // Qui segnaliamo solo il completamento per bloccare booking_form_abandon.
+                // Il POST REST non esegue wp_footer: il dataLayer lato PHP non arriva al browser.
+                // La risposta include `reservation.tracking` (value/currency/event_id allineati a FP Tracking Layer) per GA4/GTM.
                 _bookingSubmitted = true;
+
+                var resv = data.reservation || {};
+                var tr = resv.tracking;
+                if (tr && tr.event_name && typeof pushDataLayerEvent === 'function') {
+                    var dlParams = {
+                        value: typeof tr.value === 'number' ? tr.value : parseFloat(tr.value) || 0,
+                        currency: tr.currency || 'EUR',
+                        transaction_id: tr.transaction_id || '',
+                        event_id: tr.event_id || '',
+                        reservation_id: tr.reservation_id,
+                        reservation_party: tr.reservation_party,
+                        reservation_date: tr.reservation_date || '',
+                        reservation_time: tr.reservation_time || '',
+                        meal_type: tr.meal_type || '',
+                        reservation_location: tr.reservation_location || ''
+                    };
+                    if (tr.items && tr.items.length) {
+                        dlParams.ecommerce = { items: tr.items };
+                    }
+                    pushDataLayerEvent(tr.event_name, dlParams);
+                }
 
                 // UI: notice + nasconde form (DOPO il tracking)
                 showNotice('success', data.message || 'Prenotazione inviata con successo! Ti contatteremo presto per confermare.');

@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.37
+Stable tag: 1.0.38
 License: GPLv2 or later
 
 == Description ==
@@ -65,11 +65,11 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
-= 1.0.37 - 2026-04-10 =
-* Fixed: Brevo — evitato doppio upsert contatto (lista IT da FP Tracking + lista da lingua pagina) che iscriveva lo stesso contatto a due liste contemporaneamente.
+= 1.0.38 - 2026-04-10 =
+* Added: GA4/GTM — dopo invio form, `dataLayer.push` con `value`/`currency` dalla risposta REST (`reservation.tracking`), stesso `event_id` del server per deduplica con Measurement Protocol.
 
-= 1.0.36 - 2026-04-09 =
-* Fixed: bottone **menu PDF** in testa al form — corretta risoluzione URL quando la mappa è salvata con chiavi IT/EN (Impostazioni → Generali).
+= 1.0.36 - 2026-04-10 =
+* Fixed: Brevo — evitato doppio upsert contatto (lista IT da FP Tracking + lista da lingua pagina) che iscriveva lo stesso contatto a due liste contemporaneamente.
 
 = 1.0.35 - 2026-04-07 =
 * Fixed: conferma al **cliente** con canale **Brevo** — se l’evento `email_confirmation` non parte (checklist disattivata, client non connesso, errore API), invio di **fallback** con `wp_mail` e template della sezione Notifiche, così il cliente non resta senza mail.

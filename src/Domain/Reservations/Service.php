@@ -28,6 +28,7 @@ use FP\Resv\Core\Helpers;
 use FP\Resv\Core\Logging;
 use FP\Resv\Core\DataLayer;
 use FP\Resv\Domain\Settings\Language;
+use FP\Resv\Domain\Settings\MealPlan;
 use FP\Resv\Domain\Settings\Options;
 use Throwable;
 use RuntimeException;
@@ -71,6 +72,8 @@ use function substr;
 use function sprintf;
 use function trailingslashit;
 use function trim;
+use function uniqid;
+use function round;
 use function uksort;
 use function wp_parse_args;
 use function wp_json_encode;
@@ -538,12 +541,23 @@ class Service
             ]);
         }
 
+        $trackingEventId = uniqid('resv_' . $reservationId . '_', true);
+        $sanitized['fp_tracking_event_id'] = $trackingEventId;
+
         do_action('fp_resv_reservation_created', $reservationId, $sanitized, $reservation, $manageUrl);
+
+        unset($sanitized['fp_tracking_event_id']);
 
         $result = [
             'id'         => $reservationId,
             'status'     => $status,
             'manage_url' => $manageUrl,
+            'tracking'   => $this->buildClientGa4TrackingPayload(
+                $reservationId,
+                $status,
+                $sanitized,
+                $trackingEventId
+            ),
         ];
 
         if ($paymentPayload !== null) {
@@ -566,11 +580,108 @@ class Service
         return $result;
     }
 
+    /**
+     * Dati per dataLayer (GTM/GA4) sul browser dopo POST REST: stesso `event_id` usato da FP Tracking server-side (deduplica MP).
+     *
+     * @param array<string, mixed> $sanitized Payload già sanitizzato (senza `fp_tracking_event_id`).
+     *
+     * @return array<string, mixed>
+     */
+    private function buildClientGa4TrackingPayload(
+        int $reservationId,
+        string $status,
+        array $sanitized,
+        string $trackingEventId
+    ): array {
+        $eventName = $this->resolveBookingTrackingEventName($status);
+        $value     = (float) ($sanitized['value'] ?? 0);
+        $currency  = strtoupper((string) ($sanitized['currency'] ?? 'EUR'));
+        if (!preg_match('/^[A-Z]{3}$/', $currency)) {
+            $currency = 'EUR';
+        }
 
+        $party = max(1, (int) ($sanitized['party'] ?? 1));
+
+        $out = [
+            'event_name'            => $eventName,
+            'event_id'              => $trackingEventId,
+            'transaction_id'        => 'resv-' . $reservationId,
+            'reservation_id'        => $reservationId,
+            'value'                 => round($value, 2),
+            'currency'              => $currency,
+            'reservation_party'     => $party,
+            'reservation_date'      => (string) ($sanitized['date'] ?? ''),
+            'reservation_time'      => (string) ($sanitized['time'] ?? ''),
+            'meal_type'             => (string) ($sanitized['meal'] ?? ''),
+            'reservation_location'  => (string) ($sanitized['location'] ?? ''),
+        ];
+
+        if ($value > 0.0 && $party > 0) {
+            $items = $this->buildGa4EcommerceItemsFromSanitized($sanitized, $value, $party);
+            if ($items !== null) {
+                $out['items'] = $items;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Allinea i nomi evento al {@see \FP\Resv\Domain\Tracking\TrackingBridge::on_reservation_created}.
+     */
+    private function resolveBookingTrackingEventName(string $status): string
+    {
+        return match (strtolower($status)) {
+            'confirmed'       => 'booking_confirmed',
+            'pending'         => 'booking_submitted',
+            'waitlist'        => 'waitlist_joined',
+            'pending_payment' => 'booking_payment_required',
+            default           => 'booking_submitted',
+        };
+    }
+
+    /**
+     * Righe `items` GA4 allineate a TrackingBridge (prezzo × coperti).
+     *
+     * @param array<string, mixed> $sanitized
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function buildGa4EcommerceItemsFromSanitized(array $sanitized, float $value, int $party): ?array
+    {
+        $ppp = round($value / $party, 2);
+        if ($ppp <= 0.0) {
+            return null;
+        }
+
+        $mealKey = trim((string) ($sanitized['meal'] ?? ''));
+        $label   = '';
+        $definition = (string) $this->options->getField('fp_resv_general', 'frontend_meals', '');
+        if ($definition !== '') {
+            $meals = MealPlan::parse($definition);
+            if ($meals !== []) {
+                $byKey = MealPlan::indexByKey($meals);
+                if ($mealKey !== '' && isset($byKey[$mealKey]['label'])) {
+                    $label = (string) $byKey[$mealKey]['label'];
+                }
+            }
+        }
+
+        $name = $label !== '' ? $label : ($mealKey !== '' ? $mealKey : 'restaurant_reservation');
+        $id   = $mealKey !== '' ? $mealKey : 'reservation';
+
+        return [[
+            'item_id'       => $id,
+            'item_name'     => $name,
+            'item_category' => 'restaurant_reservation',
+            'price'         => $ppp,
+            'quantity'      => $party,
+        ]];
+    }
 
     /**
      * @param array<string, mixed> $payload
-     * 
+     *
      * @throws \FP\Resv\Core\Exceptions\ValidationException
      */
     private function assertPayload(array $payload): void
