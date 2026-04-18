@@ -102,6 +102,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextBtn = document.getElementById('next-btn');
     const prevBtn = document.getElementById('prev-btn');
     const submitBtn = document.getElementById('submit-btn');
+
+    // FIX CRITICO: temi come Salient/WPBakery applicano regole CSS con !important
+    // (es. pointer-events: none su alcuni button) che impediscono il click sui bottoni
+    // nav del wizard. Gli inline style con !important battono qualsiasi regola CSS
+    // esterna, quindi qui forziamo pointer-events/cursor corretti direttamente sul DOM.
+    [nextBtn, prevBtn, submitBtn].forEach(btn => {
+        if (!btn) return;
+        btn.style.setProperty('pointer-events', 'auto', 'important');
+        btn.style.setProperty('cursor', 'pointer', 'important');
+    });
     
     // Meal selection - dynamic
     let mealBtns = form.querySelectorAll('.fp-meal-btn');
@@ -501,6 +511,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.hidden = false;
                 btn.removeAttribute('aria-hidden');
                 btn.style.removeProperty('display');
+                // Ri-forza la cliccabilità: alcuni temi (Salient/WPBakery) applicano
+                // pointer-events: none dinamicamente; ri-applichiamo inline !important
+                // ogni volta che mostriamo il bottone.
+                btn.style.setProperty('pointer-events', 'auto', 'important');
+                btn.style.setProperty('cursor', 'pointer', 'important');
             }
         };
         setBtnHidden(prevBtn, step <= 1);

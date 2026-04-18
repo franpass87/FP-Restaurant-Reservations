@@ -1,3 +1,16 @@
+## [1.1.3] - 2026-04-18
+
+### Fixed
+
+- **Tasto "Indietro" non funzionante con temi Salient/WPBakery**: verificato dal vivo tramite browser MCP — il bottone `#prev-btn` risultava avere `pointer-events: none` applicato da una regola CSS del tema con `!important` e specificità superiore a qualsiasi selettore usato nel plugin. Il click veniva intercettato dal `<div class="fp-buttons">` contenitore anziché dal bottone, quindi il listener `click` su `prev-btn` non scattava mai (identico problema potenziale su `next-btn` e `submit-btn`).
+  - **Soluzione (JS, `assets/js/form-simple.js`)**: all'inizializzazione del form e ogni volta che `setBtnHidden(btn, false)` mostra un bottone nav, applichiamo inline style `pointer-events: auto !important` e `cursor: pointer !important` su `prev-btn` / `next-btn` / `submit-btn`. Gli inline style con `!important` battono qualsiasi regola CSS esterna del tema (no CSS specificity war).
+  - **Safety net (CSS, `assets/css/form-simple-inline.css`)**: aggiunto `pointer-events: none` su `.fp-btn::before`, `.fp-meal-btn::before`, `.fp-time-slot::before` (pseudo-elementi shine overlay assolutamente posizionati sopra il bottone) per garantire che non intercettino mai il click, indipendentemente dal tema.
+  - **Regola CSS difensiva**: aggiunto un override `html body .fp-resv-simple #prev-btn / #next-btn / #submit-btn { pointer-events: auto !important }` (specificità massima) come prima linea di difesa se mai l'inline JS non dovesse girare (es. errore JS precedente).
+
+### Verifica dal vivo
+
+Testato con browser MCP su `https://fp-development.local/test-rest/` (pagina con shortcode `[fp_reservations]` in ambiente Salient + WPBakery): click su Avanti allo step 2 → click su Indietro → form torna correttamente allo step 1 con i 4 meal buttons visibili e heading "1. Scegli il Servizio".
+
 ## [1.1.2] - 2026-04-18
 
 ### Fixed

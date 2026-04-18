@@ -2421,6 +2421,38 @@ abbr.fp-required:hover,
         color 0.2s ease;
 }
 
+/* Fix critico: temi Salient/WPBakery possono impostare pointer-events: none
+   su selettori generici (es. button:not(.something)). Forziamo sui bottoni
+   nav del form con specificità massima (html body + id) + !important
+   per garantire che i click su Indietro/Avanti/Prenota passino sempre. */
+html body .fp-resv-simple #prev-btn,
+html body .fp-resv-simple #next-btn,
+html body .fp-resv-simple #submit-btn,
+html body #fp-resv-default #prev-btn,
+html body #fp-resv-default #next-btn,
+html body #fp-resv-default #submit-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+html body .fp-resv-simple #prev-btn[disabled],
+html body .fp-resv-simple #next-btn[disabled],
+html body .fp-resv-simple #submit-btn[disabled],
+html body #fp-resv-default #prev-btn[disabled],
+html body #fp-resv-default #next-btn[disabled],
+html body #fp-resv-default #submit-btn[disabled] {
+    cursor: not-allowed !important;
+}
+
+/* Pseudo-elementi decorativi (shine overlay su bottoni e meal-btn): non devono
+   intercettare il click — pointer-events none per sicurezza, indipendentemente
+   dal tema. */
+.fp-resv-simple .fp-btn::before,
+.fp-resv-simple .fp-meal-btn::before,
+.fp-resv-simple .fp-time-slot::before {
+    pointer-events: none !important;
+}
+
 .fp-resv-simple .fp-btn-primary {
     background: linear-gradient(
         135deg,

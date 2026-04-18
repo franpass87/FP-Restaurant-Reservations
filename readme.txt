@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,9 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 1.1.3 - 2026-04-18 =
+* Fixed: Tasto "Indietro" non funzionante con temi Salient/WPBakery. Tali temi applicano regole CSS `pointer-events: none !important` su certi bottoni, sovrascrivendo qualsiasi selettore del plugin. Ora `prev-btn`, `next-btn` e `submit-btn` ricevono inline style `pointer-events: auto !important` + `cursor: pointer !important` via JavaScript (batte qualsiasi `!important` CSS esterno). Aggiunto anche safety net sui pseudo-elementi `::before` decorativi dei bottoni (shine overlay) con `pointer-events: none` per escludere che intercettino il click.
 
 = 1.1.2 - 2026-04-18 =
 * Fixed: Rimosse le righe orizzontali sopra "Servizi Aggiuntivi" e sopra i consensi privacy (border-top sui fieldset introdotto in 1.1.1). Il raggruppamento è ora dato dalla sola legend visibile e da uno spacing verticale più pulito.
