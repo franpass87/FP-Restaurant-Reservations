@@ -489,9 +489,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Update buttons
-        if (prevBtn) prevBtn.hidden = step <= 1;
-        if (nextBtn) nextBtn.hidden = step >= totalSteps;
+        // Update buttons — imposta sia attributo hidden sia style.display per bypassare
+        // eventuali "button { display: inline-block !important }" del tema (es. Salient/WPBakery).
+        const setBtnHidden = (btn, hide) => {
+            if (!btn) return;
+            if (hide) {
+                btn.hidden = true;
+                btn.setAttribute('aria-hidden', 'true');
+                btn.style.setProperty('display', 'none', 'important');
+            } else {
+                btn.hidden = false;
+                btn.removeAttribute('aria-hidden');
+                btn.style.removeProperty('display');
+            }
+        };
+        setBtnHidden(prevBtn, step <= 1);
+        setBtnHidden(nextBtn, step >= totalSteps);
         // #submit-btn è incollato allo step 4 in form-simple.php: con il flusso step, compare solo a riepilogo.
         
         // Aggiorna lo stato corrente
@@ -759,9 +772,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     summaryStep.hidden = true;
                 }
                 
-                // Nascondi i pulsanti
-                if (submitBtn) submitBtn.hidden = true;
-                if (prevBtn) prevBtn.hidden = true;
+                // Nascondi i pulsanti (anche con style.display !important per battere temi con button { display: inline-block !important })
+                if (submitBtn) { submitBtn.hidden = true; submitBtn.style.setProperty('display', 'none', 'important'); }
+                if (prevBtn) { prevBtn.hidden = true; prevBtn.style.setProperty('display', 'none', 'important'); }
                 
                 // Nascondi la progress bar
                 const progressBar = form.querySelector('.fp-progress');

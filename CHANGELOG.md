@@ -1,21 +1,9 @@
-## [1.0.43] - 2026-04-18
+## [1.0.44] - 2026-04-18
 
 ### Fixed
 
-- **Dark mode — reset una tantum**: sui siti che avevano il valore `style_enable_dark_mode = 1` ereditato dal vecchio default, alla prima visita admin dopo l’upgrade viene azzerato a `0` (solo una volta, guard `fp_resv_style_dark_mode_reset_v1042`). Chi vuole mantenere la dark mode automatica può riattivarla da Aspetto.
-- **CSS nuclear per `#submit-btn`**: regole difensive in `form-simple.php` (CSS critico inline) e `form-simple-inline.css` nascondono il tasto *Prenota* se appare nella barra `.fp-buttons` o in uno step diverso dal 4. Tutela contro HTML cached (browser / page cache) ancora con il vecchio layout.
-
-## [1.0.42] - 2026-04-18
-
-### Fixed
-
-- **Form multi-step**: il tasto *Prenota* è spostato **nello step 4 (riepilogo)**: la barra con Avanti/Indietro non contiene più il CTA per l’invio, così non appare (né come testo) nel primo passaggio. Stile: `.fp-step-final-actions` / `.fp-btn-submit` a larghezza piena nello step finale.
-
-## [1.0.41] - 2026-04-18
-
-### Changed
-
-- **Form frontend e dark mode**: la voce *Dark mode automatica* in Aspetto è **disattivata di default**. Il form in pagina resta sui colori chiari (personalizzabili) anche con OS in dark mode, evitando la versione a sfondo scuro. Chi vuole l’adattamento al tema scuro del dispositivo può riattivare l’opzione. Testo di aiuto aggiornato in impostazioni.
+- **Form frontend — navigazione step**: i bottoni *Indietro* / *Avanti* / *Prenota* nascosti allo step corrente ora vengono forzati con `style.display='none' !important` oltre all'attributo HTML `hidden`. Necessario per bypassare temi (es. Salient/WPBakery) che applicano `button { display: inline-block !important }` a tutti i `button`, facendo riapparire il pulsante *Indietro* anche allo step 1.
+- **Accessibilità**: i bottoni nascosti ricevono anche `aria-hidden="true"` per coerenza con gli screen reader.
 
 ## [1.0.40] - 2026-04-18
 
@@ -28,6 +16,16 @@
 - **Form prenotazione (UX FP)**: `form-simple-inline.css` e sezioni collegate usano le variabili `--fp-resv-*` (gradiente barra, card step, input focus con `--fp-resv-focus-ring`, bottoni primi/secondari con `--fp-resv-button-bg` e `--fp-resv-button-text`, servizi pasto, step progress). Fallback espliciti = look precedente se l’iniezione non c’è.
 - **`form.css`**: mappa `--fp-form-*` sui token; Flatpickr e calendario usano token; su apertura calendario, `form-simple.js` copia le variabili correnti su `.flatpickr-calendar` (portale di Flatpickr fuori dal nodo form) così date e oggi rispettano i colori impostati.
 - **`form-simple.php` (critico)**: asterischi obbligatori, bordi checkbox, separatore, colori con `var(--fp-resv-…)` ove applicabile.
+
+## [1.0.40] - 2026-04-18
+
+### Changed
+
+- **Aspetto / Dark mode automatica**: disattivata di default. Prima il form in frontend diventava scuro automaticamente se l'OS/browser usava `prefers-color-scheme: dark`, senza un controllo chiaro in admin. Chi vuole la dark mode può riattivarla da **FP Reservations → Aspetto → Dark mode automatica**.
+
+### Fixed
+
+- **Form frontend — pulsanti navigazione**: aggiunto CSS a specificità nucleare per forzare `display: none` sui bottoni `#prev-btn` / `#next-btn` / `#submit-btn` quando hanno l'attributo `hidden` (alcuni temi, es. Salient / WPBakery, impostavano `display: inline-block !important` su tutti i `button` rendendo «Prenota» sempre visibile anche allo step 1).
 
 ## [1.0.39] - 2026-04-18
 
