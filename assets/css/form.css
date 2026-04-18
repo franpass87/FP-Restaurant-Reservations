@@ -24,23 +24,23 @@
     --fp-form-space-xl: 1.5rem;     /* 24px - extra large */
     --fp-form-space-2xl: 2rem;      /* 32px - section spacing */
     
-    /* Color palette */
-    --fp-form-primary: #3b82f6;
-    --fp-form-primary-dark: #2563eb;
-    --fp-form-success: #10b981;
-    --fp-form-success-dark: #059669;
-    --fp-form-error: #dc2626;
+    /* Allineati ai token impostazioni (#formId) — fp-resv-*, con fallback stile legacy */
+    --fp-form-primary: var(--fp-resv-primary, #3b82f6);
+    --fp-form-primary-dark: var(--fp-resv-primary, #2563eb);
+    --fp-form-success: var(--fp-resv-success, #10b981);
+    --fp-form-success-dark: var(--fp-resv-success, #059669);
+    --fp-form-error: var(--fp-resv-danger, #dc2626);
     --fp-form-error-light: #fef2f2;
-    --fp-form-warning: #f59e0b;
-    --fp-form-neutral: #6b7280;
-    --fp-form-neutral-light: #f3f4f6;
-    --fp-form-text: #374151;
-    --fp-form-text-light: #6b7280;
+    --fp-form-warning: var(--fp-resv-accent, #f59e0b);
+    --fp-form-neutral: var(--fp-resv-muted, #6b7280);
+    --fp-form-neutral-light: var(--fp-resv-surface-alt, #f3f4f6);
+    --fp-form-text: var(--fp-resv-text, #374151);
+    --fp-form-text-light: var(--fp-resv-muted, #6b7280);
     
     /* Border & radius */
-    --fp-form-border-color: #d1d5db;
-    --fp-form-border-radius: 12px;
-    --fp-form-border-radius-sm: 8px;
+    --fp-form-border-color: var(--fp-resv-outline, #d1d5db);
+    --fp-form-border-radius: var(--fp-resv-radius, 12px);
+    --fp-form-border-radius-sm: var(--fp-resv-radius-sm, 8px);
     
     /* Typography */
     --fp-form-font-base: 16px;
@@ -101,10 +101,11 @@
 
 /* ==================== CALENDARIO FLATPICKR - DATE DISABILITATE ==================== */
 
+/* Calendario: le variabili vengono copiate sul .flatpickr-calendar in apertura (form-simple.js) */
 /* Date NON disponibili - Stile minimale e discreto */
 .flatpickr-day.flatpickr-disabled {
-    background: #f3f4f6 !important;
-    color: #9ca3af !important;
+    background: var(--fp-resv-surface-alt, #f3f4f6) !important;
+    color: var(--fp-resv-muted, #9ca3af) !important;
     cursor: not-allowed !important;
     opacity: 0.6;
     /* Previeni completamente il click */
@@ -117,63 +118,57 @@
 }
 
 .flatpickr-day.flatpickr-disabled:hover {
-    background: #e5e7eb !important;
-    color: #6b7280 !important;
+    background: var(--fp-resv-divider, #e5e7eb) !important;
+    color: var(--fp-resv-muted, #6b7280) !important;
 }
 
 /* Date DISPONIBILI - Subtle highlight */
 .flatpickr-day:not(.flatpickr-disabled):not(.today):not(.selected) {
-    background: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    color: #374151 !important;
+    background: var(--fp-resv-surface, #ffffff) !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
+    color: var(--fp-resv-text, #374151) !important;
     font-weight: 400;
     transition: all 0.15s ease;
 }
 
-/* Date DISPONIBILI - Hover state */
+/* Date DISPONIBILI - Hover: brand (primary) */
 .flatpickr-day:not(.flatpickr-disabled):not(.today):not(.selected):hover {
-    background: #f0fdf4 !important;
-    border-color: #10b981 !important;
-    color: #065f46 !important;
+    background: var(--fp-resv-primary-soft, #d1fae5) !important;
+    border-color: var(--fp-resv-primary, #10b981) !important;
+    color: var(--fp-resv-text, #374151) !important;
     font-weight: 500;
-}
-
-.flatpickr-day:not(.flatpickr-disabled):not(.today):not(.selected):hover {
-    background: #d1fae5 !important;
-    border-color: #10b981 !important;
-    /* Prefissi vendor per compatibilità */
     -webkit-transform: scale(1.05);
     -ms-transform: scale(1.05);
     transform: scale(1.05);
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-    /* Smooth transition */
     transition: all 0.2s ease-in-out;
 }
 
 /* Data OGGI - Enfatizzata */
 .flatpickr-day.today:not(.flatpickr-disabled) {
-    background: #dbeafe !important;
-    border: 2px solid #3b82f6 !important;
-    color: #1e40af !important;
+    background: var(--fp-resv-primary-soft, #dbeafe) !important;
+    border: 2px solid var(--fp-resv-primary, #3b82f6) !important;
+    color: var(--fp-resv-text, #1e40af) !important;
     font-weight: 700;
 }
 
 .flatpickr-day.today:not(.flatpickr-disabled):hover {
-    background: #bfdbfe !important;
-    border-color: #2563eb !important;
+    background: var(--fp-resv-primary-soft, #bfdbfe) !important;
+    border-color: var(--fp-resv-primary, #2563eb) !important;
 }
 
-/* Data SELEZIONATA */
+/* Data SELEZIONATA (brand) */
 .flatpickr-day.selected {
-    background: #10b981 !important;
-    border-color: #059669 !important;
-    color: white !important;
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #10b981)) !important;
+    border-color: var(--fp-resv-button-bg, var(--fp-resv-primary, #059669)) !important;
+    color: var(--fp-resv-button-text, #ffffff) !important;
     font-weight: 700;
-    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 6px rgba(15, 23, 42, 0.12);
 }
 
 .flatpickr-day.selected:hover {
-    background: #059669 !important;
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #059669)) !important;
+    filter: brightness(0.97);
 }
 
 /* Loading state per calendario */
@@ -182,12 +177,12 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
+    background: var(--fp-resv-surface, #ffffff);
     padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: var(--fp-resv-radius-sm, 8px);
+    box-shadow: var(--fp-resv-shadow-sm, 0 4px 12px rgba(15, 23, 42, 0.1));
     font-size: 14px;
-    color: #6b7280;
+    color: var(--fp-resv-muted, #6b7280);
     text-align: center;
     margin-top: 8px;
     z-index: 1000;
@@ -202,8 +197,8 @@
     display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top-color: #10b981;
+    border: 2px solid var(--fp-resv-divider, #e5e7eb);
+    border-top-color: var(--fp-resv-primary, #10b981);
     border-radius: 50%;
     /* Prefissi vendor per compatibilità */
     -webkit-animation: fp-spin 0.6s linear infinite;

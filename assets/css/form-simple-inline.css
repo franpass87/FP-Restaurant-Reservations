@@ -1,16 +1,23 @@
+/**
+ * Form prenotazione — stile allineato ai token FP (Design Suite / DMS: radii, ombre, focus).
+ * Le variabili --fp-resv-* sono iniettate su #formId dalle impostazioni Aspetto (form.php + StyleCssGenerator).
+ * I fallback replicano il look precedente se l’iniezione non c’è.
+ */
 .fp-resv-simple {
-    max-width: 660px;
+    max-width: min(100%, 660px);
     margin: 0 auto;
-    padding: 20px 24px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
-    border: 1px solid rgba(209, 213, 219, 0.2);
+    padding: var(--fp-resv-space-lg, 1.25rem) var(--fp-resv-space-xl, 1.5rem);
+    font-family: inherit;
+    background: var(--fp-resv-surface, #ffffff);
+    color: var(--fp-resv-text, #111827);
+    border-radius: var(--fp-resv-radius-lg, 16px);
+    box-shadow: var(--fp-resv-shadow, 0 8px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06));
+    border: 1px solid var(--fp-resv-divider, #e5e7eb);
     position: relative;
     overflow: hidden;
     /* Assicuriamo che gli elementi interattivi funzionino */
     pointer-events: auto;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .fp-resv-simple::before {
@@ -20,7 +27,15 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #374151 0%, #6b7280 25%, #9ca3af 50%, #6b7280 75%, #374151 100%);
+    /* Gradiente stile FP: colore principale e accento dalle impostazioni */
+    background: linear-gradient(
+        90deg,
+        var(--fp-resv-primary, #374151) 0%,
+        var(--fp-resv-accent, #6b7280) 25%,
+        var(--fp-resv-primary, #4b5563) 50%,
+        var(--fp-resv-accent, #6b7280) 75%,
+        var(--fp-resv-primary, #374151) 100%
+    );
     border-radius: 20px 20px 0 0;
 }
 
@@ -40,11 +55,11 @@
 }
 
 .fp-resv-simple h2 {
-    color: #111827;
+    color: var(--fp-resv-text, #111827);
     margin: 0;
     text-align: center;
-    font-size: 24px;
-    font-weight: 700;
+    font-size: clamp(1.25rem, 0.4vw + 1.1rem, 1.5rem);
+    font-weight: var(--fp-resv-heading-weight, 700);
     letter-spacing: -0.3px;
     line-height: 1.2;
     position: relative;
@@ -57,42 +72,47 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
+    width: 64px;
     height: 3px;
-    background: linear-gradient(90deg, #374151 0%, #6b7280 100%);
-    border-radius: 2px;
+    background: linear-gradient(90deg, var(--fp-resv-primary, #374151) 0%, var(--fp-resv-accent, #6b7280) 100%);
+    border-radius: var(--fp-resv-radius-sm, 2px);
 }
 
-/* Bottone PDF */
+/* Bottone PDF (colori = impostazioni: bottone) */
 .fp-btn-pdf {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 13px 20px;
-    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-    color: #ffffff !important;
+    padding: 0.6rem 1.15rem;
+    background: linear-gradient(
+        135deg,
+        var(--fp-resv-button-bg, var(--fp-resv-primary, #374151)) 0%,
+        var(--fp-resv-primary, #4b5563) 100%
+    );
+    color: var(--fp-resv-button-text, #ffffff) !important;
     text-decoration: none !important;
     font-size: 14px;
     font-weight: 600;
     min-height: 44px;
-    border-radius: 10px;
+    border-radius: var(--fp-resv-radius-md, 10px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(55, 65, 81, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.2);
     white-space: nowrap;
     cursor: pointer;
     pointer-events: auto !important;
 }
 
 .fp-btn-pdf:hover {
-    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.3);
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #1f2937));
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
 }
 
 .fp-btn-pdf:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(55, 65, 81, 0.2);
+    filter: brightness(0.92);
 }
 
 .fp-btn-pdf__icon {
@@ -107,7 +127,7 @@
 
 .fp-step {
     display: none;
-    padding: 12px;
+    padding: var(--fp-resv-space-sm, 12px);
     opacity: 0;
     -webkit-transform: translateX(20px);
     -ms-transform: translateX(20px);
@@ -119,10 +139,11 @@
     left: 0;
     right: 0;
     visibility: hidden;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid rgba(209, 213, 219, 0.3);
+    background: var(--fp-resv-surface, #ffffff);
+    color: var(--fp-resv-text, #111827);
+    border-radius: var(--fp-resv-radius-md, 12px);
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 10px rgba(15, 23, 42, 0.06));
+    border: 1px solid var(--fp-resv-divider, #e5e7eb);
     margin-bottom: 10px;
 }
 
@@ -133,8 +154,8 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #374151 0%, #6b7280 50%, #374151 100%);
-    border-radius: 16px 16px 0 0;
+    background: linear-gradient(90deg, var(--fp-resv-primary, #374151) 0%, var(--fp-resv-accent, #6b7280) 50%, var(--fp-resv-primary, #374151) 100%);
+    border-radius: var(--fp-resv-radius-md, 12px) var(--fp-resv-radius-md, 12px) 0 0;
 }
 
 .fp-step.active {
@@ -172,17 +193,18 @@
 .fp-steps-container {
     position: relative;
     min-height: 80px;
-    background: #f9fafb;
-    border-radius: 16px;
-    padding: 12px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    background: var(--fp-resv-background, #f9fafb);
+    border-radius: var(--fp-resv-radius-lg, 16px);
+    padding: var(--fp-resv-space-sm, 12px);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--fp-resv-divider, #e5e7eb);
 }
 
 .fp-step h3 {
-    color: #111827;
+    color: var(--fp-resv-text, #111827);
     margin-bottom: 10px;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 1.125rem;
+    font-weight: var(--fp-resv-heading-weight, 700);
     letter-spacing: -0.2px;
     position: relative;
     padding: 18px;
@@ -190,24 +212,24 @@
 
 .fp-field {
     margin-bottom: 10px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 12px;
-    border: 1px solid rgba(209, 213, 219, 0.2);
+    padding: var(--fp-resv-space-sm, 12px);
+    background: var(--fp-resv-surface-alt, rgba(255, 255, 255, 0.9));
+    border-radius: var(--fp-resv-radius-md, 12px);
+    border: 1px solid var(--fp-resv-divider, #e5e7eb);
     transition: all 0.2s ease;
 }
 
 .fp-field:hover {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(209, 213, 219, 0.4);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background: var(--fp-resv-surface, #ffffff);
+    border-color: var(--fp-resv-outline, #d1d5db);
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.05));
 }
 
 .fp-field label {
     display: block !important;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #374151;
+    color: var(--fp-resv-text, #374151);
     font-size: 14px;
     letter-spacing: 0.2px;
     line-height: 1.4 !important;
@@ -234,7 +256,7 @@ label abbr {
 /* Separatori tra sezioni */
 .fp-section-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, #d1d5db 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--fp-resv-divider, #d1d5db) 50%, transparent 100%);
     margin: 12px 0;
     position: relative;
 }
@@ -386,25 +408,25 @@ p:empty {
 .fp-field textarea {
     width: 100%;
     padding: 13px 14px;
-    border: 1.5px solid #d1d5db;
-    border-radius: 8px;
+    border: 1.5px solid var(--fp-resv-outline, #d1d5db);
+    border-radius: var(--fp-resv-radius-sm, 8px);
     font-size: 14px;
     min-height: 44px;
     box-sizing: border-box;
-    background: #ffffff;
-    color: #374151;
+    background: var(--fp-resv-surface, #ffffff);
+    color: var(--fp-resv-text, #374151);
     transition: all 0.2s ease;
     font-family: inherit;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .fp-field input:focus-visible,
 .fp-field select:focus-visible,
 .fp-field textarea:focus-visible {
-    outline: 2px solid #374151;
+    outline: 2px solid var(--fp-resv-primary, #374151);
     outline-offset: 2px;
-    border-color: #374151;
-    box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.1), 0 4px 12px 0 rgba(55, 65, 81, 0.15);
+    border-color: var(--fp-resv-primary, #374151);
+    box-shadow: var(--fp-resv-focus-ring, 0 0 0 3px var(--fp-resv-primary-soft, rgba(55, 65, 81, 0.12)));
     transform: translateY(-1px);
 }
 
@@ -416,7 +438,7 @@ p:empty {
 
 .fp-field input::placeholder,
 .fp-field textarea::placeholder {
-    color: #6b7280;
+    color: var(--fp-resv-muted, #6b7280);
 }
 
 .fp-meals {
@@ -428,19 +450,19 @@ p:empty {
 
 .fp-meal-btn {
     padding: 14px 16px;
-    border: 1.5px solid #d1d5db;
-    background: #ffffff;
-    border-radius: 8px;
+    border: 1.5px solid var(--fp-resv-outline, #d1d5db);
+    background: var(--fp-resv-surface, #ffffff);
+    border-radius: var(--fp-resv-radius-sm, 8px);
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
     min-height: 44px;
     transition: all 0.2s ease;
     text-align: center;
-    color: #374151;
+    color: var(--fp-resv-text, #374151);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.06));
 }
 
 .fp-meal-btn::before {
@@ -450,15 +472,15 @@ p:empty {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(55, 65, 81, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, var(--fp-resv-primary-soft, rgba(55, 65, 81, 0.08)), transparent);
     transition: left 0.5s ease;
 }
 
 .fp-meal-btn:hover {
-    border-color: #374151;
-    background: #f9fafb;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.12);
+    border-color: var(--fp-resv-primary, #374151);
+    background: var(--fp-resv-background, #f9fafb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
 .fp-meal-btn:hover::before {
@@ -466,11 +488,11 @@ p:empty {
 }
 
 .fp-meal-btn.selected {
-    background: #374151;
-    color: #ffffff;
-    border-color: #374151;
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #374151));
+    color: var(--fp-resv-button-text, #ffffff);
+    border-color: var(--fp-resv-button-bg, var(--fp-resv-primary, #374151));
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.2);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
 .fp-buttons {
@@ -479,10 +501,10 @@ p:empty {
     justify-content: space-between;
     margin-top: 10px;
     padding: 10px;
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    background: var(--fp-resv-surface, #ffffff);
+    border-radius: var(--fp-resv-radius-md, 12px);
+    border: 1px solid var(--fp-resv-divider, #e5e7eb);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .fp-btn {
@@ -515,42 +537,43 @@ p:empty {
 }
 
 .fp-btn-primary {
-    background: #374151;
-    color: #ffffff;
-    border-color: #374151;
-    box-shadow: 0 2px 8px rgba(55, 65, 81, 0.15);
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #374151));
+    color: var(--fp-resv-button-text, #ffffff);
+    border-color: var(--fp-resv-button-bg, var(--fp-resv-primary, #374151));
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.1));
     font-weight: 600;
     letter-spacing: 0.025em;
 }
 
 .fp-btn-primary:hover {
-    background: #1f2937;
-    border-color: #1f2937;
-    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.25);
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #1f2937));
+    border-color: var(--fp-resv-button-bg, var(--fp-resv-primary, #1f2937));
+    filter: brightness(0.96);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
     transform: translateY(-1px);
 }
 
 .fp-btn-secondary {
-    background: #ffffff;
-    color: #374151;
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    background: var(--fp-resv-surface, #ffffff);
+    color: var(--fp-resv-text, #374151);
+    border-color: var(--fp-resv-outline, #d1d5db);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
     font-weight: 500;
 }
 
 .fp-btn-secondary:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: var(--fp-resv-background, #f9fafb);
+    border-color: var(--fp-resv-muted, #9ca3af);
+    box-shadow: var(--fp-resv-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.08));
     transform: translateY(-1px);
 }
 
 .fp-btn:disabled {
     opacity: 0.65;
     cursor: not-allowed;
-    background: #f3f4f6;
-    color: #9ca3af;
-    border-color: #e5e7eb;
+    background: var(--fp-resv-surface-alt, #f3f4f6);
+    color: var(--fp-resv-muted, #9ca3af);
+    border-color: var(--fp-resv-divider, #e5e7eb);
 }
 
 /* Assicuriamo che tutti gli elementi interattivi del form funzionino */
@@ -617,7 +640,7 @@ p:empty {
     transform: translate(-50%, -50%);
     width: 80%;
     height: 2px;
-    background: #d1d5db;
+    background: var(--fp-resv-divider, #d1d5db);
     z-index: 1;
 }
 
@@ -625,40 +648,40 @@ p:empty {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #ffffff;
+    background: var(--fp-resv-surface, #ffffff);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 6px;
     font-weight: 600;
-    color: #999999;
+    color: var(--fp-resv-muted, #999999);
     font-size: 12px;
-    border: 2px solid #e8e8e8;
+    border: 2px solid var(--fp-resv-divider, #e8e8e8);
     transition: all 0.3s ease;
     position: relative;
     z-index: 2;
 }
 
 .fp-progress-step.active {
-    background: #000000;
-    color: #ffffff;
-    border-color: #000000;
+    background: var(--fp-resv-button-bg, var(--fp-resv-primary, #000000));
+    color: var(--fp-resv-button-text, #ffffff);
+    border-color: var(--fp-resv-button-bg, var(--fp-resv-primary, #000000));
     -webkit-transform: scale(1.1);
     -ms-transform: scale(1.1);
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .fp-progress-step.completed {
-    background: #333333;
-    color: #ffffff;
-    border-color: #333333;
+    background: var(--fp-resv-primary, #333333);
+    color: var(--fp-resv-on-primary, #ffffff);
+    border-color: var(--fp-resv-primary, #333333);
 }
 
-/* Link privacy in blu */
+/* Link privacy: accento dalle impostazioni */
 .fp-field a,
 .fp-checkbox-wrapper label a {
-    color: #2563eb !important;
+    color: var(--fp-resv-primary, #2563eb) !important;
     text-decoration: underline !important;
     text-decoration-skip-ink: auto !important;
     text-decoration-thickness: 1px !important;
@@ -674,7 +697,8 @@ p:empty {
 
 .fp-field a:hover,
 .fp-checkbox-wrapper label a:hover {
-    color: #1d4ed8 !important;
+    color: var(--fp-resv-accent, #1d4ed8) !important;
+    filter: brightness(0.92);
 }
 
 /* Reset pseudo-elementi sui link che potrebbero causare artefatti */
@@ -801,7 +825,7 @@ p:empty {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    border: 2px solid #d1d5db;
+    border: 2px solid var(--fp-resv-outline, #d1d5db);
     background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
     color: #374151;
     font-size: 24px;
@@ -825,7 +849,7 @@ p:empty {
 .fp-btn-minus:disabled, .fp-btn-plus:disabled {
     background: #f3f4f6;
     color: #9ca3af;
-    border-color: #d1d5db;
+    border-color: var(--fp-resv-outline, #d1d5db);
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
@@ -1411,7 +1435,7 @@ input[type="checkbox"].fp-checkbox {
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
-    border: 2px solid #d1d5db !important;
+    border: 2px solid var(--fp-resv-outline, #d1d5db) !important;
     border-radius: 4px !important;
     background: #ffffff !important;
     transition: all 0.2s ease !important;
@@ -1473,7 +1497,7 @@ input[type="checkbox"].fp-checkbox:hover {
 .fp-input-number {
     width: 70px;
     padding: 12px 10px;
-    border: 1.5px solid #d1d5db;
+    border: 1.5px solid var(--fp-resv-outline, #d1d5db);
     border-radius: 8px;
     font-size: 14px;
     background: #ffffff;
@@ -1645,7 +1669,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1697,7 +1721,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1727,7 +1751,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1757,7 +1781,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1787,7 +1811,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1817,7 +1841,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1849,7 +1873,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1879,7 +1903,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;
@@ -1909,7 +1933,7 @@ abbr.fp-required:hover,
     cursor: pointer !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid var(--fp-resv-outline, #d1d5db) !important;
     background-color: #ffffff !important;
     appearance: checkbox !important;
     -webkit-appearance: checkbox !important;

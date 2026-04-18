@@ -1,3 +1,15 @@
+## [1.0.40] - 2026-04-18
+
+### Added
+
+- **Form frontend (shortcode)**: in `templates/frontend/form.php` viene iniettato l’output CSS generato da `Style::buildFrontend()` (stesso usato in anteprima admin), collegando al `#formId` le variabili colore, tipografia, ombre, radii e spaziature definite in **Impostazioni → Aspetto / Stile**.
+
+### Changed
+
+- **Form prenotazione (UX FP)**: `form-simple-inline.css` e sezioni collegate usano le variabili `--fp-resv-*` (gradiente barra, card step, input focus con `--fp-resv-focus-ring`, bottoni primi/secondari con `--fp-resv-button-bg` e `--fp-resv-button-text`, servizi pasto, step progress). Fallback espliciti = look precedente se l’iniezione non c’è.
+- **`form.css`**: mappa `--fp-form-*` sui token; Flatpickr e calendario usano token; su apertura calendario, `form-simple.js` copia le variabili correnti su `.flatpickr-calendar` (portale di Flatpickr fuori dal nodo form) così date e oggi rispettano i colori impostati.
+- **`form-simple.php` (critico)**: asterischi obbligatori, bordi checkbox, separatore, colori con `var(--fp-resv-…)` ove applicabile.
+
 ## [1.0.39] - 2026-04-18
 
 ### Added

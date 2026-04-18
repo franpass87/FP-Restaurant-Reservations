@@ -856,6 +856,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inizializza Flatpickr per un calendario visivo migliore
     let flatpickrInstance = null;
     if (typeof flatpickr !== 'undefined' && dateInput) {
+        var fpResvCopyTokensTo = function (target) {
+            if (!target) {
+                return;
+            }
+            try {
+                var s = getComputedStyle(form);
+                // Token impostazioni Aspetto (iniettati su #formId) → calendario (portale flatpickr fuori dal form)
+                var copy = [
+                    '--fp-resv-primary', '--fp-resv-on-primary', '--fp-resv-surface', '--fp-resv-text', '--fp-resv-muted',
+                    '--fp-resv-outline', '--fp-resv-background', '--fp-resv-divider', '--fp-resv-button-bg', '--fp-resv-button-text',
+                    '--fp-resv-success', '--fp-resv-radius', '--fp-resv-radius-sm', '--fp-resv-shadow', '--fp-resv-shadow-sm',
+                    '--fp-resv-focus', '--fp-resv-primary-soft', '--fp-resv-color-primary-rgb'
+                ];
+                for (var c = 0; c < copy.length; c++) {
+                    var name = copy[c];
+                    var v = s.getPropertyValue(name);
+                    if (v && String(v).trim() !== '') {
+                        target.style.setProperty(name, v);
+                    }
+                }
+            } catch (e) {
+                if (window.fpResvDebug) { console.warn('[fp-resv] copy tokens to calendar', e); }
+            }
+        };
         flatpickrInstance = flatpickr(dateInput, {
             dateFormat: 'Y-m-d',
             minDate: 'today',
@@ -863,6 +887,11 @@ document.addEventListener('DOMContentLoaded', function() {
             enable: [], // Inizialmente nessuna data abilitata
             allowInput: false,
             disableMobile: false,
+            onOpen: function (_selected, _dstr, inst) {
+                if (inst && inst.calendarContainer) {
+                    fpResvCopyTokensTo(inst.calendarContainer);
+                }
+            },
             onChange: function(selectedDates, dateStr, instance) {
                 // Trigger evento change per compatibilità con il codice esistente
                 const event = new Event('change', { bubbles: true });
