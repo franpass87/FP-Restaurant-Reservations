@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,9 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 1.1.6 - 2026-04-18 =
+* Fixed: I cerchi del progress indicator apparivano ovali invece che perfettamente circolari con temi come Salient/WPBakery che applicano min-height/padding generici ai div. Forziamo width/height/min-width/min-height/max-width/max-height a 36 px con !important per blindare la proporzione 1:1 e mantenere border-radius: 50% come cerchio perfetto.
 
 = 1.1.5 - 2026-04-18 =
 * Fixed: Step completato nel progress indicator appariva come cerchio bianco col numero originale, perché la SVG mask per il checkmark non veniva interpretata correttamente e il tema sovrascriveva il background. Ora usiamo il carattere Unicode ✓ (U+2713) con font-size dedicato nel pseudo ::after, e !important su background/border/color per vincere su qualsiasi regola del tema.

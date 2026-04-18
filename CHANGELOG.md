@@ -1,3 +1,14 @@
+## [1.1.6] - 2026-04-18
+
+### Fixed
+
+- **Cerchi del progress indicator ovali invece che circolari**: verificato dal vivo via browser MCP su Salient + WPBakery. I temi applicano regole CSS generiche tipo `min-height` / `padding` a tutti i `<div>` del contenuto, rendendo la proporzione del `.fp-progress-step` non più 36×36 quadrata. Con `border-radius: 50%` un rettangolo diventa ovale.
+- **Fix**: forziamo con `!important` `width`, `height`, `min-width`, `min-height`, `max-width`, `max-height` tutti a 36 px, `flex: 0 0 36px`, `padding: 0`, `box-sizing: border-box`, `border-radius: 50%`. Così il `.fp-progress-step` resta esattamente 36×36 in ogni ambiente, indipendentemente dalle regole del tema. Le dimensioni restano coerenti con la linea di sfondo calibrata in `StyleCss.php` (`calc(50% - 138px)` desktop, `calc(50% - 120px)` mobile).
+
+### Verifica dal vivo
+
+Screenshot dopo fix: step 1 (completato nero con ✓), step 2 (attivo nero scaled 1.12 con "2"), step 3/4 (grigio vuoti) sono tutti cerchi perfettamente circolari.
+
 ## [1.1.5] - 2026-04-18
 
 ### Fixed
