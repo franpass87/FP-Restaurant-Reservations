@@ -660,9 +660,10 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin: 0 auto 8px;
     padding: 6px 18px;
     position: relative;
+    max-width: 360px;
 }
 
 /* Linea di sfondo che unisce il centro del primo step al centro dell'ultimo.
@@ -1079,8 +1080,9 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
     }
     
     .fp-progress {
-        margin-bottom: 16px;
+        margin: 0 auto 16px;
         padding: 12px 12px;
+        max-width: 320px;
     }
     
     .fp-progress-step {

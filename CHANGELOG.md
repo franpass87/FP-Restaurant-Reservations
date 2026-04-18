@@ -1,3 +1,9 @@
+## [1.0.46] - 2026-04-18
+
+### Changed
+
+- **Progress bar — spaziatura**: i 4 indicatori step sono ora raggruppati al centro con `max-width: 360px` (320px su mobile) e centrati con `margin: 0 auto`, mantenendo `space-between`. Numeri più ravvicinati e visivamente bilanciati, senza sbilanciamento a destra.
+
 ## [1.0.45] - 2026-04-18
 
 ### Fixed
