@@ -1,3 +1,9 @@
+## [1.0.45] - 2026-04-18
+
+### Fixed
+
+- **Progress bar form (step 1/2/3/4)**: i cerchi degli step erano addensati al centro e la linea di sfondo (`::before`) occupava solo l'80% centrato, lasciando uno "spazio vuoto" a destra. Ora `.fp-progress` usa `justify-content: space-between` con padding laterale 18px, e la linea di sfondo è posizionata con `left: 36px; right: 36px;` per unire **esattamente** il centro del primo e dell'ultimo step, a larghezza piena del contenitore.
+
 ## [1.0.44] - 2026-04-18
 
 ### Fixed

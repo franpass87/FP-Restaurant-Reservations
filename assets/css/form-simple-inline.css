@@ -658,22 +658,24 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
 
 .fp-progress {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    padding: 6px 0;
+    padding: 6px 18px;
     position: relative;
 }
 
+/* Linea di sfondo che unisce il centro del primo step al centro dell'ultimo.
+   Con step da 36px e padding 18px: la linea parte da (18+18)=36px da sx e finisce simmetrica a dx. */
 .fp-progress::before {
     content: '';
     position: absolute;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
+    left: 36px;
+    right: 36px;
     height: 2px;
     background: var(--fp-resv-divider, #d1d5db);
+    transform: translateY(-50%);
     z-index: 1;
 }
 
@@ -685,7 +687,7 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 6px;
+    flex: 0 0 36px;
     font-weight: 600;
     color: var(--fp-resv-muted, #999999);
     font-size: 12px;
@@ -1078,18 +1080,18 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
     
     .fp-progress {
         margin-bottom: 16px;
-        padding: 12px 0;
+        padding: 12px 12px;
     }
     
     .fp-progress-step {
         width: 36px;
         height: 36px;
-        margin: 0 4px;
         font-size: 12px;
     }
     
     .fp-progress::before {
-        width: 70%;
+        left: 30px;
+        right: 30px;
     }
     
     .fp-time-slots {
