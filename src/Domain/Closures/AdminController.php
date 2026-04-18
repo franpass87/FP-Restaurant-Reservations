@@ -118,6 +118,8 @@ final class AdminController
                 'empty'       => __('Nessuna chiusura o apertura programmata nel periodo selezionato.', 'fp-restaurant-reservations'),
                 'emptyFiltered' => __('Nessun risultato con i filtri attuali. Modifica ricerca o filtri per vedere altri eventi.', 'fp-restaurant-reservations'),
                 'formTitle'   => __('Configura nuovo evento operativo', 'fp-restaurant-reservations'),
+                'formTitleEdit' => __('Modifica evento operativo', 'fp-restaurant-reservations'),
+                'edit'        => __('Modifica', 'fp-restaurant-reservations'),
                 'searchLabel' => __('Cerca evento', 'fp-restaurant-reservations'),
                 'startLabel'  => __('Inizio', 'fp-restaurant-reservations'),
                 'endLabel'    => __('Fine', 'fp-restaurant-reservations'),

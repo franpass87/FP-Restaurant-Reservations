@@ -74,6 +74,8 @@
         delete: 'Elimina',
         clearFilters: 'Reset filtri',
         confirmDelete: 'Eliminare definitivamente?',
+        edit: 'Modifica',
+        formTitleEdit: 'Modifica evento operativo',
         searchPlaceholder: 'Cerca per nota, tipo o ambito...',
         filterLabel: 'Filtro',
         filterAll: 'Tutte',
@@ -99,6 +101,8 @@
         search: '',
         filter: 'all',
         sort: 'nearest',
+        editingId: null,
+        editingMealKey: '',
     };
 
     const ajaxRequest = (action, data = {}) => {
@@ -297,6 +301,7 @@
         </div>
     `;
 
+    const formTitleH3 = form.querySelector('header h3');
     const modeField = form.querySelector('[name="closure_mode"]');
     const modeDayWrapper = form.querySelector('.fp-resv-closures-form__mode-day');
     const modeSlotWrapper = form.querySelector('.fp-resv-closures-form__mode-slot');
@@ -357,6 +362,115 @@
             slotsList.appendChild(createSlotRow());
         });
     }
+
+    const toDateTimeLocal = (value) => {
+        if (!value || typeof value !== 'string') {
+            return '';
+        }
+        const t = value.trim();
+        if (t === '') {
+            return '';
+        }
+        const normalized = t.includes('T') ? t : t.replace(' ', 'T');
+        const ts = Date.parse(normalized);
+        if (!Number.isFinite(ts)) {
+            return '';
+        }
+        const d = new Date(ts);
+        const pad = (n) => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+
+    const clearFormFields = () => {
+        form.reset();
+        if (percentWrapper) {
+            percentWrapper.hidden = true;
+        }
+        if (specialOpeningWrapper) {
+            specialOpeningWrapper.hidden = true;
+        }
+        if (slotsList) {
+            slotsList.innerHTML = '';
+        }
+        if (modeField) {
+            modeField.value = 'day';
+            switchMode('day');
+        }
+    };
+
+    const resetForm = () => {
+        state.editingId = null;
+        state.editingMealKey = '';
+        if (formTitleH3) {
+            formTitleH3.textContent = strings.formTitle;
+        }
+        clearFormFields();
+    };
+
+    const openFormForEdit = (item) => {
+        if (!item) {
+            return;
+        }
+        const co = item.capacity_override;
+        state.editingId = item.id;
+        state.editingMealKey = (item.type === 'special_opening' && co && co.meal_key) ? String(co.meal_key) : '';
+        if (formTitleH3) {
+            formTitleH3.textContent = strings.formTitleEdit || 'Modifica evento operativo';
+        }
+        clearFormFields();
+        if (modeField) {
+            modeField.value = 'advanced';
+            switchMode('advanced');
+        }
+        if (typeField) {
+            typeField.value = item.type;
+            typeField.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (startField) {
+            startField.value = toDateTimeLocal(String(item.start_at || ''));
+        }
+        if (endField) {
+            endField.value = toDateTimeLocal(String(item.end_at || ''));
+        }
+        if (noteField) {
+            noteField.value = item.note || '';
+        }
+        if (item.type === 'capacity_reduction' && percentField && co && co.percent != null) {
+            percentField.value = String(co.percent);
+        }
+        if (item.type === 'special_opening' && co) {
+            if (specialLabelField) {
+                specialLabelField.value = co.label || '';
+            }
+            if (specialCapacityField) {
+                specialCapacityField.value = String(co.capacity != null ? co.capacity : 40);
+            }
+            if (slotsList) {
+                slotsList.innerHTML = '';
+                const sl = co.slots;
+                if (Array.isArray(sl) && sl.length > 0) {
+                    sl.forEach((s) => {
+                        if (s && s.start && s.end) {
+                            const a = String(s.start).length >= 5 ? String(s.start).substring(0, 5) : String(s.start);
+                            const b = String(s.end).length >= 5 ? String(s.end).substring(0, 5) : String(s.end);
+                            slotsList.appendChild(createSlotRow(a, b));
+                        }
+                    });
+                }
+                if (slotsList.children.length === 0) {
+                    slotsList.appendChild(createSlotRow('12:00', '15:00'));
+                }
+            }
+        }
+        state.formOpen = true;
+        form.hidden = false;
+        if (toggleButton) {
+            toggleButton.textContent = strings.cancel;
+        }
+        if (startField) {
+            startField.focus();
+        }
+    };
 
     const list = document.createElement('div');
     list.className = 'fp-resv-closures-list';
@@ -578,6 +692,13 @@
 
             const actions = document.createElement('div');
             actions.className = 'fp-resv-closure-card__actions';
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'button-link';
+            editBtn.textContent = strings.edit || 'Modifica';
+            editBtn.dataset.action = 'edit-closure';
+            editBtn.dataset.id = String(item.id);
+            actions.appendChild(editBtn);
             const deleteBtn = document.createElement('button');
             deleteBtn.type = 'button';
             deleteBtn.className = 'button-link';
@@ -687,24 +808,6 @@
             });
     };
 
-    const resetForm = () => {
-        form.reset();
-        if (percentWrapper) {
-            percentWrapper.hidden = true;
-        }
-        if (specialOpeningWrapper) {
-            specialOpeningWrapper.hidden = true;
-        }
-        if (slotsList) {
-            slotsList.innerHTML = '';
-        }
-        // Reset alla modalità "giorno" di default
-        if (modeField) {
-            modeField.value = 'day';
-            switchMode('day');
-        }
-    };
-
     const toggleForm = (open) => {
         state.formOpen = open;
         form.hidden = !open;
@@ -719,7 +822,17 @@
     };
 
     toggleButton.addEventListener('click', () => {
-        toggleForm(!state.formOpen);
+        if (state.formOpen) {
+            toggleForm(false);
+        } else {
+            state.editingId = null;
+            state.editingMealKey = '';
+            if (formTitleH3) {
+                formTitleH3.textContent = strings.formTitle;
+            }
+            clearFormFields();
+            toggleForm(true);
+        }
     });
 
     const buildPayloadFromMode = () => {
@@ -825,15 +938,24 @@
         const payload = buildPayloadFromMode();
         if (!payload) return;
 
+        if (state.editingId) {
+            payload.id = state.editingId;
+            if (payload.type === 'special_opening' && state.editingMealKey) {
+                payload.meal_key = state.editingMealKey;
+            }
+        }
+        const action = state.editingId ? 'fp_resv_closures_update' : 'fp_resv_closures_create';
         setLoading(true);
-        ajaxRequest('fp_resv_closures_create', payload)
+        ajaxRequest(action, payload)
             .then(() => {
                 state.error = '';
                 toggleForm(false);
                 loadClosures();
             })
             .catch((error) => {
-                state.error = error && error.message ? error.message : 'Impossibile creare la chiusura.';
+                state.error = error && error.message
+                    ? error.message
+                    : (state.editingId ? 'Impossibile aggiornare l\'evento operativo.' : 'Impossibile creare la chiusura.');
                 renderError();
             })
             .finally(() => {
@@ -886,6 +1008,17 @@
     list.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
+            return;
+        }
+        if (target.dataset.action === 'edit-closure') {
+            const id = Number.parseInt(target.dataset.id || '0', 10);
+            if (!id) {
+                return;
+            }
+            const item = state.items.find((row) => row && row.id === id);
+            if (item) {
+                openFormForEdit(item);
+            }
             return;
         }
         if (target.dataset.action === 'delete-closure') {

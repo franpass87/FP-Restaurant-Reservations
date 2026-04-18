@@ -1,3 +1,13 @@
+## [1.0.39] - 2026-04-18
+
+### Added
+
+- **Calendario operativo (chiusure)**: pulsante **Modifica** su ogni evento e azione AJAX `fp_resv_closures_update` per aggiornare data, orari, tipologia, note, capacità, fasce (inclusa **Apertura speciale**). In modifica mantiene `meal_key` per le aperture speciali.
+
+### Fixed
+
+- **Chiusure AJAX**: `sanitizeSpecialHours` ora preserva `start`/`end` nelle fasce inviate in JSON, coerentemente con `PayloadNormalizer` (in precedenza i dati potevano generare slot vuoti in salvataggio).
+
 ## [1.0.38] - 2026-04-10
 
 ### Added
