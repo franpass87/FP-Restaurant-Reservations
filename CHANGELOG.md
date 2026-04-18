@@ -1,3 +1,9 @@
+## [1.0.48] - 2026-04-18
+
+### Fixed
+
+- **Link "Privacy Policy" nel checkbox consenso**: appariva attaccato al testo (`laPrivacy Policye il trattamento…`) perché alcuni temi (WPBakery/Salient) rimuovono i text-node di solo whitespace vicino ai tag `<a>` e il CSS del plugin aveva `margin: 0 !important` sul link, eliminando anche lo spazio visivo. Ora il link ha `margin: 0 0.25em !important`, garantendo la spaziatura indipendentemente dal comportamento del tema.
+
 ## [1.0.47] - 2026-04-18
 
 ### Fixed

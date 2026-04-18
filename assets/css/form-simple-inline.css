@@ -731,7 +731,9 @@ html body #fp-resv-default .fp-progress::after,
     border-color: var(--fp-resv-primary, #333333);
 }
 
-/* Link privacy: accento dalle impostazioni */
+/* Link privacy: accento dalle impostazioni.
+   Margin orizzontale 0.25em per garantire lo spazio attorno al link anche se
+   il tema (WPBakery/Salient) rimuove i text-node di solo whitespace vicino al tag <a>. */
 .fp-field a,
 .fp-checkbox-wrapper label a {
     color: var(--fp-resv-primary, #2563eb) !important;
@@ -743,7 +745,7 @@ html body #fp-resv-default .fp-progress::after,
     white-space: normal !important;
     overflow: visible !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 0.25em !important;
     border: none !important;
     background: none !important;
 }
