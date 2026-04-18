@@ -2676,22 +2676,23 @@ abbr.fp-required:hover,
     box-shadow: none;
 }
 
-/* Fieldset (Servizi aggiuntivi / Consensi privacy): sobrio, leggero separatore
-   Utile per raggruppare visivamente senza sovrapporre card */
+/* Fieldset (Servizi aggiuntivi / Consensi privacy): sobrio, senza card né
+   separatore. Il raggruppamento è dato dalla legend (quando visibile) e da
+   uno spacing verticale più generoso rispetto ai field adiacenti. */
 .fp-resv-simple .fp-fieldset {
     background: transparent;
     border: 0;
-    border-top: 1px solid var(--fp-resv-divider, #e5e7eb);
     border-radius: 0;
-    padding: 14px 0 0;
-    margin: 0;
+    padding: 0;
+    margin: 8px 0 0;
 }
 
 .fp-resv-simple .fp-fieldset > legend {
     padding: 0;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
     color: var(--fp-resv-text, #0f172a);
     font-weight: 600;
+    letter-spacing: -0.005em;
 }
 
 /* Spaziatura interna dello step (il padding della card è stato tolto) */

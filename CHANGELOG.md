@@ -1,3 +1,9 @@
+## [1.1.2] - 2026-04-18
+
+### Fixed
+
+- **Righe orizzontali spurie sopra "Servizi Aggiuntivi" e sopra i consensi privacy**: rimosso il `border-top` sul `.fp-fieldset` introdotto in 1.1.1. Il raggruppamento dei campi è ora dato solo dalla `<legend>` visibile (quando presente) e da uno spacing verticale leggermente più generoso, senza linee divisorie che apparivano "appese" nel flusso verticale.
+
 ## [1.1.1] - 2026-04-18
 
 ### Fixed
