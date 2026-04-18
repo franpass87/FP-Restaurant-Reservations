@@ -2095,29 +2095,36 @@ abbr.fp-required:hover,
         0 8px 20px rgba(15, 23, 42, 0.18);
 }
 
+/* Step completato: cerchio pieno col colore primary + checkmark Unicode.
+   Usiamo font-size: 0 sul cerchio (non color:transparent, che il tema può
+   sovrascrivere) per nascondere il numero testuale, e !important su background
+   e border per battere regole più specifiche del tema. Il ::after mostra il ✓
+   con font-size proprio. */
 .fp-resv-simple .fp-progress-step.completed {
-    background: var(--fp-resv-primary, #1e293b);
-    color: transparent;
-    border-color: var(--fp-resv-primary, #1e293b);
+    background: var(--fp-resv-primary, #1e293b) !important;
+    border-color: var(--fp-resv-primary, #1e293b) !important;
+    color: transparent !important;
+    font-size: 0 !important;
     position: relative;
 }
 
 .fp-resv-simple .fp-progress-step.completed::after {
-    content: '';
+    content: '\2713'; /* U+2713 CHECK MARK */
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 14px;
-    height: 14px;
     transform: translate(-50%, -50%);
-    background-color: var(--fp-resv-on-primary, #ffffff);
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") no-repeat center / contain;
-            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") no-repeat center / contain;
+    color: var(--fp-resv-on-primary, #ffffff);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Mantieni leggibile lo screen-reader-text sul cerchio completato */
 .fp-resv-simple .fp-progress-step.completed > .screen-reader-text {
     color: initial;
+    font-size: 1px; /* non 0 per non annullare del tutto, ma comunque invisibile */
 }
 
 /* ---- Step title (h3): sobrio, senza card né barra laterale ----

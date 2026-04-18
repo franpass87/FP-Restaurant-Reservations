@@ -1,3 +1,16 @@
+## [1.1.5] - 2026-04-18
+
+### Fixed
+
+- **Step completato nel progress indicator non visibile**: verificato dal vivo via browser MCP — lo step 1 dopo il click su "Avanti" appariva come cerchio bianco col numero "1" visibile, senza il checkmark né il fill primary del mio design. Due cause concomitanti:
+  1. La SVG mask usata per il checkmark (`-webkit-mask: url("data:image/svg+xml;utf8,...")`) non veniva parsata correttamente in tutti i browser perché i caratteri `<` / `>` / attributi non codificati nel data URI creano problemi di parsing.
+  2. Il `background: var(--fp-resv-primary)` della regola `.fp-resv-simple .fp-progress-step.completed` veniva sovrascritto dal tema o da regole più specifiche, facendo apparire il cerchio bianco invece che scuro.
+- **Soluzione**: sostituito il ::after con `content: '\2713'` (carattere Unicode ✓ U+2713), più robusto in qualsiasi ambiente. Aggiunto `!important` su `background`, `border-color`, `color`, `font-size` sullo `.fp-progress-step.completed` per vincere su qualsiasi regola del tema. Il numero testuale viene nascosto con `font-size: 0` (più stabile di `color: transparent` che il tema poteva sovrascrivere), mentre il ::after mostra il ✓ con `font-size: 16px` proprio.
+
+### Verifica dal vivo
+
+Testato con browser MCP su `https://fp-development.local/test-rest/` (ambiente Salient + WPBakery): click su Avanti allo step 2 → lo step 1 nel progress indicator ora è un cerchio scuro pieno col checkmark ✓ bianco ben visibile.
+
 ## [1.1.4] - 2026-04-18
 
 ### Changed
