@@ -42,7 +42,7 @@ abbr.fp-required,
     display: inline !important;
     white-space: nowrap !important;
     overflow: visible !important;
-    color: var(--fp-resv-danger, #dc2626) !important;
+    color: #dc2626 !important;
     text-decoration: none !important;
     font-weight: bold !important;
     margin-left: 2px !important;
@@ -101,7 +101,7 @@ html body .fp-checkbox-wrapper label,
     line-height: 1.5 !important;
     margin-bottom: 0 !important;
     font-weight: 400 !important;
-    color: var(--fp-resv-text, #374151) !important;
+    color: #374151 !important;
     padding-top: 1px !important;
 }
 
@@ -127,9 +127,9 @@ input[type="checkbox"].fp-checkbox {
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
-    border: 2px solid var(--fp-resv-outline, #d1d5db) !important;
+    border: 2px solid #d1d5db !important;
     border-radius: 4px !important;
-    background: var(--fp-resv-surface, #ffffff) !important;
+    background: #ffffff !important;
     position: relative !important;
     vertical-align: middle !important;
     z-index: 1 !important;
@@ -162,7 +162,7 @@ abbr.fp-required,
     display: inline !important;
     white-space: nowrap !important;
     overflow: visible !important;
-    color: var(--fp-resv-danger, #dc2626) !important;
+    color: #dc2626 !important;
     margin-left: 2px !important;
     margin-right: 0 !important;
     margin-top: 0 !important;
@@ -209,8 +209,8 @@ input[type="checkbox"].fp-checkbox {
     display: inline-block !important;
     -webkit-appearance: none !important;
     appearance: none !important;
-    border: 2px solid var(--fp-resv-outline, #d1d5db) !important;
-    background: var(--fp-resv-surface, #ffffff) !important;
+    border: 2px solid #d1d5db !important;
+    background: #ffffff !important;
     flex-shrink: 0 !important;
 }
 `;
@@ -374,7 +374,7 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-field">
             <label for="reservation-date">
                 Data
-                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
             </label>
             <input type="text" id="reservation-date" name="date" required placeholder="Seleziona una data" readonly aria-describedby="date-hint date-loading">
             <div id="date-loading" class="fp-loading-message" role="status" aria-live="polite" aria-busy="true" hidden>
@@ -429,7 +429,7 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-field">
             <label for="customer-first-name">
                 Nome
-                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
             </label>
             <input 
                 type="text" 
@@ -445,7 +445,7 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-field">
             <label for="customer-last-name">
                 Cognome
-                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
             </label>
             <input 
                 type="text" 
@@ -461,7 +461,7 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-field">
             <label for="customer-email">
                 Email
-                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
             </label>
             <input 
                 type="email" 
@@ -478,7 +478,7 @@ input[type="checkbox"].fp-checkbox {
         <div class="fp-field">
             <label for="customer-phone">
                 Telefono
-                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
             </label>
             <div class="fp-phone-input-group">
                 <select name="fp_resv_phone_prefix" class="fp-input fp-input--phone-prefix" aria-label="Prefisso telefonico" autocomplete="tel-country-code">
@@ -585,7 +585,7 @@ input[type="checkbox"].fp-checkbox {
                     <input type="checkbox" id="privacy-consent" name="fp_resv_consent" required class="fp-checkbox" aria-describedby="privacy-consent-text" style="width:20px!important;height:20px!important;opacity:1!important;visibility:visible!important;display:inline-block!important;flex-shrink:0!important;">
                     <label for="privacy-consent" id="privacy-consent-text">
                         Accetto la <a href="<?php echo esc_url($context['privacy']['policy_url'] ?? '#'); ?>" target="_blank" rel="noopener noreferrer">Privacy Policy</a> e il trattamento dei miei dati personali
-                        <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                        <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
                     </label>
                 </div>
                 <div class="fp-checkbox-wrapper" style="display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;">
@@ -667,14 +667,14 @@ input[type="checkbox"].fp-checkbox {
         </div>
         
         <!-- Consensi Privacy nello step finale (riepilogo) -->
-        <div class="fp-field" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--fp-resv-divider, #e5e7eb);">
+        <div class="fp-field" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
             <fieldset class="fp-fieldset">
                 <legend class="screen-reader-text">Consensi Privacy</legend>
                 <div class="fp-checkbox-wrapper" style="display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;position:relative!important;z-index:10000!important;">
                     <input type="checkbox" id="privacy-consent-final" name="fp_resv_consent" required class="fp-checkbox" aria-describedby="privacy-consent-text-final" style="width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;opacity:1!important;visibility:visible!important;display:inline-block!important;flex-shrink:0!important;pointer-events:auto!important;z-index:10001!important;position:relative!important;cursor:pointer!important;margin:0!important;padding:0!important;">
                     <label for="privacy-consent-final" id="privacy-consent-text-final" style="pointer-events:auto!important;z-index:10000!important;position:relative!important;cursor:pointer!important;user-select:none!important;-webkit-user-select:none!important;-moz-user-select:none!important;-ms-user-select:none!important;flex:1!important;">
                         Accetto la <a href="<?php echo esc_url($context['privacy']['policy_url'] ?? '#'); ?>" target="_blank" rel="noopener noreferrer">Privacy Policy</a> e il trattamento dei miei dati personali
-                        <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:var(--fp-resv-danger, #dc2626)!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
+                        <abbr class="fp-required" title="Obbligatorio" aria-label="Campo obbligatorio" style="display:inline!important;white-space:nowrap!important;margin-left:2px!important;color:#dc2626!important;text-decoration:none!important;float:none!important;overflow:visible!important;">*</abbr>
                     </label>
                 </div>
                 <div class="fp-checkbox-wrapper" style="display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;position:relative!important;z-index:10000!important;">
@@ -686,6 +686,9 @@ input[type="checkbox"].fp-checkbox {
         
         <div class="fp-summary-note">
             <p>📝 <strong>Verifica attentamente tutti i dati</strong> prima di confermare la prenotazione. Una volta inviata, riceverai una email di conferma.</p>
+        </div>
+        <div class="fp-step-final-actions">
+            <button type="button" class="fp-btn fp-btn-primary fp-btn-submit" id="submit-btn" aria-label="<?php echo esc_attr__('Conferma e invia prenotazione', 'fp-restaurant-reservations'); ?>"><?php echo esc_html__('Prenota', 'fp-restaurant-reservations'); ?></button>
         </div>
     </div>
     </div> <!-- End fp-steps-container -->
@@ -711,7 +714,6 @@ input[type="checkbox"].fp-checkbox {
     <div class="fp-buttons">
         <button type="button" class="fp-btn fp-btn-secondary" id="prev-btn" hidden aria-label="Torna al passaggio precedente">← Indietro</button>
         <button type="button" class="fp-btn fp-btn-primary" id="next-btn" aria-label="Procedi al passaggio successivo">Avanti →</button>
-        <button type="button" class="fp-btn fp-btn-primary" id="submit-btn" hidden aria-label="Conferma e invia prenotazione">Prenota</button>
     </div>
 </div>
 

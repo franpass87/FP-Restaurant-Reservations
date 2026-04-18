@@ -507,6 +507,22 @@ p:empty {
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
+/* Pulsante "Prenota" solo nello step riepilogo (non nella barra Avanti/Indietro) */
+.fp-step-final-actions {
+    margin-top: var(--fp-resv-space-lg, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fp-resv-simple .fp-btn-submit {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+    font-size: 0.95rem;
+}
+
 .fp-btn {
     padding: 13px 20px;
     border: 1.5px solid;

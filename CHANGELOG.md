@@ -1,3 +1,9 @@
+## [1.0.42] - 2026-04-18
+
+### Fixed
+
+- **Form multi-step**: il tasto *Prenota* è spostato **nello step 4 (riepilogo)**: la barra con Avanti/Indietro non contiene più il CTA per l’invio, così non appare (né come testo) nel primo passaggio. Stile: `.fp-step-final-actions` / `.fp-btn-submit` a larghezza piena nello step finale.
+
 ## [1.0.41] - 2026-04-18
 
 ### Changed
