@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.0.40
+Stable tag: 1.0.41
 License: GPLv2 or later
 
 == Description ==
@@ -65,11 +65,8 @@ Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
 
-= 1.0.40 - 2026-04-18 =
-* Form frontend: CSS token da Impostazioni (Aspetto) iniettato in pagina; layout card/steps/pulsanti/calendario con variabili --fp-resv-*. Flatpickr riceve i token in apertura. Nessuna variazione alle opzioni colore nel backend.
-
-= 1.0.39 - 2026-04-18 =
-* Calendario operativo: modifica eventi (inclusa apertura speciale) oltre a eliminazione; fix fasce orarie in salvataggio AJAX.
+= 1.0.41 - 2026-04-18 =
+* Form: la dark mode automatica (Aspetto) è disattivata di default; il form resta chiaro anche con OS in dark mode. Attivabile dalle impostazioni se preferisci.
 
 = 1.0.38 - 2026-04-10 =
 * Added: GA4/GTM — dopo invio form, `dataLayer.push` con `value`/`currency` dalla risposta REST (`reservation.tracking`), stesso `event_id` del server per deduplica con Measurement Protocol.

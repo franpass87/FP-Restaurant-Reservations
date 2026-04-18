@@ -38,7 +38,7 @@ final class Style
             'style_shadow_level'     => 'soft',
             'style_spacing_scale'    => 'cozy',
             'style_focus_ring_width' => '3',
-            'style_enable_dark_mode' => '1',
+            'style_enable_dark_mode' => '0',
             'style_custom_css'       => '',
         ];
     }

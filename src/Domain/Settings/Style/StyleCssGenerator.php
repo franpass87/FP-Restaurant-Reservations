@@ -39,7 +39,7 @@ final class StyleCssGenerator
         $variables = $this->buildVariableBlock($scope, $tokens, $settings, $shadowPresets);
         $base      = $this->buildBaseCss($scope);
         $dark      = '';
-        if (($settings['style_enable_dark_mode'] ?? '1') === '1') {
+        if (($settings['style_enable_dark_mode'] ?? '0') === '1') {
             $dark = $this->buildDarkVariables($scope, $tokens);
         }
 

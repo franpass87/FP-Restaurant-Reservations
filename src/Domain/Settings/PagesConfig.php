@@ -890,7 +890,8 @@ final class PagesConfig
                 'label'          => __('Dark mode automatica', 'fp-restaurant-reservations'),
                 'type'           => 'checkbox',
                 'checkbox_label' => __('Adatta i colori al tema scuro del dispositivo.', 'fp-restaurant-reservations'),
-                'default'        => '1',
+                'default'        => '0',
+                'description'    => __('Disattivata di default: il form in pagina resta in versione chiara (colori personalizzati) anche con OS in dark mode. Attivala se vuoi sfondi e testi invertiti sul tema scuro.', 'fp-restaurant-reservations'),
             ],
         ];
     }

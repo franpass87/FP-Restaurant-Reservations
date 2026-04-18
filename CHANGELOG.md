@@ -1,3 +1,9 @@
+## [1.0.41] - 2026-04-18
+
+### Changed
+
+- **Form frontend e dark mode**: la voce *Dark mode automatica* in Aspetto è **disattivata di default**. Il form in pagina resta sui colori chiari (personalizzabili) anche con OS in dark mode, evitando la versione a sfondo scuro. Chi vuole l’adattamento al tema scuro del dispositivo può riattivare l’opzione. Testo di aiuto aggiornato in impostazioni.
+
 ## [1.0.40] - 2026-04-18
 
 ### Added
