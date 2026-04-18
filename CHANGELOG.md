@@ -1,3 +1,29 @@
+## [1.1.0] - 2026-04-18
+
+### Added
+
+- **Form frontend allineato al design system FP**: nuovo layer estetico coerente con gli altri plugin FP, aggiunto come blocco finale in `assets/css/form-simple-inline.css`. Principali miglioramenti:
+  - **Progress indicator**: step completati ora mostrano un ✓ (checkmark SVG via `mask`) al posto del numero, step attivo con alone colorato morbido e gradient primary→accent, transizioni cubic-bezier eleganti. Dimensioni cerchi e gap preservati (36 px / 56 px desktop · 36 px / 44 px mobile) per non disallineare la linea di sfondo calibrata in `StyleCss.php`.
+  - **Titoli step (H3)**: barra verticale sfumata primary→accent a sinistra del titolo, tipografia più incisiva.
+  - **Meal buttons**: card-tile con padding generoso, icona sopra il label, hover con `translateY(-2px)` + ombra diffusa, stato `selected` con gradient primary e alone morbido.
+  - **Time slots**: chip pill `border-radius: 999px` con hover scale, stato `selected` con gradient e alone, stato `disabled` con line-through sobrio.
+  - **Party selector**: card con bottoni +/- a 44 px, numero grande nel colore primary, label uppercase muted.
+  - **Bottoni nav (Avanti/Indietro/Prenota) + bottone PDF**: gradient primary→darker, shadow multilivello, hover con sollevamento.
+  - **Form field**: bordi 1.5 px, hover color primary, focus ring colorato `var(--fp-resv-primary-soft)` + border primary.
+  - **Summary**: card con barra accento laterale (gradient primary→accent), header titolo con separatore, nota finale con sfondo primary-soft e barra laterale.
+- Tutti gli elementi usano esclusivamente le variabili `--fp-resv-*` già iniettate da `StyleCssGenerator` in base al colore scelto in *Impostazioni → Aspetto*. Nessuna palette hardcoded, nessun viola admin: il form usa il colore del ristorante.
+
+### Changed
+
+- **Preview form-colors in admin**: beneficia automaticamente del nuovo look, perché `AdminPages.php` carica lo stesso `form-simple-inline.css` della pagina pubblica.
+
+### Compat / no-regression
+
+- Nessuna modifica a HTML, JS, endpoint, DB, email, hook, shortcode. Solo CSS aggiunto in coda al file esistente.
+- Preservate tutte le classi lette da `form-simple.js`: `active`, `completed`, `selected`, `disabled` su `.fp-step`, `.fp-progress-step`, `.fp-meal-btn`, `.fp-time-slot`.
+- Preservate dimensioni/gap del progress indicator per non rompere la linea di sfondo calibrata con `calc(50% - 138px)` / `calc(50% - 120px)` in `StyleCss.php`.
+- Rispetto di `prefers-reduced-motion`: transizioni e transform disabilitati per utenti con preferenza accessibilità.
+
 ## [1.0.48] - 2026-04-18
 
 ### Fixed
