@@ -2120,30 +2120,16 @@ abbr.fp-required:hover,
     color: initial;
 }
 
-/* ---- Step title (h3) con accento laterale ---- */
+/* ---- Step title (h3): sobrio, senza card né barra laterale ----
+   Il numero "2." è già nel testo del titolo, quindi niente barra verticale
+   ridondante. La card .fp-step viene appiattita più sotto. */
 .fp-resv-simple .fp-step h3 {
-    position: relative;
-    font-size: clamp(1.05rem, 0.4vw + 1rem, 1.2rem);
+    font-size: clamp(1.1rem, 0.5vw + 1rem, 1.3rem);
     font-weight: var(--fp-resv-heading-weight, 700);
     color: var(--fp-resv-text, #0f172a);
-    padding-left: 14px;
-    margin-bottom: 6px;
+    padding: 0;
+    margin: 0 0 6px;
     letter-spacing: -0.01em;
-}
-
-.fp-resv-simple .fp-step h3::before {
-    content: '';
-    position: absolute;
-    top: 4px;
-    bottom: 4px;
-    left: 0;
-    width: 4px;
-    border-radius: 999px;
-    background: linear-gradient(
-        180deg,
-        var(--fp-resv-primary, #1e293b) 0%,
-        var(--fp-resv-accent, var(--fp-resv-primary, #475569)) 100%
-    );
 }
 
 .fp-resv-simple .fp-section-divider {
@@ -2636,4 +2622,81 @@ abbr.fp-required:hover,
         transform: none;
     }
 }
+
+/* =============================================================
+   FP THEME — Appiattimento contenitori nidificati
+   Il CSS precedente rendeva ogni wrapper una card (steps-container,
+   step, field, fieldset), creando l'effetto "scatola dentro scatola".
+   Qui rimuoviamo background / border / shadow / radius per avere
+   un solo contenitore (.fp-resv-simple) con sezioni interne sobrie.
+   La barra top della step (.fp-step::before) è ridondante con la
+   barra del container esterno: la nascondiamo.
+   NON tocchiamo position/display/visibility/opacity/transform delle
+   .fp-step per non rompere la logica slide-in gestita dal JS.
+   ============================================================= */
+
+/* Barra orizzontale sopra lo step: rimossa (duplicava quella di .fp-resv-simple::before) */
+.fp-resv-simple .fp-step::before {
+    content: none;
+}
+
+/* Steps container: trasparente */
+.fp-resv-simple .fp-steps-container {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+}
+
+/* Step wrapper: nessuna card, solo spacing interno */
+.fp-resv-simple .fp-step {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Field: nessuna card, solo margine verticale fra le sezioni */
+.fp-resv-simple .fp-field {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0 0 16px;
+    transition: none;
+}
+
+.fp-resv-simple .fp-field:hover {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+/* Fieldset (Servizi aggiuntivi / Consensi privacy): sobrio, leggero separatore
+   Utile per raggruppare visivamente senza sovrapporre card */
+.fp-resv-simple .fp-fieldset {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--fp-resv-divider, #e5e7eb);
+    border-radius: 0;
+    padding: 14px 0 0;
+    margin: 0;
+}
+
+.fp-resv-simple .fp-fieldset > legend {
+    padding: 0;
+    margin-bottom: 6px;
+    color: var(--fp-resv-text, #0f172a);
+    font-weight: 600;
+}
+
+/* Spaziatura interna dello step (il padding della card è stato tolto) */
+.fp-resv-simple .fp-step.active {
+    padding: 4px 0 0;
+}
+
 /* ==== fine FP DESIGN SYSTEM THEME ==== */

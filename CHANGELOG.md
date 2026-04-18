@@ -1,3 +1,16 @@
+## [1.1.1] - 2026-04-18
+
+### Fixed
+
+- **Effetto "scatola dentro scatola"**: appiattiti i contenitori nidificati del form (`.fp-steps-container`, `.fp-step`, `.fp-field`, `.fp-fieldset`). Ciascuno di essi aveva `background` + `border` + `border-radius` + `box-shadow`, producendo fino a 4 card nidificate. Ora il form ha un solo contenitore principale con sezioni interne sobrie (solo `margin-bottom` tra i field, niente card).
+- **Barra orizzontale sopra lo step** (`.fp-step::before`): rimossa perché duplicava la barra gradient già presente in cima al container principale (`.fp-resv-simple::before`).
+- **Barra verticale accanto al titolo di step** (mia `h3::before` introdotta in 1.1.0): rimossa. Il numero "1.", "2.", "3.", "4." è già nel testo del titolo, la barra era ridondante.
+
+### Compat / no-regression
+
+- Nessuna modifica a HTML / JS / PHP. Non sono toccati `position`, `display`, `visibility`, `opacity`, `transform` di `.fp-step` per non rompere la logica slide-in degli step gestita da `form-simple.js`.
+- Il tasto *Indietro* mantiene il suo comportamento: `#prev-btn` resta legato al listener JS che fa `currentStep--; showStep(currentStep)` senza alterazioni.
+
 ## [1.1.0] - 2026-04-18
 
 ### Added
