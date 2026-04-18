@@ -1,3 +1,9 @@
+## [1.1.4] - 2026-04-18
+
+### Changed
+
+- **Meal buttons più compatti**: i box "Scegli il Servizio" (Cena / Pranzo / Pranzo Domenicale / Cena Weekend) risultavano troppo grandi con la migrazione 1.1.0. Ora: `min-height` da 88 a 64 px (mobile: 58 px), `padding` da 16/12 a 10/8, `gap` interno da 8 a 6 px, icona da 32×32 a 24×24 px (SVG da 22 a 18 px), font da 14 a 13 px. Layout flex-column con icona sopra label resta invariato, stato `selected` e hover invariati.
+
 ## [1.1.3] - 2026-04-18
 
 ### Fixed
