@@ -658,26 +658,43 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
 
 .fp-progress {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin: 0 auto 8px;
-    padding: 6px 18px;
+    gap: 56px;
+    margin-bottom: 8px;
+    padding: 6px 0;
     position: relative;
-    max-width: 360px;
 }
 
-/* Linea di sfondo che unisce il centro del primo step al centro dell'ultimo.
-   Con step da 36px e padding 18px: la linea parte da (18+18)=36px da sx e finisce simmetrica a dx. */
+/* Linea di sfondo: dal centro del primo al centro dell'ultimo step.
+   4 step x 36px + 3 gap x 56px = 312px totali; centri estremi a +/- 138px dal centro.
+   !important necessario per battere StyleCss.php che imposta left:0; right:0 su #formId .fp-progress::before. */
+html body .fp-resv-simple .fp-progress::before,
+html body #fp-resv-default .fp-progress::before,
+.fp-resv-simple .fp-progress::before,
+#fp-resv-default .fp-progress::before,
 .fp-progress::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 36px;
-    right: 36px;
-    height: 2px;
-    background: var(--fp-resv-divider, #d1d5db);
-    transform: translateY(-50%);
-    z-index: 1;
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: calc(50% - 138px) !important;
+    right: calc(50% - 138px) !important;
+    width: auto !important;
+    height: 2px !important;
+    background: var(--fp-resv-divider, #d1d5db) !important;
+    background-color: var(--fp-resv-divider, #d1d5db) !important;
+    border-radius: 0 !important;
+    transform: translateY(-50%) !important;
+    z-index: 1 !important;
+}
+
+/* Disabilita la barra di progresso "fill" (::after) iniettata da StyleCss.php:
+   form-simple.php usa cerchi numerati senza fill lineare. */
+html body .fp-resv-simple .fp-progress::after,
+html body #fp-resv-default .fp-progress::after,
+.fp-resv-simple .fp-progress::after,
+#fp-resv-default .fp-progress::after {
+    display: none !important;
 }
 
 .fp-progress-step {
@@ -1080,9 +1097,9 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
     }
     
     .fp-progress {
-        margin: 0 auto 16px;
-        padding: 12px 12px;
-        max-width: 320px;
+        margin-bottom: 16px;
+        padding: 12px 0;
+        gap: 44px;
     }
     
     .fp-progress-step {
@@ -1091,9 +1108,14 @@ html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
         font-size: 12px;
     }
     
+    /* Mobile: 4 step x 36px + 3 gap x 44px = 276px; centri a +/- 120px dal centro. */
+    html body .fp-resv-simple .fp-progress::before,
+    html body #fp-resv-default .fp-progress::before,
+    .fp-resv-simple .fp-progress::before,
+    #fp-resv-default .fp-progress::before,
     .fp-progress::before {
-        left: 30px;
-        right: 30px;
+        left: calc(50% - 120px) !important;
+        right: calc(50% - 120px) !important;
     }
     
     .fp-time-slots {

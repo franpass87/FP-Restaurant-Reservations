@@ -1,3 +1,10 @@
+## [1.0.47] - 2026-04-18
+
+### Fixed
+
+- **Progress bar — linea di sfondo a tutta larghezza**: `StyleCss.php` iniettava `#formId .fp-progress::before { left: 0; right: 0 }` con specificità superiore al CSS del template `form-simple.php`, facendo sbordare la linea fuori dai cerchi estremi. Ora il CSS inline usa selettori più specifici (`#fp-resv-default`, `.fp-resv-simple` scoped) con `!important` e la linea si ferma esattamente al centro del primo e dell'ultimo cerchio. La `::after` di progresso lineare (non usata da `form-simple.php`) viene nascosta.
+- **Progress bar — spaziatura**: rimosso `max-width` e introdotto `gap: 56px` (44px su mobile) con `justify-content: center` per tenere i 4 step raggruppati al centro del form senza costringere la larghezza del contenitore.
+
 ## [1.0.46] - 2026-04-18
 
 ### Changed
