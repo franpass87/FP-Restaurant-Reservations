@@ -523,6 +523,23 @@ p:empty {
     font-size: 0.95rem;
 }
 
+/* Nucleare: il CTA #submit-btn deve comparire SOLO nello step 4 riepilogo.
+   Protegge da eventuale HTML cachato in cui il bottone sta ancora nella
+   barra Avanti/Indietro (cache browser o page cache). */
+html body .fp-resv-simple .fp-buttons #submit-btn,
+html body .fp-resv-simple .fp-step:not([data-step="4"]) #submit-btn {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
 .fp-btn {
     padding: 13px 20px;
     border: 1.5px solid;

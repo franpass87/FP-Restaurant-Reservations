@@ -125,9 +125,40 @@ final class Lifecycle
     {
         // Run database migrations
         self::runMigrations($oldVersion, $newVersion);
-        
+
+        // Reset dark mode opzione (una tantum) — da 1.0.42: nuovo default off,
+        // ma siti preesistenti avevano valore salvato '1'. Azzeriamo solo se mai
+        // marcato come "gestito" dall'utente dopo il reset.
+        self::resetDarkModeDefault_1_0_42();
+
         // Clear caches
         wp_cache_flush();
+    }
+
+    /**
+     * One-time reset dark mode default per siti che avevano salvato '1' prima del cambio default 1.0.41/42.
+     *
+     * L'utente può riabilitarla da Impostazioni → Aspetto se davvero la vuole (lì
+     * scriverà sull'opzione e la nostra migrazione non reinterviene).
+     */
+    private static function resetDarkModeDefault_1_0_42(): void
+    {
+        if (!function_exists('get_option') || !function_exists('update_option')) {
+            return;
+        }
+
+        $flagKey = 'fp_resv_style_dark_mode_reset_v1042';
+        if (get_option($flagKey) === '1') {
+            return;
+        }
+
+        $style = get_option('fp_resv_style', []);
+        if (is_array($style) && (($style['style_enable_dark_mode'] ?? '') === '1')) {
+            $style['style_enable_dark_mode'] = '0';
+            update_option('fp_resv_style', $style);
+        }
+
+        update_option($flagKey, '1');
     }
     
     /**

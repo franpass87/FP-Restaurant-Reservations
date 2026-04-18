@@ -1,3 +1,10 @@
+## [1.0.43] - 2026-04-18
+
+### Fixed
+
+- **Dark mode — reset una tantum**: sui siti che avevano il valore `style_enable_dark_mode = 1` ereditato dal vecchio default, alla prima visita admin dopo l’upgrade viene azzerato a `0` (solo una volta, guard `fp_resv_style_dark_mode_reset_v1042`). Chi vuole mantenere la dark mode automatica può riattivarla da Aspetto.
+- **CSS nuclear per `#submit-btn`**: regole difensive in `form-simple.php` (CSS critico inline) e `form-simple-inline.css` nascondono il tasto *Prenota* se appare nella barra `.fp-buttons` o in uno step diverso dal 4. Tutela contro HTML cached (browser / page cache) ancora con il vecchio layout.
+
 ## [1.0.42] - 2026-04-18
 
 ### Fixed

@@ -213,6 +213,23 @@ input[type="checkbox"].fp-checkbox {
     background: #ffffff !important;
     flex-shrink: 0 !important;
 }
+
+/* SUBMIT button visibile SOLO nello step 4 attivo (riepilogo).
+   Se per qualche motivo l'HTML cached avesse #submit-btn nella barra,
+   qui lo forziamo invisibile. */
+html body .fp-resv-simple .fp-buttons #submit-btn,
+html body .fp-resv-simple .fp-step:not([data-step="4"]) #submit-btn {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+html body .fp-resv-simple .fp-step[data-step="4"].active #submit-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
 `;
     
     var criticalStyle = document.createElement('style');
