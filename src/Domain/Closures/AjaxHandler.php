@@ -12,8 +12,6 @@ use function array_key_exists;
 use function check_ajax_referer;
 use function current_user_can;
 use function filter_var;
-use function is_array;
-use function is_string;
 use function sanitize_key;
 use function sanitize_text_field;
 use function wp_send_json_error;
