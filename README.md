@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 1.3.0 |
+| **Versione** | 1.3.1 |
 | **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -350,7 +350,7 @@ Se questo plugin ti è utile:
 
 ---
 
-**Versione:** 1.3.0  
+**Versione:** 1.3.1  
 **Data:** 18 Aprile 2026
 ---
 

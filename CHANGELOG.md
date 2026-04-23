@@ -1,3 +1,9 @@
+## [1.3.1] - 2026-04-23
+
+### Fixed
+
+- **Regressione 1.3.0: utenti `fp_manager` redirettati al "Mio account" WooCommerce invece che al backend**. Rimuovendo `edit_posts` dal ruolo, scattava il filtro `woocommerce_prevent_admin_access` di WooCommerce, che richiede una tra `edit_posts`, `manage_woocommerce` o `view_admin_dashboard` per consentire l'accesso a `/wp-admin/`. Aggiunta `view_admin_dashboard` alle capability di default del ruolo `fp_manager`: è la capability WordPress dedicata proprio a questo caso (accesso al backend senza diritti di editor sui post). La capability viene aggiunta idempotentemente al prossimo `admin_init` su installazioni esistenti.
+
 ## [1.3.0] - 2026-04-23
 
 ### Added

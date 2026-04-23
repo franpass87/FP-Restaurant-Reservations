@@ -204,6 +204,11 @@ final class Roles
             'read' => true,
             'upload_files' => true,
 
+            // Consente l'accesso al backend senza dare `edit_posts`.
+            // Senza questa capability WooCommerce (woocommerce_prevent_admin_access)
+            // redirige gli utenti fp_manager alla pagina "Mio account".
+            'view_admin_dashboard' => true,
+
             self::MANAGE_RESERVATIONS => true,
             self::VIEW_RESERVATIONS_MANAGER => true,
         ];
