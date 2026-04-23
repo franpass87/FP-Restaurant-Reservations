@@ -142,8 +142,9 @@ final class Roles
 
     /**
      * Garantisce l'esistenza del ruolo `fp_manager` e l'aggiunta idempotente
-     * delle capabilities di FP Restaurant. Non rimuove capabilities già
-     * presenti (importante per coesistere con FP Experiences).
+     * delle capabilities di FP Restaurant. Non rimuove capabilities aggiunte
+     * da FP Experiences sul medesimo ruolo, ma si occupa di rimuovere le
+     * capability esplicitamente vietate (vedi FP_MANAGER_FORBIDDEN_CAPS).
      */
     private static function ensureFpManagerRole(): void
     {
@@ -155,17 +156,28 @@ final class Roles
                 __('FP Manager', 'fp-restaurant-reservations'),
                 self::getFpManagerCapabilities()
             );
+            $role = get_role(self::FP_MANAGER);
+        } else {
+            foreach (self::getFpManagerCapabilities() as $cap => $granted) {
+                if (!$granted) {
+                    continue;
+                }
 
+                if (!$role->has_cap($cap)) {
+                    $role->add_cap($cap);
+                }
+            }
+        }
+
+        if ($role === null) {
             return;
         }
 
-        foreach (self::getFpManagerCapabilities() as $cap => $granted) {
-            if (!$granted) {
-                continue;
-            }
-
-            if (!$role->has_cap($cap)) {
-                $role->add_cap($cap);
+        // Rimuove capability vietate (es. `edit_posts`) che darebbero accesso
+        // a menu non pertinenti per il ruolo FP Manager.
+        foreach (self::FP_MANAGER_FORBIDDEN_CAPS as $cap) {
+            if ($role->has_cap($cap)) {
+                $role->remove_cap($cap);
             }
         }
     }
@@ -178,6 +190,12 @@ final class Roles
      * WordPress necessarie per accedere al backend). Le capabilities di FP
      * Experiences vengono aggiunte dall'altro plugin in modo idempotente.
      *
+     * NOTA: `edit_posts` è volutamente escluso. Concederebbe accesso ad Articoli
+     * WP e ai menu dei temi/page builder che lo usano come capability di accesso
+     * (Salient, WPBakery, ecc.). Il CPT delle esperienze e le pagine admin di
+     * entrambi i plugin usano capabilities custom (`fp_exp_*`, `manage_fp_reservations`),
+     * quindi `edit_posts` non è necessario.
+     *
      * @return array<string, bool>
      */
     private static function getFpManagerCapabilities(): array
@@ -185,7 +203,6 @@ final class Roles
         $caps = [
             'read' => true,
             'upload_files' => true,
-            'edit_posts' => true,
 
             self::MANAGE_RESERVATIONS => true,
             self::VIEW_RESERVATIONS_MANAGER => true,
@@ -198,6 +215,27 @@ final class Roles
          */
         return (array) apply_filters('fp_resv_fp_manager_capabilities', $caps);
     }
+
+    /**
+     * Capabilities che vanno esplicitamente rimosse dal ruolo `fp_manager` se
+     * presenti (ad esempio perché aggiunte da versioni precedenti del plugin o
+     * da plugin di terze parti). Impediscono la comparsa di menu non pertinenti
+     * (Articoli, builder, ecc.) per l'utente FP Manager.
+     *
+     * @var string[]
+     */
+    private const FP_MANAGER_FORBIDDEN_CAPS = [
+        'edit_posts',
+        'edit_others_posts',
+        'edit_published_posts',
+        'publish_posts',
+        'delete_posts',
+        'delete_others_posts',
+        'delete_published_posts',
+        'delete_private_posts',
+        'edit_private_posts',
+        'read_private_posts',
+    ];
 
     /**
      * Aggiunge tutte le capabilities del ruolo FP Manager agli amministratori.

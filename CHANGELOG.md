@@ -1,3 +1,21 @@
+## [1.3.0] - 2026-04-23
+
+### Added
+
+- **`AdminRestrictor`**: nuova classe in `src/Core/AdminRestrictor.php` che limita l'UI admin per gli utenti con ruolo `fp_manager` (non amministratori). Registrata da `Kernel\Bootstrap`, nasconde dai menu top-level tutto ciò che non sia Bacheca, Profilo utente, FP Experiences e FP Restaurant Reservations. Rimuove anche tutti i widget dalla Bacheca e riduce la admin bar alle sole voci FP (più i sottomenu account / logout / edit profile).
+- Nuovo filtro `fp_resv_admin_menu_whitelist` per personalizzare la whitelist dei menu top-level (default: `index.php`, `profile.php`, `fp_exp_dashboard`, `fp-resv-settings`).
+
+### Changed
+
+- **Ruolo `fp_manager` più stretto**: rimossa la capability `edit_posts` dalla definizione del ruolo. Le capability custom di FP Restaurant (`manage_fp_reservations`, `view_fp_reservations_manager`) e di FP Experiences (`fp_exp_*`, `*_fp_experiences`) sono sufficienti per gestire prenotazioni ed esperienze, senza esporre l'utente ad Articoli WP, temi come Salient, o page builder come WPBakery.
+- `Roles::ensureFpManagerRole()` ora rimuove esplicitamente le capability "vietate" (`edit_posts`, varianti `_posts`) eventualmente ereditate da versioni precedenti del ruolo. La pulizia è idempotente.
+
+### Note
+
+- Gli amministratori non sono mai interessati dalla nuova classe `AdminRestrictor`: continuano a vedere l'intera UI WordPress.
+- Gli Store Manager WooCommerce sono esclusi dal restrictor per preservare la loro dashboard e-commerce.
+- `upload_files` è mantenuta per consentire l'upload di immagini per il CPT delle esperienze; di conseguenza il menu "Media" resta accessibile solo a fronte di caricamento esplicito (non appare nel menu principale per `fp_manager` grazie al restrictor).
+
 ## [1.2.0] - 2026-04-23
 
 ### Changed

@@ -153,7 +153,14 @@ final class Bootstrap
         if (class_exists('\FP\Resv\Core\Roles')) {
             \FP\Resv\Core\Roles::ensureAdminCapabilities();
         }
-        
+
+        // Restringe l'UI admin per gli utenti con il ruolo FP Manager:
+        // menu, widget dashboard e admin bar sono limitati a FP Experiences
+        // e FP Restaurant Reservations (più Bacheca e Profilo utente).
+        if (class_exists('\FP\Resv\Core\AdminRestrictor')) {
+            \FP\Resv\Core\AdminRestrictor::register();
+        }
+
         // Run migrations
         if (class_exists('\FP\Resv\Core\Migrations')) {
             \FP\Resv\Core\Migrations::run();
