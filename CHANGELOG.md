@@ -1,3 +1,19 @@
+## [1.2.0] - 2026-04-23
+
+### Changed
+
+- **Ruolo unificato FP Manager**: i due ruoli precedenti (`fp_restaurant_manager` e `fp_reservations_viewer`) sono stati sostituiti da un unico ruolo `fp_manager` condiviso con FP Experiences. Il nuovo ruolo ha accesso completo a tutte le funzioni di FP Restaurant Reservations e FP Experiences, eliminando la necessità di gestire ruoli multipli per utenti che lavorano su entrambi i plugin.
+- `Roles::create()` è ora idempotente: non rimuove capabilities già presenti sul ruolo, consentendo a FP Experiences di aggiungere in parallelo le proprie capabilities sullo stesso `fp_manager` senza conflitti.
+- `Roles::ensureAdminCapabilities()` assicura l'esistenza del ruolo e la presenza delle capabilities di FP Restaurant sull'amministratore ad ogni caricamento admin, ed esegue una migrazione utenti una sola volta (flag `fp_resv_roles_unified_v2`).
+- Migrazione automatica degli utenti dai ruoli legacy (`fp_restaurant_manager`, `fp_reservations_viewer`, `fp_exp_manager`, `fp_exp_operator`, `fp_exp_guide`) al nuovo `fp_manager`, con rimozione dei ruoli legacy dal sito.
+
+### Compatibilità
+
+- La costante `Roles::RESTAURANT_MANAGER` è mantenuta come alias deprecato di `Roles::FP_MANAGER` per retrocompatibilità.
+- Le capability `MANAGE_RESERVATIONS` e `VIEW_RESERVATIONS_MANAGER` restano invariate: il nuovo ruolo unificato le include entrambe, quindi tutti i check `current_user_can(...)` esistenti continuano a funzionare senza modifiche.
+- `Roles::remove()` ora rimuove solo le capabilities di FP Restaurant dal ruolo (senza eliminarlo), per coesistere con FP Experiences.
+- `uninstall.php` rimuove il ruolo `fp_manager` e tutti gli slug legacy quando l'utente sceglie di eliminare i dati del plugin.
+
 ## [1.1.6] - 2026-04-18
 
 ### Fixed

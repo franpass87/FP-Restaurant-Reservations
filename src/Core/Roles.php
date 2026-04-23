@@ -4,17 +4,28 @@ declare(strict_types=1);
 
 namespace FP\Resv\Core;
 
+use WP_User;
+
 use function add_role;
+use function apply_filters;
 use function current_user_can;
+use function get_option;
 use function get_role;
+use function get_userdata;
+use function get_users;
+use function in_array;
 use function remove_role;
+use function update_option;
 use function __;
 
 /**
- * Gestisce i ruoli personalizzati e le capabilities del plugin.
- * 
- * Integrato con FP Experiences per condividere i ruoli.
- * Gli utenti con ruoli di FP Experiences hanno automaticamente accesso anche a FP Restaurant.
+ * Gestisce il ruolo unificato FP Manager e le capabilities del plugin.
+ *
+ * A partire dall'unificazione dei ruoli, FP Restaurant Reservations e FP Experiences
+ * condividono un unico ruolo `fp_manager` che ha accesso completo a entrambi i plugin.
+ * I vecchi ruoli (`fp_restaurant_manager`, `fp_reservations_viewer`, `fp_exp_manager`,
+ * `fp_exp_operator`, `fp_exp_guide`) vengono rimossi e gli utenti assegnati vengono
+ * migrati automaticamente al nuovo ruolo.
  */
 final class Roles
 {
@@ -24,84 +35,77 @@ final class Roles
     public const MANAGE_RESERVATIONS = 'manage_fp_reservations';
 
     /**
-     * Capability per visualizzare solo il manager delle prenotazioni.
+     * Capability per visualizzare il manager delle prenotazioni.
+     * Mantenuta per retrocompatibilità con i controlli esistenti nel codice:
+     * il ruolo unificato la include insieme a MANAGE_RESERVATIONS.
      */
     public const VIEW_RESERVATIONS_MANAGER = 'view_fp_reservations_manager';
 
     /**
-     * Slug del ruolo Restaurant Manager.
+     * Slug del ruolo unificato. Ha accesso completo a FP Restaurant e FP Experiences.
      */
-    public const RESTAURANT_MANAGER = 'fp_restaurant_manager';
+    public const FP_MANAGER = 'fp_manager';
 
     /**
-     * Slug del ruolo Reservations Viewer (solo accesso al manager).
+     * Alias di retrocompatibilità per il vecchio nome della costante.
+     *
+     * @deprecated Usare self::FP_MANAGER.
      */
-    public const RESERVATIONS_VIEWER = 'fp_reservations_viewer';
+    public const RESTAURANT_MANAGER = self::FP_MANAGER;
 
     /**
-     * Verifica se FP Experiences è attivo.
+     * Flag usato per eseguire la migrazione dei ruoli legacy una sola volta.
      */
-    private static function isExperiencesActive(): bool
-    {
-        return class_exists('\FP_Exp\Utils\Helpers\PermissionHelper');
-    }
+    private const MIGRATION_OPTION = 'fp_resv_roles_unified_v2';
 
     /**
-     * Verifica se l'utente ha accesso a FP Experiences.
+     * Ruoli legacy da rimuovere dopo la migrazione degli utenti.
+     *
+     * @var string[]
      */
-    private static function userHasExperiencesAccess(): bool
-    {
-        if (! self::isExperiencesActive()) {
-            return false;
-        }
-
-        $user = wp_get_current_user();
-        if (! $user || ! $user->exists()) {
-            return false;
-        }
-
-        // Verifica se l'utente ha le capabilities di FP Experiences
-        return $user->has_cap('fp_exp_admin_access')
-            || $user->has_cap('fp_exp_manage')
-            || $user->has_cap('fp_exp_operate');
-    }
+    private const LEGACY_ROLES = [
+        'fp_restaurant_manager',
+        'fp_reservations_viewer',
+        'fp_exp_manager',
+        'fp_exp_operator',
+        'fp_exp_guide',
+    ];
 
     /**
-     * Crea i ruoli personalizzati del plugin.
+     * Crea (o aggiorna) il ruolo unificato e migra gli utenti dai ruoli legacy.
+     *
+     * L'aggiornamento è idempotente: se il ruolo esiste già (ad esempio perché
+     * FP Experiences lo ha creato per primo), vengono soltanto aggiunte le
+     * capabilities mancanti, senza sovrascrivere quelle già presenti.
      */
     public static function create(): void
     {
-        // Rimuove i ruoli se esistono già (per aggiornare le capabilities)
-        remove_role(self::RESTAURANT_MANAGER);
-        remove_role(self::RESERVATIONS_VIEWER);
+        self::ensureFpManagerRole();
+        self::addCapabilitiesToAdministrators();
+        self::migrateLegacyRoleUsers();
+        self::removeLegacyRoles();
 
-        // Crea il ruolo Restaurant Manager con le capabilities complete
-        add_role(
-            self::RESTAURANT_MANAGER,
-            __('Restaurant Manager', 'fp-restaurant-reservations'),
-            self::getRestaurantManagerCapabilities()
-        );
-
-        // Crea il ruolo Reservations Viewer (solo accesso al manager)
-        add_role(
-            self::RESERVATIONS_VIEWER,
-            __('Reservations Viewer', 'fp-restaurant-reservations'),
-            self::getReservationsViewerCapabilities()
-        );
-
-        // Aggiungi le capability anche agli amministratori
-        self::addCapabilityToAdministrators();
+        update_option(self::MIGRATION_OPTION, '1', false);
     }
 
     /**
-     * Rimuove i ruoli personalizzati del plugin.
+     * Rimuove le capabilities di FP Restaurant dal ruolo unificato e
+     * dall'amministratore.
+     *
+     * Non rimuove l'intero ruolo `fp_manager` perché potrebbe essere condiviso
+     * con FP Experiences; rimuove invece solo le capabilities specifiche
+     * di FP Restaurant.
      */
     public static function remove(): void
     {
-        remove_role(self::RESTAURANT_MANAGER);
-        remove_role(self::RESERVATIONS_VIEWER);
-        
-        // Rimuove le capability dagli amministratori
+        $role = get_role(self::FP_MANAGER);
+        if ($role !== null) {
+            $role->remove_cap(self::MANAGE_RESERVATIONS);
+            $role->remove_cap(self::VIEW_RESERVATIONS_MANAGER);
+        }
+
+        self::removeLegacyRoles();
+
         $adminRole = get_role('administrator');
         if ($adminRole !== null) {
             $adminRole->remove_cap(self::MANAGE_RESERVATIONS);
@@ -111,128 +115,149 @@ final class Roles
 
     /**
      * Verifica se l'utente corrente può gestire le prenotazioni.
-     * 
-     * Ora verifica anche l'accesso a FP Experiences.
      */
     public static function currentUserCanManageReservations(): bool
     {
-        // Verifica prima le capabilities di FP Restaurant
-        if (current_user_can(self::MANAGE_RESERVATIONS)) {
-            return true;
-        }
-
-        // Se l'utente ha accesso a FP Experiences, può gestire anche FP Restaurant
-        return self::userHasExperiencesAccess();
+        return current_user_can(self::MANAGE_RESERVATIONS);
     }
 
     /**
-     * Ottiene le capabilities per il ruolo Restaurant Manager.
-     * 
-     * @return array<string, bool>
-     */
-    private static function getRestaurantManagerCapabilities(): array
-    {
-        return [
-            // Capability principale del plugin (accesso completo)
-            self::MANAGE_RESERVATIONS => true,
-
-            // Capability per visualizzare il manager
-            self::VIEW_RESERVATIONS_MANAGER => true,
-
-            // Capabilities base di lettura (necessarie per accedere al backend)
-            'read' => true,
-
-            // Capabilities per gli upload (utili per immagini eventi, etc.)
-            'upload_files' => true,
-        ];
-    }
-
-    /**
-     * Ottiene le capabilities per il ruolo Reservations Viewer.
-     * Questo ruolo ha accesso SOLO al manager delle prenotazioni.
-     * 
-     * @return array<string, bool>
-     */
-    private static function getReservationsViewerCapabilities(): array
-    {
-        return [
-            // Solo la capability per visualizzare il manager
-            self::VIEW_RESERVATIONS_MANAGER => true,
-
-            // Capability base di lettura (necessaria per accedere al backend)
-            'read' => true,
-        ];
-    }
-
-    /**
-     * Aggiunge le capability agli amministratori.
-     */
-    private static function addCapabilityToAdministrators(): void
-    {
-        $adminRole = get_role('administrator');
-        if ($adminRole !== null) {
-            // Verifica se le capability sono già presenti prima di aggiungerle
-            if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
-                $adminRole->add_cap(self::MANAGE_RESERVATIONS);
-            }
-            if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
-                $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
-            }
-        }
-    }
-
-    /**
-     * Verifica e ripara le capabilities degli amministratori se necessario.
-     * 
-     * Ora aggiunge anche le capabilities di FP Restaurant ai ruoli di FP Experiences,
-     * in modo che gli operatori abbiano accesso ad entrambi i plugin.
-     * 
-     * Questo metodo può essere chiamato durante l'inizializzazione per garantire
-     * che gli amministratori abbiano sempre accesso al plugin.
+     * Garantisce che il ruolo unificato esista, che gli amministratori abbiano
+     * tutte le capabilities e che non siano rimasti utenti sui ruoli legacy.
+     *
+     * Il chunk di migrazione utenti viene eseguito una sola volta, grazie al
+     * flag in opzione, per evitare query ripetute ad ogni caricamento admin.
      */
     public static function ensureAdminCapabilities(): void
     {
-        $adminRole = get_role('administrator');
-        if ($adminRole !== null) {
-            if (!$adminRole->has_cap(self::MANAGE_RESERVATIONS)) {
-                $adminRole->add_cap(self::MANAGE_RESERVATIONS);
-            }
-            if (!$adminRole->has_cap(self::VIEW_RESERVATIONS_MANAGER)) {
-                $adminRole->add_cap(self::VIEW_RESERVATIONS_MANAGER);
-            }
+        self::ensureFpManagerRole();
+        self::addCapabilitiesToAdministrators();
+
+        if (get_option(self::MIGRATION_OPTION, '0') !== '1') {
+            self::migrateLegacyRoleUsers();
+            self::removeLegacyRoles();
+            update_option(self::MIGRATION_OPTION, '1', false);
+        }
+    }
+
+    /**
+     * Garantisce l'esistenza del ruolo `fp_manager` e l'aggiunta idempotente
+     * delle capabilities di FP Restaurant. Non rimuove capabilities già
+     * presenti (importante per coesistere con FP Experiences).
+     */
+    private static function ensureFpManagerRole(): void
+    {
+        $role = get_role(self::FP_MANAGER);
+
+        if ($role === null) {
+            add_role(
+                self::FP_MANAGER,
+                __('FP Manager', 'fp-restaurant-reservations'),
+                self::getFpManagerCapabilities()
+            );
+
+            return;
         }
 
-        // Se FP Experiences è attivo, aggiungi le capabilities di FP Restaurant ai suoi ruoli
-        if (self::isExperiencesActive()) {
-            $restaurant_caps = [
-                self::MANAGE_RESERVATIONS,
-                self::VIEW_RESERVATIONS_MANAGER,
-            ];
+        foreach (self::getFpManagerCapabilities() as $cap => $granted) {
+            if (!$granted) {
+                continue;
+            }
 
-            // Cerca ruoli che hanno capabilities di FP Experiences
-            $wp_roles = wp_roles();
-            if ($wp_roles instanceof \WP_Roles) {
-                foreach ($wp_roles->roles as $role_name => $role_data) {
-                    $role = get_role($role_name);
-                    
-                    if (! $role) {
-                        continue;
-                    }
+            if (!$role->has_cap($cap)) {
+                $role->add_cap($cap);
+            }
+        }
+    }
 
-                    // Verifica se il ruolo ha almeno una capability di FP Experiences
-                    $has_exp_access = $role->has_cap('fp_exp_admin_access')
-                        || $role->has_cap('fp_exp_manage')
-                        || $role->has_cap('fp_exp_operate');
+    /**
+     * Capabilities di FP Restaurant Reservations per il ruolo FP Manager.
+     *
+     * Il ruolo `fp_manager` è condiviso con FP Experiences: questo metodo ritorna
+     * solo le capabilities di competenza di FP Restaurant (più quelle base di
+     * WordPress necessarie per accedere al backend). Le capabilities di FP
+     * Experiences vengono aggiunte dall'altro plugin in modo idempotente.
+     *
+     * @return array<string, bool>
+     */
+    private static function getFpManagerCapabilities(): array
+    {
+        $caps = [
+            'read' => true,
+            'upload_files' => true,
+            'edit_posts' => true,
 
-                    if ($has_exp_access) {
-                        // Aggiungi le capabilities di FP Restaurant a questo ruolo
-                        foreach ($restaurant_caps as $cap) {
-                            if (! $role->has_cap($cap)) {
-                                $role->add_cap($cap);
-                            }
-                        }
-                    }
+            self::MANAGE_RESERVATIONS => true,
+            self::VIEW_RESERVATIONS_MANAGER => true,
+        ];
+
+        /**
+         * Consente di personalizzare le capabilities aggiunte dal plugin al ruolo FP Manager.
+         *
+         * @param array<string, bool> $caps
+         */
+        return (array) apply_filters('fp_resv_fp_manager_capabilities', $caps);
+    }
+
+    /**
+     * Aggiunge tutte le capabilities del ruolo FP Manager agli amministratori.
+     */
+    private static function addCapabilitiesToAdministrators(): void
+    {
+        $adminRole = get_role('administrator');
+        if ($adminRole === null) {
+            return;
+        }
+
+        foreach (array_keys(self::getFpManagerCapabilities()) as $cap) {
+            if (!$adminRole->has_cap($cap)) {
+                $adminRole->add_cap($cap);
+            }
+        }
+    }
+
+    /**
+     * Migra gli utenti dai ruoli legacy al nuovo ruolo `fp_manager`.
+     *
+     * Un utente può avere più ruoli contemporaneamente: se ha un ruolo legacy,
+     * gli viene aggiunto `fp_manager` (se non già presente) e il ruolo legacy
+     * viene rimosso dal suo profilo.
+     */
+    private static function migrateLegacyRoleUsers(): void
+    {
+        foreach (self::LEGACY_ROLES as $legacyRole) {
+            $users = get_users([
+                'role'   => $legacyRole,
+                'fields' => ['ID'],
+            ]);
+
+            foreach ($users as $user) {
+                $wpUser = get_userdata((int) $user->ID);
+                if (!$wpUser instanceof WP_User) {
+                    continue;
                 }
+
+                if (!in_array(self::FP_MANAGER, (array) $wpUser->roles, true)) {
+                    $wpUser->add_role(self::FP_MANAGER);
+                }
+
+                $wpUser->remove_role($legacyRole);
+            }
+        }
+    }
+
+    /**
+     * Rimuove dal sito i ruoli legacy non più utilizzati.
+     */
+    private static function removeLegacyRoles(): void
+    {
+        foreach (self::LEGACY_ROLES as $legacyRole) {
+            if ($legacyRole === self::FP_MANAGER) {
+                continue;
+            }
+
+            if (get_role($legacyRole) !== null) {
+                remove_role($legacyRole);
             }
         }
     }

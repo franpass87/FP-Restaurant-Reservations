@@ -78,8 +78,23 @@ $wpdb->query(
     )
 );
 
-// Elimina i ruoli personalizzati
-remove_role('fp_reservation_manager');
+// Elimina i ruoli personalizzati (attuali e legacy).
+// Il ruolo `fp_manager` è condiviso con FP Experiences: viene rimosso solo qui
+// perché siamo nel contesto di uninstall del plugin (l'utente ha scelto di
+// eliminare i dati). Se FP Experiences rimane installato, potrà ricrearlo.
+$fp_resv_roles_to_remove = [
+    'fp_manager',
+    'fp_restaurant_manager',
+    'fp_reservations_viewer',
+    'fp_reservation_manager', // typo storico, mantenuto per pulizia
+];
+
+foreach ($fp_resv_roles_to_remove as $fp_resv_role_slug) {
+    remove_role($fp_resv_role_slug);
+}
+
+// Pulisce il flag di migrazione ruoli
+delete_option('fp_resv_roles_unified_v2');
 
 // Elimina i post type custom (eventi)
 $events = get_posts([

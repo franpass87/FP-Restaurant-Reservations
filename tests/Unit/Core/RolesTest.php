@@ -24,9 +24,19 @@ final class RolesTest extends TestCase
     /**
      * @test
      */
-    public function testRestaurantManagerRoleSlugIsDefinedCorrectly(): void
+    public function testFpManagerRoleSlugIsDefinedCorrectly(): void
     {
-        $this->assertSame('fp_restaurant_manager', Roles::RESTAURANT_MANAGER);
+        $this->assertSame('fp_manager', Roles::FP_MANAGER);
+    }
+
+    /**
+     * @test
+     */
+    public function testRestaurantManagerAliasPointsToFpManager(): void
+    {
+        // L'alias legacy è mantenuto per retrocompatibilità ma deve
+        // puntare al nuovo slug unificato.
+        $this->assertSame(Roles::FP_MANAGER, Roles::RESTAURANT_MANAGER);
     }
 
     /**

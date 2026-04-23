@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.1.6
+Stable tag: 1.2.0
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,13 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 1.2.0 - 2026-04-23 =
+
+* Ruolo unificato FP Manager: i due ruoli precedenti (`fp_restaurant_manager` e `fp_reservations_viewer`) sono stati sostituiti da un unico ruolo `fp_manager` condiviso con FP Experiences. Il nuovo ruolo ha accesso completo a tutte le funzioni di entrambi i plugin.
+* Migrazione automatica degli utenti dai ruoli legacy al nuovo `fp_manager` (eseguita una sola volta, in modo trasparente, al primo caricamento admin).
+* `Roles::RESTAURANT_MANAGER` mantenuto come alias deprecato di `Roles::FP_MANAGER` per retrocompatibilità del codice di terze parti.
+* Capability `MANAGE_RESERVATIONS` e `VIEW_RESERVATIONS_MANAGER` invariate: il ruolo unificato le include entrambe.
 
 = 1.1.6 - 2026-04-18 =
 * Fixed: I cerchi del progress indicator apparivano ovali invece che perfettamente circolari con temi come Salient/WPBakery che applicano min-height/padding generici ai div. Forziamo width/height/min-width/min-height/max-width/max-height a 36 px con !important per blindare la proporzione 1:1 e mantenere border-radius: 50% come cerchio perfetto.
