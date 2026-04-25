@@ -511,6 +511,36 @@ class ReservationManager {
     }
 
     /**
+     * Imposta data e vista in modo atomico, evitando una doppia chiamata
+     * a loadReservations() (e la conseguente race condition tra range mese/settimana
+     * e range giorno che faceva apparire prenotazioni di altri giorni nella vista giorno).
+     *
+     * @public
+     * @param {Date} date - Nuova data corrente
+     * @param {string} view - Nuova vista ('day', 'week', 'month', 'list')
+     */
+    setDateAndView(date, view) {
+        this.state.currentDate = date;
+        this.updateDatePicker();
+
+        // Aggiorna la vista (bottoni, label "oggi", ecc.) senza invocare loadReservations:
+        // gestiamo qui sotto un'unica chiamata coerente con data + vista nuove.
+        this.state.currentView = view;
+        this.dom.viewBtns.forEach(btn => {
+            if (btn.dataset.view === view) {
+                btn.classList.add('is-active');
+                btn.setAttribute('aria-pressed', 'true');
+            } else {
+                btn.classList.remove('is-active');
+                btn.setAttribute('aria-pressed', 'false');
+            }
+        });
+        this.updateTodayButtonText();
+
+        this.loadReservations();
+    }
+
+    /**
      * Aggiorna il valore del date picker con la data corrente
      * @private
      */
@@ -824,7 +854,21 @@ class ReservationManager {
 
     getFilteredReservations() {
         let filtered = [...this.state.reservations];
-        
+
+        // Filtro difensivo per la vista GIORNO: garantisce che vengano mostrate
+        // solo le prenotazioni della data corrente, anche in caso di race condition
+        // tra loadReservations() per range mese/settimana e quella per range giorno
+        // (es. click su una cella del calendario mese/settimana che cambia data + vista).
+        if (this.state.currentView === 'day') {
+            const currentDateStr = this.formatDate(this.state.currentDate);
+            filtered = filtered.filter(r => {
+                if (!r.date) return false;
+                // Backend restituisce r.date come 'YYYY-MM-DD'; confronto stringa è stabile
+                const resvDate = String(r.date).substring(0, 10);
+                return resvDate === currentDateStr;
+            });
+        }
+
         // Filtra per servizio (meal) - usa il campo meal dalla prenotazione
         // Se meal è NULL, mostra la prenotazione in tutti i filtri (considera come "non specificato")
         if (this.state.filters.service) {
@@ -1163,8 +1207,9 @@ class ReservationManager {
         this.dom.monthCalendar.querySelectorAll('[data-action="select-day"]').forEach(day => {
             day.addEventListener('click', () => {
                 const dateStr = day.dataset.date;
-                this.setDate(new Date(dateStr + 'T12:00:00'));
-                this.setView('day'); // Torna alla vista giorno
+                // Cambio atomico data + vista: una sola loadReservations() per il giorno
+                // selezionato, evitando la race con il fetch del mese in corso.
+                this.setDateAndView(new Date(dateStr + 'T12:00:00'), 'day');
             });
         });
 
@@ -1390,8 +1435,9 @@ class ReservationManager {
                     return;
                 }
                 const dateStr = day.dataset.date;
-                this.setDate(new Date(dateStr + 'T12:00:00'));
-                this.setView('day'); // Passa alla vista giorno
+                // Cambio atomico data + vista: una sola loadReservations() per il giorno
+                // selezionato, evitando la race con il fetch della settimana in corso.
+                this.setDateAndView(new Date(dateStr + 'T12:00:00'), 'day');
             });
         });
 

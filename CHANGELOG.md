@@ -1,3 +1,10 @@
+## [1.3.2] - 2026-04-25
+
+### Fixed
+
+- **Manager → Vista Giornaliera mostrava prenotazioni di altri giorni**. Cliccando su una cella della vista mese o settimana, il codice eseguiva in sequenza `setDate()` (che innescava un `loadReservations()` con `range=month/week` perché la vista corrente non era ancora cambiata) seguito da `setView('day')` (secondo `loadReservations()` con `range=day`). Se la prima risposta arrivava dopo la seconda, lo stato veniva popolato con le prenotazioni dell'intero mese/settimana e la vista giorno — che non aveva alcun filtro per data — le mostrava tutte. Risolto con due interventi: (1) nuovo metodo `setDateAndView(date, view)` in `manager-app.js` che aggiorna data e vista in modo atomico ed esegue una sola `loadReservations()` coerente con la nuova combinazione; (2) filtro difensivo per data corrente in `getFilteredReservations()` quando `currentView === 'day'`, che blocca a monte qualunque "fuga" di prenotazioni di altri giorni residue nello state.
+- I bind `bindMonthViewEvents` e `bindWeekViewEvents` ora usano `setDateAndView()` al posto della coppia `setDate()` + `setView('day')`, eliminando la doppia richiesta REST `/agenda` ridondante (e la race condition associata).
+
 ## [1.3.1] - 2026-04-23
 
 ### Fixed

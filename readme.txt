@@ -5,7 +5,7 @@ Author URI: https://francescopasseri.com
 Tags: reservations, restaurant, events, booking, calendar, ga4, brevo, stripe
 Requires at least: 6.5
 Tested up to: 6.6
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 
 == Description ==
@@ -64,6 +64,10 @@ FP Restaurant Reservations è un plugin WordPress production-ready per la gestio
 Per supporto commerciale scrivi a info@francescopasseri.com.
 
 == Changelog ==
+
+= 1.3.2 - 2026-04-25 =
+
+* Fix: Manager → Vista Giornaliera non mostra più prenotazioni di altri giorni quando si arriva da vista mese/settimana cliccando su una cella. Risolta race condition tra due `loadReservations()` consecutivi (range mese/settimana + range giorno) tramite nuovo metodo atomico `setDateAndView()` e filtro difensivo per data corrente in vista giorno.
 
 = 1.3.1 - 2026-04-23 =
 
