@@ -66,7 +66,7 @@ final class PagesConfig
                             'label'       => __('Parametri aperture speciali', 'fp-restaurant-reservations'),
                             'type'        => 'special_opening_params',
                             'default'     => '{}',
-                            'description' => __('Configura slot, turno, buffer e prenotazioni parallele per le aperture speciali (es. San Valentino). Le aperture si creano nel Manager → scheda Calendario operativo.', 'fp-restaurant-reservations'),
+                            'description' => __('Configura slot, turno, buffer e prenotazioni parallele per le aperture speciali (es. San Valentino). Le aperture si creano dal Manager → pulsante Calendario operativo (modale).', 'fp-restaurant-reservations'),
                         ],
                     ],
                 ],

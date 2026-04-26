@@ -21,6 +21,7 @@ test.describe('Admin Closures Page', () => {
     await page.waitForLoadState('domcontentloaded', { timeout: 60000 });
     
     await expect(page.locator('#fp-resv-manager')).toBeVisible();
+    await expect(page.locator('#fp-resv-closures-modal')).toBeVisible();
     await expect(page.locator('[data-fp-resv-closures]')).toBeVisible();
   });
 

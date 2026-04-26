@@ -1,3 +1,10 @@
+## [1.3.4] - 2026-04-26
+
+### Changed
+
+- **Planner chiusure in modale**: il calendario operativo non usa più le schede in pagina; si apre in un modale full-width (`#fp-resv-closures-modal`) dal pulsante «Calendario operativo», con chiusura backdrop/X/ESC e URL `fp_resv_tab=closures` per deep link. Il vecchio form rapido «Nuova Chiusura» nel modal prenotazioni apre lo stesso planner.
+- **E2E**: `test-admin-closures.spec.js` e `debug-session.spec.js` attendono anche `#fp-resv-closures-modal` visibile dopo il deep link alla tab planner.
+
 ## [1.3.3] - 2026-04-26
 
 ### Changed

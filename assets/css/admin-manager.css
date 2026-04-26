@@ -1970,50 +1970,26 @@ select.fp-form-control {
     }
 }
 
-/* Schede Manager: Prenotazioni | Calendario operativo */
-.fp-manager-primary-tabs {
+/* Modale planner chiusure/aperture (wide, sopra il modal prenotazioni) */
+.fp-modal--closures-planner {
+    z-index: 100001;
+    padding: 12px;
+}
+
+.fp-modal--closures-planner .fp-modal__content {
+    max-width: min(1240px, 98vw);
+    width: 98%;
+    max-height: 94vh;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px 32px 0;
-    background: var(--fp-gray-50);
-    border-bottom: 1px solid var(--fp-gray-200);
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.fp-manager-primary-tabs__btn {
-    appearance: none;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--fp-gray-600);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: var(--fp-radius) var(--fp-radius) 0 0;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.fp-manager-primary-tabs__btn:hover {
-    color: var(--fp-gray-800);
-    background: var(--fp-gray-100);
-}
-
-.fp-manager-primary-tabs__btn.is-active {
-    color: var(--fp-primary);
-    background: #fff;
-    border-color: var(--fp-gray-200);
-    border-bottom-color: #fff;
-    margin-bottom: -1px;
-}
-
-.fp-resv-manager-tab-panel[hidden] {
-    display: none !important;
-}
-
-.fp-resv-manager-closures-inner {
-    padding: 16px 32px 32px;
-    max-width: 1400px;
-    margin: 0 auto;
+.fp-modal--closures-planner .fp-modal__body--closures-planner {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 24px 28px;
 }
 
 .fp-resv-manager-closures__hint {

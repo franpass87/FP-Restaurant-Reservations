@@ -28,6 +28,7 @@ test.describe('Debug Session - Runtime Evidence Collection', () => {
       timeout: 60000
     });
     
+    await page.waitForSelector('#fp-resv-closures-modal', { timeout: 30000 });
     await page.waitForSelector('[data-fp-resv-closures]', { timeout: 30000 });
     
     // Wait for AJAX calls to complete - check for network requests

@@ -46,7 +46,7 @@ class ReservationManager {
         this.state = {
             currentDate: new Date(),
             currentView: 'week', // Vista settimanale di default per maggiore chiarezza
-            managerTab: 'reservations',
+            closuresPlannerOpen: false,
             filters: {
                 service: '',
                 status: '',
@@ -128,7 +128,7 @@ class ReservationManager {
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('fp_resv_tab') === 'closures') {
-            this.setManagerTab('closures', { syncUrl: false });
+            this.openClosuresPlannerModal({ syncUrl: false });
         }
         
         // Setup touch optimizations
@@ -181,6 +181,7 @@ class ReservationManager {
             modal: document.getElementById('fp-reservation-modal'),
             modalTitle: document.getElementById('fp-modal-title'),
             modalBody: document.getElementById('fp-modal-body'),
+            closuresPlannerModal: document.getElementById('fp-resv-closures-modal'),
         };
     }
 
@@ -275,13 +276,12 @@ class ReservationManager {
             btn.addEventListener('click', () => this.openNewReservationModal());
         });
 
-        document.querySelectorAll('[data-action="manager-set-tab"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab || '';
-                if (tab) {
-                    this.setManagerTab(tab);
-                }
-            });
+        document.querySelectorAll('[data-action="open-closures-planner-modal"]').forEach(btn => {
+            btn.addEventListener('click', () => this.openClosuresPlannerModal());
+        });
+
+        document.querySelectorAll('[data-action="close-closures-planner-modal"]').forEach(btn => {
+            btn.addEventListener('click', () => this.closeClosuresPlannerModal());
         });
 
         document.querySelectorAll('[data-action="export"]').forEach(btn => {
@@ -305,9 +305,27 @@ class ReservationManager {
             });
         }
 
-        // ESC per chiudere modal
+        if (this.dom.closuresPlannerModal) {
+            this.dom.closuresPlannerModal.addEventListener('click', (e) => {
+                if (
+                    e.target === this.dom.closuresPlannerModal
+                    || (e.target instanceof HTMLElement && e.target.classList.contains('fp-modal__backdrop'))
+                ) {
+                    this.closeClosuresPlannerModal();
+                }
+            });
+        }
+
+        // ESC per chiudere modal (prima planner chiusure, poi prenotazione)
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.dom.modal.style.display !== 'none') {
+            if (e.key !== 'Escape') {
+                return;
+            }
+            if (this.state.closuresPlannerOpen && this.dom.closuresPlannerModal) {
+                this.closeClosuresPlannerModal();
+                return;
+            }
+            if (this.dom.modal && this.dom.modal.style.display !== 'none') {
                 this.closeModal();
             }
         });
@@ -1526,6 +1544,7 @@ class ReservationManager {
     }
 
     openReservationModal(id) {
+        this.closeClosuresPlannerModal();
         this.debugLog('Opening reservation modal for ID:', id);
         
         const resv = this.state.reservations.find(r => r.id === id);
@@ -1900,64 +1919,58 @@ class ReservationManager {
     }
 
     /**
-     * Commuta tra la tab Prenotazioni e Calendario operativo (planner chiusure).
+     * Apre il modale a tutto schermo con il planner chiusure/aperture.
      *
-     * @param {'reservations'|'closures'} tab
      * @param {{ syncUrl?: boolean }} opts
      */
-    setManagerTab(tab, opts = {}) {
+    openClosuresPlannerModal(opts = {}) {
         const syncUrl = opts.syncUrl !== false;
-        const reservationsPanel = document.getElementById('fp-resv-manager-tab-panel-reservations');
-        const closuresPanel = document.getElementById('fp-resv-manager-tab-panel-closures');
-        const tabResBtn = document.getElementById('fp-resv-manager-tab-reservations');
-        const tabClosuresBtn = document.getElementById('fp-resv-manager-tab-closures');
-        if (!reservationsPanel || !closuresPanel) {
+        const el = this.dom.closuresPlannerModal;
+        if (!el) {
             return;
         }
 
-        const showClosures = tab === 'closures';
+        this.closeModal();
+        el.removeAttribute('hidden');
+        el.setAttribute('aria-hidden', 'false');
+        el.style.display = 'flex';
+        this.state.closuresPlannerOpen = true;
 
-        if (!showClosures) {
-            reservationsPanel.hidden = false;
-            reservationsPanel.removeAttribute('aria-hidden');
-            closuresPanel.hidden = true;
-            closuresPanel.setAttribute('aria-hidden', 'true');
-            tabResBtn?.classList.add('is-active');
-            tabClosuresBtn?.classList.remove('is-active');
-            tabResBtn?.setAttribute('aria-selected', 'true');
-            tabClosuresBtn?.setAttribute('aria-selected', 'false');
-            tabClosuresBtn?.setAttribute('tabindex', '-1');
-            tabResBtn?.removeAttribute('tabindex');
-            this.state.managerTab = 'reservations';
-        } else {
-            closuresPanel.hidden = false;
-            closuresPanel.removeAttribute('aria-hidden');
-            reservationsPanel.hidden = true;
-            reservationsPanel.setAttribute('aria-hidden', 'true');
-            tabClosuresBtn?.classList.add('is-active');
-            tabResBtn?.classList.remove('is-active');
-            tabClosuresBtn?.setAttribute('aria-selected', 'true');
-            tabResBtn?.setAttribute('aria-selected', 'false');
-            tabResBtn?.setAttribute('tabindex', '-1');
-            tabClosuresBtn?.removeAttribute('tabindex');
-            this.state.managerTab = 'closures';
+        requestAnimationFrame(() => {
             if (typeof window.fpResvInitClosuresApp === 'function') {
                 window.fpResvInitClosuresApp();
             }
-        }
+        });
 
         if (syncUrl && window.history && typeof window.history.replaceState === 'function') {
             const url = new URL(window.location.href);
-            if (!showClosures) {
-                url.searchParams.delete('fp_resv_tab');
-            } else {
-                url.searchParams.set('fp_resv_tab', 'closures');
-            }
+            url.searchParams.set('fp_resv_tab', 'closures');
+            window.history.replaceState({}, '', url.toString());
+        }
+    }
+
+    /**
+     * Chiude il modale del planner chiusure.
+     */
+    closeClosuresPlannerModal() {
+        const el = this.dom.closuresPlannerModal;
+        if (!el) {
+            return;
+        }
+        el.style.display = 'none';
+        el.setAttribute('hidden', 'hidden');
+        el.setAttribute('aria-hidden', 'true');
+        this.state.closuresPlannerOpen = false;
+
+        if (window.history && typeof window.history.replaceState === 'function') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('fp_resv_tab');
             window.history.replaceState({}, '', url.toString());
         }
     }
 
     async openNewReservationModal() {
+        this.closeClosuresPlannerModal();
         // Reset dei dati della nuova prenotazione per evitare che vengano riutilizzati dati vecchi
         this.newReservationData = {};
         
@@ -1971,10 +1984,7 @@ class ReservationManager {
     }
 
     openNewClosureModal() {
-        this.dom.modalTitle.textContent = 'Nuova Chiusura';
-        this.dom.modalBody.innerHTML = this.renderNewClosureForm();
-        this.dom.modal.style.display = 'flex';
-        this.bindNewClosureForm();
+        this.openClosuresPlannerModal();
     }
 
     renderNewClosureForm() {
