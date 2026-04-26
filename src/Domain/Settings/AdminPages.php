@@ -698,7 +698,7 @@ final class AdminPages
                     'bufferLabel'    => __('Buffer (minuti)', 'fp-restaurant-reservations'),
                     'parallelLabel'  => __('Prenotazioni parallele', 'fp-restaurant-reservations'),
                     'capacityLabel'  => __('Capacità massima', 'fp-restaurant-reservations'),
-                    'closuresLink'   => admin_url('admin.php?page=fp-resv-closures-app'),
+                    'closuresLink'   => admin_url('admin.php?page=fp-resv-manager&fp_resv_tab=closures'),
                 ];
                 $stringsJson = wp_json_encode($strings);
                 if (!is_string($stringsJson)) {

@@ -55,7 +55,6 @@ final class AdminMenuEnhancer
         $desiredOrder = [
             self::PARENT_SLUG,
             'fp-resv-manager',
-            'fp-resv-closures-app',
             'fp-resv-layout',
             'fp-resv-analytics',
             'fp-resv-notifications',
@@ -171,7 +170,7 @@ final class AdminMenuEnhancer
                 'id'     => 'fp-resv-closures',
                 'parent' => 'fp-resv',
                 'title'  => esc_html__('Calendario Operativo', 'fp-restaurant-reservations'),
-                'href'   => admin_url('admin.php?page=fp-resv-closures-app'),
+                'href'   => admin_url('admin.php?page=fp-resv-manager&fp_resv_tab=closures'),
             ]);
         }
 

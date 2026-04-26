@@ -81,8 +81,10 @@ final class AdminServiceProvider extends ServiceProvider
         $container->singleton(
             \FP\Resv\Domain\Reservations\AdminController::class,
             function (Container $container) {
-                $controller = new \FP\Resv\Domain\Reservations\AdminController();
+                $closuresService = $container->get(\FP\Resv\Domain\Closures\Service::class);
+                $controller = new \FP\Resv\Domain\Reservations\AdminController($closuresService);
                 $controller->register();
+
                 return $controller;
             }
         );
@@ -120,10 +122,10 @@ final class AdminServiceProvider extends ServiceProvider
         // Closures admin controller
         $container->singleton(
             \FP\Resv\Domain\Closures\AdminController::class,
-            function (Container $container) {
-                $closuresService = $container->get(\FP\Resv\Domain\Closures\Service::class);
-                $controller = new \FP\Resv\Domain\Closures\AdminController($closuresService);
+            function () {
+                $controller = new \FP\Resv\Domain\Closures\AdminController();
                 $controller->register();
+
                 return $controller;
             }
         );
@@ -187,7 +189,7 @@ final class AdminServiceProvider extends ServiceProvider
             $container->get(\FP\Resv\Domain\Reservations\AdminController::class);
         }
         
-        // Ensure ClosuresAdminController is instantiated to register the Closures SPA menu
+        // Redirect legacy URL fp-resv-closures-app → Manager (tab Calendario operativo)
         if ($container->has(\FP\Resv\Domain\Closures\AdminController::class)) {
             $container->get(\FP\Resv\Domain\Closures\AdminController::class);
         }

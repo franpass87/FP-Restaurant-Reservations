@@ -543,7 +543,8 @@ final class ServiceRegistry
         $this->container->register(AdminPages::class, $adminPages);
         $this->container->register('settings.admin_pages', $adminPages);
 
-        $reservationsAdmin = new ReservationsAdminController();
+        $closuresServiceForAdmin = $this->container->get(ClosuresService::class);
+        $reservationsAdmin = new ReservationsAdminController($closuresServiceForAdmin);
         $reservationsAdmin->register();
         $this->container->register(ReservationsAdminController::class, $reservationsAdmin);
         $this->container->register('reservations.admin_controller', $reservationsAdmin);
@@ -558,8 +559,7 @@ final class ServiceRegistry
             $this->container->register('tables.admin_controller', $tablesAdmin);
         }
 
-        $closuresService = $this->container->get(ClosuresService::class);
-        $closuresAdmin = new ClosuresAdminController($closuresService);
+        $closuresAdmin = new ClosuresAdminController();
         $closuresAdmin->register();
         $this->container->register(ClosuresAdminController::class, $closuresAdmin);
         $this->container->register('closures.admin_controller', $closuresAdmin);

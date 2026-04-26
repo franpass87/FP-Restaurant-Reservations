@@ -7,7 +7,10 @@
 declare(strict_types=1);
 
 $settingsUrl = admin_url('admin.php?page=fp-resv-settings');
+$serviceSettingsUrl = $settingsUrl . '#general-service-hours';
 $headingId = 'fp-resv-manager-title';
+$tabReservationsId = 'fp-resv-manager-tab-reservations';
+$tabClosuresId = 'fp-resv-manager-tab-closures';
 ?>
 
 <div class="wrap fp-resv-admin-outer">
@@ -33,9 +36,9 @@ $headingId = 'fp-resv-manager-title';
                     <span class="dashicons dashicons-download"></span>
                     <?php esc_html_e('Esporta', 'fp-restaurant-reservations'); ?>
                 </button>
-                <button type="button" class="fp-btn fp-btn--secondary" data-action="new-closure">
+                <button type="button" class="fp-btn fp-btn--secondary" data-action="manager-set-tab" data-tab="closures">
                     <span class="dashicons dashicons-calendar"></span>
-                    <?php esc_html_e('Nuova Chiusura', 'fp-restaurant-reservations'); ?>
+                    <?php esc_html_e('Calendario operativo', 'fp-restaurant-reservations'); ?>
                 </button>
                 <button type="button" class="fp-btn fp-btn--primary" data-action="new-reservation">
                     <span class="dashicons dashicons-plus-alt"></span>
@@ -93,6 +96,16 @@ $headingId = 'fp-resv-manager-title';
         </div>
     </header>
 
+    <nav class="fp-manager-primary-tabs" role="tablist" aria-label="<?php esc_attr_e('Sezione Manager', 'fp-restaurant-reservations'); ?>">
+        <button type="button" class="fp-manager-primary-tabs__btn is-active" role="tab" id="<?php echo esc_attr($tabReservationsId); ?>" aria-selected="true" aria-controls="fp-resv-manager-tab-panel-reservations" data-action="manager-set-tab" data-tab="reservations">
+            <?php esc_html_e('Prenotazioni', 'fp-restaurant-reservations'); ?>
+        </button>
+        <button type="button" class="fp-manager-primary-tabs__btn" role="tab" id="<?php echo esc_attr($tabClosuresId); ?>" aria-selected="false" aria-controls="fp-resv-manager-tab-panel-closures" data-action="manager-set-tab" data-tab="closures" tabindex="-1">
+            <?php esc_html_e('Calendario operativo', 'fp-restaurant-reservations'); ?>
+        </button>
+    </nav>
+
+    <section id="fp-resv-manager-tab-panel-reservations" class="fp-resv-manager-tab-panel" role="tabpanel" aria-labelledby="<?php echo esc_attr($tabReservationsId); ?>" data-fp-resv-manager-tab-panel="reservations">
     <!-- Main Content Area -->
     <main class="fp-manager-main">
         <!-- Toolbar con Filtri -->
@@ -213,6 +226,33 @@ $headingId = 'fp-resv-manager-title';
             </div>
         </div>
     </main>
+    </section>
+
+    <section id="fp-resv-manager-tab-panel-closures" class="fp-resv-manager-tab-panel" role="tabpanel" aria-labelledby="<?php echo esc_attr($tabClosuresId); ?>" data-fp-resv-manager-tab-panel="closures" hidden aria-hidden="true">
+        <div class="fp-resv-manager-closures-inner">
+            <p class="fp-resv-manager-closures__hint">
+                <a class="fp-resv-manager-closures__link" href="<?php echo esc_url($serviceSettingsUrl); ?>"><?php esc_html_e('Turni e parametri aperture speciali', 'fp-restaurant-reservations'); ?></a>
+                <?php esc_html_e('— configurazione in Impostazioni → Generali.', 'fp-restaurant-reservations'); ?>
+            </p>
+            <div class="fp-resv-closures__stats fp-resv-manager-closures__stats" aria-live="polite">
+                <div class="fp-resv-closures__stat">
+                    <span class="fp-resv-closures__stat-label"><?php esc_html_e('Blocchi attivi', 'fp-restaurant-reservations'); ?></span>
+                    <span class="fp-resv-closures__stat-value" data-role="closures-active">0</span>
+                </div>
+                <div class="fp-resv-closures__stat">
+                    <span class="fp-resv-closures__stat-label"><?php esc_html_e('Riduzioni capienza', 'fp-restaurant-reservations'); ?></span>
+                    <span class="fp-resv-closures__stat-value" data-role="closures-capacity">0%</span>
+                </div>
+                <div class="fp-resv-closures__stat">
+                    <span class="fp-resv-closures__stat-label"><?php esc_html_e('Prossimo evento in chiusura', 'fp-restaurant-reservations'); ?></span>
+                    <span class="fp-resv-closures__stat-value" data-role="closures-next">—</span>
+                </div>
+            </div>
+            <div id="fp-resv-closures-app" class="fp-resv-closures-app" data-fp-resv-closures>
+                <?php esc_html_e('Caricamento planner…', 'fp-restaurant-reservations'); ?>
+            </div>
+        </div>
+    </section>
 </div>
 </div>
 

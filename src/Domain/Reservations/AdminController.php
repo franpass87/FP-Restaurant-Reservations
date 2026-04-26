@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace FP\Resv\Domain\Reservations;
 
+use FP\Resv\Core\ErrorLogger;
 use FP\Resv\Core\Plugin;
 use FP\Resv\Core\Roles;
-use FP\Resv\Core\ErrorLogger;
+use FP\Resv\Domain\Closures\ClosuresAdminAssets;
+use FP\Resv\Domain\Closures\Service as ClosuresService;
 use function __;
 use function add_action;
 use function add_menu_page;
@@ -37,6 +39,10 @@ final class AdminController
     private const PAGE_SLUG = 'fp-resv-manager';
 
     private ?string $pageHook = null;
+
+    public function __construct(private readonly ClosuresService $closuresService)
+    {
+    }
 
     public function register(): void
     {
@@ -180,6 +186,8 @@ final class AdminController
 
         wp_enqueue_script($scriptHandle, $scriptUrl, ['wp-i18n'], $version, true);
         wp_enqueue_style($styleHandle, $styleUrl, [], $version);
+
+        ClosuresAdminAssets::enqueue($hook, (string) $this->pageHook, $this->closuresService);
 
         // Carica meal plans configurati
         $meals = [];

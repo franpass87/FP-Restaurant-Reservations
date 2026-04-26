@@ -1,9 +1,11 @@
 (function () {
     // Production-ready: removed debug agent logs
-    const root = document.querySelector('[data-fp-resv-closures]');
-    if (!root) {
-        return;
-    }
+    window.fpResvInitClosuresApp = function fpResvInitClosuresApp() {
+        const root = document.querySelector('[data-fp-resv-closures]:not([data-fp-resv-closures-mounted])');
+        if (!root) {
+            return;
+        }
+        root.setAttribute('data-fp-resv-closures-mounted', '1');
 
     const settings = window.fpResvClosuresSettings || {};
 
@@ -1083,4 +1085,29 @@
 
     render();
     loadClosures();
+    };
+
+    /**
+     * Avvio automatico solo se il mount non è dentro un pannello nascosto (es. tab Manager).
+     */
+    function fpResvClosuresTryAutoBoot() {
+        const root = document.querySelector('[data-fp-resv-closures]');
+        if (!root) {
+            return;
+        }
+        let el = root.parentElement;
+        while (el) {
+            if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') {
+                return;
+            }
+            el = el.parentElement;
+        }
+        window.fpResvInitClosuresApp();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fpResvClosuresTryAutoBoot);
+    } else {
+        fpResvClosuresTryAutoBoot();
+    }
 })();

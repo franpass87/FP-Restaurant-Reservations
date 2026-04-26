@@ -23,13 +23,12 @@ test.describe('Debug Session - Runtime Evidence Collection', () => {
     
     // Step 3: Visit Closures page to trigger handleList
     console.log('[DEBUG] Visiting Closures page...');
-    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-closures-app', { 
+    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-manager&fp_resv_tab=closures', { 
       waitUntil: 'domcontentloaded',
       timeout: 60000
     });
     
-    // Wait for page to fully load and AJAX calls to complete
-    await page.waitForSelector('h1', { timeout: 30000 });
+    await page.waitForSelector('[data-fp-resv-closures]', { timeout: 30000 });
     
     // Wait for AJAX calls to complete - check for network requests
     await page.waitForResponse(response => 

@@ -1,3 +1,11 @@
+## [1.3.3] - 2026-04-26
+
+### Changed
+
+- **Planner chiusure/aperture nel Manager**: la UI «Calendario operativo» (`closures-app.js`) è incorporata nella pagina `fp-resv-manager` con schede accessibili (Prenotazioni | Calendario operativo). Enqueue e localize centralizzati in `Domain\Closures\ClosuresAdminAssets`; il pulsante header «Nuova Chiusura» diventa accesso alla scheda planner. Init lazy del planner quando la tab è nascosta (`fpResvInitClosuresApp` + skip auto-boot se antenato `hidden`/`aria-hidden`).
+- **Redirect legacy**: `admin.php?page=fp-resv-closures-app` reindirizza a `fp-resv-manager&fp_resv_tab=closures` (stessi permessi del Manager). Voce submenu separata e ordinamento menu aggiornati; admin bar «Calendario Operativo» punta al Manager con tab.
+- **Testi**: descrizione `special_opening_params` in `PagesConfig` e link `closuresLink` (meal plan) puntano al Manager con tab.
+
 ## [1.3.2] - 2026-04-25
 
 ### Fixed

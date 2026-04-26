@@ -8,7 +8,7 @@
 
 | Dettaglio | Valore |
 |-----------|--------|
-| **Versione** | 1.3.2 |
+| **Versione** | 1.3.3 |
 | **Status** | Stable ✅ |
 | **Richiede WordPress** | 6.5+ |
 | **Richiede PHP** | 8.1+ |
@@ -22,7 +22,7 @@
 ### 🎯 Core Features
 
 - ✅ **Sistema prenotazioni completo** con calendario interattivo
-- ✅ **Manager Agenda** drag & drop per gestione prenotazioni
+- ✅ **Manager Agenda** drag & drop per gestione prenotazioni (scheda dedicata **Calendario operativo** per chiusure, aperture speciali e riduzioni capienza)
 - ✅ **Meal Plans** configurabili (pranzo, cena, eventi)
 - ✅ **Sale & Tavoli** con layout personalizzabile
 - ✅ **Chiusure programmate** (singole/ricorrenti)

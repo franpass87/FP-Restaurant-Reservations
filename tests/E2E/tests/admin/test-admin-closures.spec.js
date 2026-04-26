@@ -17,11 +17,11 @@ test.describe('Admin Closures Page', () => {
   });
 
   test('should load closures page', async ({ page }) => {
-    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-closures-app', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-manager&fp_resv_tab=closures', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('domcontentloaded', { timeout: 60000 });
     
-    // Verify page loads
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('#fp-resv-manager')).toBeVisible();
+    await expect(page.locator('[data-fp-resv-closures]')).toBeVisible();
   });
 
   test('should load closures without JSON parsing errors', async ({ page }) => {
@@ -35,10 +35,9 @@ test.describe('Admin Closures Page', () => {
       }
     });
 
-    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-closures-app', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://fp-development.local/wp-admin/admin.php?page=fp-resv-manager&fp_resv_tab=closures', { waitUntil: 'domcontentloaded' });
     
-    // Wait for page to load
-    await page.waitForSelector('h1', { timeout: 30000 });
+    await page.waitForSelector('[data-fp-resv-closures]', { timeout: 30000 });
     
     // Wait for AJAX calls to complete (shorter timeout to avoid test timeout)
     await page.waitForTimeout(3000);

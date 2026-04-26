@@ -46,6 +46,7 @@ class ReservationManager {
         this.state = {
             currentDate: new Date(),
             currentView: 'week', // Vista settimanale di default per maggiore chiarezza
+            managerTab: 'reservations',
             filters: {
                 service: '',
                 status: '',
@@ -124,6 +125,11 @@ class ReservationManager {
         
         // Setup event listeners
         this.bindEvents();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('fp_resv_tab') === 'closures') {
+            this.setManagerTab('closures', { syncUrl: false });
+        }
         
         // Setup touch optimizations
         this.setupTouchOptimizations();
@@ -269,8 +275,13 @@ class ReservationManager {
             btn.addEventListener('click', () => this.openNewReservationModal());
         });
 
-        document.querySelectorAll('[data-action="new-closure"]').forEach(btn => {
-            btn.addEventListener('click', () => this.openNewClosureModal());
+        document.querySelectorAll('[data-action="manager-set-tab"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab || '';
+                if (tab) {
+                    this.setManagerTab(tab);
+                }
+            });
         });
 
         document.querySelectorAll('[data-action="export"]').forEach(btn => {
@@ -1885,6 +1896,64 @@ class ReservationManager {
         } catch (error) {
             this.debugError('DELETE Error:', error);
             alert('Errore nell\'eliminazione della prenotazione: ' + error.message);
+        }
+    }
+
+    /**
+     * Commuta tra la tab Prenotazioni e Calendario operativo (planner chiusure).
+     *
+     * @param {'reservations'|'closures'} tab
+     * @param {{ syncUrl?: boolean }} opts
+     */
+    setManagerTab(tab, opts = {}) {
+        const syncUrl = opts.syncUrl !== false;
+        const reservationsPanel = document.getElementById('fp-resv-manager-tab-panel-reservations');
+        const closuresPanel = document.getElementById('fp-resv-manager-tab-panel-closures');
+        const tabResBtn = document.getElementById('fp-resv-manager-tab-reservations');
+        const tabClosuresBtn = document.getElementById('fp-resv-manager-tab-closures');
+        if (!reservationsPanel || !closuresPanel) {
+            return;
+        }
+
+        const showClosures = tab === 'closures';
+
+        if (!showClosures) {
+            reservationsPanel.hidden = false;
+            reservationsPanel.removeAttribute('aria-hidden');
+            closuresPanel.hidden = true;
+            closuresPanel.setAttribute('aria-hidden', 'true');
+            tabResBtn?.classList.add('is-active');
+            tabClosuresBtn?.classList.remove('is-active');
+            tabResBtn?.setAttribute('aria-selected', 'true');
+            tabClosuresBtn?.setAttribute('aria-selected', 'false');
+            tabClosuresBtn?.setAttribute('tabindex', '-1');
+            tabResBtn?.removeAttribute('tabindex');
+            this.state.managerTab = 'reservations';
+        } else {
+            closuresPanel.hidden = false;
+            closuresPanel.removeAttribute('aria-hidden');
+            reservationsPanel.hidden = true;
+            reservationsPanel.setAttribute('aria-hidden', 'true');
+            tabClosuresBtn?.classList.add('is-active');
+            tabResBtn?.classList.remove('is-active');
+            tabClosuresBtn?.setAttribute('aria-selected', 'true');
+            tabResBtn?.setAttribute('aria-selected', 'false');
+            tabResBtn?.setAttribute('tabindex', '-1');
+            tabClosuresBtn?.removeAttribute('tabindex');
+            this.state.managerTab = 'closures';
+            if (typeof window.fpResvInitClosuresApp === 'function') {
+                window.fpResvInitClosuresApp();
+            }
+        }
+
+        if (syncUrl && window.history && typeof window.history.replaceState === 'function') {
+            const url = new URL(window.location.href);
+            if (!showClosures) {
+                url.searchParams.delete('fp_resv_tab');
+            } else {
+                url.searchParams.set('fp_resv_tab', 'closures');
+            }
+            window.history.replaceState({}, '', url.toString());
         }
     }
 
