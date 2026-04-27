@@ -61,6 +61,8 @@ final class Service
      */
     public function list(array $filters = []): array
     {
+        $this->deactivateExpiredEphemeralSpecialClosures();
+
         $models = $this->fetchModels($filters);
 
         return array_map(fn (Model $model): array => $this->exportModel($model), $models);
@@ -150,6 +152,8 @@ final class Service
             throw new InvalidArgumentException('The end date must be after the start date.');
         }
 
+        $this->deactivateExpiredEphemeralSpecialClosures();
+
         $diff = $start->diff($end);
         if ($diff->days !== false && $diff->days > self::MAX_PREVIEW_DAYS) {
             throw new InvalidArgumentException(sprintf(
@@ -164,6 +168,42 @@ final class Service
         $models = $this->fetchModels($filters);
 
         return $this->previewGenerator->generate($start, $end, $models, $filters);
+    }
+
+    /**
+     * Disattiva automaticamente aperture speciali e orari speciali (senza ricorrenza) la cui fine è già passata,
+     * così non compaiono più nella tabella operativa (lista con solo record attivi).
+     */
+    private function deactivateExpiredEphemeralSpecialClosures(): void
+    {
+        $table = $this->wpdb->prefix . 'fp_closures';
+        $now   = current_time('mysql');
+
+        $types = [Model::TYPE_SPECIAL_HOURS, Model::TYPE_SPECIAL_OPENING];
+        $placeholders = implode(',', array_fill(0, count($types), '%s'));
+
+        $sql = $this->wpdb->prepare(
+            "SELECT id FROM {$table} WHERE active = 1 AND type IN ({$placeholders}) AND end_at < %s AND (recurrence_json IS NULL OR recurrence_json = '') ORDER BY id ASC",
+            array_merge($types, [$now])
+        );
+
+        $ids = $this->wpdb->get_col($sql);
+        if (!is_array($ids) || $ids === []) {
+            return;
+        }
+
+        foreach ($ids as $idRaw) {
+            $id = absint((string) $idRaw);
+            if ($id < 1) {
+                continue;
+            }
+
+            try {
+                $this->deactivate($id);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
+        }
     }
 
     /**

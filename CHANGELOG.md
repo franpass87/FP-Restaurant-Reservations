@@ -1,3 +1,9 @@
+## [1.3.7] - 2026-04-26
+
+### Changed
+
+- **Planner chiusure**: le righe di tipo **orari speciali** (`special_hours`) e **aperture speciali** (`special_opening`) **senza ricorrenza**, con `end_at` già passato rispetto all’ora del sito, vengono **disattivate automaticamente** all’inizio di `Service::list()` e `Service::preview()` (stesso flusso di `deactivate()`, incluso audit). Non compaiono più nella tabella operativa finché non si attiva «Includi inattive» / filtri che mostrano gli inattivi.
+
 ## [1.3.6] - 2026-04-27
 
 ### Changed
