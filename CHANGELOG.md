@@ -1,3 +1,9 @@
+## [1.3.6] - 2026-04-27
+
+### Changed
+
+- **Modale «Calendario operativo» — altezza**: il pannello usa **quasi tutta l’altezza del viewport** (`height` / `max-height: calc(100vh - 20px)`), senza il precedente tetto `min(92vh, 900px)` che su monitor alti lasciava troppo margine. Wrapper modale in **stretch** verticale; **corpo** a colonna flex con hint/stat fissi in alto e **`#fp-resv-closures-app` in `flex: 1`** con scroll interno per dare più spazio al planner. Media query per viewport bassi (`max-height: 640px`).
+
 ## [1.3.5] - 2026-04-27
 
 ### Changed

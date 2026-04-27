@@ -411,3 +411,8 @@
 .fp-modal--closures-planner .fp-resv-closures-app__toolbar--compact .fp-resv-closures-app__toolbar-actions {
     flex-shrink: 0;
 }
+
+/* Il planner riempie l’area scrollabile del modale Manager */
+.fp-modal--closures-planner #fp-resv-closures-app.fp-resv-closures-app .fp-resv-closures-app__shell {
+    min-height: 100%;
+}
