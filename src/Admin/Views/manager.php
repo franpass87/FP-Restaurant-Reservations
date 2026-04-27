@@ -217,22 +217,34 @@ $headingId = 'fp-resv-manager-title';
 </div>
 </div>
 
-<!-- Modal planner chiusure / aperture (fullscreen) -->
+<!-- Modal planner chiusure / aperture (design FP: header gradiente + corpo scrollabile) -->
 <div class="fp-modal fp-modal--closures-planner" id="fp-resv-closures-modal" hidden aria-hidden="true">
-    <div class="fp-modal__backdrop" data-action="close-closures-planner-modal"></div>
-    <div class="fp-modal__content" role="dialog" aria-modal="true" aria-labelledby="fp-resv-closures-modal-title">
-        <div class="fp-modal__header">
-            <h2 id="fp-resv-closures-modal-title"><?php esc_html_e('Calendario operativo', 'fp-restaurant-reservations'); ?></h2>
-            <button type="button" class="fp-modal__close" data-action="close-closures-planner-modal" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
-                <span class="dashicons dashicons-no-alt"></span>
+    <div class="fp-modal__backdrop" data-action="close-closures-planner-modal" tabindex="-1" aria-hidden="true"></div>
+    <div class="fp-modal__content fpresv-closures-modal__shell" role="dialog" aria-modal="true" aria-labelledby="fp-resv-closures-modal-title" aria-describedby="fp-resv-closures-modal-desc">
+        <h1 class="screen-reader-text" id="fp-resv-closures-modal-sr-heading"><?php esc_html_e('Calendario operativo — planner chiusure e aperture', 'fp-restaurant-reservations'); ?></h1>
+        <header class="fpresv-closures-modal__header">
+            <div class="fpresv-closures-modal__header-text">
+                <h2 id="fp-resv-closures-modal-title" class="fpresv-closures-modal__title">
+                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                    <?php esc_html_e('Calendario operativo', 'fp-restaurant-reservations'); ?>
+                </h2>
+                <p id="fp-resv-closures-modal-desc" class="fpresv-closures-modal__desc">
+                    <?php esc_html_e('Planner chiusure, aperture speciali e riduzioni di capienza.', 'fp-restaurant-reservations'); ?>
+                </p>
+            </div>
+            <button type="button" class="fpresv-closures-modal__close" data-action="close-closures-planner-modal" aria-label="<?php esc_attr_e('Chiudi', 'fp-restaurant-reservations'); ?>">
+                <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
             </button>
-        </div>
-        <div class="fp-modal__body fp-modal__body--closures-planner">
-            <p class="fp-resv-manager-closures__hint">
-                <a class="fp-resv-manager-closures__link" href="<?php echo esc_url($serviceSettingsUrl); ?>"><?php esc_html_e('Turni e parametri aperture speciali', 'fp-restaurant-reservations'); ?></a>
-                <?php esc_html_e('— configurazione in Impostazioni → Generali.', 'fp-restaurant-reservations'); ?>
-            </p>
-            <div class="fp-resv-closures__stats fp-resv-manager-closures__stats" aria-live="polite">
+        </header>
+        <div class="fp-modal__body fp-modal__body--closures-planner fpresv-closures-modal__body">
+            <div class="fpresv-closures-modal__hint-card" role="note">
+                <span class="dashicons dashicons-admin-links fpresv-closures-modal__hint-icon" aria-hidden="true"></span>
+                <p class="fpresv-closures-modal__hint-text">
+                    <a class="fpresv-closures-modal__hint-link" href="<?php echo esc_url($serviceSettingsUrl); ?>"><?php esc_html_e('Turni e parametri aperture speciali', 'fp-restaurant-reservations'); ?></a>
+                    <?php esc_html_e('— configurazione in Impostazioni → Generali.', 'fp-restaurant-reservations'); ?>
+                </p>
+            </div>
+            <div class="fp-resv-closures__stats fp-resv-manager-closures__stats fpresv-closures-modal__stats" aria-live="polite">
                 <div class="fp-resv-closures__stat">
                     <span class="fp-resv-closures__stat-label"><?php esc_html_e('Blocchi attivi', 'fp-restaurant-reservations'); ?></span>
                     <span class="fp-resv-closures__stat-value" data-role="closures-active">0</span>
@@ -246,7 +258,7 @@ $headingId = 'fp-resv-manager-title';
                     <span class="fp-resv-closures__stat-value" data-role="closures-next">—</span>
                 </div>
             </div>
-            <div id="fp-resv-closures-app" class="fp-resv-closures-app" data-fp-resv-closures>
+            <div id="fp-resv-closures-app" class="fp-resv-closures-app fpresv-closures-modal__app" data-fp-resv-closures>
                 <?php esc_html_e('Caricamento planner…', 'fp-restaurant-reservations'); ?>
             </div>
         </div>

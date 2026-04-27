@@ -7,6 +7,8 @@
         }
         root.setAttribute('data-fp-resv-closures-mounted', '1');
 
+    const inManagerModal = Boolean(root.closest('#fp-resv-closures-modal'));
+
     const settings = window.fpResvClosuresSettings || {};
 
     const normalizeAjaxUrl = (rawUrl) => {
@@ -158,17 +160,30 @@
 
     const toolbar = document.createElement('div');
     toolbar.className = 'fp-resv-closures-app__toolbar';
-    const toolbarTitle = document.createElement('h2');
-    toolbarTitle.textContent = strings.headline;
-    const toolbarDesc = document.createElement('p');
-    toolbarDesc.textContent = strings.description;
     const toggleButton = document.createElement('button');
     toggleButton.type = 'button';
-    toggleButton.className = 'button button-primary';
+    toggleButton.className = inManagerModal ? 'fp-btn fp-btn--primary' : 'button button-primary';
     toggleButton.textContent = strings.createCta;
-    toolbar.appendChild(toolbarTitle);
-    toolbar.appendChild(toolbarDesc);
-    toolbar.appendChild(toggleButton);
+
+    if (inManagerModal) {
+        toolbar.classList.add('fp-resv-closures-app__toolbar--compact');
+        const lead = document.createElement('p');
+        lead.className = 'fp-resv-closures-app__toolbar-lead';
+        lead.textContent = strings.description;
+        const actions = document.createElement('div');
+        actions.className = 'fp-resv-closures-app__toolbar-actions';
+        actions.appendChild(toggleButton);
+        toolbar.appendChild(lead);
+        toolbar.appendChild(actions);
+    } else {
+        const toolbarTitle = document.createElement('h2');
+        toolbarTitle.textContent = strings.headline;
+        const toolbarDesc = document.createElement('p');
+        toolbarDesc.textContent = strings.description;
+        toolbar.appendChild(toolbarTitle);
+        toolbar.appendChild(toolbarDesc);
+        toolbar.appendChild(toggleButton);
+    }
 
     const controls = document.createElement('div');
     controls.className = 'fp-resv-closures-app__controls';

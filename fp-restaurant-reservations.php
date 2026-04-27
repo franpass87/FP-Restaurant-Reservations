@@ -3,7 +3,7 @@
  * Plugin Name: FP Restaurant Reservations
  * Plugin URI: https://francescopasseri.com/projects/fp-restaurant-reservations
  * Description: Prenotazioni ristorante con eventi, calendario drag&drop, Brevo + Google Calendar, tracking GA4/Ads/Meta/Clarity e stile personalizzabile.
- * Version: 1.3.4
+ * Version: 1.3.5
  * Author: Francesco Passeri
  * Author URI: https://francescopasseri.com
  * Text Domain: fp-restaurant-reservations

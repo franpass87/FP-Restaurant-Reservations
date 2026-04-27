@@ -1,3 +1,10 @@
+## [1.3.5] - 2026-04-27
+
+### Changed
+
+- **Modale «Calendario operativo» (Manager)**: skin allineata al design system FP — header con `var(--fpdms-gradient-primary)`, titolo con icona, sottotitolo, pulsante chiusura su pill trasparente; backdrop scuro con `backdrop-filter`; contenitore con ombra e raggio 16px; hint impostazioni in card bianca; **statistiche** in griglia con card come nella pagina closures (prima erano prive di stile perché legate a `.fp-resv-admin--closures`). **Body** `overflow: hidden` mentre il modale è aperto; **focus** iniziale sul pulsante chiudi e ripristino del focus alla chiusura.
+- **`closures-app.js`**: nel modale Manager la toolbar usa layout **compatto** (descrizione + CTA `fp-btn fp-btn--primary`) senza secondo `<h2>` «Planner operativo…», evitando duplicazione con l’intestazione del modale.
+
 ## [1.3.4] - 2026-04-26
 
 ### Changed

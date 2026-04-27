@@ -386,3 +386,28 @@
         text-align: center;
     }
 }
+
+/**
+ * Toolbar planner nel modale Manager: niente secondo H2, solo lead + CTA (grafica FP).
+ */
+.fp-modal--closures-planner .fp-resv-closures-app__toolbar--compact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.fp-modal--closures-planner .fp-resv-closures-app__toolbar--compact .fp-resv-closures-app__toolbar-lead {
+    margin: 0;
+    flex: 1;
+    min-width: min(100%, 260px);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #475569;
+}
+
+.fp-modal--closures-planner .fp-resv-closures-app__toolbar--compact .fp-resv-closures-app__toolbar-actions {
+    flex-shrink: 0;
+}

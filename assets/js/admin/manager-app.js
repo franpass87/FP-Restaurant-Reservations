@@ -63,6 +63,9 @@ class ReservationManager {
         
         // Timeouts for cleanup
         this.searchTimeout = null;
+
+        /** @type {Element|null} Focus da ripristinare alla chiusura del modale planner */
+        this.closuresPlannerReturnFocus = null;
         
         // Inizializza
         this.init();
@@ -1931,15 +1934,24 @@ class ReservationManager {
         }
 
         this.closeModal();
+        this.closuresPlannerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
         el.removeAttribute('hidden');
         el.setAttribute('aria-hidden', 'false');
         el.style.display = 'flex';
         this.state.closuresPlannerOpen = true;
+        document.body.classList.add('fp-resv-body--closures-modal-open');
 
         requestAnimationFrame(() => {
             if (typeof window.fpResvInitClosuresApp === 'function') {
                 window.fpResvInitClosuresApp();
             }
+            requestAnimationFrame(() => {
+                const closeBtn = el.querySelector('.fpresv-closures-modal__close');
+                if (closeBtn instanceof HTMLElement) {
+                    closeBtn.focus();
+                }
+            });
         });
 
         if (syncUrl && window.history && typeof window.history.replaceState === 'function') {
@@ -1961,6 +1973,13 @@ class ReservationManager {
         el.setAttribute('hidden', 'hidden');
         el.setAttribute('aria-hidden', 'true');
         this.state.closuresPlannerOpen = false;
+        document.body.classList.remove('fp-resv-body--closures-modal-open');
+
+        const returnFocus = this.closuresPlannerReturnFocus;
+        this.closuresPlannerReturnFocus = null;
+        if (returnFocus && typeof returnFocus.focus === 'function') {
+            returnFocus.focus();
+        }
 
         if (window.history && typeof window.history.replaceState === 'function') {
             const url = new URL(window.location.href);
