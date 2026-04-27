@@ -1,3 +1,9 @@
+## [1.3.8] - 2026-04-26
+
+### Fixed
+
+- **Planner chiusure — form evento operativo (modalità avanzata / apertura speciale)**: il blocco «nome servizio», capienza e fasce orarie era un solo elemento della griglia `auto-fit` e finiva in una colonna stretta accanto a inizio/fine/tipo/ambito, con overflow sui campi orari. Il blocco **`.fp-resv-closures-form__special-opening`** ora occupa **tutta la larghezza** (`grid-column: 1 / -1`), con sottogriglia e separatore visivo; elenco fasce a colonna piena; righe ora con **`flex-wrap`** e **`min-width: 0`** sui label. Nel modale Manager le colonne avanzate usano **`minmax(150px, 1fr)`** per ridurre affollamento orizzontale.
+
 ## [1.3.7] - 2026-04-26
 
 ### Changed

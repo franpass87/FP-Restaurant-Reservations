@@ -221,17 +221,66 @@
     display: none;
 }
 
+/**
+ * Blocco aperture speciali: nella griglia avanzata deve occupare tutta la larghezza sotto
+ * inizio/fine/tipo/ambito, altrimenti resta in una colonna stretta e il contenuto si “spagina”.
+ */
+.fp-resv-closures-form__special-opening {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(148, 163, 184, 0.45);
+}
+
+.fp-resv-closures-form__special-opening[hidden] {
+    display: none;
+}
+
+.fp-resv-closures-form__special-opening .fp-resv-closures-form__slots {
+    grid-column: 1 / -1;
+}
+
+.fp-resv-closures-form__slots {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+}
+
+.fp-resv-closures-form__slots-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.fp-resv-closures-form__slots-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+}
+
 .fp-resv-closures-form__slot-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-end;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
 }
 
 .fp-resv-closures-form__slot-row label {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
+    flex: 1 1 140px;
+    min-width: 0;
 }
 
 .fp-resv-closures-form__slot-row label span {
@@ -415,4 +464,9 @@
 /* Il planner riempie l’area scrollabile del modale Manager */
 .fp-modal--closures-planner #fp-resv-closures-app.fp-resv-closures-app .fp-resv-closures-app__shell {
     min-height: 100%;
+}
+
+/* Modale più stretta: colonne avanzate un po’ più compatte (evita troppi blocchi affiancati) */
+.fp-modal--closures-planner .fp-resv-closures-form__mode-advanced {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
