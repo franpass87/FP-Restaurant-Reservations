@@ -1,3 +1,9 @@
+## [1.3.9] - 2026-05-01
+
+### Fixed
+
+- **`AdminMenuEnhancer.php`**: rimosso codice duplicato dopo la chiusura della classe (parse error «Unmatched `}`») che impediva il bootstrap del plugin e mostrava l’errore in bacheca.
+
 ## [1.3.8] - 2026-04-26
 
 ### Fixed
