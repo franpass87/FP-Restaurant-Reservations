@@ -221,19 +221,23 @@ final class TrackingBridge
             return;
         }
 
-        // Aggiunge value/currency per tutti gli eventi che hanno un valore economico
-        if (in_array($event_name, ['booking_confirmed', 'booking_payment_completed'], true) && $entry_value > 0) {
+        // Sempre value + currency per eventi revenue (anche importo 0: es. hold senza prezzo o omaggio).
+        // FP Tracking richiede entrambi nel catalogo; la currency viene da DB o da default_currency impostazioni.
+        if (in_array($event_name, ['booking_confirmed', 'booking_payment_completed'], true)) {
             $base_params['value']    = $entry_value;
             $base_params['currency'] = $entry_currency;
-            $mealKey                 = trim((string) ($entry['meal'] ?? ''));
-            $party                   = (int) ($entry['party'] ?? 1);
-            $items                   = $this->buildEcommerceItemsForMeal($mealKey, $party, $entry_value);
-            if ($items !== null) {
-                $base_params['items'] = $items;
-            }
-            $mealLabel = $this->resolveMealLabel($mealKey);
-            if ($mealLabel !== '') {
-                $base_params['meal_label'] = $mealLabel;
+
+            if ($entry_value > 0) {
+                $mealKey = trim((string) ($entry['meal'] ?? ''));
+                $party   = max(1, (int) ($entry['party'] ?? 1));
+                $items   = $this->buildEcommerceItemsForMeal($mealKey, $party, $entry_value);
+                if ($items !== null) {
+                    $base_params['items'] = $items;
+                }
+                $mealLabel = $this->resolveMealLabel($mealKey);
+                if ($mealLabel !== '') {
+                    $base_params['meal_label'] = $mealLabel;
+                }
             }
         }
 

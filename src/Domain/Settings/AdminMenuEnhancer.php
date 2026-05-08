@@ -195,3 +195,9 @@ final class AdminMenuEnhancer
         return $classes;
     }
 }
+ if (strpos($screenId, 'fp-resv') !== false && strpos($classes, 'fp-resv-admin-shell') === false) {
+            $classes .= ' fp-resv-admin-shell';
+        }
+        return $classes;
+    }
+}

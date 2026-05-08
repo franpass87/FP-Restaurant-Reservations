@@ -1,3 +1,9 @@
+## [1.3.10] - 2026-05-07
+
+### Fixed
+
+- **`TrackingBridge::on_status_changed`**: l’evento `booking_confirmed` / `booking_payment_completed` inviato al cambio stato in admin include sempre `value` e `currency` (anche con importo 0). Prima venivano omessi se il totale risultava 0, generando avvisi FP Tracking («Campo richiesto mancante: value | currency») nonostante la valuta di default nelle impostazioni.
+
 ## [1.3.9] - 2026-05-01
 
 ### Fixed
