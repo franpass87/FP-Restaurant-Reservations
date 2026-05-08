@@ -1,3 +1,9 @@
+## [1.3.11] - 2026-05-08
+
+### Fixed
+
+- **`AdminMenuEnhancer.php`**: rimosso frammento duplicato fuori dalla classe (resto di merge/salvataggio) che avrebbe causato errore di parse in produzione.
+
 ## [1.3.10] - 2026-05-07
 
 ### Fixed
