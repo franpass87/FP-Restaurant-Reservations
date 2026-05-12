@@ -1,3 +1,10 @@
+## [1.3.12] - 2026-05-12
+
+### Fixed
+
+- **Dashboard Manager mobile**: migliorato il layout responsive di header, azioni, filtri, statistiche, switcher vista e modali. La vista settimanale generata dal manager ora passa da griglia a 7 colonne a lista verticale su mobile, rendendo giorni e prenotazioni leggibili e tappabili.
+- **Vendor deploy**: allineato `.gitignore` alla regola FP che richiede `vendor/` incluso nel repository per gli aggiornamenti via fp-git-updater.
+
 ## [1.3.11] - 2026-05-08
 
 ### Fixed

@@ -1958,11 +1958,247 @@ select.fp-form-control {
     }
 }
 
+/* Mobile manager refinements aligned with the WordPress admin breakpoint */
+@media (max-width: 782px) {
+    #wpbody-content > .wrap.fp-resv-admin-outer {
+        margin: 8px 0 0;
+    }
+
+    .fp-resv-manager,
+    .fp-resv-manager * {
+        box-sizing: border-box;
+    }
+
+    .fp-manager-header {
+        padding: 14px;
+    }
+
+    .fp-manager-header__top {
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .fp-manager-header__branding {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .fp-manager-header__branding h1,
+    .fp-manager-header__branding h2 {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: clamp(20px, 6vw, 24px);
+        line-height: 1.2;
+    }
+
+    .fp-manager-breadcrumbs {
+        flex-wrap: wrap;
+    }
+
+    .fp-manager-header__actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .fp-manager-header__actions .fp-btn,
+    .fp-manager-header__actions .fpresv-page-header-badge {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .fp-manager-stats {
+        display: flex !important;
+        grid-template-columns: none;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        margin-right: -14px;
+        padding: 0 14px 10px 0;
+    }
+
+    .fp-manager-stats::after {
+        display: none;
+    }
+
+    .fp-stat-card {
+        min-width: min(260px, 86vw);
+        scroll-snap-align: start;
+    }
+
+    .fp-manager-main {
+        padding: 14px;
+    }
+
+    .fp-manager-toolbar {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .fp-manager-toolbar__left,
+    .fp-manager-toolbar__right,
+    .fp-search-box {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .fp-date-nav {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .fp-date-nav .fp-btn[data-action="today"] {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .fp-date-picker,
+    .fp-filter-select,
+    .fp-search-input {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .fp-search-input {
+        padding-left: 12px;
+    }
+
+    .fp-view {
+        padding: 14px;
+        overflow-x: hidden;
+    }
+
+    .fp-view-switcher {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fp-view-btn {
+        min-width: 72px;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 13px !important;
+    }
+
+    .fp-view-btn .dashicons {
+        display: inline-block !important;
+    }
+
+    .fp-view-btn span:not(.dashicons) {
+        display: inline !important;
+    }
+
+    .fp-week-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px;
+        margin-bottom: 14px !important;
+        padding: 12px !important;
+    }
+
+    .fp-week-header h2 {
+        font-size: 18px !important;
+        line-height: 1.25 !important;
+    }
+
+    .fp-week-nav {
+        width: 100%;
+        justify-content: space-between !important;
+    }
+
+    .fp-week-nav .fp-btn-icon {
+        flex: 1;
+        min-height: 44px;
+    }
+
+    .fp-week-legend {
+        flex-wrap: nowrap !important;
+        gap: 10px !important;
+        overflow-x: auto;
+        margin-bottom: 12px !important;
+        padding: 10px !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fp-week-legend > div {
+        flex: 0 0 auto;
+    }
+
+    .fp-week-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .fp-week-day {
+        min-height: 0 !important;
+        padding: 12px !important;
+    }
+
+    .fp-week-day__header {
+        margin-bottom: 10px !important;
+    }
+
+    .fp-week-day__stats {
+        flex-wrap: wrap;
+    }
+
+    .fp-week-day__empty {
+        padding: 18px 10px !important;
+    }
+
+    .fp-week-reservation {
+        min-height: 44px;
+        padding: 12px !important;
+    }
+
+    .fp-week-reservation__name {
+        white-space: normal !important;
+    }
+
+    .fp-month-calendar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+    }
+
+    .fp-calendar-grid {
+        min-width: 560px;
+    }
+
+    .fp-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .fp-modal__content {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - 12px);
+        border-radius: var(--fp-radius-lg) var(--fp-radius-lg) 0 0;
+    }
+
+    .fp-modal-actions,
+    .fp-form-actions {
+        flex-direction: column;
+    }
+}
+
 /* Landscape mobile */
 @media (max-width: 768px) and (orientation: landscape) {
     .fp-manager-header__top {
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: column;
+        justify-content: flex-start;
     }
     
     .fp-manager-stats {
