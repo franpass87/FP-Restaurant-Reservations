@@ -1,3 +1,9 @@
+## [1.3.13] - 2026-05-12
+
+### Fixed
+
+- **Dashboard Manager mobile**: corretto il selettore data sotto i 480px. Il vecchio ordinamento del date picker lo spostava nella colonna da 44px della griglia mobile, rendendo il campo quasi inutilizzabile; ora resta nella colonna centrale e mantiene larghezza tappabile.
+
 ## [1.3.12] - 2026-05-12
 
 ### Fixed

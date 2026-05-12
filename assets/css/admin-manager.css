@@ -2070,6 +2070,12 @@ select.fp-form-control {
         max-width: 100%;
     }
 
+    .fp-date-picker {
+        grid-column: 2;
+        margin-bottom: 0;
+        order: 0;
+    }
+
     .fp-search-input {
         padding-left: 12px;
     }
